@@ -1,0 +1,151 @@
+<div class="login-container">
+  <div class="left-section">
+    <div class="brand-content">
+      <div class="brand-description">
+        <h2>Smart Learning Management Platform</h2>
+        <p>Connect students and teachers seamlessly through live classes, smart attendance, and digital learning tools in one powerful platform.</p>
+      </div>
+
+      <div class="features-list">
+        <div class="feature-item">
+          <div class="feature-icon"><i class="fa-solid fa-video"></i></div>
+          <div class="feature-text">
+            <h3>Live Video Classes</h3>
+            <p>Teachers and students connect through secure real-time video meetings</p>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon"><i class="fa-solid fa-user-graduate"></i></div>
+          <div class="feature-text">
+            <h3>Student Learning Portal</h3>
+            <p>Access classes, assignments, notes, and progress in one place</p>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon"><i class="fa-solid fa-chalkboard-teacher"></i></div>
+          <div class="feature-text">
+            <h3>Teacher Management</h3>
+            <p>Schedule classes, manage students, and track learning performance</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="right-section">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="logo-icon">
+          <img src="logo.png" class="logo-width" alt="logo">
+        </div>
+        <h2>B2P Teachers</h2>
+        <p>Sign in to access your admin dashboard</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label for="email">Username / Email Address</label>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3.33334 5.83333L10 10.8333L16.6667 5.83333M3.33334 15H16.6667C17.5872 15 18.3333 14.2538 18.3333 13.3333V6.66667C18.3333 5.74619 17.5872 5 16.6667 5H3.33334C2.41286 5 1.66667 5.74619 1.66667 6.66667V13.3333C1.66667 14.2538 2.41286 15 3.33334 15Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <input 
+              type="email" 
+              id="email" 
+              formControlName="email"
+              placeholder="admin@salestrack.com"
+              [class.error]="email?.invalid && email?.touched"
+            />
+          </div>
+          <span class="error-message" *ngIf="email?.invalid && email?.touched">
+            <span *ngIf="email?.errors?.['required']">Email is required</span>
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5.83334 9.16667V5.83333C5.83334 3.53215 7.69882 1.66667 10 1.66667C12.3012 1.66667 14.1667 3.53215 14.1667 5.83333V9.16667M10 12.0833V14.1667M5.16667 18.3333H14.8333C15.7538 18.3333 16.5 17.5871 16.5 16.6667V10.8333C16.5 9.91286 15.7538 9.16667 14.8333 9.16667H5.16667C4.24619 9.16667 3.5 9.91286 3.5 10.8333V16.6667C3.5 17.5871 4.24619 18.3333 5.16667 18.3333Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <input 
+              [type]="showPassword ? 'text' : 'password'" 
+              id="password" 
+              formControlName="password"
+              placeholder="Enter your password"
+              [class.error]="password?.invalid && password?.touched"
+            />
+            <button 
+              type="button" 
+              class="toggle-password"
+              (click)="togglePassword()"
+              tabindex="-1"
+            >
+              <svg *ngIf="!showPassword" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1.66667 10C1.66667 10 4.16667 4.16667 10 4.16667C15.8333 4.16667 18.3333 10 18.3333 10C18.3333 10 15.8333 15.8333 10 15.8333C4.16667 15.8333 1.66667 10 1.66667 10Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M10 12.5C11.3807 12.5 12.5 11.3807 12.5 10C12.5 8.61929 11.3807 7.5 10 7.5C8.61929 7.5 7.5 8.61929 7.5 10C7.5 11.3807 8.61929 12.5 10 12.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <svg *ngIf="showPassword" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14.95 14.95C13.5255 16.0358 11.7909 16.6374 10 16.6667C4.16667 16.6667 1.66667 10.8333 1.66667 10.8333C2.49581 9.19076 3.64605 7.73313 5.05 6.55M8.25 5.11667C8.82365 4.96934 9.41092 4.89923 10 4.90833C15.8333 4.90833 18.3333 10.7417 18.3333 10.7417C17.9286 11.5442 17.4402 12.3009 16.875 13M11.7667 11.7667C11.5378 12.0123 11.2617 12.2093 10.9552 12.3459C10.6487 12.4826 10.3181 12.556 9.98276 12.562C9.64746 12.5679 9.31444 12.5061 9.00334 12.3804C8.69225 12.2547 8.40938 12.0675 8.17159 11.8297C7.9338 11.5919 7.74658 11.309 7.62086 10.9979C7.49515 10.6868 7.4334 10.3538 7.43932 10.0185C7.44525 9.68318 7.51872 9.35256 7.65538 9.04605C7.79203 8.73954 7.98904 8.46345 8.23467 8.23453M1.66667 1.66667L18.3333 18.3333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <span class="error-message" *ngIf="password?.invalid && password?.touched">
+            <span *ngIf="password?.errors?.['required']">Password is required</span>
+            <span *ngIf="password?.errors?.['minlength']">Password must be at least 3 characters</span>
+          </span>
+        </div>
+
+        <!-- <div class="form-options">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="rememberMe">
+            <span class="checkbox-custom"></span>
+            <span class="checkbox-text">Remember me</span>
+          </label>
+          <a href="#" class="forgot-password">Forgot Password?</a>
+        </div> -->
+
+        <button type="submit" class="submit-btn" [disabled]="isLoading">
+          <span *ngIf="!isLoading">Sign In</span>
+          <span *ngIf="isLoading" class="loading-spinner">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 2V6M10 14V18M18 10H14M6 10H2M15.6569 15.6569L12.8284 12.8284M7.17157 7.17157L4.34315 4.34315" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            Signing in...
+          </span>
+        </button>
+      </form>
+
+      <div class="divider">
+        <i class="fa-solid fa-headset"></i>Infinity Uniquers
+      </div>
+
+      <!-- <div class="social-login">
+        <button type="button" class="social-btn google">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18.1711 8.36788H17.5001V8.33329H10.0001V11.6666H14.7096C14.0226 13.6071 12.1761 15 10.0001 15C7.23909 15 5.00009 12.7609 5.00009 9.99996C5.00009 7.23896 7.23909 4.99996 10.0001 4.99996C11.2746 4.99996 12.4341 5.48079 13.3171 6.26663L15.6741 3.90954C14.1856 2.52204 12.1951 1.66663 10.0001 1.66663C5.39809 1.66663 1.66675 5.39796 1.66675 9.99996C1.66675 14.602 5.39809 18.3333 10.0001 18.3333C14.6021 18.3333 18.3334 14.602 18.3334 9.99996C18.3334 9.44121 18.2759 8.89579 18.1711 8.36788Z" fill="#FFC107"/>
+            <path d="M2.62793 6.12121L5.36543 8.12913C6.10626 6.29496 7.90043 5.00004 10.0004 5.00004C11.2754 5.00004 12.4349 5.48088 13.3179 6.26671L15.6749 3.90963C14.1864 2.52213 12.1959 1.66671 10.0004 1.66671C6.79959 1.66671 3.99709 3.47379 2.62793 6.12121Z" fill="#FF3D00"/>
+            <path d="M10.0001 18.3334C12.1531 18.3334 14.1081 17.5096 15.5871 16.17L13.0084 13.9875C12.1433 14.6451 11.0864 15.0009 10.0001 15C7.83259 15 5.99176 13.6179 5.29843 11.6892L2.58093 13.7829C3.93009 16.4817 6.76176 18.3334 10.0001 18.3334Z" fill="#4CAF50"/>
+            <path d="M18.1713 8.36796H17.5003V8.33337H10.0003V11.6667H14.7098C14.3783 12.5902 13.7771 13.3972 12.9888 13.9879C12.9893 13.9875 12.9898 13.9871 12.9903 13.9867L15.569 16.1692C15.3836 16.3371 18.3336 14.1667 18.3336 10C18.3336 9.44129 18.2761 8.89587 18.1713 8.36796Z" fill="#1976D2"/>
+          </svg>
+          Google
+        </button>
+        <button type="button" class="social-btn microsoft">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 2H9.5V9.5H2V2Z" fill="#F25022"/>
+            <path d="M10.5 2H18V9.5H10.5V2Z" fill="#7FBA00"/>
+            <path d="M2 10.5H9.5V18H2V10.5Z" fill="#00A4EF"/>
+            <path d="M10.5 10.5H18V18H10.5V10.5Z" fill="#FFB900"/>
+          </svg>
+          Microsoft
+        </button>
+      </div> -->
+    </div>
+  </div>
+</div>

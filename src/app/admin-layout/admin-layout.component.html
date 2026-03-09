@@ -1,0 +1,125 @@
+<div class="admin-container">
+  <div
+    class="sidebar-overlay"
+    *ngIf="!sidebarCollapsed"
+    (click)="toggleSidebar()"
+  ></div>
+
+  <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
+    <div class="sidebar-logo">
+      <div class="logo-row">
+        <div class="logo-content">
+          <div class="logo-icon">
+            <img src="logo.png" class="logo-width" alt="logo">
+          </div>
+          <span class="logo-text" *ngIf="!sidebarCollapsed">B2P Teachers</span>
+        </div>
+
+        <button class="sidebar-close-btn" (click)="toggleSidebar()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <!-- Dashboard -->
+      <a
+        class="nav-item dashboard-item"
+        (click)="navigateTo(dashboardItem.route)"
+        [ngClass]="{ 'nav-item--active': isActive(dashboardItem.route) }"
+      >
+        <i class="{{ dashboardItem.icon }} nav-icon"></i>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">{{
+          dashboardItem.label
+        }}</span>
+      </a>
+
+      <!-- Dynamic Menu -->
+      <div class="menu-category" *ngFor="let category of menuCategories">
+        <div class="category-header" (click)="toggleCategory(category)">
+          <div class="category-title">
+            <i class="{{ category.icon }} category-icon"></i>
+            <span class="category-label" *ngIf="!sidebarCollapsed">{{
+              category.title
+            }}</span>
+          </div>
+
+          <i
+            class="fa-solid fa-chevron-right category-arrow"
+            *ngIf="!sidebarCollapsed"
+            [class.expanded]="category.expanded"
+          >
+          </i>
+        </div>
+
+        <div
+          class="category-items"
+          *ngIf="category.expanded && !sidebarCollapsed"
+        >
+          <a
+            class="nav-item sub-item"
+            *ngFor="let item of category.items"
+            (click)="navigateTo(item.route)"
+            [ngClass]="{ 'nav-item--active': isActive(item.route) }"
+          >
+            <i class="{{ item.icon }} nav-icon"></i>
+            <span class="nav-label">{{ item.label }}</span>
+
+            <span class="nav-badge" *ngIf="item.badge">{{ item.badge }}</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- <div class="sidebar-footer">
+      <div class="user-profile">
+        <div class="user-avatar">
+          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" />
+        </div>
+
+        <div class="user-info" *ngIf="!sidebarCollapsed">
+          <div class="user-name">John Doe</div>
+          <div class="user-role">Administrator</div>
+        </div>
+      </div>
+    </div> -->
+  </aside>
+
+  <div class="main-content" [class.expanded]="sidebarCollapsed">
+    <header class="header">
+      <div class="header-left">
+        <button class="toggle-btn" *ngIf="isMobileView" (click)="toggleSidebar()">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="breadcrumb">
+          <span class="breadcrumb-item active">Welcome to Your Workspace...</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" placeholder="Search..." class="search-input" />
+        </div> -->
+
+        <!-- <button class="header-icon-btn">
+          <span class="icon-badge">3</span>
+          <i class="fa-solid fa-bell"></i>
+        </button> -->
+
+        <button class="header-icon-btn-txt" title="Refresh" (click)="refreshComponent()">
+          Refresh
+        </button>
+
+        <button class="header-icon-btn" title="logout" (click)="logout()">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

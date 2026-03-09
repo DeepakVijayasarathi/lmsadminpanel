@@ -1,0 +1,7 @@
+<ng-container *ngIf="!isLoginPage">
+    <app-admin-layout></app-admin-layout>
+</ng-container>
+
+<ng-container *ngIf="isLoginPage">
+    <router-outlet></router-outlet>
+</ng-container>
