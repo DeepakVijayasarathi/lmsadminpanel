@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ToastrService } from 'ngx-toastr';
+import { CommonService } from '../services/common.service';
 import { AuthService } from '../auth/auth.service';
 import { Router } from '@angular/router';
 
@@ -27,7 +27,7 @@ export class LoginComponent {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private toastr: ToastrService,
+    private commonService: CommonService,
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required]],
@@ -70,12 +70,12 @@ export class LoginComponent {
     this.authService.login(payload).subscribe({
       next: () => {
         this.isLoading = false;
-        this.toastr.success('Login Successful', 'Success');
+        this.commonService.success('Login Successful', 'Success');
         this.router.navigate(['/dashboard']);
       },
       error: () => {
         this.isLoading = false;
-        this.toastr.error('Invalid email or password', 'Login Failed');
+        this.commonService.error('Invalid email or password', 'Login Failed');
       },
     });
   }
@@ -92,7 +92,7 @@ export class LoginComponent {
       next: () => {
         this.isLoading = false;
         this.otpStep = 'verify';
-        this.toastr.success(`OTP sent to ${this.otpEmail}`, "Check your inbox");
+        this.commonService.success(`OTP sent to ${this.otpEmail}`, "Check your inbox");
         this.startResendCooldown();
       },
       error: (err) => {
@@ -101,7 +101,7 @@ export class LoginComponent {
           typeof err?.error === 'string'
             ? err.error
             : err?.error?.message || 'Failed to send OTP. Please try again.';
-        this.toastr.error(message, 'Error');
+        this.commonService.error(message, 'Error');
       }
     });
   }
@@ -116,12 +116,12 @@ export class LoginComponent {
     this.authService.verifyOtp(this.otpEmail, otpCtrl!.value).subscribe({
       next: () => {
         this.isLoading = false;
-        this.toastr.success('Login Successful', 'Success');
+        this.commonService.success('Login Successful', 'Success');
         this.router.navigate(['/dashboard']);
       },
       error: () => {
         this.isLoading = false;
-        this.toastr.error('Invalid or expired OTP', 'Verification Failed');
+        this.commonService.error('Invalid or expired OTP', 'Verification Failed');
       },
     });
   }
@@ -133,13 +133,13 @@ export class LoginComponent {
     this.authService.sendOtp(this.otpEmail).subscribe({
       next: () => {
         this.isLoading = false;
-        this.toastr.success('New OTP sent!', 'Resent');
+        this.commonService.success('New OTP sent!', 'Resent');
         this.otpForm.get('otp')?.reset();
         this.startResendCooldown();
       },
       error: () => {
         this.isLoading = false;
-        this.toastr.error('Could not resend OTP.', 'Error');
+        this.commonService.error('Could not resend OTP.', 'Error');
       },
     });
   }

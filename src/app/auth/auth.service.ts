@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, catchError, tap, throwError } from 'rxjs';
 import { TokenStorageService } from './token-storage.service';
-import { ToastrService } from 'ngx-toastr';
+import { CommonService } from '../services/common.service';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -14,7 +14,7 @@ export class AuthService {
     private http: HttpClient,
     private tokenStorage: TokenStorageService,
     private router: Router,
-    private toastr: ToastrService,
+    private commonService: CommonService,
   ) {
     this.isLoggedInSubject = new BehaviorSubject<boolean>(
       this.tokenStorage.getAccessToken() != null,
@@ -75,7 +75,7 @@ export class AuthService {
           );
         }),
         catchError((err) => {
-          this.toastr.error(
+          this.commonService.error(
             'Session expired, please login again.',
             'Token Expired',
           );
@@ -86,7 +86,7 @@ export class AuthService {
   }
 
   logout() {
-    this.toastr.info('You have been logged out', 'Logged Out');
+    this.commonService.info('You have been logged out', 'Logged Out');
     this.tokenStorage.clear();
     this.isLoggedInSubject.next(false);
     this.router.navigate(['/login']);

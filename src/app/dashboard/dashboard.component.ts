@@ -2,7 +2,7 @@ import {
   Component
 } from '@angular/core';
 import { HttpGeneralService } from '../services/http.service';
-import { ToastrService } from 'ngx-toastr';
+import { CommonService } from '../services/common.service';
 import { environment } from '../../environments/environment';
 import { Router } from '@angular/router';
 
@@ -15,7 +15,7 @@ import { Router } from '@angular/router';
 export class DashboardComponent {
   constructor(
     private readonly httpService: HttpGeneralService<any>,
-    private toastr: ToastrService,
+    private common: CommonService,
     private router: Router
   ) {}
 
