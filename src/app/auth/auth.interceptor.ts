@@ -20,6 +20,12 @@ export class AuthInterceptor implements HttpInterceptor {
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 
+    if (req.url.includes('/auth/login') || 
+        req.url.includes('/auth/login/send-otp') ||
+        req.url.includes('/auth/login/verify-otp')) {
+      return next.handle(req);
+    }
+
     let authReq = req;
 
     const token = this.tokenStorage.getAccessToken();
@@ -31,7 +37,6 @@ export class AuthInterceptor implements HttpInterceptor {
       });
     }
 
-    // If token expired → refresh
     if (token && isExpired) {
       return this.authService.refreshToken().pipe(
         switchMap(() => {
@@ -50,7 +55,6 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
-        // If API returns 401 → logout
         if (error.status === 401) {
           this.authService.logout();
         }
