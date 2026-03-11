@@ -1,9 +1,9 @@
 import {
   Component
 } from '@angular/core';
-import { HttpGeneralService } from '../services/http.service';
-import { CommonService } from '../services/common.service';
-import { environment } from '../../environments/environment';
+import { HttpGeneralService } from '../../services/http.service';
+import { CommonService } from '../../services/common.service';
+import { environment } from '../../../environments/environment';
 import { Router } from '@angular/router';
 
 @Component({

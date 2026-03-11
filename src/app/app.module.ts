@@ -8,9 +8,9 @@ import { CommonModule } from '@angular/common';
 import { HttpGeneralService } from './services/http.service';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { LoginComponent } from './login/login.component';
-import { AdminLayoutComponent } from './admin-layout/admin-layout.component';
-import { DashboardComponent } from './dashboard/dashboard.component';
+import { LoginComponent } from './components/login/login.component';
+import { AdminLayoutComponent } from './components/admin-layout/admin-layout.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { AuthInterceptor } from './auth/auth.interceptor';
 
 @NgModule({
