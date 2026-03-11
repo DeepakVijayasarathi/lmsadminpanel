@@ -18,13 +18,17 @@
 }
 
 .left-section::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -50%;
   right: -50%;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.1) 1px,
+    transparent 1px
+  );
   background-size: 50px 50px;
   animation: movePattern 20s linear infinite;
 }
@@ -46,16 +50,18 @@
 .logo-icon {
   background: rgba(255, 255, 255, 0.2);
   padding: var(--spacing-md);
+  padding-top: 0;
   border-radius: var(--radius-xl);
   backdrop-filter: blur(10px);
 }
 
-.logo-width{
+.logo-width {
   max-width: 120px;
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px);
   }
   50% {
@@ -203,7 +209,7 @@
 form {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
 }
 
 .form-group {
@@ -330,7 +336,7 @@ form {
 }
 
 .checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after {
-  content: '';
+  content: "";
   width: 5px;
   height: 10px;
   border: solid white;
@@ -375,13 +381,18 @@ form {
 }
 
 .submit-btn::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
   transition: left 0.5s ease;
 }
 
@@ -436,7 +447,7 @@ form {
 
 .divider::before,
 .divider::after {
-  content: '';
+  content: "";
   flex: 1;
   border-bottom: 1px solid var(--border-color);
 }
@@ -518,7 +529,7 @@ form {
   .left-section {
     display: none;
   }
-  
+
   .right-section {
     flex: 1;
   }
@@ -528,22 +539,143 @@ form {
   .right-section {
     padding: var(--spacing-lg);
   }
-  
+
   .login-card {
     max-width: 100%;
   }
-  
+
   .login-header h2 {
     font-size: var(--font-size-2xl);
   }
-  
+
   .social-login {
     flex-direction: column;
   }
-  
+
   .footer-links {
     flex-direction: column;
     gap: var(--spacing-sm);
     text-align: center;
   }
+}
+
+/* ── Mode Toggle ───────────────────────────────────────────── */
+.mode-toggle {
+  display: flex;
+  gap: 0;
+  background: var(--bg-gray-50);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  margin-bottom: var(--spacing-lg);
+}
+
+.mode-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  font-family: var(--font-family);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.mode-btn.active {
+  background: var(--bg-white);
+  color: var(--primary-color);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mode-btn:hover:not(.active) {
+  color: var(--text-primary);
+}
+
+/* ── OTP Banners ───────────────────────────────────────────── */
+.otp-info-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--primary-color);
+  /* margin-bottom: var(--spacing-lg); */
+}
+
+.otp-sent-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: rgba(34, 197, 94, 0.06);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: #16a34a;
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.otp-sent-banner strong {
+  font-weight: 600;
+}
+
+.change-email-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--primary-color);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.change-email-btn:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+/* ── Resend OTP ────────────────────────────────────────────── */
+.resend-otp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.resend-btn {
+  background: none;
+  border: none;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--primary-color);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.resend-btn:hover:not(:disabled) {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+.resend-btn:disabled {
+  color: var(--text-tertiary);
+  cursor: not-allowed;
 }
