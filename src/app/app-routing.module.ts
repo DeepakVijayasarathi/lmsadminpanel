@@ -4,14 +4,36 @@ import { AuthGuard } from './auth/auth.guard';
 import { LoginComponent } from './components/login/login.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { UsersComponent } from './components/users/users.component';
+import { BoardsComponent } from './components/curriculum/boards/boards.component';
+import { ClassesComponent } from './components/curriculum/classes/classes.component';
+import { ExamsComponent } from './components/assessment/exams/exams.component';
+import { ResultsComponent } from './components/assessment/results/results.component';
+import { AnnouncementsComponent } from './components/communication/announcements/announcements.component';
+import { NotificationsComponent } from './components/communication/notifications/notifications.component';
+import { SubjectsComponent } from './components/curriculum/subjects/subjects.component';
+import { TopicsComponent } from './components/curriculum/topics/topics.component';
+import { PaymentsComponent } from './components/finance/payments/payments.component';
+import { RefundsComponent } from './components/finance/refunds/refunds.component';
+import { SubscriptionsComponent } from './components/finance/subscriptions/subscriptions.component';
+import { BatchesComponent } from './components/learning/batches/batches.component';
+import { CoursesComponent } from './components/learning/courses/courses.component';
+import { LibraryComponent } from './components/learning/library/library.component';
+import { LiveClassesComponent } from './components/learning/live-classes/live-classes.component';
+import { AttendanceReportComponent } from './components/reports/attendance-report/attendance-report.component';
+import { PerformanceReportComponent } from './components/reports/performance-report/performance-report.component';
+import { RevenueReportComponent } from './components/reports/revenue-report/revenue-report.component';
+import { RolesComponent } from './components/system/roles/roles.component';
+import { SettingsComponent } from './components/system/settings/settings.component';
+
+const AG = [AuthGuard];
 
 const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
 
   // dashboard
-  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
-  { path: 'users', component: UsersComponent, canActivate: [AuthGuard] },
+  { path: 'dashboard', component: DashboardComponent, canActivate: AG },
+  { path: 'users', component: UsersComponent, canActivate: AG },
 
   // Curriculum
   { path: 'boards',    component: BoardsComponent,    canActivate: AG },
