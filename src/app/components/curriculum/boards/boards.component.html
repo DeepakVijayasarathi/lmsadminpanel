@@ -1,0 +1,133 @@
+<div class="pg">
+
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-indigo">
+        <i class="fas fa-building-columns"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Boards</div>
+        <div class="pg-head__sub">Academic boards &amp; affiliations</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary">
+        <i class="fas fa-plus"></i> Add Board
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-indigo"><i class="fas fa-building-columns"></i></div>
+      <div>
+        <div class="pg-stat__val">8</div>
+        <div class="pg-stat__lbl">Total Boards</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald"><i class="fas fa-circle-check"></i></div>
+      <div>
+        <div class="pg-stat__val">6</div>
+        <div class="pg-stat__lbl">Active</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky"><i class="fas fa-school"></i></div>
+      <div>
+        <div class="pg-stat__val">48</div>
+        <div class="pg-stat__lbl">Total Classes</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-purple"><i class="fas fa-atom"></i></div>
+      <div>
+        <div class="pg-stat__val">192</div>
+        <div class="pg-stat__lbl">Total Subjects</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <span class="pg-card__title">All Boards</span>
+      <div class="pg-toolbar">
+        <div class="pg-search">
+          <i class="fas fa-magnifying-glass"></i>
+          <input
+            type="text"
+            placeholder="Search boards..."
+            [(ngModel)]="searchQuery"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Board Name</th>
+            <th>Short Code</th>
+            <th>Classes</th>
+            <th>Subjects</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let board of filteredBoards">
+            <td>
+              <span class="pg-cell__primary">{{ board.name }}</span>
+            </td>
+            <td>
+              <span class="pg-badge pg-badge--indigo">{{ board.shortCode }}</span>
+            </td>
+            <td>
+              <span class="pg-cell__primary">{{ board.classCount }}</span>
+            </td>
+            <td>
+              <span class="pg-cell__primary">{{ board.subjectCount }}</span>
+            </td>
+            <td>
+              <span
+                class="pg-badge"
+                [ngClass]="board.status === 'Active' ? 'pg-badge--green' : 'pg-badge--gray'"
+              >
+                <i
+                  class="fas"
+                  [ngClass]="board.status === 'Active' ? 'fa-circle-check' : 'fa-circle-xmark'"
+                ></i>
+                {{ board.status }}
+              </span>
+            </td>
+            <td>
+              <span class="pg-cell__sub">{{ board.createdDate }}</span>
+            </td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="pg-action-btn" title="Edit">
+                  <i class="fas fa-pen"></i>
+                </button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredBoards.length === 0">
+            <td colspan="7" style="text-align:center;padding:32px;color:#9ca3af;">
+              <i class="fas fa-building-columns" style="font-size:28px;margin-bottom:8px;display:block;opacity:0.3;"></i>
+              No boards found matching your search.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

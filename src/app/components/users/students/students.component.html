@@ -1,0 +1,156 @@
+<div class="pg">
+
+  <!-- ── Page Header ── -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-indigo">
+        <i class="fas fa-user-graduate"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Students</div>
+        <div class="pg-head__sub">Manage enrolled students</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--outline">
+        <i class="fas fa-download"></i> Export
+      </button>
+      <button class="pg-btn pg-btn--primary">
+        <i class="fas fa-plus"></i> Add Student
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Stat Cards ── -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-indigo">
+        <i class="fas fa-user-graduate"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">2,847</div>
+        <div class="pg-stat__lbl">Total Students</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald">
+        <i class="fas fa-circle-check"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">2,634</div>
+        <div class="pg-stat__lbl">Active</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-rose">
+        <i class="fas fa-circle-xmark"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">213</div>
+        <div class="pg-stat__lbl">Inactive</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky">
+        <i class="fas fa-user-plus"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">128</div>
+        <div class="pg-stat__lbl">New This Month</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Main Card ── -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <div class="pg-toolbar">
+        <div class="pg-search">
+          <i class="fas fa-search"></i>
+          <input
+            type="text"
+            placeholder="Search students..."
+            [(ngModel)]="searchTerm"
+          />
+        </div>
+        <select class="pg-filter" [(ngModel)]="filterStatus">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+      <button class="pg-btn pg-btn--primary" style="padding: 7px 14px; font-size: 12px;">
+        <i class="fas fa-plus"></i> Add
+      </button>
+    </div>
+
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Batch &amp; Class</th>
+            <th>Phone</th>
+            <th>Status</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let student of filteredStudents">
+            <td>
+              <div class="pg-with-avatar">
+                <div class="pg-avatar av-indigo">{{ student.avatar }}</div>
+                <div>
+                  <span class="pg-cell__primary">{{ student.name }}</span>
+                  <span class="pg-cell__sub">{{ student.email }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="pg-cell__primary">{{ student.batch }}</span>
+              <span class="pg-cell__sub">{{ student.class }}</span>
+            </td>
+            <td>{{ student.phone }}</td>
+            <td>
+              <span
+                class="pg-badge"
+                [ngClass]="{
+                  'pg-badge--green': student.status === 'active',
+                  'pg-badge--red':   student.status === 'inactive'
+                }"
+              >
+                <i
+                  class="fas"
+                  [ngClass]="{
+                    'fa-circle-check': student.status === 'active',
+                    'fa-circle-xmark': student.status === 'inactive'
+                  }"
+                ></i>
+                {{ student.status | titlecase }}
+              </span>
+            </td>
+            <td>{{ student.joinDate }}</td>
+            <td>
+              <div style="display: flex; gap: 6px;">
+                <button class="pg-action-btn" title="Edit">
+                  <i class="fas fa-pen"></i>
+                </button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredStudents.length === 0">
+            <td colspan="6" style="text-align: center; padding: 32px; color: #9ca3af;">
+              <i class="fas fa-search" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+              No students found matching your search.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

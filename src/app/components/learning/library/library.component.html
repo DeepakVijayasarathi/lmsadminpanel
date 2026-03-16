@@ -1,0 +1,157 @@
+<div class="pg">
+
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-teal">
+        <i class="fa-solid fa-book-bookmark"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Digital Library</div>
+        <div class="pg-head__sub">Manage learning resources</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary">
+        <i class="fa-solid fa-upload"></i> Upload Resource
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-teal">
+        <i class="fa-solid fa-book-bookmark"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">1,284</div>
+        <div class="pg-stat__lbl">Total Resources</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-rose">
+        <i class="fa-solid fa-file-pdf"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">612</div>
+        <div class="pg-stat__lbl">PDFs</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky">
+        <i class="fa-solid fa-video"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">398</div>
+        <div class="pg-stat__lbl">Videos</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-amber">
+        <i class="fa-solid fa-note-sticky"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">274</div>
+        <div class="pg-stat__lbl">Notes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <div class="pg-card__title">All Resources</div>
+      <div class="pg-toolbar">
+        <div class="pg-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search resources..." [(ngModel)]="searchQuery" />
+        </div>
+        <select class="pg-filter" [(ngModel)]="typeFilter">
+          <option value="">All Types</option>
+          <option value="PDF">PDF</option>
+          <option value="Video">Video</option>
+          <option value="Notes">Notes</option>
+          <option value="Presentation">Presentation</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Resource Title</th>
+            <th>Subject &amp; Class</th>
+            <th>Uploaded By</th>
+            <th>File Size</th>
+            <th>Downloads</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let res of filteredResources">
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span [class]="getTypeChipClass(res.type)">
+                  <i class="fa-solid" [class]="getTypeIcon(res.type)"></i>
+                  {{ res.type }}
+                </span>
+                <div>
+                  <div class="pg-cell__primary">{{ res.title }}</div>
+                  <div class="pg-cell__sub">{{ formatDate(res.uploadDate) }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="pg-cell__primary">{{ res.subject }}</div>
+              <div class="pg-cell__sub">{{ res.class }}</div>
+            </td>
+            <td>
+              <div class="pg-with-avatar">
+                <div class="pg-avatar av-teal">{{ res.uploadedBy.charAt(0) }}</div>
+                <span class="pg-cell__primary">{{ res.uploadedBy }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="pg-cell__primary">{{ res.fileSize }}</span>
+            </td>
+            <td>
+              <span style="display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;color:#475569;border-radius:20px;padding:3px 10px;font-size:13px;font-weight:600;">
+                <i class="fa-solid fa-download" style="font-size:11px;"></i>
+                {{ res.downloads }}
+              </span>
+            </td>
+            <td>
+              <span [class]="getStatusBadge(res.status)">{{ res.status | titlecase }}</span>
+            </td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="pg-action-btn" title="Preview">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button class="pg-action-btn" title="Download">
+                  <i class="fa-solid fa-download"></i>
+                </button>
+                <button class="pg-action-btn" title="Edit">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Delete">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredResources.length === 0">
+            <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">
+              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+              No resources found
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

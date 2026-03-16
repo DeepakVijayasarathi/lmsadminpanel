@@ -1,0 +1,135 @@
+<div class="pg">
+
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-orange">
+        <i class="fas fa-atom"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Subjects</div>
+        <div class="pg-head__sub">Manage academic subjects</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary">
+        <i class="fas fa-plus"></i> Add Subject
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-orange"><i class="fas fa-atom"></i></div>
+      <div>
+        <div class="pg-stat__val">96</div>
+        <div class="pg-stat__lbl">Total Subjects</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald"><i class="fas fa-circle-check"></i></div>
+      <div>
+        <div class="pg-stat__val">91</div>
+        <div class="pg-stat__lbl">Active</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-indigo"><i class="fas fa-list-check"></i></div>
+      <div>
+        <div class="pg-stat__val">1,248</div>
+        <div class="pg-stat__lbl">Topics Covered</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-purple"><i class="fas fa-building-columns"></i></div>
+      <div>
+        <div class="pg-stat__val">8</div>
+        <div class="pg-stat__lbl">Boards Covered</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <span class="pg-card__title">All Subjects</span>
+      <div class="pg-toolbar">
+        <div class="pg-search">
+          <i class="fas fa-magnifying-glass"></i>
+          <input
+            type="text"
+            placeholder="Search subjects..."
+            [(ngModel)]="searchQuery"
+          />
+        </div>
+        <select class="pg-filter" [(ngModel)]="selectedClass">
+          <option value="">All Classes</option>
+          <option *ngFor="let cls of classes" [value]="cls">{{ cls }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Code</th>
+            <th>Class &amp; Board</th>
+            <th>Topics</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let subject of filteredSubjects">
+            <td>
+              <span class="pg-cell__primary">{{ subject.name }}</span>
+            </td>
+            <td>
+              <span class="pg-badge pg-badge--indigo">{{ subject.code }}</span>
+            </td>
+            <td>
+              <span class="pg-cell__primary">{{ subject.className }}</span>
+              <span class="pg-cell__sub">{{ subject.board }}</span>
+            </td>
+            <td>
+              <span class="pg-cell__primary">{{ subject.topicCount }}</span>
+              <span class="pg-cell__sub">topics</span>
+            </td>
+            <td>
+              <span
+                class="pg-badge"
+                [ngClass]="subject.status === 'Active' ? 'pg-badge--green' : 'pg-badge--gray'"
+              >
+                <i
+                  class="fas"
+                  [ngClass]="subject.status === 'Active' ? 'fa-circle-check' : 'fa-circle-xmark'"
+                ></i>
+                {{ subject.status }}
+              </span>
+            </td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="pg-action-btn" title="Edit">
+                  <i class="fas fa-pen"></i>
+                </button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredSubjects.length === 0">
+            <td colspan="6" style="text-align:center;padding:32px;color:#9ca3af;">
+              <i class="fas fa-atom" style="font-size:28px;margin-bottom:8px;display:block;opacity:0.3;"></i>
+              No subjects found matching your criteria.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

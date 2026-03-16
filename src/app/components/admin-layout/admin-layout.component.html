@@ -1,125 +1,105 @@
-<div class="admin-container">
-  <div
-    class="sidebar-overlay"
-    *ngIf="!sidebarCollapsed"
-    (click)="toggleSidebar()"
-  ></div>
+<!-- Mobile Overlay -->
+<div class="al-overlay" [class.al-overlay--visible]="mobileSidebarOpen" (click)="closeMobileSidebar()"></div>
 
-  <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
-    <div class="sidebar-logo">
-      <div class="logo-row">
-        <div class="logo-content">
-          <div class="logo-icon">
-            <img src="logo.png" class="logo-width" alt="logo">
+<div class="al-wrap">
+
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="al-sidebar"
+    [class.al-sidebar--collapsed]="!sidebarOpen && !isMobile"
+    [class.al-sidebar--open]="mobileSidebarOpen">
+
+    <!-- Logo -->
+    <div class="al-logo">
+      <img src="logo.png" alt="B2P Teachers" class="al-logo__img" />
+      <span class="al-logo__text">B2P Teachers</span>
+    </div>
+
+    <!-- Nav -->
+    <nav class="al-nav">
+
+      <!-- Dashboard -->
+      <a class="al-nav__item" [class.al-nav__item--active]="isActive('/dashboard')" (click)="navigate('/dashboard')">
+        <span class="al-nav__icon"><i class="fa-solid fa-gauge-high"></i></span>
+        <span class="al-nav__label">Dashboard</span>
+      </a>
+
+      <!-- Groups -->
+      <ng-container *ngFor="let group of navGroups">
+        <div class="al-group">
+          <button class="al-group__header" (click)="toggleGroup(group.groupLabel)">
+            <span class="al-group__label">{{ group.groupLabel }}</span>
+            <i class="fa-solid fa-chevron-down al-group__arrow"
+              [class.al-group__arrow--open]="isGroupExpanded(group.groupLabel)"></i>
+          </button>
+
+          <div class="al-group__items" [class.al-group__items--open]="isGroupExpanded(group.groupLabel)">
+            <a class="al-nav__item al-nav__item--sub"
+              *ngFor="let item of group.items"
+              [class.al-nav__item--active]="isActive(item.route)"
+              (click)="navigate(item.route)">
+              <span class="al-nav__icon"><i class="{{ item.icon }}"></i></span>
+              <span class="al-nav__label">{{ item.label }}</span>
+              <span class="al-nav__badge" *ngIf="item.badge">{{ item.badge }}</span>
+            </a>
           </div>
-          <span class="logo-text" *ngIf="!sidebarCollapsed">B2P Teachers</span>
         </div>
+      </ng-container>
 
-        <button class="sidebar-close-btn" (click)="toggleSidebar()">
-          <i class="fa-solid fa-xmark"></i>
+    </nav>
+
+    <!-- Footer -->
+    <div class="al-sidebar__footer">
+      <div class="al-user">
+        <div class="al-user__avatar">A</div>
+        <div class="al-user__info">
+          <span class="al-user__name">Admin</span>
+          <span class="al-user__role">Super Admin</span>
+        </div>
+        <button class="al-user__logout" (click)="logout()" title="Logout">
+          <i class="fa-solid fa-right-from-bracket"></i>
         </button>
       </div>
     </div>
 
-    <nav class="sidebar-nav">
-      <!-- Dashboard -->
-      <a
-        class="nav-item dashboard-item"
-        (click)="navigateTo(dashboardItem.route)"
-        [ngClass]="{ 'nav-item--active': isActive(dashboardItem.route) }"
-      >
-        <i class="{{ dashboardItem.icon }} nav-icon"></i>
-        <span class="nav-label" *ngIf="!sidebarCollapsed">{{
-          dashboardItem.label
-        }}</span>
-      </a>
-
-      <!-- Dynamic Menu -->
-      <div class="menu-category" *ngFor="let category of menuCategories">
-        <div class="category-header" (click)="toggleCategory(category)">
-          <div class="category-title">
-            <i class="{{ category.icon }} category-icon"></i>
-            <span class="category-label" *ngIf="!sidebarCollapsed">{{
-              category.title
-            }}</span>
-          </div>
-
-          <i
-            class="fa-solid fa-chevron-right category-arrow"
-            *ngIf="!sidebarCollapsed"
-            [class.expanded]="category.expanded"
-          >
-          </i>
-        </div>
-
-        <div
-          class="category-items"
-          *ngIf="category.expanded && !sidebarCollapsed"
-        >
-          <a
-            class="nav-item sub-item"
-            *ngFor="let item of category.items"
-            (click)="navigateTo(item.route)"
-            [ngClass]="{ 'nav-item--active': isActive(item.route) }"
-          >
-            <i class="{{ item.icon }} nav-icon"></i>
-            <span class="nav-label">{{ item.label }}</span>
-
-            <span class="nav-badge" *ngIf="item.badge">{{ item.badge }}</span>
-          </a>
-        </div>
-      </div>
-    </nav>
-
-    <!-- <div class="sidebar-footer">
-      <div class="user-profile">
-        <div class="user-avatar">
-          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" />
-        </div>
-
-        <div class="user-info" *ngIf="!sidebarCollapsed">
-          <div class="user-name">John Doe</div>
-          <div class="user-role">Administrator</div>
-        </div>
-      </div>
-    </div> -->
   </aside>
 
-  <div class="main-content" [class.expanded]="sidebarCollapsed">
-    <header class="header">
-      <div class="header-left">
-        <button class="toggle-btn" *ngIf="isMobileView" (click)="toggleSidebar()">
+  <!-- ─── MAIN ─── -->
+  <div class="al-main" [class.al-main--wide]="!sidebarOpen && !isMobile">
+
+    <!-- Header -->
+    <header class="al-header">
+      <div class="al-header__left">
+        <button class="al-header__toggle" (click)="toggleSidebar()" title="Toggle sidebar">
           <i class="fa-solid fa-bars"></i>
         </button>
-
-        <div class="breadcrumb">
-          <span class="breadcrumb-item active">Welcome to Your Workspace...</span>
+        <div class="al-header__breadcrumb">
+          <span class="al-header__page">{{ activeLabel }}</span>
         </div>
       </div>
 
-      <div class="header-right">
-        <!-- <div class="search-box">
-          <i class="fa-solid fa-magnifying-glass search-icon"></i>
-          <input type="text" placeholder="Search..." class="search-input" />
-        </div> -->
+      <div class="al-header__right">
+        <div class="al-search">
+          <i class="fa-solid fa-magnifying-glass al-search__icon"></i>
+          <input class="al-search__input" type="text" placeholder="Search..." />
+        </div>
 
-        <!-- <button class="header-icon-btn">
-          <span class="icon-badge">3</span>
+        <button class="al-header__btn" (click)="refreshComponent()" title="Refresh">
+          <i class="fa-solid fa-rotate-right"></i>
+        </button>
+
+        <button class="al-header__btn al-header__btn--notif" title="Notifications">
           <i class="fa-solid fa-bell"></i>
-        </button> -->
-
-        <button class="header-icon-btn-txt" title="Refresh" (click)="refreshComponent()">
-          Refresh
+          <span class="al-header__badge">5</span>
         </button>
 
-        <button class="header-icon-btn" title="logout" (click)="logout()">
-          <i class="fa-solid fa-right-from-bracket"></i>
-        </button>
+        <div class="al-header__avatar" title="Admin">A</div>
       </div>
     </header>
 
-    <main class="page-content">
+    <!-- Page Content -->
+    <main class="al-content">
       <router-outlet></router-outlet>
     </main>
+
   </div>
 </div>

@@ -1,0 +1,401 @@
+<div class="ad">
+
+  <!-- Top Bar -->
+  <div class="ad-topbar">
+    <div class="ad-topbar__left">
+      <div class="ad-topbar__avatar">A</div>
+      <div>
+        <h1 class="ad-topbar__name">Admin Dashboard</h1>
+        <span class="ad-topbar__sub">Platform management &amp; overview</span>
+      </div>
+    </div>
+    <div class="ad-topbar__right">
+      <div class="ad-topbar__meta">
+        <i class="fa-solid fa-calendar"></i>
+        {{ currentDate | date:'EEE, MMM d, y' }}
+        <span class="ad-sep"></span>
+        <i class="fa-solid fa-clock"></i>
+        {{ currentTime }}
+      </div>
+      <button class="ad-btn ad-btn--outline" (click)="navigate('/users')">
+        <i class="fa-solid fa-user-plus"></i> Add User
+      </button>
+      <button class="ad-btn ad-btn--primary" (click)="navigate('/courses')">
+        <i class="fa-solid fa-plus"></i> New Course
+      </button>
+    </div>
+  </div>
+
+  <!-- Alert Strip -->
+  <div class="ad-alerts">
+    <div *ngFor="let a of systemAlerts" class="ad-alert ad-alert--{{ a.type }}">
+      <i class="{{ a.icon }}"></i>
+      <span>{{ a.message }}</span>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="ad-stats">
+    <div *ngFor="let card of statCards" class="ad-stat">
+      <div class="ad-stat__icon" [ngClass]="card.colorClass">
+        <i class="{{ card.icon }}"></i>
+      </div>
+      <div class="ad-stat__body">
+        <span class="ad-stat__value">{{ card.value }}</span>
+        <span class="ad-stat__label">{{ card.title }}</span>
+        <span class="ad-stat__trend"
+          [class.ad-stat__trend--up]="card.trend > 0"
+          [class.ad-stat__trend--down]="card.trend < 0"
+          [class.ad-stat__trend--flat]="card.trend === 0">
+          <i class="fa-solid"
+            [ngClass]="card.trend > 0 ? 'fa-arrow-trend-up' : card.trend < 0 ? 'fa-arrow-trend-down' : 'fa-minus'">
+          </i>
+          {{ card.trend === 0 ? 'No change' : (card.trend > 0 ? '+' : '') + card.trend + '%' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="ad-layout">
+
+    <!-- Left Column -->
+    <div class="ad-layout__main">
+
+      <!-- Enrollment Chart -->
+      <div class="ad-card">
+        <div class="ad-card__head">
+          <div>
+            <h3 class="ad-card__title">Student Enrollment</h3>
+            <p class="ad-card__sub">Monthly trend — last 6 months</p>
+          </div>
+          <span class="ad-pill ad-pill--green">
+            <i class="fa-solid fa-arrow-trend-up"></i> +18.3% Growth
+          </span>
+        </div>
+        <apx-chart
+          [series]="chartSeries"
+          [chart]="chartConfig"
+          [xaxis]="chartXAxis"
+          [yaxis]="chartYAxis"
+          [stroke]="chartStroke"
+          [fill]="chartFill"
+          [colors]="chartColors"
+          [dataLabels]="chartDataLabels"
+          [grid]="chartGrid"
+          [markers]="chartMarkers"
+          [tooltip]="chartTooltip">
+        </apx-chart>
+      </div>
+
+      <!-- Platform Performance -->
+      <div class="ad-card">
+        <div class="ad-card__head">
+          <div>
+            <h3 class="ad-card__title">Platform Performance</h3>
+            <p class="ad-card__sub">Key performance indicators</p>
+          </div>
+        </div>
+        <div class="ad-progress-list">
+          <div *ngFor="let stat of quickStats" class="ad-progress">
+            <div class="ad-progress__row">
+              <span class="ad-progress__lbl">{{ stat.label }}</span>
+              <span class="ad-progress__pct" [style.color]="stat.color">{{ stat.value }}%</span>
+            </div>
+            <div class="ad-progress__track">
+              <div class="ad-progress__fill"
+                [style.width.%]="stat.value"
+                [style.background-color]="stat.color">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Classes -->
+      <div class="ad-card">
+        <div class="ad-card__head">
+          <div>
+            <h3 class="ad-card__title">Today's Classes</h3>
+            <p class="ad-card__sub">Scheduled live sessions</p>
+          </div>
+          <button class="ad-link">View all <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+        <div class="ad-table-wrap">
+          <table class="ad-table">
+            <thead>
+              <tr>
+                <th>Subject &amp; Batch</th>
+                <th>Teacher</th>
+                <th>Students</th>
+                <th>Time</th>
+                <th>Closes At</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let cls of upcomingClasses">
+                <td>
+                  <span class="ad-table__primary">{{ cls.subject }}</span>
+                  <span class="ad-table__secondary">{{ cls.batch }}</span>
+                </td>
+                <td class="ad-table__teacher">
+                  <div class="ad-avatar">{{ cls.teacher.charAt(0) }}</div>
+                  {{ cls.teacher }}
+                </td>
+                <td>
+                  <span class="ad-table__students">
+                    <i class="fa-solid fa-user-graduate"></i>
+                    {{ cls.students }}
+                  </span>
+                </td>
+                <td><strong>{{ cls.time }}</strong></td>
+                <td>
+                  <span class="ad-table__endtime">
+                    <i class="fa-regular fa-clock"></i>
+                    {{ cls.endTime }}
+                  </span>
+                </td>
+                <td>
+                  <span class="ad-status ad-status--{{ cls.status }}">
+                    <i class="fa-solid"
+                      [ngClass]="{
+                        'fa-circle-dot':    cls.status === 'live',
+                        'fa-hourglass-half':cls.status === 'upcoming',
+                        'fa-calendar-check':cls.status === 'scheduled'
+                      }">
+                    </i>
+                    {{ cls.status | titlecase }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column -->
+    <div class="ad-layout__side">
+
+      <!-- Quick Actions -->
+      <div class="ad-card">
+        <div class="ad-card__head">
+          <h3 class="ad-card__title">Quick Actions</h3>
+        </div>
+        <div class="ad-actions">
+          <button class="ad-action" (click)="navigate('/users')">
+            <span class="ad-action__icon" style="background:#eef2ff;color:#4f46e5"><i class="fa-solid fa-user-plus"></i></span>
+            <span>Add Student</span>
+          </button>
+          <button class="ad-action" (click)="navigate('/users')">
+            <span class="ad-action__icon" style="background:#d1fae5;color:#059669"><i class="fa-solid fa-chalkboard-user"></i></span>
+            <span>Add Teacher</span>
+          </button>
+          <button class="ad-action" (click)="navigate('/courses')">
+            <span class="ad-action__icon" style="background:#ffedd5;color:#ea580c"><i class="fa-solid fa-book-open"></i></span>
+            <span>New Course</span>
+          </button>
+          <button class="ad-action" (click)="navigate('/batches')">
+            <span class="ad-action__icon" style="background:#f3e8ff;color:#9333ea"><i class="fa-solid fa-layer-group"></i></span>
+            <span>New Batch</span>
+          </button>
+          <button class="ad-action" (click)="navigate('/exams')">
+            <span class="ad-action__icon" style="background:#e0f2fe;color:#0284c7"><i class="fa-solid fa-file-pen"></i></span>
+            <span>Create Quiz</span>
+          </button>
+          <button class="ad-action" (click)="navigate('/library')">
+            <span class="ad-action__icon" style="background:#ffe4e6;color:#e11d48"><i class="fa-solid fa-book-bookmark"></i></span>
+            <span>Upload Book</span>
+          </button>
+          <button class="ad-action" (click)="navigate('/attendance-report')">
+            <span class="ad-action__icon" style="background:#ccfbf1;color:#0d9488"><i class="fa-solid fa-chart-bar"></i></span>
+            <span>Reports</span>
+          </button>
+          <button class="ad-action" (click)="navigate('/payments')">
+            <span class="ad-action__icon" style="background:#fef3c7;color:#d97706"><i class="fa-solid fa-indian-rupee-sign"></i></span>
+            <span>Payments</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- User Distribution -->
+      <div class="ad-card">
+        <div class="ad-card__head">
+          <div>
+            <h3 class="ad-card__title">User Distribution</h3>
+            <p class="ad-card__sub">By role</p>
+          </div>
+        </div>
+        <div class="ad-donut-wrap">
+          <div class="ad-donut">
+            <svg viewBox="0 0 100 100">
+              <circle class="ad-donut__bg"  cx="50" cy="50" r="38"/>
+              <circle class="ad-donut__seg" cx="50" cy="50" r="38" stroke="#4f46e5"
+                stroke-dasharray="222.6 238.8" stroke-dashoffset="0"/>
+              <circle class="ad-donut__seg" cx="50" cy="50" r="38" stroke="#10b981"
+                stroke-dasharray="11.9 238.8" stroke-dashoffset="-222.6"/>
+              <circle class="ad-donut__seg" cx="50" cy="50" r="38" stroke="#f59e0b"
+                stroke-dasharray="4.8 238.8" stroke-dashoffset="-234.5"/>
+            </svg>
+            <div class="ad-donut__center">
+              <strong>3,052</strong>
+              <span>Total</span>
+            </div>
+          </div>
+          <div class="ad-donut__legend">
+            <div *ngFor="let role of roleDistribution" class="ad-legend">
+              <span class="ad-legend__dot" [style.background]="role.color"></span>
+              <div class="ad-legend__body">
+                <span class="ad-legend__role">{{ role.role }}</span>
+                <span class="ad-legend__n">{{ role.count | number }}</span>
+              </div>
+              <span class="ad-legend__pct" [style.color]="role.color">{{ role.percentage }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="ad-card">
+        <div class="ad-card__head">
+          <div>
+            <h3 class="ad-card__title">Recent Activity</h3>
+            <p class="ad-card__sub">Latest events</p>
+          </div>
+          <button class="ad-link">View all <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+        <div class="ad-feed">
+          <div *ngFor="let act of recentActivities" class="ad-feed__item">
+            <div class="ad-feed__icon ad-feed__icon--{{ act.type }}">
+              <i class="{{ act.icon }}"></i>
+            </div>
+            <div class="ad-feed__body">
+              <p class="ad-feed__msg">{{ act.message }}</p>
+              <span class="ad-feed__time"><i class="fa-regular fa-clock"></i> {{ act.time }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Row -->
+  <div class="ad-bottom">
+
+    <!-- Curriculum -->
+    <div class="ad-card">
+      <div class="ad-card__head">
+        <h3 class="ad-card__title">Curriculum</h3>
+      </div>
+      <div class="ad-curr">
+        <div class="ad-curr__item">
+          <i class="fa-solid fa-building-columns" style="color:#4f46e5"></i>
+          <strong>8</strong><span>Boards</span>
+        </div>
+        <div class="ad-curr__item">
+          <i class="fa-solid fa-school" style="color:#10b981"></i>
+          <strong>24</strong><span>Classes</span>
+        </div>
+        <div class="ad-curr__item">
+          <i class="fa-solid fa-atom" style="color:#f97316"></i>
+          <strong>96</strong><span>Subjects</span>
+        </div>
+        <div class="ad-curr__item">
+          <i class="fa-solid fa-list-check" style="color:#a855f7"></i>
+          <strong>1,248</strong><span>Topics</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exams -->
+    <div class="ad-card">
+      <div class="ad-card__head">
+        <h3 class="ad-card__title">Exams &amp; Assessments</h3>
+      </div>
+      <div class="ad-rows">
+        <div class="ad-row">
+          <span class="ad-row__dot" style="background:#4f46e5"></span>
+          <span class="ad-row__lbl">Total Quizzes Created</span>
+          <strong class="ad-row__val">342</strong>
+        </div>
+        <div class="ad-row">
+          <span class="ad-row__dot" style="background:#10b981"></span>
+          <span class="ad-row__lbl">Quizzes Attempted Today</span>
+          <strong class="ad-row__val">87</strong>
+        </div>
+        <div class="ad-row">
+          <span class="ad-row__dot" style="background:#f97316"></span>
+          <span class="ad-row__lbl">Avg. Score This Week</span>
+          <strong class="ad-row__val">72%</strong>
+        </div>
+        <div class="ad-row">
+          <span class="ad-row__dot" style="background:#a855f7"></span>
+          <span class="ad-row__lbl">Pending Result Reviews</span>
+          <strong class="ad-row__val">14</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payments -->
+    <div class="ad-card">
+      <div class="ad-card__head">
+        <h3 class="ad-card__title">Payment Summary</h3>
+      </div>
+      <div class="ad-rows">
+        <div class="ad-row">
+          <span class="ad-row__icon" style="background:#d1fae5;color:#059669"><i class="fa-solid fa-circle-check"></i></span>
+          <span class="ad-row__lbl">Received</span>
+          <strong class="ad-row__val" style="color:#059669">&#8377;4,82,500</strong>
+        </div>
+        <div class="ad-row">
+          <span class="ad-row__icon" style="background:#fef3c7;color:#d97706"><i class="fa-solid fa-hourglass-half"></i></span>
+          <span class="ad-row__lbl">Pending</span>
+          <strong class="ad-row__val" style="color:#d97706">&#8377;38,200</strong>
+        </div>
+        <div class="ad-row">
+          <span class="ad-row__icon" style="background:#fee2e2;color:#dc2626"><i class="fa-solid fa-rotate-left"></i></span>
+          <span class="ad-row__lbl">Refund Requests</span>
+          <strong class="ad-row__val" style="color:#dc2626">12</strong>
+        </div>
+        <div class="ad-row">
+          <span class="ad-row__icon" style="background:#eef2ff;color:#4f46e5"><i class="fa-solid fa-users"></i></span>
+          <span class="ad-row__lbl">Active Subscriptions</span>
+          <strong class="ad-row__val" style="color:#4f46e5">1,204</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="ad-card">
+      <div class="ad-card__head">
+        <h3 class="ad-card__title">Notifications Sent</h3>
+      </div>
+      <div class="ad-rows">
+        <div class="ad-row">
+          <span class="ad-row__icon" style="background:#dcfce7;color:#16a34a"><i class="fa-brands fa-whatsapp"></i></span>
+          <span class="ad-row__lbl">WhatsApp Today</span>
+          <strong class="ad-row__val">1,284</strong>
+        </div>
+        <div class="ad-row">
+          <span class="ad-row__icon" style="background:#e0f2fe;color:#0284c7"><i class="fa-solid fa-bell"></i></span>
+          <span class="ad-row__lbl">Class Reminders</span>
+          <strong class="ad-row__val">640</strong>
+        </div>
+        <div class="ad-row">
+          <span class="ad-row__icon" style="background:#ffedd5;color:#ea580c"><i class="fa-solid fa-clipboard-list"></i></span>
+          <span class="ad-row__lbl">Assignment Alerts</span>
+          <strong class="ad-row__val">312</strong>
+        </div>
+        <div class="ad-row">
+          <span class="ad-row__icon" style="background:#ffe4e6;color:#e11d48"><i class="fa-solid fa-phone-volume"></i></span>
+          <span class="ad-row__lbl">Missed Class Calls</span>
+          <strong class="ad-row__val">87</strong>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

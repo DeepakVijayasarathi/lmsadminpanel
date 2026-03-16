@@ -1,0 +1,98 @@
+<div class="pg">
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-sky">
+        <i class="fa-solid fa-bullhorn"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Announcements</div>
+        <div class="pg-head__sub">Post announcements to users</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary">
+        <i class="fa-solid fa-plus"></i> New Announcement
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-bullhorn"></i></div>
+      <div class="pg-stat__val">48</div>
+      <div class="pg-stat__lbl">Total</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="pg-stat__val">24</div>
+      <div class="pg-stat__lbl">Active</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-amber"><i class="fa-solid fa-thumbtack"></i></div>
+      <div class="pg-stat__val">4</div>
+      <div class="pg-stat__lbl">Pinned</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-gray"><i class="fa-solid fa-clock-rotate-left"></i></div>
+      <div class="pg-stat__val">20</div>
+      <div class="pg-stat__lbl">Expired</div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <span class="pg-card__title">All Announcements</span>
+      <div class="pg-toolbar">
+        <input class="pg-search" type="text" placeholder="Search announcements..." />
+        <select class="pg-filter">
+          <option value="">All Audience</option>
+          <option value="students">Students</option>
+          <option value="teachers">Teachers</option>
+          <option value="all">All</option>
+        </select>
+      </div>
+    </div>
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Audience</th>
+            <th>Posted By</th>
+            <th>Posted At</th>
+            <th>Pinned</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let ann of announcements">
+            <td>
+              <div class="pg-cell__primary">{{ ann.title }}</div>
+            </td>
+            <td>
+              <span class="pg-badge {{ audienceBadge(ann.audience) }}">{{ ann.audience }}</span>
+            </td>
+            <td>{{ ann.postedBy }}</td>
+            <td>{{ ann.postedAt }}</td>
+            <td>
+              <i *ngIf="ann.pinned" class="fa-solid fa-thumbtack" style="color:#f59e0b;"></i>
+              <span *ngIf="!ann.pinned" style="color:#d1d5db;">—</span>
+            </td>
+            <td>
+              <span class="pg-badge {{ statusBadge(ann.status) }}">{{ ann.status }}</span>
+            </td>
+            <td>
+              <button class="pg-action-btn" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+              <button class="pg-action-btn" title="View"><i class="fa-solid fa-eye"></i></button>
+              <button class="pg-action-btn pg-action-btn--danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

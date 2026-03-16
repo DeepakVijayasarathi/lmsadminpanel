@@ -1,0 +1,100 @@
+<div class="pg">
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-purple">
+        <i class="fa-solid fa-file-pen"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Exams &amp; Quizzes</div>
+        <div class="pg-head__sub">Create and manage assessments</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary">
+        <i class="fa-solid fa-plus"></i> Add Exam
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-purple"><i class="fa-solid fa-file-pen"></i></div>
+      <div class="pg-stat__val">342</div>
+      <div class="pg-stat__lbl">Total Exams</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-circle-dot"></i></div>
+      <div class="pg-stat__val">3</div>
+      <div class="pg-stat__lbl">Live Now</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-clock"></i></div>
+      <div class="pg-stat__val">18</div>
+      <div class="pg-stat__lbl">Upcoming</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="pg-stat__val">321</div>
+      <div class="pg-stat__lbl">Completed</div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <span class="pg-card__title">All Exams</span>
+      <div class="pg-toolbar">
+        <input class="pg-search" type="text" placeholder="Search exams..." />
+        <select class="pg-filter">
+          <option value="">All Status</option>
+          <option value="live">Live</option>
+          <option value="upcoming">Upcoming</option>
+          <option value="completed">Completed</option>
+          <option value="draft">Draft</option>
+        </select>
+      </div>
+    </div>
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Exam Title</th>
+            <th>Subject &amp; Class</th>
+            <th>Teacher</th>
+            <th>Duration</th>
+            <th>Marks</th>
+            <th>Scheduled Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let exam of exams">
+            <td>
+              <div class="pg-cell__primary">{{ exam.title }}</div>
+              <div class="pg-cell__sub">{{ exam.attempts }} attempts</div>
+            </td>
+            <td>
+              <div class="pg-cell__primary">{{ exam.subject }}</div>
+              <div class="pg-cell__sub">{{ exam.class }}</div>
+            </td>
+            <td>{{ exam.teacher }}</td>
+            <td>{{ exam.duration }} mins</td>
+            <td>{{ exam.totalMarks }}</td>
+            <td>{{ exam.scheduled }}</td>
+            <td>
+              <span class="pg-badge {{ statusBadge(exam.status) }}">{{ exam.status }}</span>
+            </td>
+            <td>
+              <button class="pg-action-btn" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+              <button class="pg-action-btn" title="View"><i class="fa-solid fa-eye"></i></button>
+              <button class="pg-action-btn pg-action-btn--danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

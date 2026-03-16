@@ -1,0 +1,103 @@
+<div class="pg">
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-indigo">
+        <i class="fa-solid fa-bell"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Notifications</div>
+        <div class="pg-head__sub">Send &amp; manage notifications</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary">
+        <i class="fa-solid fa-paper-plane"></i> Send Notification
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-bell"></i></div>
+      <div class="pg-stat__val">1,284</div>
+      <div class="pg-stat__lbl">Sent Today</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald"><i class="fa-brands fa-whatsapp"></i></div>
+      <div class="pg-stat__val">640</div>
+      <div class="pg-stat__lbl">WhatsApp</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-mobile-screen"></i></div>
+      <div class="pg-stat__val">382</div>
+      <div class="pg-stat__lbl">Push</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-amber"><i class="fa-solid fa-clock"></i></div>
+      <div class="pg-stat__val">12</div>
+      <div class="pg-stat__lbl">Pending</div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <span class="pg-card__title">All Notifications</span>
+      <div class="pg-toolbar">
+        <input class="pg-search" type="text" placeholder="Search notifications..." />
+        <select class="pg-filter">
+          <option value="">All Types</option>
+          <option value="push">Push</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="sms">SMS</option>
+          <option value="email">Email</option>
+        </select>
+      </div>
+    </div>
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Target</th>
+            <th>Message</th>
+            <th>Recipients</th>
+            <th>Sent At</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let notif of notifications">
+            <td>
+              <div class="pg-cell__primary">{{ notif.title }}</div>
+            </td>
+            <td>
+              <span class="pg-badge {{ typeBadge(notif.type) }}">
+                <i class="fa-solid {{ typeIcon(notif.type) }}" style="margin-right:4px;"></i>
+                {{ notif.type }}
+              </span>
+            </td>
+            <td>{{ notif.target }}</td>
+            <td>
+              <div class="pg-cell__sub">{{ truncate(notif.message) }}</div>
+            </td>
+            <td>{{ notif.recipients | number }}</td>
+            <td>{{ notif.sentAt || '—' }}</td>
+            <td>
+              <span class="pg-badge {{ statusBadge(notif.status) }}">{{ notif.status }}</span>
+            </td>
+            <td>
+              <button class="pg-action-btn" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+              <button class="pg-action-btn" title="View"><i class="fa-solid fa-eye"></i></button>
+              <button class="pg-action-btn pg-action-btn--danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

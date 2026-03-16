@@ -1,0 +1,99 @@
+<div class="pg">
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-indigo">
+        <i class="fa-solid fa-indian-rupee-sign"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Payments</div>
+        <div class="pg-head__sub">Payment transactions</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--outline">
+        <i class="fa-solid fa-download"></i> Export
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+      <div class="pg-stat__val">₹4,82,500</div>
+      <div class="pg-stat__lbl">Total Received</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-calendar-days"></i></div>
+      <div class="pg-stat__val">₹68,400</div>
+      <div class="pg-stat__lbl">This Month</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-amber"><i class="fa-solid fa-clock"></i></div>
+      <div class="pg-stat__val">₹38,200</div>
+      <div class="pg-stat__lbl">Pending</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-circle-xmark"></i></div>
+      <div class="pg-stat__val">₹4,800</div>
+      <div class="pg-stat__lbl">Failed</div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <span class="pg-card__title">All Transactions</span>
+      <div class="pg-toolbar">
+        <input class="pg-search" type="text" placeholder="Search transactions..." />
+        <select class="pg-filter">
+          <option value="">All Status</option>
+          <option value="success">Success</option>
+          <option value="pending">Pending</option>
+          <option value="failed">Failed</option>
+        </select>
+      </div>
+    </div>
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Amount</th>
+            <th>Method</th>
+            <th>Purpose</th>
+            <th>Transaction ID</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let payment of payments">
+            <td>
+              <div class="pg-cell__primary">{{ payment.student }}</div>
+            </td>
+            <td>
+              <strong style="color:#4f46e5;">{{ formatAmount(payment.amount) }}</strong>
+            </td>
+            <td>{{ payment.method }}</td>
+            <td>{{ payment.purpose }}</td>
+            <td>
+              <div class="pg-cell__sub">{{ payment.transactionId }}</div>
+            </td>
+            <td>{{ payment.date }}</td>
+            <td>
+              <span class="pg-badge {{ statusBadge(payment.status) }}">{{ payment.status }}</span>
+            </td>
+            <td>
+              <button class="pg-action-btn" title="View"><i class="fa-solid fa-eye"></i></button>
+              <button class="pg-action-btn" title="Download Receipt"><i class="fa-solid fa-receipt"></i></button>
+              <button class="pg-action-btn pg-action-btn--danger" title="Refund"><i class="fa-solid fa-rotate-left"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

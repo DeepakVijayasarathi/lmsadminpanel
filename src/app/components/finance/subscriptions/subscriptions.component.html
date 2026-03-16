@@ -1,0 +1,100 @@
+<div class="pg">
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-purple">
+        <i class="fa-solid fa-id-card"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Subscriptions</div>
+        <div class="pg-head__sub">Manage student subscriptions</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary">
+        <i class="fa-solid fa-plus"></i> Add Plan
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-purple"><i class="fa-solid fa-id-card"></i></div>
+      <div class="pg-stat__val">1,204</div>
+      <div class="pg-stat__lbl">Active Subs</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-calendar-day"></i></div>
+      <div class="pg-stat__val">480</div>
+      <div class="pg-stat__lbl">Monthly</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-calendar-check"></i></div>
+      <div class="pg-stat__val">520</div>
+      <div class="pg-stat__lbl">Annual</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div class="pg-stat__val">38</div>
+      <div class="pg-stat__lbl">Expiring Soon</div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <span class="pg-card__title">All Subscriptions</span>
+      <div class="pg-toolbar">
+        <input class="pg-search" type="text" placeholder="Search subscriptions..." />
+        <select class="pg-filter">
+          <option value="">All Plans</option>
+          <option value="Monthly">Monthly</option>
+          <option value="Quarterly">Quarterly</option>
+          <option value="Annual">Annual</option>
+        </select>
+      </div>
+    </div>
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Plan</th>
+            <th>Amount</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Auto Renew</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let sub of subscriptions">
+            <td>
+              <div class="pg-cell__primary">{{ sub.student }}</div>
+            </td>
+            <td>
+              <span class="pg-badge {{ planBadge(sub.plan) }}">{{ sub.plan }}</span>
+            </td>
+            <td>{{ formatAmount(sub.amount) }}</td>
+            <td>{{ sub.startDate }}</td>
+            <td>{{ sub.endDate }}</td>
+            <td>
+              <i *ngIf="sub.autoRenew" class="fa-solid fa-circle-check" style="color:#10b981;"></i>
+              <i *ngIf="!sub.autoRenew" class="fa-solid fa-circle-xmark" style="color:#d1d5db;"></i>
+            </td>
+            <td>
+              <span class="pg-badge {{ statusBadge(sub.status) }}">{{ sub.status }}</span>
+            </td>
+            <td>
+              <button class="pg-action-btn" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+              <button class="pg-action-btn" title="Renew"><i class="fa-solid fa-rotate"></i></button>
+              <button class="pg-action-btn pg-action-btn--danger" title="Cancel"><i class="fa-solid fa-ban"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

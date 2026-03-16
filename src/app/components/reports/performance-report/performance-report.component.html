@@ -1,0 +1,96 @@
+<div class="pg">
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-sky">
+        <i class="fa-solid fa-chart-line"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Performance Report</div>
+        <div class="pg-head__sub">Student academic performance</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--outline">
+        <i class="fa-solid fa-download"></i> Export
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-users"></i></div>
+      <div class="pg-stat__val">2,847</div>
+      <div class="pg-stat__lbl">Students Tracked</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-chart-simple"></i></div>
+      <div class="pg-stat__val">72%</div>
+      <div class="pg-stat__lbl">Avg Score</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-purple"><i class="fa-solid fa-star"></i></div>
+      <div class="pg-stat__val">284</div>
+      <div class="pg-stat__lbl">Top Performers</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-hand-holding-heart"></i></div>
+      <div class="pg-stat__val">312</div>
+      <div class="pg-stat__lbl">Need Support</div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <span class="pg-card__title">Student Performance</span>
+      <div class="pg-toolbar">
+        <input class="pg-search" type="text" placeholder="Search students..." />
+        <select class="pg-filter">
+          <option value="">All Subjects</option>
+          <option value="Mathematics">Mathematics</option>
+          <option value="Science">Science</option>
+          <option value="English">English</option>
+        </select>
+      </div>
+    </div>
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Subject</th>
+            <th>Avg Score</th>
+            <th>Quizzes Taken</th>
+            <th>Rank</th>
+            <th>Trend</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let rec of records">
+            <td>
+              <div class="pg-cell__primary">{{ rec.student }}</div>
+            </td>
+            <td>{{ rec.subject }}</td>
+            <td>
+              <strong [style.color]="scoreColor(rec.avgScore)">{{ rec.avgScore }}%</strong>
+            </td>
+            <td>{{ rec.quizzesTaken }}</td>
+            <td>#{{ rec.rank }}</td>
+            <td>
+              <i *ngIf="rec.trend === 'up'" class="fa-solid fa-arrow-trend-up" style="color:#10b981;font-size:16px;"></i>
+              <i *ngIf="rec.trend === 'down'" class="fa-solid fa-arrow-trend-down" style="color:#ef4444;font-size:16px;"></i>
+              <i *ngIf="rec.trend === 'stable'" class="fa-solid fa-minus" style="color:#9ca3af;font-size:16px;"></i>
+            </td>
+            <td>
+              <button class="pg-action-btn" title="View Profile"><i class="fa-solid fa-eye"></i></button>
+              <button class="pg-action-btn" title="Download Report"><i class="fa-solid fa-download"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

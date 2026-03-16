@@ -1,0 +1,86 @@
+<div class="pg">
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-gray">
+        <i class="fa-solid fa-gear"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Settings</div>
+        <div class="pg-head__sub">Platform configuration</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Grid -->
+  <div class="settings-grid">
+    <!-- Card 1: General Settings -->
+    <div class="pg-card">
+      <div class="pg-card__head">
+        <span class="pg-card__title">
+          <i class="fa-solid fa-sliders" style="color:#4f46e5;margin-right:8px;"></i>General Settings
+        </span>
+      </div>
+      <div class="pg-card__body">
+        <div class="form-field">
+          <label class="form-label">Platform Name</label>
+          <input class="form-input" type="text" [(ngModel)]="platformName" placeholder="Platform name" />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Support Email</label>
+          <input class="form-input" type="email" [(ngModel)]="supportEmail" placeholder="support@example.com" />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Timezone</label>
+          <select class="form-input" [(ngModel)]="timezone">
+            <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+            <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+            <option value="UTC">UTC</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Language</label>
+          <select class="form-input" [(ngModel)]="language">
+            <option value="English">English</option>
+            <option value="Hindi">Hindi</option>
+            <option value="Tamil">Tamil</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Platform Controls -->
+    <div class="pg-card">
+      <div class="pg-card__head">
+        <span class="pg-card__title">
+          <i class="fa-solid fa-toggle-on" style="color:#4f46e5;margin-right:8px;"></i>Platform Controls
+        </span>
+      </div>
+      <div class="pg-card__body">
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Maintenance Mode</div>
+            <div class="toggle-sub">Temporarily disable the platform for users</div>
+          </div>
+          <input type="checkbox" [(ngModel)]="maintenanceMode" style="width:18px;height:18px;accent-color:#4f46e5;cursor:pointer;" />
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Allow Registration</div>
+            <div class="toggle-sub">Allow new users to register on the platform</div>
+          </div>
+          <input type="checkbox" [(ngModel)]="allowRegistration" style="width:18px;height:18px;accent-color:#4f46e5;cursor:pointer;" />
+        </div>
+        <div class="form-field" style="margin-top:20px;">
+          <label class="form-label">Max Students Per Batch</label>
+          <input class="form-input" type="number" [(ngModel)]="maxStudentsPerBatch" min="1" max="200" placeholder="50" />
+        </div>
+        <div style="margin-top:24px;">
+          <button class="pg-btn pg-btn--primary" (click)="saveSettings()" style="width:100%;">
+            <i class="fa-solid fa-floppy-disk"></i> Save Settings
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

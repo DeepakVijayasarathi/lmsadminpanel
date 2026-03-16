@@ -1,0 +1,134 @@
+<div class="pg">
+
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-purple">
+        <i class="fas fa-list-check"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Topics</div>
+        <div class="pg-head__sub">Manage curriculum topics</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary">
+        <i class="fas fa-plus"></i> Add Topic
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-purple"><i class="fas fa-list-check"></i></div>
+      <div>
+        <div class="pg-stat__val">1,248</div>
+        <div class="pg-stat__lbl">Total Topics</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald"><i class="fas fa-circle-check"></i></div>
+      <div>
+        <div class="pg-stat__val">1,180</div>
+        <div class="pg-stat__lbl">Active</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-orange"><i class="fas fa-atom"></i></div>
+      <div>
+        <div class="pg-stat__val">96</div>
+        <div class="pg-stat__lbl">Subjects</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky"><i class="fas fa-calculator"></i></div>
+      <div>
+        <div class="pg-stat__val">13</div>
+        <div class="pg-stat__lbl">Avg per Subject</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <span class="pg-card__title">All Topics</span>
+      <div class="pg-toolbar">
+        <div class="pg-search">
+          <i class="fas fa-magnifying-glass"></i>
+          <input
+            type="text"
+            placeholder="Search topics..."
+            [(ngModel)]="searchQuery"
+          />
+        </div>
+        <select class="pg-filter" [(ngModel)]="selectedSubject">
+          <option value="">All Subjects</option>
+          <option *ngFor="let subject of subjects" [value]="subject">{{ subject }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Topic Title</th>
+            <th>Subject &amp; Class</th>
+            <th>Chapter No.</th>
+            <th>Duration</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let topic of filteredTopics">
+            <td>
+              <span class="pg-cell__primary">{{ topic.title }}</span>
+            </td>
+            <td>
+              <span class="pg-cell__primary">{{ topic.subject }}</span>
+              <span class="pg-cell__sub">{{ topic.className }}</span>
+            </td>
+            <td>
+              <span class="pg-badge pg-badge--blue">Ch. {{ topic.chapterNo }}</span>
+            </td>
+            <td>
+              <span class="pg-cell__primary">{{ topic.duration }}</span>
+            </td>
+            <td>
+              <span
+                class="pg-badge"
+                [ngClass]="topic.status === 'Active' ? 'pg-badge--green' : 'pg-badge--gray'"
+              >
+                <i
+                  class="fas"
+                  [ngClass]="topic.status === 'Active' ? 'fa-circle-check' : 'fa-circle-xmark'"
+                ></i>
+                {{ topic.status }}
+              </span>
+            </td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="pg-action-btn" title="Edit">
+                  <i class="fas fa-pen"></i>
+                </button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredTopics.length === 0">
+            <td colspan="6" style="text-align:center;padding:32px;color:#9ca3af;">
+              <i class="fas fa-list-check" style="font-size:28px;margin-bottom:8px;display:block;opacity:0.3;"></i>
+              No topics found matching your criteria.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

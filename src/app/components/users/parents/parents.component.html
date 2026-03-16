@@ -1,0 +1,155 @@
+<div class="pg">
+
+  <!-- ── Page Header ── -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-purple">
+        <i class="fas fa-people-roof"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Parents</div>
+        <div class="pg-head__sub">Manage parent accounts</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--outline">
+        <i class="fas fa-download"></i> Export
+      </button>
+      <button class="pg-btn pg-btn--primary">
+        <i class="fas fa-plus"></i> Add Parent
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Stat Cards ── -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-purple">
+        <i class="fas fa-people-roof"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">318</div>
+        <div class="pg-stat__lbl">Total Parents</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald">
+        <i class="fas fa-circle-check"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">301</div>
+        <div class="pg-stat__lbl">Active</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky">
+        <i class="fas fa-user-graduate"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">412</div>
+        <div class="pg-stat__lbl">Linked Children</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-amber">
+        <i class="fas fa-user-plus"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">22</div>
+        <div class="pg-stat__lbl">New This Month</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Main Card ── -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <div class="pg-toolbar">
+        <div class="pg-search">
+          <i class="fas fa-search"></i>
+          <input
+            type="text"
+            placeholder="Search parents..."
+            [(ngModel)]="searchTerm"
+          />
+        </div>
+      </div>
+      <button class="pg-btn pg-btn--primary" style="padding: 7px 14px; font-size: 12px;">
+        <i class="fas fa-plus"></i> Add
+      </button>
+    </div>
+
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Parent</th>
+            <th>Email &amp; Phone</th>
+            <th>Children</th>
+            <th>Status</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let parent of filteredParents">
+            <td>
+              <div class="pg-with-avatar">
+                <div class="pg-avatar av-purple">{{ parent.avatar }}</div>
+                <div>
+                  <span class="pg-cell__primary">{{ parent.name }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="pg-cell__primary">{{ parent.email }}</span>
+              <span class="pg-cell__sub">{{ parent.phone }}</span>
+            </td>
+            <td>
+              <span class="pg-badge pg-badge--blue">
+                <i class="fas fa-user-graduate"></i>
+                {{ parent.children }} {{ parent.children === 1 ? 'Child' : 'Children' }}
+              </span>
+            </td>
+            <td>
+              <span
+                class="pg-badge"
+                [ngClass]="{
+                  'pg-badge--green': parent.status === 'active',
+                  'pg-badge--red':   parent.status === 'inactive'
+                }"
+              >
+                <i
+                  class="fas"
+                  [ngClass]="{
+                    'fa-circle-check': parent.status === 'active',
+                    'fa-circle-xmark': parent.status === 'inactive'
+                  }"
+                ></i>
+                {{ parent.status | titlecase }}
+              </span>
+            </td>
+            <td>{{ parent.joinDate }}</td>
+            <td>
+              <div style="display: flex; gap: 6px;">
+                <button class="pg-action-btn" title="Edit">
+                  <i class="fas fa-pen"></i>
+                </button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredParents.length === 0">
+            <td colspan="6" style="text-align: center; padding: 32px; color: #9ca3af;">
+              <i class="fas fa-search" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+              No parents found matching your search.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
