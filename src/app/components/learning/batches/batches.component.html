@@ -1,0 +1,145 @@
+<div class="pg">
+
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-orange">
+        <i class="fa-solid fa-layer-group"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Batches</div>
+        <div class="pg-head__sub">Manage student batches</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary">
+        <i class="fa-solid fa-plus"></i> Add Batch
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-orange">
+        <i class="fa-solid fa-layer-group"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">68</div>
+        <div class="pg-stat__lbl">Total Batches</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">54</div>
+        <div class="pg-stat__lbl">Active</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky">
+        <i class="fa-solid fa-clock"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">8</div>
+        <div class="pg-stat__lbl">Upcoming</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-gray">
+        <i class="fa-solid fa-flag-checkered"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">6</div>
+        <div class="pg-stat__lbl">Completed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <div class="pg-card__title">All Batches</div>
+      <div class="pg-toolbar">
+        <div class="pg-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search batches..." [(ngModel)]="searchQuery" />
+        </div>
+        <select class="pg-filter" [(ngModel)]="statusFilter">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="upcoming">Upcoming</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Batch Name</th>
+            <th>Class &amp; Board</th>
+            <th>Teacher</th>
+            <th>Students</th>
+            <th>Start – End Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let batch of filteredBatches">
+            <td>
+              <div class="pg-cell__primary">{{ batch.name }}</div>
+            </td>
+            <td>
+              <div class="pg-cell__primary">{{ batch.class }}</div>
+              <div class="pg-cell__sub">{{ batch.board }}</div>
+            </td>
+            <td>
+              <div class="pg-with-avatar">
+                <div class="pg-avatar av-orange">{{ batch.teacher.charAt(0) }}</div>
+                <span class="pg-cell__primary">{{ batch.teacher }}</span>
+              </div>
+            </td>
+            <td>
+              <span style="display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;color:#475569;border-radius:20px;padding:3px 10px;font-size:13px;font-weight:600;">
+                <i class="fa-solid fa-users" style="font-size:11px;"></i>
+                {{ batch.students }}
+              </span>
+            </td>
+            <td>
+              <div class="pg-cell__primary">{{ formatDate(batch.startDate) }}</div>
+              <div class="pg-cell__sub">{{ formatDate(batch.endDate) }}</div>
+            </td>
+            <td>
+              <span [class]="getStatusBadge(batch.status)">{{ batch.status | titlecase }}</span>
+            </td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="pg-action-btn" title="View">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button class="pg-action-btn" title="Edit">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Delete">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredBatches.length === 0">
+            <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">
+              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+              No batches found
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

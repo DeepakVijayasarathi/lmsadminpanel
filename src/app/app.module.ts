@@ -5,12 +5,15 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ToastrModule } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
+import { NgApexchartsModule } from 'ng-apexcharts';
 import { HttpGeneralService } from './services/http.service';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './components/login/login.component';
 import { AdminLayoutComponent } from './components/admin-layout/admin-layout.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { StudentDashboardComponent } from './components/student-dashboard/student-dashboard.component';
+import { TeacherDashboardComponent } from './components/teacher-dashboard/teacher-dashboard.component';
 import { AuthInterceptor } from './auth/auth.interceptor';
 import { UsersComponent } from './components/users/users.component';
 import { DeleteConfirmationModalComponent } from './components/controls/delete-confirmation-modal/delete-confirmation-modal.component';
@@ -34,6 +37,7 @@ import { ActionButtonsComponent } from './components/controls/action-buttons/act
     ReactiveFormsModule,
     FormsModule,
     CommonModule,
+    NgApexchartsModule,
     HttpClientModule,
     BrowserAnimationsModule,
     ToastrModule.forRoot()

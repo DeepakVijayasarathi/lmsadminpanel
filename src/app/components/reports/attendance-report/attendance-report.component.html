@@ -1,0 +1,92 @@
+<div class="pg">
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-teal">
+        <i class="fa-solid fa-user-check"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Attendance Report</div>
+        <div class="pg-head__sub">Student attendance overview</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--outline">
+        <i class="fa-solid fa-download"></i> Export
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-teal"><i class="fa-solid fa-percent"></i></div>
+      <div class="pg-stat__val">85%</div>
+      <div class="pg-stat__lbl">Avg Attendance</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="pg-stat__val">1,824</div>
+      <div class="pg-stat__lbl">Regular</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div class="pg-stat__val">742</div>
+      <div class="pg-stat__lbl">Irregular</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-user-slash"></i></div>
+      <div class="pg-stat__val">281</div>
+      <div class="pg-stat__lbl">Absent</div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <span class="pg-card__title">Student Attendance</span>
+      <div class="pg-toolbar">
+        <input class="pg-search" type="text" placeholder="Search students..." />
+        <select class="pg-filter">
+          <option value="">All Status</option>
+          <option value="regular">Regular</option>
+          <option value="irregular">Irregular</option>
+          <option value="absent">Absent</option>
+        </select>
+      </div>
+    </div>
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Batch &amp; Class</th>
+            <th>Present / Total Days</th>
+            <th>Percentage</th>
+            <th>Last Attended</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let rec of records">
+            <td>
+              <div class="pg-cell__primary">{{ rec.student }}</div>
+            </td>
+            <td>
+              <div class="pg-cell__primary">{{ rec.batch }}</div>
+              <div class="pg-cell__sub">{{ rec.class }}</div>
+            </td>
+            <td>{{ rec.presentDays }} / {{ rec.totalDays }}</td>
+            <td>
+              <strong [style.color]="percentageColor(rec.percentage)">{{ rec.percentage }}%</strong>
+            </td>
+            <td>{{ rec.lastAttended }}</td>
+            <td>
+              <span class="pg-badge {{ statusBadge(rec.status) }}">{{ rec.status }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

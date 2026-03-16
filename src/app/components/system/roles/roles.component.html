@@ -1,0 +1,92 @@
+<div class="pg">
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-indigo">
+        <i class="fa-solid fa-user-shield"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Roles &amp; Permissions</div>
+        <div class="pg-head__sub">Manage user roles</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary">
+        <i class="fa-solid fa-plus"></i> Add Role
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-user-shield"></i></div>
+      <div class="pg-stat__val">5</div>
+      <div class="pg-stat__lbl">Total Roles</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-users"></i></div>
+      <div class="pg-stat__val">3,052</div>
+      <div class="pg-stat__lbl">Total Users</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-user-tie"></i></div>
+      <div class="pg-stat__val">3</div>
+      <div class="pg-stat__lbl">Admins</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="pg-stat__val">5</div>
+      <div class="pg-stat__lbl">Active Roles</div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <span class="pg-card__title">All Roles</span>
+      <div class="pg-toolbar">
+        <input class="pg-search" type="text" placeholder="Search roles..." />
+      </div>
+    </div>
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Role Name</th>
+            <th>Users</th>
+            <th>Permissions</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let role of roles">
+            <td>
+              <span class="pg-badge {{ roleBadgeClass(role.name) }}">{{ role.name }}</span>
+            </td>
+            <td>{{ role.userCount | number }}</td>
+            <td>
+              <div class="perms-cell">
+                <span class="perm-chip" *ngFor="let perm of visiblePerms(role.permissions)">{{ perm }}</span>
+                <span class="perm-chip" *ngIf="extraPermsCount(role.permissions) > 0" style="background:#e0e7ff;color:#4f46e5;">
+                  +{{ extraPermsCount(role.permissions) }} more
+                </span>
+              </div>
+            </td>
+            <td>
+              <span class="pg-badge {{ role.status === 'active' ? 'pg-badge--green' : 'pg-badge--gray' }}">
+                {{ role.status }}
+              </span>
+            </td>
+            <td>
+              <button class="pg-action-btn" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+              <button class="pg-action-btn" title="View Permissions"><i class="fa-solid fa-key"></i></button>
+              <button class="pg-action-btn pg-action-btn--danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

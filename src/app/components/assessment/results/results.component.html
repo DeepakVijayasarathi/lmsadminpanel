@@ -1,0 +1,101 @@
+<div class="pg">
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-emerald">
+        <i class="fa-solid fa-file-circle-check"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Results</div>
+        <div class="pg-head__sub">Student exam results</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--outline">
+        <i class="fa-solid fa-download"></i> Export
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-file-circle-check"></i></div>
+      <div class="pg-stat__val">8,420</div>
+      <div class="pg-stat__lbl">Total Submissions</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-percent"></i></div>
+      <div class="pg-stat__val">87%</div>
+      <div class="pg-stat__lbl">Pass Rate</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-chart-simple"></i></div>
+      <div class="pg-stat__val">72%</div>
+      <div class="pg-stat__lbl">Avg Score</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-purple"><i class="fa-solid fa-trophy"></i></div>
+      <div class="pg-stat__val">98%</div>
+      <div class="pg-stat__lbl">Top Score</div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <span class="pg-card__title">All Results</span>
+      <div class="pg-toolbar">
+        <input class="pg-search" type="text" placeholder="Search student or exam..." />
+        <select class="pg-filter">
+          <option value="">All Grades</option>
+          <option value="A+">A+</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="F">F</option>
+        </select>
+      </div>
+    </div>
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Exam</th>
+            <th>Subject</th>
+            <th>Score / Total</th>
+            <th>Percentage</th>
+            <th>Grade</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let result of results">
+            <td>
+              <div class="pg-cell__primary">{{ result.student }}</div>
+            </td>
+            <td>
+              <div class="pg-cell__primary">{{ result.exam }}</div>
+            </td>
+            <td>{{ result.subject }}</td>
+            <td>{{ result.score }} / {{ result.totalMarks }}</td>
+            <td>
+              <strong>{{ result.percentage }}%</strong>
+            </td>
+            <td>
+              <span class="pg-badge {{ gradeBadge(result.grade) }}">{{ result.grade }}</span>
+            </td>
+            <td>
+              <span class="pg-badge {{ result.status === 'pass' ? 'pg-badge--green' : 'pg-badge--red' }}">
+                {{ result.status }}
+              </span>
+            </td>
+            <td>{{ result.submittedAt }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

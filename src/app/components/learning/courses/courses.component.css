@@ -1,0 +1,12 @@
+.course-thumb {
+  width: 8px;
+  height: 40px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.course-title-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

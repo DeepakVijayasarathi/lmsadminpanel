@@ -1,0 +1,149 @@
+<div class="pg">
+
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-indigo">
+        <i class="fa-solid fa-book-open"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Courses</div>
+        <div class="pg-head__sub">Manage published courses</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--outline">
+        <i class="fa-solid fa-download"></i> Export
+      </button>
+      <button class="pg-btn pg-btn--primary">
+        <i class="fa-solid fa-plus"></i> Add Course
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-indigo">
+        <i class="fa-solid fa-book-open"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">312</div>
+        <div class="pg-stat__lbl">Total Courses</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">287</div>
+        <div class="pg-stat__lbl">Active</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-amber">
+        <i class="fa-solid fa-pen-to-square"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">18</div>
+        <div class="pg-stat__lbl">Draft</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon" style="background:#f1f5f9;color:#475569;">
+        <i class="fa-solid fa-archive"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">7</div>
+        <div class="pg-stat__lbl">Archived</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <div class="pg-card__title">All Courses</div>
+      <div class="pg-toolbar">
+        <div class="pg-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search courses..." [(ngModel)]="searchQuery" />
+        </div>
+        <select class="pg-filter" [(ngModel)]="statusFilter">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="draft">Draft</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Course Title</th>
+            <th>Teacher</th>
+            <th>Batch</th>
+            <th>Duration</th>
+            <th>Enrolled</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let course of filteredCourses">
+            <td>
+              <div class="course-title-cell">
+                <div class="course-thumb" [style.background]="course.thumbnail"></div>
+                <div>
+                  <div class="pg-cell__primary">{{ course.title }}</div>
+                  <div class="pg-cell__sub">{{ course.subject }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="pg-with-avatar">
+                <div class="pg-avatar av-indigo">{{ course.teacher.charAt(0) }}</div>
+                <span class="pg-cell__primary">{{ course.teacher }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="pg-cell__primary">{{ course.batch }}</span>
+            </td>
+            <td>
+              <span class="pg-cell__primary">{{ course.duration }}</span>
+            </td>
+            <td>
+              <span class="pg-cell__primary">{{ course.enrolled }}</span>
+            </td>
+            <td>
+              <span [class]="getStatusBadge(course.status)">{{ course.status | titlecase }}</span>
+            </td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="pg-action-btn" title="View">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button class="pg-action-btn" title="Edit">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Delete">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredCourses.length === 0">
+            <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">
+              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+              No courses found
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

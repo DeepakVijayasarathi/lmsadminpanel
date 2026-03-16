@@ -1,0 +1,162 @@
+<div class="pg">
+
+  <!-- ── Page Header ── -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-emerald">
+        <i class="fas fa-chalkboard-user"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Teachers</div>
+        <div class="pg-head__sub">Manage teaching staff</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--outline">
+        <i class="fas fa-download"></i> Export
+      </button>
+      <button class="pg-btn pg-btn--primary">
+        <i class="fas fa-plus"></i> Add Teacher
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Stat Cards ── -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald">
+        <i class="fas fa-chalkboard-user"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">143</div>
+        <div class="pg-stat__lbl">Total Teachers</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-indigo">
+        <i class="fas fa-circle-check"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">138</div>
+        <div class="pg-stat__lbl">Active</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-purple">
+        <i class="fas fa-atom"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">24</div>
+        <div class="pg-stat__lbl">Subjects Taught</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-amber">
+        <i class="fas fa-layer-group"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">4.2</div>
+        <div class="pg-stat__lbl">Avg Batches / Teacher</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Main Card ── -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <div class="pg-toolbar">
+        <div class="pg-search">
+          <i class="fas fa-search"></i>
+          <input
+            type="text"
+            placeholder="Search teachers..."
+            [(ngModel)]="searchTerm"
+          />
+        </div>
+        <select class="pg-filter" [(ngModel)]="filterStatus">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+      <button class="pg-btn pg-btn--primary" style="padding: 7px 14px; font-size: 12px;">
+        <i class="fas fa-plus"></i> Add
+      </button>
+    </div>
+
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Teacher</th>
+            <th>Subject</th>
+            <th>Batches</th>
+            <th>Phone</th>
+            <th>Status</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let teacher of filteredTeachers">
+            <td>
+              <div class="pg-with-avatar">
+                <div class="pg-avatar av-emerald">{{ teacher.avatar }}</div>
+                <div>
+                  <span class="pg-cell__primary">{{ teacher.name }}</span>
+                  <span class="pg-cell__sub">{{ teacher.email }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="pg-badge pg-badge--indigo">
+                <i class="fas fa-book"></i>
+                {{ teacher.subject }}
+              </span>
+            </td>
+            <td>
+              <span class="pg-cell__primary" style="text-align: center; display: block;">{{ teacher.batches }}</span>
+            </td>
+            <td>{{ teacher.phone }}</td>
+            <td>
+              <span
+                class="pg-badge"
+                [ngClass]="{
+                  'pg-badge--green': teacher.status === 'active',
+                  'pg-badge--red':   teacher.status === 'inactive'
+                }"
+              >
+                <i
+                  class="fas"
+                  [ngClass]="{
+                    'fa-circle-check': teacher.status === 'active',
+                    'fa-circle-xmark': teacher.status === 'inactive'
+                  }"
+                ></i>
+                {{ teacher.status | titlecase }}
+              </span>
+            </td>
+            <td>{{ teacher.joinDate }}</td>
+            <td>
+              <div style="display: flex; gap: 6px;">
+                <button class="pg-action-btn" title="Edit">
+                  <i class="fas fa-pen"></i>
+                </button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredTeachers.length === 0">
+            <td colspan="7" style="text-align: center; padding: 32px; color: #9ca3af;">
+              <i class="fas fa-search" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+              No teachers found matching your search.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

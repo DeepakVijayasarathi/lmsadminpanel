@@ -1,0 +1,154 @@
+<div class="pg">
+
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-rose">
+        <i class="fa-solid fa-video"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Live Classes</div>
+        <div class="pg-head__sub">Schedule &amp; manage live sessions</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary">
+        <i class="fa-solid fa-plus"></i> Schedule Class
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-rose">
+        <i class="fa-solid fa-calendar-day"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">24</div>
+        <div class="pg-stat__lbl">Today's Classes</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald">
+        <i class="fa-solid fa-circle-dot"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">3</div>
+        <div class="pg-stat__lbl">Live Now</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky">
+        <i class="fa-solid fa-clock"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">8</div>
+        <div class="pg-stat__lbl">Upcoming</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-indigo">
+        <i class="fa-solid fa-calendar-week"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">42</div>
+        <div class="pg-stat__lbl">This Week</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <div class="pg-card__title">All Live Classes</div>
+      <div class="pg-toolbar">
+        <div class="pg-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search classes..." [(ngModel)]="searchQuery" />
+        </div>
+        <select class="pg-filter" [(ngModel)]="statusFilter">
+          <option value="">All Status</option>
+          <option value="live">Live</option>
+          <option value="upcoming">Upcoming</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Subject &amp; Batch</th>
+            <th>Teacher</th>
+            <th>Date &amp; Time</th>
+            <th>Duration</th>
+            <th>Students</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let cls of filteredClasses">
+            <td>
+              <div class="pg-cell__primary">{{ cls.subject }}</div>
+              <div class="pg-cell__sub">{{ cls.batch }}</div>
+            </td>
+            <td>
+              <div class="pg-with-avatar">
+                <div class="pg-avatar av-rose">{{ cls.teacher.charAt(0) }}</div>
+                <span class="pg-cell__primary">{{ cls.teacher }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="pg-cell__primary">{{ formatDate(cls.date) }}</div>
+              <div class="pg-cell__sub">{{ cls.startTime }} – {{ cls.endTime }}</div>
+            </td>
+            <td>
+              <span class="pg-cell__primary">{{ getDuration(cls.startTime, cls.endTime) }}</span>
+            </td>
+            <td>
+              <span style="display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;color:#475569;border-radius:20px;padding:3px 10px;font-size:13px;font-weight:600;">
+                <i class="fa-solid fa-users" style="font-size:11px;"></i>
+                {{ cls.students }}
+              </span>
+            </td>
+            <td>
+              <span [class]="getStatusBadge(cls.status)" [class.status-live]="cls.status === 'live'">
+                <i *ngIf="cls.status === 'live'" class="fa-solid fa-circle" style="font-size:8px;"></i>
+                {{ cls.status | titlecase }}
+              </span>
+            </td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <a *ngIf="cls.status === 'live' || cls.status === 'upcoming'"
+                   [href]="cls.meetingLink" target="_blank"
+                   class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 10px;text-decoration:none;">
+                  <i class="fa-solid fa-video"></i> Join
+                </a>
+                <button class="pg-action-btn" title="View">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button class="pg-action-btn" title="Edit">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Cancel">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredClasses.length === 0">
+            <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">
+              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+              No live classes found
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

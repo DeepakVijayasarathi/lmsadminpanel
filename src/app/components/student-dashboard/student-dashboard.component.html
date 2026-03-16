@@ -1,0 +1,181 @@
+<div class="sd">
+
+  <!-- Top Bar -->
+  <div class="sd-topbar">
+    <div class="sd-topbar__left">
+      <div class="sd-topbar__avatar">{{ student.avatar }}</div>
+      <div>
+        <h1 class="sd-topbar__name">Good morning, {{ student.name }} 👋</h1>
+        <span class="sd-topbar__class">{{ student.class }}</span>
+      </div>
+    </div>
+    <div class="sd-topbar__right">
+      <div class="sd-streak">
+        <i class="fa-solid fa-fire"></i>
+        <span><strong>{{ student.streak }}</strong> day streak</span>
+      </div>
+      <div class="sd-topbar__date">
+        <i class="fa-solid fa-calendar"></i>
+        {{ currentDate | date:'EEE, MMM d' }} &nbsp;·&nbsp; {{ currentTime }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="sd-stats">
+    <div *ngFor="let s of stats" class="sd-stat">
+      <div class="sd-stat__icon" [style.background]="s.bg" [style.color]="s.color">
+        <i class="{{ s.icon }}"></i>
+      </div>
+      <div class="sd-stat__body">
+        <span class="sd-stat__val" [style.color]="s.color">{{ s.value }}</span>
+        <span class="sd-stat__lbl">{{ s.label }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="sd-layout">
+
+    <!-- Center Column -->
+    <div class="sd-layout__center">
+
+      <!-- Today's Schedule -->
+      <div class="sd-card">
+        <div class="sd-card__head">
+          <div>
+            <h3 class="sd-card__title">Today's Schedule</h3>
+            <p class="sd-card__sub">{{ currentDate | date:'EEEE, MMMM d' }}</p>
+          </div>
+          <span class="sd-badge sd-badge--blue">{{ todaysClasses.length }} Classes</span>
+        </div>
+        <div class="sd-timeline">
+          <div *ngFor="let cls of todaysClasses" class="sd-tl-item sd-tl-item--{{ cls.status }}">
+            <div class="sd-tl-time">{{ cls.time }}</div>
+            <div class="sd-tl-dot">
+              <i class="fa-solid"
+                [ngClass]="{
+                  'fa-circle-check': cls.status === 'done',
+                  'fa-circle-dot':   cls.status === 'live',
+                  'fa-circle':       cls.status === 'upcoming'
+                }">
+              </i>
+            </div>
+            <div class="sd-tl-body">
+              <div class="sd-tl-subject">{{ cls.subject }}
+                <span *ngIf="cls.status === 'live'" class="sd-live-tag">
+                  <span class="sd-live-dot"></span> LIVE
+                </span>
+              </div>
+              <div class="sd-tl-topic">{{ cls.topic }}</div>
+              <div class="sd-tl-meta">
+                <span><i class="fa-solid fa-chalkboard-user"></i> {{ cls.teacher }}</span>
+                <span><i class="fa-solid fa-clock"></i> {{ cls.duration }}</span>
+              </div>
+            </div>
+            <div class="sd-tl-action" *ngIf="cls.status === 'live'">
+              <button class="sd-btn-join">Join Now</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- My Courses -->
+      <div class="sd-card">
+        <div class="sd-card__head">
+          <div>
+            <h3 class="sd-card__title">My Courses</h3>
+            <p class="sd-card__sub">Progress across enrolled subjects</p>
+          </div>
+          <button class="sd-link">View all <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+        <div class="sd-courses">
+          <div *ngFor="let c of courses" class="sd-course">
+            <div class="sd-course__icon" [style.background]="c.color + '18'" [style.color]="c.color">
+              <i class="{{ c.icon }}"></i>
+            </div>
+            <div class="sd-course__body">
+              <div class="sd-course__top">
+                <span class="sd-course__name">{{ c.name }}</span>
+                <span class="sd-course__pct" [style.color]="c.color">{{ c.progress }}%</span>
+              </div>
+              <div class="sd-course__track">
+                <div class="sd-course__fill" [style.width.%]="c.progress" [style.background-color]="c.color"></div>
+              </div>
+              <div class="sd-course__meta">{{ c.done }} / {{ c.lessons }} lessons completed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column -->
+    <div class="sd-layout__side">
+
+      <!-- Assignments Due -->
+      <div class="sd-card">
+        <div class="sd-card__head">
+          <div>
+            <h3 class="sd-card__title">Assignments Due</h3>
+            <p class="sd-card__sub">Pending submissions</p>
+          </div>
+          <span class="sd-badge sd-badge--red">{{ assignments.length }}</span>
+        </div>
+        <div class="sd-assign-list">
+          <div *ngFor="let a of assignments" class="sd-assign sd-assign--{{ a.priority }}">
+            <div class="sd-assign__priority"></div>
+            <div class="sd-assign__body">
+              <span class="sd-assign__subj">{{ a.subject }}</span>
+              <p class="sd-assign__title">{{ a.title }}</p>
+              <span class="sd-assign__due">
+                <i class="fa-regular fa-clock"></i> {{ a.due }}
+              </span>
+            </div>
+            <button class="sd-btn-submit">Submit</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Results -->
+      <div class="sd-card">
+        <div class="sd-card__head">
+          <div>
+            <h3 class="sd-card__title">Recent Results</h3>
+            <p class="sd-card__sub">Latest quiz scores</p>
+          </div>
+        </div>
+        <div class="sd-results">
+          <div *ngFor="let r of recentResults" class="sd-result">
+            <div class="sd-result__left">
+              <span class="sd-result__subj">{{ r.subject }}</span>
+              <span class="sd-result__quiz">{{ r.quiz }}</span>
+            </div>
+            <div class="sd-result__right">
+              <span class="sd-result__score"
+                [style.color]="getScoreColor(r.score)"
+                [style.background]="getScoreBg(r.score)">
+                {{ r.score }}/{{ r.total }}
+              </span>
+              <span class="sd-result__date">{{ r.date }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="sd-card">
+        <div class="sd-card__head">
+          <h3 class="sd-card__title">Quick Access</h3>
+        </div>
+        <div class="sd-quicklinks">
+          <button class="sd-ql"><i class="fa-solid fa-play-circle" style="color:#4f46e5"></i><span>Recorded Classes</span><i class="fa-solid fa-chevron-right sd-ql__arr"></i></button>
+          <button class="sd-ql"><i class="fa-solid fa-book-bookmark" style="color:#0d9488"></i><span>Digital Library</span><i class="fa-solid fa-chevron-right sd-ql__arr"></i></button>
+          <button class="sd-ql"><i class="fa-solid fa-chart-line" style="color:#d97706"></i><span>My Progress</span><i class="fa-solid fa-chevron-right sd-ql__arr"></i></button>
+          <button class="sd-ql"><i class="fa-solid fa-trophy" style="color:#db2777"></i><span>Leaderboard</span><i class="fa-solid fa-chevron-right sd-ql__arr"></i></button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

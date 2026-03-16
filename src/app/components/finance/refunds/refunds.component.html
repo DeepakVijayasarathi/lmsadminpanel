@@ -1,0 +1,97 @@
+<div class="pg">
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-rose">
+        <i class="fa-solid fa-rotate-left"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Refunds</div>
+        <div class="pg-head__sub">Manage refund requests</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary">
+        <i class="fa-solid fa-gears"></i> Process
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-rotate-left"></i></div>
+      <div class="pg-stat__val">47</div>
+      <div class="pg-stat__lbl">Total Requests</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-amber"><i class="fa-solid fa-clock"></i></div>
+      <div class="pg-stat__val">12</div>
+      <div class="pg-stat__lbl">Pending</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="pg-stat__val">28</div>
+      <div class="pg-stat__lbl">Approved</div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-gray"><i class="fa-solid fa-circle-xmark"></i></div>
+      <div class="pg-stat__val">7</div>
+      <div class="pg-stat__lbl">Rejected</div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <span class="pg-card__title">All Refund Requests</span>
+      <div class="pg-toolbar">
+        <input class="pg-search" type="text" placeholder="Search refunds..." />
+        <select class="pg-filter">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+    </div>
+    <div class="pg-table-wrap">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Amount</th>
+            <th>Reason</th>
+            <th>Requested At</th>
+            <th>Processed At</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let refund of refunds">
+            <td>
+              <div class="pg-cell__primary">{{ refund.student }}</div>
+            </td>
+            <td>
+              <strong style="color:#4f46e5;">{{ formatAmount(refund.amount) }}</strong>
+            </td>
+            <td>
+              <div class="pg-cell__sub">{{ truncate(refund.reason) }}</div>
+            </td>
+            <td>{{ refund.requestedAt }}</td>
+            <td>{{ refund.processedAt || '—' }}</td>
+            <td>
+              <span class="pg-badge {{ statusBadge(refund.status) }}">{{ refund.status }}</span>
+            </td>
+            <td>
+              <button class="pg-action-btn" title="Approve"><i class="fa-solid fa-check"></i></button>
+              <button class="pg-action-btn" title="View"><i class="fa-solid fa-eye"></i></button>
+              <button class="pg-action-btn pg-action-btn--danger" title="Reject"><i class="fa-solid fa-xmark"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
