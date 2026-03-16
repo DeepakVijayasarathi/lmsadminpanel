@@ -1,0 +1,564 @@
+<div class="page-container">
+  <!-- ===== PAGE HEADER ===== -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="fa fa-users"></i>
+      </div>
+      <div class="header-text">
+        <h1 class="page-title">User Management</h1>
+        <p class="page-subtitle">
+          Manage all user accounts, roles, and permissions in one place.
+        </p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="stats-pill">
+        <i class="fa fa-circle-info"></i>
+        <span>{{ totalRecords() }} Users</span>
+      </div>
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <i class="fa fa-plus"></i>
+        <span>Add New User</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== SEARCH & FILTER BAR ===== -->
+  <div class="toolbar-card">
+    <div class="search-wrapper">
+      <i class="fa fa-search search-icon"></i>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search by name, email, username..."
+        [value]="searchQuery()"
+        (input)="onSearch($event)"
+        autocomplete="off"
+      />
+      <button
+        *ngIf="searchQuery()"
+        class="search-clear"
+        (click)="resetSearch()"
+        title="Clear search"
+      >
+        <i class="fa fa-xmark"></i>
+      </button>
+    </div>
+    <div class="toolbar-actions">
+      <button class="tool-btn" (click)="resetSearch()" title="Reset filters">
+        <i class="fa fa-filter-circle-xmark"></i>
+        <span>Reset</span>
+      </button>
+      <button
+        class="tool-btn primary"
+        (click)="loadUsers()"
+        title="Refresh data"
+      >
+        <i class="fa fa-rotate" [class.fa-spin]="isLoading()"></i>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== TABLE CARD ===== -->
+  <div class="table-card">
+    <!-- Loading Skeleton -->
+    <ng-container *ngIf="isLoading()">
+      <div class="skeleton-wrapper">
+        <div class="skeleton-row" *ngFor="let i of [1, 2, 3, 4, 5]">
+          <div class="skeleton-cell wide"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell narrow"></div>
+          <div class="skeleton-cell narrow"></div>
+          <div class="skeleton-cell actions"></div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Empty State -->
+    <ng-container *ngIf="!isLoading() && paginatedUsers().length === 0">
+      <div class="empty-state">
+        <div class="empty-illustration">
+          <i class="fa fa-users-slash"></i>
+        </div>
+        <h3 class="empty-title">No Users Found</h3>
+        <p class="empty-message" *ngIf="!searchQuery()">
+          Get started by adding your first user account.
+        </p>
+        <p class="empty-message" *ngIf="searchQuery()">
+          No results match <strong>"{{ searchQuery() }}"</strong>. Try a
+          different search term.
+        </p>
+        <button
+          class="btn btn-primary"
+          *ngIf="!searchQuery()"
+          (click)="openCreateModal()"
+        >
+          <i class="fa fa-plus"></i> Add First User
+        </button>
+        <button
+          class="btn btn-ghost"
+          *ngIf="searchQuery()"
+          (click)="resetSearch()"
+        >
+          <i class="fa fa-filter-circle-xmark"></i> Clear Search
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- Table -->
+    <div
+      class="table-responsive"
+      *ngIf="!isLoading() && paginatedUsers().length > 0"
+    >
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>User</th>
+            <th>Contact</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Joined</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let user of paginatedUsers(); let i = index"
+            class="table-row"
+          >
+            <td class="row-num">
+              {{ (currentPage() - 1) * pageSize() + i + 1 }}
+            </td>
+            <td>
+              <div class="user-cell">
+                <div
+                  class="user-avatar"
+                  [attr.data-initials]="
+                    (user.firstName.charAt(0) || '') + (user.lastName.charAt(0) || '')
+                  "
+                >
+                  {{
+                    (user.firstName.charAt(0) || '') + (user.lastName.charAt(0) || '')
+                      | uppercase
+                  }}
+                </div>
+                <div class="user-info">
+                  <span class="user-fullname">{{ getFullName(user) }}</span>
+                  <span class="user-username">&#64;{{ user.username }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="contact-cell">
+                <span class="contact-email">
+                  <i class="fa fa-envelope"></i>
+                  {{ user.email || "—" }}
+                </span>
+                <span class="contact-phone" *ngIf="user.phone">
+                  <i class="fa fa-phone"></i>
+                  {{ user.phone }}
+                </span>
+              </div>
+            </td>
+            <td>
+              <span
+                class="badge"
+                [ngClass]="getUserTypeBadgeClass(user.userType)"
+              >
+                {{ getUserTypeLabel(user.userType) }}
+              </span>
+            </td>
+            <td>
+              <span
+                class="status-pill"
+                [class.active]="user.isActive"
+                [class.inactive]="!user.isActive"
+              >
+                <span class="status-dot"></span>
+                {{ user.isActive ? "Active" : "Inactive" }}
+              </span>
+            </td>
+            <td class="date-cell">
+              <i class="fa fa-calendar-days date-icon"></i>
+              {{ formatDate(user.createdAt) }}
+            </td>
+            <td>
+              <app-action-buttons
+                (view)="openViewModal(user)"
+                (edit)="openEditModal(user)"
+                (delete)="confirmDelete(user)"
+              >
+              </app-action-buttons>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <app-common-pagination
+      *ngIf="!isLoading() && totalRecords() > 0"
+      [currentPage]="currentPage()"
+      [totalPages]="totalPages()"
+      [pageSize]="pageSize()"
+      [totalRecords]="totalRecords()"
+      (pageChange)="onPageChange($event)"
+    >
+    </app-common-pagination>
+  </div>
+
+  <!-- Mobile Card Layout -->
+  <div class="mobile-cards" *ngIf="!isLoading() && paginatedUsers().length > 0">
+    <div
+      class="mobile-card"
+      *ngFor="let user of paginatedUsers(); let i = index"
+    >
+      <div class="mobile-card-header">
+        <div class="user-cell">
+          <div class="user-avatar">
+            {{
+              (user.firstName.charAt(0) || '') + (user.lastName.charAt(0) || '')
+                | uppercase
+            }}
+          </div>
+          <div class="user-info">
+            <span class="user-fullname">{{ getFullName(user) }}</span>
+            <span class="user-username">&#64;{{ user.username }}</span>
+          </div>
+        </div>
+        <span
+          class="status-pill"
+          [class.active]="user.isActive"
+          [class.inactive]="!user.isActive"
+        >
+          <span class="status-dot"></span>
+          {{ user.isActive ? "Active" : "Inactive" }}
+        </span>
+      </div>
+      <div class="mobile-card-body">
+        <div class="mobile-field">
+          <i class="fa fa-envelope"></i>
+          <span>{{ user.email }}</span>
+        </div>
+        <div class="mobile-field" *ngIf="user.phone">
+          <i class="fa fa-phone"></i>
+          <span>{{ user.phone }}</span>
+        </div>
+        <div class="mobile-field">
+          <i class="fa fa-tag"></i>
+          <span
+            class="badge"
+            [ngClass]="getUserTypeBadgeClass(user.userType)"
+            >{{ getUserTypeLabel(user.userType) }}</span
+          >
+        </div>
+        <div class="mobile-field">
+          <i class="fa fa-calendar-days"></i>
+          <span>{{ formatDate(user.createdAt) }}</span>
+        </div>
+      </div>
+      <div class="mobile-card-actions">
+        <app-action-buttons
+          (view)="openViewModal(user)"
+          (edit)="openEditModal(user)"
+          (delete)="confirmDelete(user)"
+        >
+        </app-action-buttons>
+      </div>
+    </div>
+
+    <app-common-pagination
+      [currentPage]="currentPage()"
+      [totalPages]="totalPages()"
+      [pageSize]="pageSize()"
+      [totalRecords]="totalRecords()"
+      (pageChange)="onPageChange($event)"
+    >
+    </app-common-pagination>
+  </div>
+</div>
+
+<!-- ===== FORM MODAL ===== -->
+<div
+  class="form-modal-backdrop"
+  *ngIf="modalMode"
+  (click)="onModalBackdropClick($event)"
+>
+  <div class="form-modal-card" [class.view-mode]="isReadonly">
+    <!-- Modal Header -->
+    <div class="form-modal-header">
+      <div class="form-modal-header-left">
+        <div
+          class="modal-header-icon"
+          [class.view]="isReadonly"
+          [class.edit]="modalMode === 'edit'"
+        >
+          <i
+            class="fa"
+            [ngClass]="{
+              'fa-user-plus': modalMode === 'create',
+              'fa-user-pen': modalMode === 'edit',
+              'fa-user': modalMode === 'view',
+            }"
+          ></i>
+        </div>
+        <div>
+          <h2 class="form-modal-title">{{ modalTitle }}</h2>
+          <p class="form-modal-subtitle">{{ modalSubtitle }}</p>
+        </div>
+      </div>
+      <button class="modal-close-btn" (click)="closeModal()" type="button">
+        <i class="fa fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="form-modal-body">
+      <form [formGroup]="userForm" (ngSubmit)="onSubmit()" novalidate>
+        <!-- Row 1: Username -->
+        <div class="form-row">
+          <div
+            class="form-group"
+            [class.has-error]="isFieldInvalid('username')"
+          >
+            <label class="form-label" for="username">
+              <i class="fa fa-at"></i>
+              Username <span class="required-star" *ngIf="!isReadonly">*</span>
+            </label>
+            <input
+              id="username"
+              type="text"
+              class="form-control"
+              formControlName="username"
+              placeholder="Enter username"
+              [readonly]="isReadonly"
+            />
+            <span class="form-error" *ngIf="isFieldInvalid('username')">{{
+              getFieldError("username")
+            }}</span>
+          </div>
+        </div>
+
+        <!-- Row 2: First Name & Last Name -->
+        <div class="form-row two-col">
+          <div
+            class="form-group"
+            [class.has-error]="isFieldInvalid('firstName')"
+          >
+            <label class="form-label" for="firstName">
+              <i class="fa fa-id-badge"></i>
+              First Name
+              <span class="required-star" *ngIf="!isReadonly">*</span>
+            </label>
+            <input
+              id="firstName"
+              type="text"
+              class="form-control"
+              formControlName="firstName"
+              placeholder="First name"
+              [readonly]="isReadonly"
+            />
+            <span class="form-error" *ngIf="isFieldInvalid('firstName')">{{
+              getFieldError("firstName")
+            }}</span>
+          </div>
+          <div
+            class="form-group"
+            [class.has-error]="isFieldInvalid('lastName')"
+          >
+            <label class="form-label" for="lastName">
+              <i class="fa fa-id-badge"></i>
+              Last Name <span class="required-star" *ngIf="!isReadonly">*</span>
+            </label>
+            <input
+              id="lastName"
+              type="text"
+              class="form-control"
+              formControlName="lastName"
+              placeholder="Last name"
+              [readonly]="isReadonly"
+            />
+            <span class="form-error" *ngIf="isFieldInvalid('lastName')">{{
+              getFieldError("lastName")
+            }}</span>
+          </div>
+        </div>
+
+        <!-- Row 3: Email -->
+        <div class="form-row">
+          <div class="form-group" [class.has-error]="isFieldInvalid('email')">
+            <label class="form-label" for="email">
+              <i class="fa fa-envelope"></i>
+              Email Address
+              <span class="required-star" *ngIf="!isReadonly">*</span>
+            </label>
+            <input
+              id="email"
+              type="email"
+              class="form-control"
+              formControlName="email"
+              placeholder="user@example.com"
+              [readonly]="isReadonly"
+            />
+            <span class="form-error" *ngIf="isFieldInvalid('email')">{{
+              getFieldError("email")
+            }}</span>
+          </div>
+        </div>
+
+        <!-- Row 4: Password (create only) -->
+        <div class="form-row" *ngIf="modalMode === 'create'">
+          <div
+            class="form-group"
+            [class.has-error]="isFieldInvalid('password')"
+          >
+            <label class="form-label" for="password">
+              <i class="fa fa-lock"></i>
+              Password <span class="required-star">*</span>
+            </label>
+            <input
+              id="password"
+              type="password"
+              class="form-control"
+              formControlName="password"
+              placeholder="Minimum 8 characters"
+            />
+            <span class="form-error" *ngIf="isFieldInvalid('password')">{{
+              getFieldError("password")
+            }}</span>
+          </div>
+        </div>
+
+        <!-- Row 5: Phone & User Type -->
+        <div class="form-row two-col">
+          <div class="form-group" [class.has-error]="isFieldInvalid('phone')">
+            <label class="form-label" for="phone">
+              <i class="fa fa-phone"></i>
+              Phone <span class="required-star" *ngIf="!isReadonly">*</span>
+            </label>
+            <input
+              id="phone"
+              type="tel"
+              class="form-control"
+              formControlName="phone"
+              placeholder="+1 234 567 8900"
+              [readonly]="isReadonly"
+            />
+            <span class="form-error" *ngIf="isFieldInvalid('phone')">{{
+              getFieldError("phone")
+            }}</span>
+          </div>
+          <div
+            class="form-group"
+            [class.has-error]="isFieldInvalid('roleId')"
+          >
+            <label class="form-label" for="roleId">
+              <i class="fa fa-tag"></i>
+              Role ID <span class="required-star" *ngIf="!isReadonly">*</span>
+            </label>
+            <select
+              id="roleId"
+              class="form-control form-select"
+              formControlName="roleId"
+              [attr.disabled]="isReadonly ? true : null"
+            >
+              <option value="">Select role...</option>
+              <option *ngFor="let type of roles()" [value]="type.id">
+                {{ type.name }}
+              </option>
+            </select>
+            <span class="form-error" *ngIf="isFieldInvalid('roleId')">{{
+              getFieldError("roleId")
+            }}</span>
+          </div>
+        </div>
+
+        <!-- View mode extra info -->
+        <div class="view-extra" *ngIf="isReadonly && selectedUser">
+          <div class="view-info-row">
+            <div class="view-info-item">
+              <span class="view-info-label"
+                ><i class="fa fa-fingerprint"></i> User ID</span
+              >
+              <span class="view-info-value mono">{{ selectedUser.id }}</span>
+            </div>
+            <div class="view-info-item">
+              <span class="view-info-label"
+                ><i class="fa fa-circle-dot"></i> Status</span
+              >
+              <span
+                class="status-pill"
+                [class.active]="selectedUser.isActive"
+                [class.inactive]="!selectedUser.isActive"
+              >
+                <span class="status-dot"></span>
+                {{ selectedUser.isActive ? "Active" : "Inactive" }}
+              </span>
+            </div>
+          </div>
+          <div class="view-info-row">
+            <div class="view-info-item">
+              <span class="view-info-label"
+                ><i class="fa fa-calendar-plus"></i> Created At</span
+              >
+              <span class="view-info-value">{{
+                formatDate(selectedUser.createdAt)
+              }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="form-modal-footer">
+          <button type="button" class="btn btn-ghost" (click)="closeModal()">
+            <i class="fa fa-xmark"></i>
+            {{ isReadonly ? "Close" : "Cancel" }}
+          </button>
+          <button
+            *ngIf="!isReadonly"
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="isSubmitting()"
+          >
+            <ng-container *ngIf="!isSubmitting()">
+              <i
+                class="fa"
+                [ngClass]="
+                  modalMode === 'create' ? 'fa-user-plus' : 'fa-floppy-disk'
+                "
+              ></i>
+              {{ modalMode === "create" ? "Create User" : "Save Changes" }}
+            </ng-container>
+            <ng-container *ngIf="isSubmitting()">
+              <i class="fa fa-spinner fa-spin"></i>
+              {{ modalMode === "create" ? "Creating..." : "Saving..." }}
+            </ng-container>
+          </button>
+          <button
+            *ngIf="isReadonly"
+            type="button"
+            class="btn btn-primary"
+            (click)="openEditModal(selectedUser!)"
+          >
+            <i class="fa fa-pen"></i>
+            Edit User
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DELETE MODAL ===== -->
+<app-delete-confirmation-modal
+  [isVisible]="showDeleteModal"
+  [itemName]="deleteItemName"
+  [isDeleting]="isDeleting()"
+  (confirmed)="onDeleteConfirmed()"
+  (cancelled)="onDeleteCancelled()"
+>
+</app-delete-confirmation-modal>

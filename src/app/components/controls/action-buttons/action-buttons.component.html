@@ -1,0 +1,31 @@
+<div class="action-buttons">
+  <button
+    *ngIf="showView"
+    class="action-btn view-btn"
+    (click)="view.emit()"
+    title="View Details"
+    type="button"
+  >
+    <i class="fa fa-eye"></i>
+  </button>
+
+  <button
+    *ngIf="showEdit"
+    class="action-btn edit-btn"
+    (click)="edit.emit()"
+    title="Edit"
+    type="button"
+  >
+    <i class="fa fa-pen"></i>
+  </button>
+
+  <button
+    *ngIf="showDelete"
+    class="action-btn delete-btn"
+    (click)="delete.emit()"
+    title="Delete"
+    type="button"
+  >
+    <i class="fa fa-trash"></i>
+  </button>
+</div>

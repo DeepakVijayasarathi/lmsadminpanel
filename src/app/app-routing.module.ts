@@ -3,40 +3,15 @@ import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from './auth/auth.guard';
 import { LoginComponent } from './components/login/login.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
-import { StudentsComponent } from './components/users/students/students.component';
-import { TeachersComponent } from './components/users/teachers/teachers.component';
-import { ParentsComponent } from './components/users/parents/parents.component';
-import { BoardsComponent } from './components/curriculum/boards/boards.component';
-import { ClassesComponent } from './components/curriculum/classes/classes.component';
-import { SubjectsComponent } from './components/curriculum/subjects/subjects.component';
-import { TopicsComponent } from './components/curriculum/topics/topics.component';
-import { CoursesComponent } from './components/learning/courses/courses.component';
-import { BatchesComponent } from './components/learning/batches/batches.component';
-import { LiveClassesComponent } from './components/learning/live-classes/live-classes.component';
-import { LibraryComponent } from './components/learning/library/library.component';
-import { ExamsComponent } from './components/assessment/exams/exams.component';
-import { ResultsComponent } from './components/assessment/results/results.component';
-import { NotificationsComponent } from './components/communication/notifications/notifications.component';
-import { AnnouncementsComponent } from './components/communication/announcements/announcements.component';
-import { PaymentsComponent } from './components/finance/payments/payments.component';
-import { SubscriptionsComponent } from './components/finance/subscriptions/subscriptions.component';
-import { RefundsComponent } from './components/finance/refunds/refunds.component';
-import { AttendanceReportComponent } from './components/reports/attendance-report/attendance-report.component';
-import { PerformanceReportComponent } from './components/reports/performance-report/performance-report.component';
-import { RevenueReportComponent } from './components/reports/revenue-report/revenue-report.component';
-import { RolesComponent } from './components/system/roles/roles.component';
-import { SettingsComponent } from './components/system/settings/settings.component';
-
-const AG = [AuthGuard];
+import { UsersComponent } from './components/users/users.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
 
-  // Users
-  { path: 'students',  component: StudentsComponent,  canActivate: AG },
-  { path: 'teachers',  component: TeachersComponent,  canActivate: AG },
-  { path: 'parents',   component: ParentsComponent,   canActivate: AG },
+  // dashboard
+  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
+  { path: 'users', component: UsersComponent, canActivate: [AuthGuard] },
 
   // Curriculum
   { path: 'boards',    component: BoardsComponent,    canActivate: AG },
