@@ -1,0 +1,45 @@
+<div class="modal-backdrop" *ngIf="isVisible" (click)="onBackdropClick($event)">
+  <div
+    class="modal-card"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="delete-modal-title"
+  >
+    <div class="modal-icon-wrapper">
+      <div class="modal-icon danger">
+        <i class="fa fa-triangle-exclamation"></i>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <h3 class="modal-title" id="delete-modal-title">Delete Confirmation</h3>
+      <p class="modal-message">
+        Are you sure you want to delete
+        <strong *ngIf="itemName">{{ itemName }}</strong>
+        <span *ngIf="!itemName">this record</span>? This action
+        <span class="danger-text">cannot be undone</span>.
+      </p>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" (click)="cancel()" [disabled]="isDeleting">
+        <i class="fa fa-xmark"></i>
+        Cancel
+      </button>
+      <button
+        class="btn btn-danger"
+        (click)="confirm()"
+        [disabled]="isDeleting"
+      >
+        <span *ngIf="!isDeleting">
+          <i class="fa fa-trash"></i>
+          Delete
+        </span>
+        <span *ngIf="isDeleting" class="btn-loading">
+          <i class="fa fa-spinner fa-spin"></i>
+          Deleting...
+        </span>
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,44 @@
+<div class="pagination-wrapper" *ngIf="totalRecords > 0">
+  <div class="pagination-info">
+    <span class="record-count">
+      Showing <strong>{{ startRecord }}–{{ endRecord }}</strong> of
+      <strong>{{ totalRecords }}</strong> records
+    </span>
+  </div>
+
+  <nav class="pagination-nav" aria-label="Pagination">
+    <button
+      class="page-btn nav-btn"
+      [class.disabled]="currentPage === 1"
+      (click)="prev()"
+      [disabled]="currentPage === 1"
+      aria-label="Previous page"
+    >
+      <i class="fa fa-chevron-left"></i>
+    </button>
+
+    <ng-container *ngFor="let page of pages">
+      <button
+        *ngIf="!isEllipsis(page)"
+        class="page-btn"
+        [class.active]="page === currentPage"
+        (click)="goTo(page)"
+      >
+        {{ page }}
+      </button>
+      <span *ngIf="isEllipsis(page)" class="page-ellipsis">
+        <i class="fa fa-ellipsis-h"></i>
+      </span>
+    </ng-container>
+
+    <button
+      class="page-btn nav-btn"
+      [class.disabled]="currentPage === totalPages"
+      (click)="next()"
+      [disabled]="currentPage === totalPages"
+      aria-label="Next page"
+    >
+      <i class="fa fa-chevron-right"></i>
+    </button>
+  </nav>
+</div>
