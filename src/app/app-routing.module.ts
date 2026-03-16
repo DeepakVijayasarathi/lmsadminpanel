@@ -24,6 +24,9 @@ import { PerformanceReportComponent } from './components/reports/performance-rep
 import { RevenueReportComponent } from './components/reports/revenue-report/revenue-report.component';
 import { RolesComponent } from './components/system/roles/roles.component';
 import { SettingsComponent } from './components/system/settings/settings.component';
+import { StudentsComponent } from './components/users/students/students.component';
+import { TeachersComponent } from './components/users/teachers/teachers.component';
+import { ParentsComponent } from './components/users/parents/parents.component';
 
 const AG = [AuthGuard];
 
@@ -34,6 +37,11 @@ const routes: Routes = [
   // dashboard
   { path: 'dashboard', component: DashboardComponent, canActivate: AG },
   { path: 'users', component: UsersComponent, canActivate: AG },
+
+  // User
+  { path: 'students',    component: StudentsComponent,    canActivate: AG },
+  { path: 'teachers',   component: TeachersComponent,   canActivate: AG },
+  { path: 'parents',  component: ParentsComponent,  canActivate: AG },
 
   // Curriculum
   { path: 'boards',    component: BoardsComponent,    canActivate: AG },
