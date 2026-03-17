@@ -15,10 +15,6 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { StudentDashboardComponent } from './components/student-dashboard/student-dashboard.component';
 import { TeacherDashboardComponent } from './components/teacher-dashboard/teacher-dashboard.component';
 import { AuthInterceptor } from './auth/auth.interceptor';
-
-
-
-import { UsersComponent } from './components/users/users.component';
 import { DeleteConfirmationModalComponent } from './components/controls/delete-confirmation-modal/delete-confirmation-modal.component';
 import { CommonPaginationComponent } from './components/controls/common-pagination/common-pagination.component';
 import { ActionButtonsComponent } from './components/controls/action-buttons/action-buttons.component';
@@ -80,7 +76,6 @@ import { MenuComponent } from './components/system/menu/menu.component';
     ExamsComponent,
     MenuComponent,
 
-    UsersComponent,
     DeleteConfirmationModalComponent,
     CommonPaginationComponent,
     ActionButtonsComponent

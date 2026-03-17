@@ -3,7 +3,6 @@ import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from './auth/auth.guard';
 import { LoginComponent } from './components/login/login.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
-import { UsersComponent } from './components/users/users.component';
 import { BoardsComponent } from './components/curriculum/boards/boards.component';
 import { ClassesComponent } from './components/curriculum/classes/classes.component';
 import { ExamsComponent } from './components/assessment/exams/exams.component';
@@ -37,7 +36,6 @@ const routes: Routes = [
 
   // dashboard
   { path: 'dashboard', component: DashboardComponent, canActivate: AG },
-  { path: 'users', component: UsersComponent, canActivate: AG },
 
   // User
   { path: 'students',    component: StudentsComponent,    canActivate: AG },
