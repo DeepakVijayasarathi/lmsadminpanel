@@ -24,7 +24,7 @@ type ModalMode =
   selector: 'app-students',
   standalone: false,
   templateUrl: './students.component.html',
-  styleUrls: ['../../../shared-page.css', './students.component.css'],
+  styleUrls: ['../../../shared-page.css','./students.component.css'],
 })
 export class StudentsComponent implements OnInit {
   allUsers: User[] = [];
