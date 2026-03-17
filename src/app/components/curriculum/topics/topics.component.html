@@ -1,5 +1,5 @@
+<!-- topics.component.html -->
 <div class="pg">
-
   <!-- Page Header -->
   <div class="pg-head">
     <div class="pg-head__left">
@@ -12,7 +12,7 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary">
+      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
         <i class="fas fa-plus"></i> Add Topic
       </button>
     </div>
@@ -21,14 +21,37 @@
   <!-- Stats -->
   <div class="pg-stats">
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-purple"><i class="fas fa-list-check"></i></div>
+      <div class="pg-stat__icon chip-purple">
+        <i class="fas fa-list-check"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ topics.length }}</div>
+        <div class="pg-stat__lbl">Total Topics</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-orange"><i class="fas fa-atom"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ subjects.length }}</div>
+        <div class="pg-stat__lbl">Total Subjects</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-purple">
+        <i class="fas fa-list-check"></i>
+      </div>
       <div>
         <div class="pg-stat__val">1,248</div>
         <div class="pg-stat__lbl">Total Topics</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-emerald"><i class="fas fa-circle-check"></i></div>
+      <div class="pg-stat__icon chip-emerald">
+        <i class="fas fa-circle-check"></i>
+      </div>
       <div>
         <div class="pg-stat__val">1,180</div>
         <div class="pg-stat__lbl">Active</div>
@@ -42,87 +65,114 @@
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-sky"><i class="fas fa-calculator"></i></div>
+      <div class="pg-stat__icon chip-sky">
+        <i class="fas fa-calculator"></i>
+      </div>
       <div>
         <div class="pg-stat__val">13</div>
         <div class="pg-stat__lbl">Avg per Subject</div>
       </div>
     </div>
-  </div>
+  </div> -->
 
   <!-- Table Card -->
   <div class="pg-card">
     <div class="pg-card__head">
       <span class="pg-card__title">All Topics</span>
       <div class="pg-toolbar">
-        <div class="pg-search">
-          <i class="fas fa-magnifying-glass"></i>
-          <input
-            type="text"
-            placeholder="Search topics..."
-            [(ngModel)]="searchQuery"
-          />
-        </div>
-        <select class="pg-filter" [(ngModel)]="selectedSubject">
+        <input
+          class="pg-search"
+          type="text"
+          placeholder="Search topics..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
+        />
+        <select
+          class="pg-filter"
+          [(ngModel)]="selectedSubjectFilter"
+          (change)="onSubjectFilter()"
+        >
           <option value="">All Subjects</option>
-          <option *ngFor="let subject of subjects" [value]="subject">{{ subject }}</option>
+          <option
+            *ngFor="let subject of subjectFilterOptions"
+            [value]="subject.id"
+          >
+            {{ subject.name }}
+          </option>
         </select>
       </div>
     </div>
 
-    <div class="pg-table-wrap">
+    <!-- Loading -->
+    <div class="pg-loading" *ngIf="isLoading">
+      <i class="fas fa-spinner fa-spin"></i> Loading topics...
+    </div>
+
+    <div class="pg-table-wrap" *ngIf="!isLoading">
       <table class="pg-table">
         <thead>
           <tr>
-            <th>Topic Title</th>
-            <th>Subject &amp; Class</th>
-            <th>Chapter No.</th>
-            <th>Duration</th>
-            <th>Status</th>
+            <th>#</th>
+            <th>Topic Name</th>
+            <th>Subject</th>
+            <th>Description</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let topic of filteredTopics">
+          <tr *ngFor="let topic of filteredTopics; let i = index">
+            <td class="idx-cell">{{ i + 1 }}</td>
             <td>
-              <span class="pg-cell__primary">{{ topic.title }}</span>
-            </td>
-            <td>
-              <span class="pg-cell__primary">{{ topic.subject }}</span>
-              <span class="pg-cell__sub">{{ topic.className }}</span>
-            </td>
-            <td>
-              <span class="pg-badge pg-badge--blue">Ch. {{ topic.chapterNo }}</span>
-            </td>
-            <td>
-              <span class="pg-cell__primary">{{ topic.duration }}</span>
+              <div class="topic-name-cell">
+                <span class="topic-icon"
+                  ><i class="fas fa-list-check"></i
+                ></span>
+                <span class="pg-cell__primary">{{ topic.name }}</span>
+              </div>
             </td>
             <td>
               <span
-                class="pg-badge"
-                [ngClass]="topic.status === 'Active' ? 'pg-badge--green' : 'pg-badge--gray'"
+                class="pg-badge pg-badge--orange"
+                *ngIf="getSubjectName(topic.subjectId) !== '—'"
               >
-                <i
-                  class="fas"
-                  [ngClass]="topic.status === 'Active' ? 'fa-circle-check' : 'fa-circle-xmark'"
-                ></i>
-                {{ topic.status }}
+                {{ getSubjectName(topic.subjectId) }}
               </span>
+              <span
+                class="no-val"
+                *ngIf="getSubjectName(topic.subjectId) === '—'"
+                >—</span
+              >
             </td>
+            <td class="desc-cell">{{ topic.description || "—" }}</td>
             <td>
-              <div style="display:flex;gap:6px;">
-                <button class="pg-action-btn" title="Edit">
-                  <i class="fas fa-pen"></i>
+              <div class="action-group">
+                <button
+                  class="pg-action-btn"
+                  title="View"
+                  (click)="openViewModal(topic)"
+                >
+                  <i class="fas fa-eye"></i>
                 </button>
-                <button class="pg-action-btn pg-action-btn--danger" title="Delete">
+                <button
+                  class="pg-action-btn"
+                  title="Edit"
+                  (click)="openEditModal(topic)"
+                >
+                  <i class="fas fa-pen-to-square"></i>
+                </button>
+                <button
+                  class="pg-action-btn pg-action-btn--danger"
+                  title="Delete"
+                  (click)="openDeleteModal(topic)"
+                >
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
             </td>
           </tr>
           <tr *ngIf="filteredTopics.length === 0">
-            <td colspan="6" style="text-align:center;padding:32px;color:#9ca3af;">
-              <i class="fas fa-list-check" style="font-size:28px;margin-bottom:8px;display:block;opacity:0.3;"></i>
+            <td colspan="5" class="pg-empty">
+              <i class="fas fa-list-check pg-empty__icon"></i>
               No topics found matching your criteria.
             </td>
           </tr>
@@ -130,5 +180,157 @@
       </table>
     </div>
   </div>
+</div>
 
+<!-- ═══════════════════════════════════════════════════
+     MODAL OVERLAY
+═══════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
+
+<!-- ─── Create / Edit Modal ─────────────────────────── -->
+<div
+  class="modal modal--sm"
+  *ngIf="modalMode === 'create' || modalMode === 'edit'"
+>
+  <div class="modal__header">
+    <h3>
+      <i
+        class="fas fa-{{
+          modalMode === 'create' ? 'plus-circle' : 'pen-to-square'
+        }}"
+      ></i>
+      {{ modalMode === "create" ? "Add New Topic" : "Edit Topic" }}
+    </h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fas fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="modal__body">
+    <!-- Topic Name -->
+    <div class="form-group" [class.has-error]="nameError">
+      <label>Topic Name <span class="required">*</span></label>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="e.g. Differential Calculus"
+        [(ngModel)]="formName"
+        (input)="nameError = ''"
+      />
+      <div class="field-error" *ngIf="nameError">
+        <i class="fas fa-circle-exclamation"></i> {{ nameError }}
+      </div>
+    </div>
+
+    <!-- Subject -->
+    <div class="form-group" [class.has-error]="subjectError">
+      <label>Subject <span class="required">*</span></label>
+      <select
+        class="form-control form-select"
+        [(ngModel)]="formSubjectId"
+        (change)="subjectError = ''"
+      >
+        <option value="">— Select a Subject —</option>
+        <option *ngFor="let subject of subjects" [value]="subject.id">
+          {{ subject.name }}
+        </option>
+      </select>
+      <div class="field-error" *ngIf="subjectError">
+        <i class="fas fa-circle-exclamation"></i> {{ subjectError }}
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="form-group">
+      <label>Description <span class="hint">(optional)</span></label>
+      <textarea
+        class="form-control"
+        rows="3"
+        placeholder="Brief description of this topic..."
+        [(ngModel)]="formDescription"
+      ></textarea>
+    </div>
+  </div>
+
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--primary" (click)="submitForm()">
+      <i
+        class="fas fa-{{ modalMode === 'create' ? 'plus' : 'floppy-disk' }}"
+      ></i>
+      {{ modalMode === "create" ? "Create Topic" : "Save Changes" }}
+    </button>
+  </div>
+</div>
+
+<!-- ─── View Modal ───────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'view' && selectedTopic">
+  <div class="modal__header">
+    <h3><i class="fas fa-eye"></i> Topic Details</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fas fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="modal__body">
+    <div class="view-showcase">
+      <div class="view-showcase__icon">
+        <i class="fas fa-list-check"></i>
+      </div>
+      <div>
+        <div class="view-showcase__title">{{ selectedTopic.name }}</div>
+        <span class="pg-badge pg-badge--orange view-showcase__badge">
+          {{ getSubjectName(selectedTopic.subjectId) }}
+        </span>
+      </div>
+    </div>
+
+    <div class="view-detail-block">
+      <div class="view-detail-label">Description</div>
+      <div
+        class="view-detail-val"
+        [class.view-detail-val--empty]="!selectedTopic.description"
+      >
+        {{ selectedTopic.description || "No description provided." }}
+      </div>
+    </div>
+  </div>
+
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+    <button
+      class="pg-btn pg-btn--primary"
+      (click)="openEditModal(selectedTopic)"
+    >
+      <i class="fas fa-pen-to-square"></i> Edit
+    </button>
+  </div>
+</div>
+
+<!-- ─── Delete Confirm Modal ─────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'delete' && selectedTopic">
+  <div class="modal__header modal__header--danger">
+    <h3><i class="fas fa-triangle-exclamation"></i> Delete Topic</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fas fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="modal__body modal__body--center">
+    <div class="delete-icon">
+      <i class="fas fa-trash-can"></i>
+    </div>
+    <p class="delete-msg">
+      Are you sure you want to delete<br />
+      <strong>"{{ selectedTopic.name }}"</strong>?
+    </p>
+    <p class="delete-sub">This action cannot be undone.</p>
+  </div>
+
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--danger" (click)="deleteTopic()">
+      <i class="fas fa-trash"></i> Delete
+    </button>
+  </div>
 </div>

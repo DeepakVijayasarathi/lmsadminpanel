@@ -1,0 +1,343 @@
+/* roles.component.css */
+
+/* ── Loading ───────────────────────────────────────── */
+.pg-loading {
+  padding: 2.5rem;
+  text-align: center;
+  color: var(--text-muted, #64748b);
+  font-size: 0.95rem;
+}
+.pg-loading i {
+  margin-right: 0.4rem;
+}
+
+/* ── Role description cell ─────────────────────────── */
+.role-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted, #64748b);
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Permission count chip ─────────────────────────── */
+.perm-count-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+}
+.perm-count-chip i {
+  font-size: 0.72rem;
+}
+
+/* ── Empty state ───────────────────────────────────── */
+.pg-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.9rem;
+}
+
+/* ══════════════════════════════════════════════════════
+   MODAL OVERLAY & SHELL
+══════════════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+  z-index: 1000;
+  animation: fadeIn 0.15s ease;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1001;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  width: 90%;
+  max-width: 780px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.2s ease;
+}
+
+.modal--sm {
+  max-width: 420px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -46%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* ── Modal Header ──────────────────────────────────── */
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+.modal__header h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.modal__header--danger {
+  background: #fff5f5;
+  border-color: #fecaca;
+}
+.modal__header--danger h3 {
+  color: #dc2626;
+}
+.modal__close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 6px;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+.modal__close:hover {
+  color: #1e293b;
+  background: #f1f5f9;
+}
+
+/* ── Modal Body ────────────────────────────────────── */
+.modal__body {
+  padding: 1.4rem 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+.modal__body--center {
+  text-align: center;
+}
+
+/* ── Modal Footer ──────────────────────────────────── */
+.modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════
+   FORM ELEMENTS
+══════════════════════════════════════════════════════ */
+.form-group {
+  margin-bottom: 1.2rem;
+}
+.form-group label {
+  display: block;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.4rem;
+}
+.form-group label .required {
+  color: #ef4444;
+  margin-left: 2px;
+}
+.form-control {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.55rem 0.85rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #1e293b;
+  background: #fff;
+  outline: none;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.form-control:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+.has-error .form-control {
+  border-color: #ef4444;
+}
+.has-error .form-control:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+.field-error {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* ══════════════════════════════════════════════════════
+   PERMISSIONS TABLE (inside modal)
+══════════════════════════════════════════════════════ */
+.perm-table-wrap {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.perm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.perm-table thead {
+  background: #f8fafc;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.perm-table thead th {
+  padding: 0.65rem 0.85rem;
+  text-align: center;
+  font-weight: 700;
+  color: #475569;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+}
+.perm-table .perm-menu-col {
+  text-align: left !important;
+  min-width: 150px;
+}
+.perm-table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.1s;
+}
+.perm-table tbody tr:last-child {
+  border-bottom: none;
+}
+.perm-table tbody tr:hover {
+  background: #f8fafc;
+}
+.perm-table td {
+  padding: 0.55rem 0.85rem;
+  text-align: center;
+  color: #334155;
+}
+.perm-menu-name {
+  text-align: left !important;
+  font-weight: 500;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.perm-menu-name i {
+  font-size: 0.8rem;
+  color: #6366f1;
+  width: 16px;
+}
+.perm-check-col {
+  width: 70px;
+}
+.perm-table input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #6366f1;
+  cursor: pointer;
+}
+
+/* View mode icons */
+.perm-yes {
+  color: #16a34a;
+  font-size: 1rem;
+}
+.perm-no {
+  color: #cbd5e1;
+  font-size: 1rem;
+}
+
+/* ── View role desc ────────────────────────────────── */
+.role-desc-view {
+  margin: 0 0 1rem;
+  font-size: 0.88rem;
+  color: #64748b;
+  background: #f8fafc;
+  padding: 0.6rem 0.85rem;
+  border-radius: 8px;
+  border-left: 3px solid #6366f1;
+}
+
+/* ══════════════════════════════════════════════════════
+   DELETE MODAL
+══════════════════════════════════════════════════════ */
+.delete-icon {
+  font-size: 2.8rem;
+  color: #ef4444;
+  margin: 0.5rem 0 1rem;
+}
+.delete-msg {
+  font-size: 0.95rem;
+  color: #1e293b;
+  line-height: 1.6;
+  margin: 0 0 0.5rem;
+}
+.delete-sub {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+/* ── Danger button ─────────────────────────────────── */
+.pg-btn--danger {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background 0.15s;
+}
+.pg-btn--danger:hover {
+  background: #dc2626;
+}

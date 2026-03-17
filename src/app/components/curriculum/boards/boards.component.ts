@@ -1,39 +1,215 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { CommonService } from '../../../services/common.service';
+import { HttpGeneralService } from '../../../services/http.service';
+import { environment } from '../../../../environments/environment';
 
-interface Board {
-  id: number;
+const BASE_URL = environment.apiUrl;
+
+export interface Board {
+  id: string;
   name: string;
-  shortCode: string;
-  classCount: number;
-  subjectCount: number;
-  status: 'Active' | 'Inactive';
-  createdDate: string;
+  description: string;
 }
+
+export interface BoardPayload {
+  name: string;
+  description: string;
+}
+
+type ModalMode = 'create' | 'edit' | 'view' | 'delete' | null;
 
 @Component({
   selector: 'app-boards',
   standalone: false,
   templateUrl: './boards.component.html',
-  styleUrls: ['../../../shared-page.css', './boards.component.css']
+  styleUrls: ['../../../shared-page.css', './boards.component.css'],
 })
-export class BoardsComponent {
-  searchQuery = '';
+export class BoardsComponent implements OnInit {
+  boards: Board[] = [];
+  filteredBoards: Board[] = [];
+  searchQuery: string = '';
+  isLoading: boolean = false;
 
-  boards: Board[] = [
-    { id: 1, name: 'Central Board of Secondary Education', shortCode: 'CBSE',      classCount: 12, subjectCount: 38, status: 'Active',   createdDate: '12 Jan 2023' },
-    { id: 2, name: 'Indian Certificate of Secondary Education', shortCode: 'ICSE', classCount: 10, subjectCount: 34, status: 'Active',   createdDate: '15 Jan 2023' },
-    { id: 3, name: 'Maharashtra State Board',                   shortCode: 'MHSB', classCount: 12, subjectCount: 32, status: 'Active',   createdDate: '20 Feb 2023' },
-    { id: 4, name: 'International Baccalaureate',               shortCode: 'IB',   classCount:  6, subjectCount: 28, status: 'Active',   createdDate: '05 Mar 2023' },
-    { id: 5, name: 'National Institute of Open Schooling',      shortCode: 'NIOS', classCount:  4, subjectCount: 30, status: 'Active',   createdDate: '10 Mar 2023' },
-    { id: 6, name: 'Cambridge Assessment International',        shortCode: 'CAIE', classCount:  4, subjectCount: 30, status: 'Inactive', createdDate: '18 Apr 2023' },
-  ];
+  // Modal state
+  modalMode: ModalMode = null;
+  selectedBoard: Board | null = null;
 
-  get filteredBoards(): Board[] {
-    const q = this.searchQuery.toLowerCase().trim();
-    if (!q) return this.boards;
-    return this.boards.filter(b =>
-      b.name.toLowerCase().includes(q) ||
-      b.shortCode.toLowerCase().includes(q)
+  // Form fields
+  formName: string = '';
+  formDescription: string = '';
+
+  // Validation
+  nameError: string = '';
+
+  constructor(
+    private commonService: CommonService,
+    private httpService: HttpGeneralService<any>,
+  ) {}
+
+  ngOnInit(): void {
+    this.loadBoards();
+  }
+
+  // ─── API Calls ──────────────────────────────────────────────
+
+  loadBoards(): void {
+    this.isLoading = true;
+    this.httpService.getData(BASE_URL, '/board').subscribe({
+      next: (res: any) => {
+        this.boards = Array.isArray(res) ? res : (res?.data ?? []);
+        this.applySearch();
+        this.isLoading = false;
+      },
+      error: () => {
+        this.commonService.error('Failed to load boards.');
+        this.isLoading = false;
+      },
+    });
+  }
+
+  createBoard(): void {
+    const payload: BoardPayload = {
+      name: this.formName.trim(),
+      description: this.formDescription.trim(),
+    };
+    this.httpService.postData(BASE_URL, '/board', payload).subscribe({
+      next: () => {
+        this.commonService.success(
+          `Board "${payload.name}" created successfully.`,
+        );
+        this.closeModal();
+        this.loadBoards();
+      },
+      error: (err: any) => {
+        const msg = err?.error?.message || 'Failed to create board.';
+        this.commonService.error(msg);
+      },
+    });
+  }
+
+  updateBoard(): void {
+    if (!this.selectedBoard) return;
+    const payload: BoardPayload = {
+      name: this.formName.trim(),
+      description: this.formDescription.trim(),
+    };
+    this.httpService
+      .putData(BASE_URL, `/board/${this.selectedBoard.id}`, payload)
+      .subscribe({
+        next: () => {
+          this.commonService.success(
+            `Board "${payload.name}" updated successfully.`,
+          );
+          this.closeModal();
+          this.loadBoards();
+        },
+        error: (err: any) => {
+          const msg = err?.error?.message || 'Failed to update board.';
+          this.commonService.error(msg);
+        },
+      });
+  }
+
+  deleteBoard(): void {
+    if (!this.selectedBoard) return;
+    this.httpService
+      .deleteData(BASE_URL, `/board/${this.selectedBoard.id}`)
+      .subscribe({
+        next: () => {
+          this.commonService.success(
+            `Board "${this.selectedBoard!.name}" deleted successfully.`,
+          );
+          this.closeModal();
+          this.loadBoards();
+        },
+        error: (err: any) => {
+          const msg = err?.error?.message || 'Failed to delete board.';
+          this.commonService.error(msg);
+        },
+      });
+  }
+
+  // ─── Modal Helpers ───────────────────────────────────────────
+
+  openCreateModal(): void {
+    this.modalMode = 'create';
+    this.selectedBoard = null;
+    this.formName = '';
+    this.formDescription = '';
+    this.nameError = '';
+  }
+
+  openEditModal(board: Board): void {
+    this.modalMode = 'edit';
+    this.selectedBoard = board;
+    this.formName = board.name;
+    this.formDescription = board.description;
+    this.nameError = '';
+  }
+
+  openViewModal(board: Board): void {
+    this.modalMode = 'view';
+    this.selectedBoard = board;
+  }
+
+  openDeleteModal(board: Board): void {
+    this.modalMode = 'delete';
+    this.selectedBoard = board;
+  }
+
+  closeModal(): void {
+    this.modalMode = null;
+    this.selectedBoard = null;
+    this.nameError = '';
+  }
+
+  // ─── Form Submit ─────────────────────────────────────────────
+
+  submitForm(): void {
+    if (!this.validateForm()) return;
+    if (this.modalMode === 'create') {
+      this.createBoard();
+    } else if (this.modalMode === 'edit') {
+      this.updateBoard();
+    }
+  }
+
+  validateForm(): boolean {
+    this.nameError = '';
+    const trimmed = this.formName.trim();
+
+    if (!trimmed) {
+      this.nameError = 'Board name is required.';
+      return false;
+    }
+
+    const duplicate = this.boards.find(
+      (b) =>
+        b.name.toLowerCase() === trimmed.toLowerCase() &&
+        b.id !== this.selectedBoard?.id,
     );
+    if (duplicate) {
+      this.nameError = 'A board with this name already exists.';
+      return false;
+    }
+
+    return true;
+  }
+
+  // ─── Search ──────────────────────────────────────────────────
+
+  onSearch(): void {
+    this.applySearch();
+  }
+
+  applySearch(): void {
+    const q = this.searchQuery.toLowerCase().trim();
+    this.filteredBoards = q
+      ? this.boards.filter(
+          (b) =>
+            b.name.toLowerCase().includes(q) ||
+            b.description?.toLowerCase().includes(q),
+        )
+      : [...this.boards];
   }
 }

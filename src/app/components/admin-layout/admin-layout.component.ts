@@ -89,6 +89,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       items: [
         { label: 'Roles & Permissions', icon: 'fa-solid fa-user-shield', route: '/roles'    },
         { label: 'Settings',            icon: 'fa-solid fa-gear',        route: '/settings' },
+        { label: 'Menu',                icon: 'fa-solid fa-bars',        route: '/menu'     },
       ],
     },
   ];

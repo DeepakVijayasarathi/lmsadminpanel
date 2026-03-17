@@ -27,6 +27,7 @@ import { SettingsComponent } from './components/system/settings/settings.compone
 import { StudentsComponent } from './components/users/students/students.component';
 import { TeachersComponent } from './components/users/teachers/teachers.component';
 import { ParentsComponent } from './components/users/parents/parents.component';
+import { MenuComponent } from './components/system/menu/menu.component';
 
 const AG = [AuthGuard];
 
@@ -76,6 +77,7 @@ const routes: Routes = [
   // System
   { path: 'roles',    component: RolesComponent,    canActivate: AG },
   { path: 'settings', component: SettingsComponent, canActivate: AG },
+  { path: 'menu',     component: MenuComponent,     canActivate: AG },
 
   // Dashboard (keep existing)
   { path: 'dashboard', component: DashboardComponent, canActivate: AG },

@@ -1,5 +1,5 @@
+<!-- subjects.component.html -->
 <div class="pg">
-
   <!-- Page Header -->
   <div class="pg-head">
     <div class="pg-head__left">
@@ -12,7 +12,7 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary">
+      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
         <i class="fas fa-plus"></i> Add Subject
       </button>
     </div>
@@ -20,6 +20,23 @@
 
   <!-- Stats -->
   <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-orange"><i class="fas fa-atom"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ subjects.length }}</div>
+        <div class="pg-stat__lbl">Total Subjects</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky"><i class="fas fa-school"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ classes.length }}</div>
+        <div class="pg-stat__lbl">Total Classes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- <div class="pg-stats">
     <div class="pg-stat">
       <div class="pg-stat__icon chip-orange"><i class="fas fa-atom"></i></div>
       <div>
@@ -48,82 +65,99 @@
         <div class="pg-stat__lbl">Boards Covered</div>
       </div>
     </div>
-  </div>
+  </div> -->
 
   <!-- Table Card -->
   <div class="pg-card">
     <div class="pg-card__head">
       <span class="pg-card__title">All Subjects</span>
       <div class="pg-toolbar">
-        <div class="pg-search">
-          <i class="fas fa-magnifying-glass"></i>
-          <input
-            type="text"
-            placeholder="Search subjects..."
-            [(ngModel)]="searchQuery"
-          />
-        </div>
-        <select class="pg-filter" [(ngModel)]="selectedClass">
+        <input
+          class="pg-search"
+          type="text"
+          placeholder="Search subjects..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
+        />
+        <select
+          class="pg-filter"
+          [(ngModel)]="selectedClassFilter"
+          (change)="onClassFilter()"
+        >
           <option value="">All Classes</option>
-          <option *ngFor="let cls of classes" [value]="cls">{{ cls }}</option>
+          <option *ngFor="let cls of classFilterOptions" [value]="cls.id">
+            {{ cls.name }}
+          </option>
         </select>
       </div>
     </div>
 
-    <div class="pg-table-wrap">
+    <!-- Loading -->
+    <div class="pg-loading" *ngIf="isLoading">
+      <i class="fas fa-spinner fa-spin"></i> Loading subjects...
+    </div>
+
+    <div class="pg-table-wrap" *ngIf="!isLoading">
       <table class="pg-table">
         <thead>
           <tr>
-            <th>Subject</th>
-            <th>Code</th>
-            <th>Class &amp; Board</th>
-            <th>Topics</th>
-            <th>Status</th>
+            <th>#</th>
+            <th>Subject Name</th>
+            <th>Class</th>
+            <th>Description</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let subject of filteredSubjects">
+          <tr *ngFor="let subject of filteredSubjects; let i = index">
+            <td class="idx-cell">{{ i + 1 }}</td>
             <td>
-              <span class="pg-cell__primary">{{ subject.name }}</span>
-            </td>
-            <td>
-              <span class="pg-badge pg-badge--indigo">{{ subject.code }}</span>
-            </td>
-            <td>
-              <span class="pg-cell__primary">{{ subject.className }}</span>
-              <span class="pg-cell__sub">{{ subject.board }}</span>
-            </td>
-            <td>
-              <span class="pg-cell__primary">{{ subject.topicCount }}</span>
-              <span class="pg-cell__sub">topics</span>
+              <div class="subject-name-cell">
+                <span class="subject-icon"><i class="fas fa-atom"></i></span>
+                <span class="pg-cell__primary">{{ subject.name }}</span>
+              </div>
             </td>
             <td>
               <span
-                class="pg-badge"
-                [ngClass]="subject.status === 'Active' ? 'pg-badge--green' : 'pg-badge--gray'"
+                class="pg-badge pg-badge--sky"
+                *ngIf="getClassName(subject.classId) !== '—'"
               >
-                <i
-                  class="fas"
-                  [ngClass]="subject.status === 'Active' ? 'fa-circle-check' : 'fa-circle-xmark'"
-                ></i>
-                {{ subject.status }}
+                {{ getClassName(subject.classId) }}
               </span>
+              <span class="no-val" *ngIf="getClassName(subject.classId) === '—'"
+                >—</span
+              >
             </td>
+            <td class="desc-cell">{{ subject.description || "—" }}</td>
             <td>
-              <div style="display:flex;gap:6px;">
-                <button class="pg-action-btn" title="Edit">
-                  <i class="fas fa-pen"></i>
+              <div class="action-group">
+                <button
+                  class="pg-action-btn"
+                  title="View"
+                  (click)="openViewModal(subject)"
+                >
+                  <i class="fas fa-eye"></i>
                 </button>
-                <button class="pg-action-btn pg-action-btn--danger" title="Delete">
+                <button
+                  class="pg-action-btn"
+                  title="Edit"
+                  (click)="openEditModal(subject)"
+                >
+                  <i class="fas fa-pen-to-square"></i>
+                </button>
+                <button
+                  class="pg-action-btn pg-action-btn--danger"
+                  title="Delete"
+                  (click)="openDeleteModal(subject)"
+                >
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
             </td>
           </tr>
           <tr *ngIf="filteredSubjects.length === 0">
-            <td colspan="6" style="text-align:center;padding:32px;color:#9ca3af;">
-              <i class="fas fa-atom" style="font-size:28px;margin-bottom:8px;display:block;opacity:0.3;"></i>
+            <td colspan="5" class="pg-empty">
+              <i class="fas fa-atom pg-empty__icon"></i>
               No subjects found matching your criteria.
             </td>
           </tr>
@@ -131,5 +165,157 @@
       </table>
     </div>
   </div>
+</div>
 
+<!-- ═══════════════════════════════════════════════════
+     MODAL OVERLAY
+═══════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
+
+<!-- ─── Create / Edit Modal ─────────────────────────── -->
+<div
+  class="modal modal--sm"
+  *ngIf="modalMode === 'create' || modalMode === 'edit'"
+>
+  <div class="modal__header">
+    <h3>
+      <i
+        class="fas fa-{{
+          modalMode === 'create' ? 'plus-circle' : 'pen-to-square'
+        }}"
+      ></i>
+      {{ modalMode === "create" ? "Add New Subject" : "Edit Subject" }}
+    </h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fas fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="modal__body">
+    <!-- Subject Name -->
+    <div class="form-group" [class.has-error]="nameError">
+      <label>Subject Name <span class="required">*</span></label>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="e.g. Mathematics"
+        [(ngModel)]="formName"
+        (input)="nameError = ''"
+      />
+      <div class="field-error" *ngIf="nameError">
+        <i class="fas fa-circle-exclamation"></i> {{ nameError }}
+      </div>
+    </div>
+
+    <!-- Class -->
+    <div class="form-group" [class.has-error]="classError">
+      <label>Class <span class="required">*</span></label>
+      <select
+        class="form-control form-select"
+        [(ngModel)]="formClassId"
+        (change)="classError = ''"
+      >
+        <option value="">— Select a Class —</option>
+        <option *ngFor="let cls of classes" [value]="cls.id">
+          {{ cls.name }}
+        </option>
+      </select>
+      <div class="field-error" *ngIf="classError">
+        <i class="fas fa-circle-exclamation"></i> {{ classError }}
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="form-group">
+      <label>Description <span class="hint">(optional)</span></label>
+      <textarea
+        class="form-control"
+        rows="3"
+        placeholder="Brief description of this subject..."
+        [(ngModel)]="formDescription"
+      ></textarea>
+    </div>
+  </div>
+
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--primary" (click)="submitForm()">
+      <i
+        class="fas fa-{{ modalMode === 'create' ? 'plus' : 'floppy-disk' }}"
+      ></i>
+      {{ modalMode === "create" ? "Create Subject" : "Save Changes" }}
+    </button>
+  </div>
+</div>
+
+<!-- ─── View Modal ───────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'view' && selectedSubject">
+  <div class="modal__header">
+    <h3><i class="fas fa-eye"></i> Subject Details</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fas fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="modal__body">
+    <div class="view-showcase">
+      <div class="view-showcase__icon">
+        <i class="fas fa-atom"></i>
+      </div>
+      <div>
+        <div class="view-showcase__title">{{ selectedSubject.name }}</div>
+        <span class="pg-badge pg-badge--sky view-showcase__badge">
+          {{ getClassName(selectedSubject.classId) }}
+        </span>
+      </div>
+    </div>
+
+    <div class="view-detail-block">
+      <div class="view-detail-label">Description</div>
+      <div
+        class="view-detail-val"
+        [class.view-detail-val--empty]="!selectedSubject.description"
+      >
+        {{ selectedSubject.description || "No description provided." }}
+      </div>
+    </div>
+  </div>
+
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+    <button
+      class="pg-btn pg-btn--primary"
+      (click)="openEditModal(selectedSubject)"
+    >
+      <i class="fas fa-pen-to-square"></i> Edit
+    </button>
+  </div>
+</div>
+
+<!-- ─── Delete Confirm Modal ─────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'delete' && selectedSubject">
+  <div class="modal__header modal__header--danger">
+    <h3><i class="fas fa-triangle-exclamation"></i> Delete Subject</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fas fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="modal__body modal__body--center">
+    <div class="delete-icon">
+      <i class="fas fa-trash-can"></i>
+    </div>
+    <p class="delete-msg">
+      Are you sure you want to delete<br />
+      <strong>"{{ selectedSubject.name }}"</strong>?
+    </p>
+    <p class="delete-sub">This action cannot be undone.</p>
+  </div>
+
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--danger" (click)="deleteSubject()">
+      <i class="fas fa-trash"></i> Delete
+    </button>
+  </div>
 </div>

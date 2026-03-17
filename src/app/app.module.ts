@@ -45,6 +45,7 @@ import { NotificationsComponent } from './components/communication/notifications
 import { AnnouncementsComponent } from './components/communication/announcements/announcements.component';
 import { ResultsComponent } from './components/assessment/results/results.component';
 import { ExamsComponent } from './components/assessment/exams/exams.component';
+import { MenuComponent } from './components/system/menu/menu.component';
 
 @NgModule({
   declarations: [
@@ -77,6 +78,7 @@ import { ExamsComponent } from './components/assessment/exams/exams.component';
     AnnouncementsComponent,
     ResultsComponent,
     ExamsComponent,
+    MenuComponent,
 
     UsersComponent,
     DeleteConfirmationModalComponent,

@@ -1,14 +1,32 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { CommonService } from '../../../services/common.service';
+import { HttpGeneralService } from '../../../services/http.service';
+import { environment } from '../../../../environments/environment';
 
-interface Topic {
-  id: number;
-  title: string;
-  subject: string;
-  className: string;
-  chapterNo: number;
-  duration: string;
-  status: 'Active' | 'Inactive';
+const BASE_URL = environment.apiUrl;
+
+export interface Subject {
+  id: string;
+  name: string;
+  description: string | null;
+  classId: string;
 }
+
+export interface Topic {
+  id: string;
+  name: string;
+  description: string | null;
+  subjectId: string;
+  subject?: Subject;
+}
+
+export interface TopicPayload {
+  name: string;
+  description: string | null;
+  subjectId: string;
+}
+
+type ModalMode = 'create' | 'edit' | 'view' | 'delete' | null;
 
 @Component({
   selector: 'app-topics',
@@ -16,38 +34,228 @@ interface Topic {
   templateUrl: './topics.component.html',
   styleUrls: ['../../../shared-page.css', './topics.component.css']
 })
-export class TopicsComponent {
-  searchQuery = '';
-  selectedSubject = '';
+export class TopicsComponent implements OnInit {
 
-  topics: Topic[] = [
-    { id: 1, title: 'Differential Calculus',        subject: 'Mathematics',      className: 'Class 12', chapterNo: 5,  duration: '8 hrs',  status: 'Active'   },
-    { id: 2, title: 'Newtonian Mechanics',           subject: 'Physics',          className: 'Class 11', chapterNo: 3,  duration: '10 hrs', status: 'Active'   },
-    { id: 3, title: 'Organic Chemistry Basics',      subject: 'Chemistry',        className: 'Class 11', chapterNo: 7,  duration: '12 hrs', status: 'Active'   },
-    { id: 4, title: 'Cell Division & Mitosis',       subject: 'Biology',          className: 'Class 10', chapterNo: 4,  duration: '6 hrs',  status: 'Active'   },
-    { id: 5, title: 'Prose & Comprehension',         subject: 'English',          className: 'Class 9',  chapterNo: 2,  duration: '5 hrs',  status: 'Active'   },
-    { id: 6, title: 'World War II',                  subject: 'History',          className: 'Class 9',  chapterNo: 9,  duration: '7 hrs',  status: 'Active'   },
-    { id: 7, title: 'Climate Zones & Biomes',        subject: 'Geography',        className: 'Class 8',  chapterNo: 6,  duration: '6 hrs',  status: 'Inactive' },
-    { id: 8, title: 'Object-Oriented Programming',  subject: 'Computer Science', className: 'Class 12', chapterNo: 4,  duration: '14 hrs', status: 'Active'   },
-  ];
+  topics: Topic[] = [];
+  filteredTopics: Topic[] = [];
+  subjects: Subject[] = [];
 
-  get subjects(): string[] {
-    return [...new Set(this.topics.map(t => t.subject))];
+  searchQuery: string = '';
+  selectedSubjectFilter: string = '';
+  isLoading: boolean = false;
+
+  // Modal state
+  modalMode: ModalMode = null;
+  selectedTopic: Topic | null = null;
+
+  // Form fields
+  formName: string = '';
+  formDescription: string = '';
+  formSubjectId: string = '';
+
+  // Validation
+  nameError: string = '';
+  subjectError: string = '';
+
+  constructor(
+    private commonService: CommonService,
+    private httpService: HttpGeneralService<any>
+  ) {}
+
+  ngOnInit(): void {
+    this.loadSubjects();
+    this.loadTopics();
   }
 
-  get filteredTopics(): Topic[] {
-    let list = this.topics;
-    if (this.selectedSubject) {
-      list = list.filter(t => t.subject === this.selectedSubject);
+  // ─── API Calls ──────────────────────────────────────────────
+
+  loadSubjects(): void {
+    this.httpService.getData(BASE_URL, '/subject').subscribe({
+      next: (res: any) => {
+        this.subjects = Array.isArray(res) ? res : (res?.data ?? []);
+      },
+      error: () => {
+        this.commonService.error('Failed to load subjects.');
+      }
+    });
+  }
+
+  loadTopics(): void {
+    this.isLoading = true;
+    this.httpService.getData(BASE_URL, '/topic').subscribe({
+      next: (res: any) => {
+        this.topics = Array.isArray(res) ? res : (res?.data ?? []);
+        this.applyFilters();
+        this.isLoading = false;
+      },
+      error: () => {
+        this.commonService.error('Failed to load topics.');
+        this.isLoading = false;
+      }
+    });
+  }
+
+  createTopic(): void {
+    const payload: TopicPayload = {
+      name: this.formName.trim(),
+      description: this.formDescription.trim() || null,
+      subjectId: this.formSubjectId
+    };
+    this.httpService.postData(BASE_URL, '/topic', payload).subscribe({
+      next: () => {
+        this.commonService.success(`Topic "${payload.name}" created successfully.`);
+        this.closeModal();
+        this.loadTopics();
+      },
+      error: (err: any) => {
+        const msg = err?.error?.message || 'Failed to create topic.';
+        this.commonService.error(msg);
+      }
+    });
+  }
+
+  updateTopic(): void {
+    if (!this.selectedTopic) return;
+    const payload: TopicPayload = {
+      name: this.formName.trim(),
+      description: this.formDescription.trim() || null,
+      subjectId: this.formSubjectId
+    };
+    this.httpService.putData(BASE_URL, `/topic/${this.selectedTopic.id}`, payload).subscribe({
+      next: () => {
+        this.commonService.success(`Topic "${payload.name}" updated successfully.`);
+        this.closeModal();
+        this.loadTopics();
+      },
+      error: (err: any) => {
+        const msg = err?.error?.message || 'Failed to update topic.';
+        this.commonService.error(msg);
+      }
+    });
+  }
+
+  deleteTopic(): void {
+    if (!this.selectedTopic) return;
+    this.httpService.deleteData(BASE_URL, `/topic/${this.selectedTopic.id}`).subscribe({
+      next: () => {
+        this.commonService.success(`Topic "${this.selectedTopic!.name}" deleted successfully.`);
+        this.closeModal();
+        this.loadTopics();
+      },
+      error: (err: any) => {
+        const msg = err?.error?.message || 'Failed to delete topic.';
+        this.commonService.error(msg);
+      }
+    });
+  }
+
+  // ─── Modal Helpers ───────────────────────────────────────────
+
+  openCreateModal(): void {
+    this.modalMode = 'create';
+    this.selectedTopic = null;
+    this.formName = '';
+    this.formDescription = '';
+    this.formSubjectId = '';
+    this.clearErrors();
+  }
+
+  openEditModal(topic: Topic): void {
+    this.modalMode = 'edit';
+    this.selectedTopic = topic;
+    this.formName = topic.name;
+    this.formDescription = topic.description ?? '';
+    this.formSubjectId = topic.subjectId;
+    this.clearErrors();
+  }
+
+  openViewModal(topic: Topic): void {
+    this.modalMode = 'view';
+    this.selectedTopic = topic;
+  }
+
+  openDeleteModal(topic: Topic): void {
+    this.modalMode = 'delete';
+    this.selectedTopic = topic;
+  }
+
+  closeModal(): void {
+    this.modalMode = null;
+    this.selectedTopic = null;
+    this.clearErrors();
+  }
+
+  clearErrors(): void {
+    this.nameError = '';
+    this.subjectError = '';
+  }
+
+  // ─── Form Submit ─────────────────────────────────────────────
+
+  submitForm(): void {
+    if (!this.validateForm()) return;
+    if (this.modalMode === 'create') {
+      this.createTopic();
+    } else if (this.modalMode === 'edit') {
+      this.updateTopic();
+    }
+  }
+
+  validateForm(): boolean {
+    this.clearErrors();
+    let valid = true;
+
+    const trimmed = this.formName.trim();
+    if (!trimmed) {
+      this.nameError = 'Topic name is required.';
+      valid = false;
+    } else {
+      const duplicate = this.topics.find(t =>
+        t.name.toLowerCase() === trimmed.toLowerCase() &&
+        t.subjectId === this.formSubjectId &&
+        t.id !== this.selectedTopic?.id
+      );
+      if (duplicate) {
+        this.nameError = 'A topic with this name already exists for the selected subject.';
+        valid = false;
+      }
+    }
+
+    if (!this.formSubjectId) {
+      this.subjectError = 'Please select a subject.';
+      valid = false;
+    }
+
+    return valid;
+  }
+
+  // ─── Helpers ─────────────────────────────────────────────────
+
+  getSubjectName(subjectId: string): string {
+    return this.subjects.find(s => s.id === subjectId)?.name ?? '—';
+  }
+
+  get subjectFilterOptions(): Subject[] {
+    const ids = [...new Set(this.topics.map(t => t.subjectId))];
+    return this.subjects.filter(s => ids.includes(s.id));
+  }
+
+  onSearch(): void { this.applyFilters(); }
+  onSubjectFilter(): void { this.applyFilters(); }
+
+  applyFilters(): void {
+    let list = [...this.topics];
+    if (this.selectedSubjectFilter) {
+      list = list.filter(t => t.subjectId === this.selectedSubjectFilter);
     }
     const q = this.searchQuery.toLowerCase().trim();
     if (q) {
       list = list.filter(t =>
-        t.title.toLowerCase().includes(q) ||
-        t.subject.toLowerCase().includes(q) ||
-        t.className.toLowerCase().includes(q)
+        t.name.toLowerCase().includes(q) ||
+        this.getSubjectName(t.subjectId).toLowerCase().includes(q) ||
+        t.description?.toLowerCase().includes(q)
       );
     }
-    return list;
+    this.filteredTopics = list;
   }
 }
