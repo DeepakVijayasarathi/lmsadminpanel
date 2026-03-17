@@ -86,9 +86,7 @@ export class ParentsComponent implements OnInit {
         this.allUsers = Array.isArray(res) ? res : (res?.data ?? []);
         const parentRole = this.roles.find((r) => r.name === PARENT_ROLE_NAME);
         this.parents = this.allUsers.filter((u) =>
-          parentRole
-            ? u.roleId === parentRole.id
-            : u.userType?.toLowerCase() === 'parent',
+          u.roleDto?.id === parentRole?.id
         );
         this.applyFilters();
         this.isLoading = false;
@@ -137,7 +135,7 @@ export class ParentsComponent implements OnInit {
       password: this.formPassword,
       phone: this.formPhone.trim(),
       userType: 'Parent',
-      roleId: role?.id ?? this.selectedUser.roleId,
+      roleId: role?.id ?? this.selectedUser.roleDto?.id,
       isActive: this.formIsActive,
     };
     this.userService.updateUser(this.selectedUser.id, payload).subscribe({

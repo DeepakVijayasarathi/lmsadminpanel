@@ -22,7 +22,7 @@ export interface User {
   userType: string;
   roleId: string;
   isActive: boolean;
-  role?: Role;
+  roleDto: Role;
   createdAt?: string;
 }
 

@@ -85,9 +85,7 @@ export class TeachersComponent implements OnInit {
           (r) => r.name === TEACHER_ROLE_NAME,
         );
         this.teachers = this.allUsers.filter((u) =>
-          teacherRole
-            ? u.roleId === teacherRole.id
-            : u.userType?.toLowerCase() === 'teacher',
+          u.roleDto?.id === teacherRole?.id
         );
         this.applyFilters();
         this.isLoading = false;
@@ -136,7 +134,7 @@ export class TeachersComponent implements OnInit {
       password: this.formPassword,
       phone: this.formPhone.trim(),
       userType: 'Teacher',
-      roleId: role?.id ?? this.selectedUser.roleId,
+      roleId: role?.id ?? this.selectedUser.roleDto?.id,
       isActive: this.formIsActive,
     };
     this.userService.updateUser(this.selectedUser.id, payload).subscribe({

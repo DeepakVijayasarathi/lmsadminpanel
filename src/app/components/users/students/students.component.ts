@@ -93,9 +93,7 @@ export class StudentsComponent implements OnInit {
           (r) => r.name === STUDENT_ROLE_NAME,
         );
         this.students = this.allUsers.filter((u) =>
-          studentRole
-            ? u.roleId === studentRole.id
-            : u.userType?.toLowerCase() === 'student',
+          u.roleDto?.id === studentRole?.id
         );
         this.applyFilters();
         this.isLoading = false;
@@ -146,7 +144,7 @@ export class StudentsComponent implements OnInit {
       password: this.formPassword,
       phone: this.formPhone.trim(),
       userType: 'Student',
-      roleId: studentRole?.id ?? this.selectedUser.roleId,
+      roleId: studentRole?.id ?? this.selectedUser.roleDto?.id,
       isActive: this.formIsActive,
     };
     this.userService.updateUser(this.selectedUser.id, payload).subscribe({
