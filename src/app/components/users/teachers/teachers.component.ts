@@ -1,48 +1,344 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonService } from '../../../services/common.service';
+import {
+  UserService,
+  User,
+  UserPayload,
+  UserUpdatePayload,
+  Role,
+} from '../users.service';
 
-export interface Teacher {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  subject: string;
-  batches: number;
-  status: 'active' | 'inactive';
-  joinDate: string;
-  avatar: string;
-}
+const TEACHER_ROLE_NAME = 'Teacher';
+
+type ModalMode =
+  | 'create'
+  | 'edit'
+  | 'view'
+  | 'delete'
+  | 'block'
+  | 'device-reset'
+  | null;
 
 @Component({
   selector: 'app-teachers',
   standalone: false,
   templateUrl: './teachers.component.html',
-  styleUrls: ['../../../shared-page.css', './teachers.component.css']
+  styleUrls: [ '../../../shared-page.css', './teachers.component.css'],
 })
 export class TeachersComponent implements OnInit {
+  allUsers: User[] = [];
+  teachers: User[] = [];
+  filteredTeachers: User[] = [];
+  roles: Role[] = [];
 
-  searchTerm = '';
-  filterStatus = '';
+  searchTerm: string = '';
+  filterStatus: string = '';
+  isLoading: boolean = false;
 
-  teachers: Teacher[] = [
-    { id: 1, name: 'Dr. Rajesh Kumar',    email: 'rajesh.kumar@lms.com',    phone: '+91 98001 11001', subject: 'Mathematics',    batches: 5, status: 'active',   joinDate: '2022-06-01', avatar: 'RK' },
-    { id: 2, name: 'Prof. Meena Verma',   email: 'meena.verma@lms.com',     phone: '+91 98002 22002', subject: 'Physics',         batches: 4, status: 'active',   joinDate: '2021-08-15', avatar: 'MV' },
-    { id: 3, name: 'Sunita Rao',          email: 'sunita.rao@lms.com',       phone: '+91 98003 33003', subject: 'Chemistry',       batches: 3, status: 'active',   joinDate: '2023-01-10', avatar: 'SR' },
-    { id: 4, name: 'Amit Joshi',          email: 'amit.joshi@lms.com',       phone: '+91 98004 44004', subject: 'English',         batches: 6, status: 'active',   joinDate: '2020-11-20', avatar: 'AJ' },
-    { id: 5, name: 'Kavitha Nambiar',     email: 'kavitha.nambiar@lms.com',  phone: '+91 98005 55005', subject: 'Biology',         batches: 4, status: 'active',   joinDate: '2022-03-05', avatar: 'KN' },
-    { id: 6, name: 'Deepak Malhotra',     email: 'deepak.malhotra@lms.com',  phone: '+91 98006 66006', subject: 'History',         batches: 2, status: 'inactive', joinDate: '2021-07-18', avatar: 'DM' },
-    { id: 7, name: 'Preethi Shankar',     email: 'preethi.shankar@lms.com',  phone: '+91 98007 77007', subject: 'Computer Science', batches: 5, status: 'active',   joinDate: '2023-04-12', avatar: 'PS' },
-  ];
+  modalMode: ModalMode = null;
+  selectedUser: User | null = null;
 
-  get filteredTeachers(): Teacher[] {
-    return this.teachers.filter(t => {
-      const matchSearch = !this.searchTerm ||
-        t.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        t.email.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        t.subject.toLowerCase().includes(this.searchTerm.toLowerCase());
-      const matchStatus = !this.filterStatus || t.status === this.filterStatus;
-      return matchSearch && matchStatus;
+  formFirstName: string = '';
+  formLastName: string = '';
+  formUsername: string = '';
+  formEmail: string = '';
+  formPhone: string = '';
+  formPassword: string = '';
+  formIsActive: boolean = true;
+  formBlockReason: string = '';
+  showPassword: boolean = false;
+
+  firstNameError: string = '';
+  lastNameError: string = '';
+  usernameError: string = '';
+  emailError: string = '';
+  passwordError: string = '';
+  blockReasonError: string = '';
+
+  constructor(
+    private commonService: CommonService,
+    private userService: UserService,
+  ) {}
+
+  ngOnInit(): void {
+    this.loadRolesAndUsers();
+  }
+
+  loadRolesAndUsers(): void {
+    this.isLoading = true;
+    this.userService.getRoles().subscribe({
+      next: (res: any) => {
+        this.roles = Array.isArray(res) ? res : (res?.data ?? []);
+        this.loadUsers();
+      },
+      error: () => {
+        this.loadUsers();
+      },
     });
   }
 
-  ngOnInit(): void {}
+  loadUsers(): void {
+    this.userService.getUsers().subscribe({
+      next: (res: any) => {
+        this.allUsers = Array.isArray(res) ? res : (res?.data ?? []);
+        const teacherRole = this.roles.find(
+          (r) => r.name === TEACHER_ROLE_NAME,
+        );
+        this.teachers = this.allUsers.filter((u) =>
+          teacherRole
+            ? u.roleId === teacherRole.id
+            : u.userType?.toLowerCase() === 'teacher',
+        );
+        this.applyFilters();
+        this.isLoading = false;
+      },
+      error: () => {
+        this.commonService.error('Failed to load teachers.');
+        this.isLoading = false;
+      },
+    });
+  }
+
+  createUser(): void {
+    const role = this.roles.find((r) => r.name === TEACHER_ROLE_NAME);
+    const payload: UserPayload = {
+      username: this.formUsername.trim(),
+      firstName: this.formFirstName.trim(),
+      lastName: this.formLastName.trim(),
+      email: this.formEmail.trim(),
+      password: this.formPassword,
+      phone: this.formPhone.trim(),
+      userType: 'Teacher',
+      roleId: role?.id ?? '',
+    };
+    this.userService.createUser(payload).subscribe({
+      next: () => {
+        this.commonService.success('Teacher created successfully.');
+        this.closeModal();
+        this.loadUsers();
+      },
+      error: (err: any) => {
+        this.commonService.error(
+          err?.error?.message || 'Failed to create teacher.',
+        );
+      },
+    });
+  }
+
+  updateUser(): void {
+    if (!this.selectedUser) return;
+    const role = this.roles.find((r) => r.name === TEACHER_ROLE_NAME);
+    const payload: UserUpdatePayload = {
+      username: this.formUsername.trim(),
+      firstName: this.formFirstName.trim(),
+      lastName: this.formLastName.trim(),
+      email: this.formEmail.trim(),
+      password: this.formPassword,
+      phone: this.formPhone.trim(),
+      userType: 'Teacher',
+      roleId: role?.id ?? this.selectedUser.roleId,
+      isActive: this.formIsActive,
+    };
+    this.userService.updateUser(this.selectedUser.id, payload).subscribe({
+      next: () => {
+        this.commonService.success('Teacher updated successfully.');
+        this.closeModal();
+        this.loadUsers();
+      },
+      error: (err: any) => {
+        this.commonService.error(
+          err?.error?.message || 'Failed to update teacher.',
+        );
+      },
+    });
+  }
+
+  deleteUser(): void {
+    if (!this.selectedUser) return;
+    this.userService.deleteUser(this.selectedUser.id).subscribe({
+      next: () => {
+        this.commonService.success('Teacher deleted.');
+        this.closeModal();
+        this.loadUsers();
+      },
+      error: (err: any) => {
+        this.commonService.error(
+          err?.error?.message || 'Failed to delete teacher.',
+        );
+      },
+    });
+  }
+
+  blockUser(): void {
+    if (!this.selectedUser) return;
+    if (!this.formBlockReason.trim()) {
+      this.blockReasonError = 'Block reason is required.';
+      return;
+    }
+    this.userService
+      .blockUser(this.selectedUser.id, { reason: this.formBlockReason.trim() })
+      .subscribe({
+        next: () => {
+          this.commonService.success('Teacher blocked.');
+          this.closeModal();
+          this.loadUsers();
+        },
+        error: (err: any) => {
+          this.commonService.error(
+            err?.error?.message || 'Failed to block teacher.',
+          );
+        },
+      });
+  }
+
+  deviceReset(): void {
+    if (!this.selectedUser) return;
+    this.userService.deviceReset(this.selectedUser.id).subscribe({
+      next: () => {
+        this.commonService.success('Device reset successful.');
+        this.closeModal();
+      },
+      error: (err: any) => {
+        this.commonService.error(
+          err?.error?.message || 'Failed to reset device.',
+        );
+      },
+    });
+  }
+
+  openCreateModal(): void {
+    this.modalMode = 'create';
+    this.selectedUser = null;
+    this.resetForm();
+  }
+  openEditModal(user: User): void {
+    this.modalMode = 'edit';
+    this.selectedUser = user;
+    this.formFirstName = user.firstName;
+    this.formLastName = user.lastName;
+    this.formUsername = user.username;
+    this.formEmail = user.email;
+    this.formPhone = user.phone;
+    this.formPassword = '';
+    this.formIsActive = user.isActive;
+    this.clearErrors();
+  }
+  openViewModal(user: User): void {
+    this.modalMode = 'view';
+    this.selectedUser = user;
+  }
+  openDeleteModal(user: User): void {
+    this.modalMode = 'delete';
+    this.selectedUser = user;
+  }
+  openBlockModal(user: User): void {
+    this.modalMode = 'block';
+    this.selectedUser = user;
+    this.formBlockReason = '';
+    this.blockReasonError = '';
+  }
+  openDeviceResetModal(user: User): void {
+    this.modalMode = 'device-reset';
+    this.selectedUser = user;
+  }
+  closeModal(): void {
+    this.modalMode = null;
+    this.selectedUser = null;
+    this.clearErrors();
+  }
+
+  submitForm(): void {
+    if (!this.validateForm()) return;
+    if (this.modalMode === 'create') this.createUser();
+    else if (this.modalMode === 'edit') this.updateUser();
+  }
+
+  validateForm(): boolean {
+    this.clearErrors();
+    let valid = true;
+    if (!this.formFirstName.trim()) {
+      this.firstNameError = 'First name is required.';
+      valid = false;
+    }
+    if (!this.formLastName.trim()) {
+      this.lastNameError = 'Last name is required.';
+      valid = false;
+    }
+    if (!this.formUsername.trim()) {
+      this.usernameError = 'Username is required.';
+      valid = false;
+    }
+    if (!this.formEmail.trim()) {
+      this.emailError = 'Email is required.';
+      valid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.formEmail)) {
+      this.emailError = 'Enter a valid email.';
+      valid = false;
+    }
+    if (this.modalMode === 'create' && !this.formPassword) {
+      this.passwordError = 'Password is required.';
+      valid = false;
+    }
+    return valid;
+  }
+
+  resetForm(): void {
+    this.formFirstName = '';
+    this.formLastName = '';
+    this.formUsername = '';
+    this.formEmail = '';
+    this.formPhone = '';
+    this.formPassword = '';
+    this.formIsActive = true;
+    this.showPassword = false;
+    this.clearErrors();
+  }
+
+  clearErrors(): void {
+    this.firstNameError = '';
+    this.lastNameError = '';
+    this.usernameError = '';
+    this.emailError = '';
+    this.passwordError = '';
+    this.blockReasonError = '';
+  }
+
+  getInitials(user: User): string {
+    return this.userService.getInitials(user.firstName, user.lastName);
+  }
+  getFullName(user: User): string {
+    return this.userService.getFullName(user);
+  }
+
+  onSearch(): void {
+    this.applyFilters();
+  }
+  onFilterChange(): void {
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    let list = [...this.teachers];
+    if (this.filterStatus)
+      list = list.filter((u) =>
+        this.filterStatus === 'active' ? u.isActive : !u.isActive,
+      );
+    const q = this.searchTerm.toLowerCase().trim();
+    if (q)
+      list = list.filter(
+        (u) =>
+          this.getFullName(u).toLowerCase().includes(q) ||
+          u.email?.toLowerCase().includes(q) ||
+          u.username?.toLowerCase().includes(q) ||
+          u.phone?.includes(q),
+      );
+    this.filteredTeachers = list;
+  }
+
+  get totalActive(): number {
+    return this.teachers.filter((u) => u.isActive).length;
+  }
+  get totalInactive(): number {
+    return this.teachers.filter((u) => !u.isActive).length;
+  }
 }
