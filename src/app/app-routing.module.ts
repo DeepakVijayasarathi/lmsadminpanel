@@ -27,6 +27,8 @@ import { StudentsComponent } from './components/users/students/students.componen
 import { TeachersComponent } from './components/users/teachers/teachers.component';
 import { ParentsComponent } from './components/users/parents/parents.component';
 import { MenuComponent } from './components/system/menu/menu.component';
+import { StudentDashboardComponent } from './components/student-dashboard/student-dashboard.component';
+import { TeacherDashboardComponent } from './components/teacher-dashboard/teacher-dashboard.component';
 
 const AG = [AuthGuard];
 
@@ -36,6 +38,8 @@ const routes: Routes = [
 
   // dashboard
   { path: 'dashboard', component: DashboardComponent, canActivate: AG },
+  { path: 'student-dashboard', component: StudentDashboardComponent, canActivate: AG },
+  { path: 'teacher-dashboard', component: TeacherDashboardComponent, canActivate: AG },
 
   // User
   { path: 'students',    component: StudentsComponent,    canActivate: AG },
