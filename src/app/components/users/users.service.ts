@@ -19,7 +19,6 @@ export interface User {
   lastName: string;
   email: string;
   phone: string;
-  userType: string;
   roleId: string;
   isActive: boolean;
   roleDto: Role;
@@ -33,7 +32,6 @@ export interface UserPayload {
   email: string;
   password: string;
   phone: string;
-  userType: string;
   roleId: string;
 }
 

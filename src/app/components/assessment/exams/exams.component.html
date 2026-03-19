@@ -1,3 +1,4 @@
+<!-- exams.component.html -->
 <div class="pg">
   <!-- Page Header -->
   <div class="pg-head">
@@ -11,8 +12,8 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary">
-        <i class="fa-solid fa-plus"></i> Add Exam
+      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
+        <i class="fa-solid fa-plus"></i> Add Quiz
       </button>
     </div>
   </div>
@@ -20,81 +21,536 @@
   <!-- Stats -->
   <div class="pg-stats">
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-purple"><i class="fa-solid fa-file-pen"></i></div>
-      <div class="pg-stat__val">342</div>
-      <div class="pg-stat__lbl">Total Exams</div>
+      <div class="pg-stat__icon chip-purple">
+        <i class="fa-solid fa-file-pen"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ quizzes.length }}</div>
+        <div class="pg-stat__lbl">Total Quizzes</div>
+      </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-circle-dot"></i></div>
-      <div class="pg-stat__val">3</div>
-      <div class="pg-stat__lbl">Live Now</div>
+      <div class="pg-stat__icon chip-sky">
+        <i class="fa-solid fa-list-check"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ totalQuestions }}</div>
+        <div class="pg-stat__lbl">Total Questions</div>
+      </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-clock"></i></div>
-      <div class="pg-stat__val">18</div>
-      <div class="pg-stat__lbl">Upcoming</div>
-    </div>
-    <div class="pg-stat">
-      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-circle-check"></i></div>
-      <div class="pg-stat__val">321</div>
-      <div class="pg-stat__lbl">Completed</div>
+      <div class="pg-stat__icon chip-emerald">
+        <i class="fa-solid fa-layer-group"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ topics.length }}</div>
+        <div class="pg-stat__lbl">Topics</div>
+      </div>
     </div>
   </div>
 
   <!-- Table Card -->
   <div class="pg-card">
     <div class="pg-card__head">
-      <span class="pg-card__title">All Exams</span>
+      <span class="pg-card__title">All Quizzes</span>
       <div class="pg-toolbar">
-        <input class="pg-search" type="text" placeholder="Search exams..." />
-        <select class="pg-filter">
-          <option value="">All Status</option>
-          <option value="live">Live</option>
-          <option value="upcoming">Upcoming</option>
-          <option value="completed">Completed</option>
-          <option value="draft">Draft</option>
-        </select>
+        <input
+          class="pg-search"
+          type="text"
+          placeholder="Search quizzes..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
+        />
       </div>
     </div>
-    <div class="pg-table-wrap">
+
+    <div class="pg-loading" *ngIf="isLoading">
+      <i class="fa-solid fa-spinner fa-spin"></i> Loading quizzes...
+    </div>
+
+    <div class="pg-table-wrap" *ngIf="!isLoading">
       <table class="pg-table">
         <thead>
           <tr>
-            <th>Exam Title</th>
-            <th>Subject &amp; Class</th>
-            <th>Teacher</th>
+            <th>#</th>
+            <th>Quiz Title</th>
+            <th>Topic</th>
             <th>Duration</th>
             <th>Marks</th>
-            <th>Scheduled Date</th>
-            <th>Status</th>
+            <th>Passing</th>
+            <th>Questions</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let exam of exams">
+          <tr *ngFor="let quiz of filteredQuizzes; let i = index">
+            <td class="idx-cell">{{ i + 1 }}</td>
             <td>
-              <div class="pg-cell__primary">{{ exam.title }}</div>
-              <div class="pg-cell__sub">{{ exam.attempts }} attempts</div>
+              <div class="quiz-title-cell">
+                <span class="quiz-icon"
+                  ><i class="fa-solid fa-file-pen"></i
+                ></span>
+                <div>
+                  <div class="pg-cell__primary">{{ quiz.title }}</div>
+                  <div class="pg-cell__sub" *ngIf="quiz.description">
+                    {{ quiz.description | slice: 0 : 50
+                    }}{{ quiz.description.length > 50 ? "…" : "" }}
+                  </div>
+                </div>
+              </div>
             </td>
             <td>
-              <div class="pg-cell__primary">{{ exam.subject }}</div>
-              <div class="pg-cell__sub">{{ exam.class }}</div>
+              <span
+                class="pg-badge pg-badge--purple"
+                *ngIf="getTopicName(quiz.topicId) !== '—'"
+              >
+                {{ getTopicName(quiz.topicId) }}
+              </span>
+              <span class="no-val" *ngIf="getTopicName(quiz.topicId) === '—'"
+                >—</span
+              >
             </td>
-            <td>{{ exam.teacher }}</td>
-            <td>{{ exam.duration }} mins</td>
-            <td>{{ exam.totalMarks }}</td>
-            <td>{{ exam.scheduled }}</td>
             <td>
-              <span class="pg-badge {{ statusBadge(exam.status) }}">{{ exam.status }}</span>
+              <span class="info-chip info-chip--sky">
+                <i class="fa-solid fa-clock"></i> {{ quiz.durationMinutes }} min
+              </span>
+            </td>
+            <td class="marks-cell">{{ quiz.totalMarks }}</td>
+            <td class="marks-cell passing">{{ quiz.passingMarks }}</td>
+            <td>
+              <span class="info-chip info-chip--purple">
+                <i class="fa-solid fa-list-check"></i>
+                {{ quiz.questionCount ?? "—" }}
+              </span>
             </td>
             <td>
-              <button class="pg-action-btn" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-              <button class="pg-action-btn" title="View"><i class="fa-solid fa-eye"></i></button>
-              <button class="pg-action-btn pg-action-btn--danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+              <div class="action-group">
+                <button
+                  class="pg-action-btn"
+                  title="View"
+                  (click)="openViewModal(quiz)"
+                >
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button
+                  class="pg-action-btn"
+                  title="Edit"
+                  (click)="openEditModal(quiz)"
+                >
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button
+                  class="pg-action-btn pg-action-btn--purple"
+                  title="Manage Questions"
+                  (click)="openQuestionsModal(quiz)"
+                >
+                  <i class="fa-solid fa-list-check"></i>
+                </button>
+                <button
+                  class="pg-action-btn pg-action-btn--danger"
+                  title="Delete"
+                  (click)="openDeleteModal(quiz)"
+                >
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredQuizzes.length === 0">
+            <td colspan="8" class="pg-empty">
+              <i class="fa-solid fa-file-pen pg-empty__icon"></i>
+              No quizzes found.
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     OVERLAY
+═══════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
+
+<!-- ─── Create / Edit ─────────────────────────────────── -->
+<div class="modal" *ngIf="modalMode === 'create' || modalMode === 'edit'">
+  <div class="modal__header">
+    <h3>
+      <i
+        class="fa-solid fa-{{
+          modalMode === 'create' ? 'plus-circle' : 'pen-to-square'
+        }}"
+      ></i>
+      {{ modalMode === "create" ? "Add New Quiz" : "Edit Quiz" }}
+    </h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <div class="modal__body">
+    <div class="form-grid">
+      <!-- Title -->
+      <div class="form-group form-group--full" [class.has-error]="titleError">
+        <label>Quiz Title <span class="required">*</span></label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="e.g. Mid-Term Mathematics"
+          [(ngModel)]="formTitle"
+          (input)="titleError = ''"
+        />
+        <div class="field-error" *ngIf="titleError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ titleError }}
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="form-group form-group--full">
+        <label>Description <span class="hint">(optional)</span></label>
+        <textarea
+          class="form-control"
+          rows="2"
+          placeholder="Brief description..."
+          [(ngModel)]="formDescription"
+        ></textarea>
+      </div>
+
+      <!-- Topic -->
+      <div class="form-group form-group--full">
+        <label>Topic <span class="hint">(optional)</span></label>
+        <select class="form-control form-select" [(ngModel)]="formTopicId">
+          <option [ngValue]="null">— No Topic —</option>
+          <option *ngFor="let topic of topics" [ngValue]="topic.id">
+            {{ topic.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Total Marks -->
+      <div class="form-group" [class.has-error]="totalMarksError">
+        <label>Total Marks <span class="required">*</span></label>
+        <input
+          type="number"
+          class="form-control"
+          min="1"
+          [(ngModel)]="formTotalMarks"
+          (input)="totalMarksError = ''"
+        />
+        <div class="field-error" *ngIf="totalMarksError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ totalMarksError }}
+        </div>
+      </div>
+
+      <!-- Passing Marks -->
+      <div class="form-group" [class.has-error]="passingMarksError">
+        <label>Passing Marks <span class="required">*</span></label>
+        <input
+          type="number"
+          class="form-control"
+          min="1"
+          [(ngModel)]="formPassingMarks"
+          (input)="passingMarksError = ''"
+        />
+        <div class="field-error" *ngIf="passingMarksError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ passingMarksError }}
+        </div>
+      </div>
+
+      <!-- Duration -->
+      <div
+        class="form-group form-group--full"
+        [class.has-error]="durationError"
+      >
+        <label>Duration <span class="required">*</span></label>
+        <div class="input-with-suffix">
+          <input
+            type="number"
+            class="form-control"
+            min="1"
+            [(ngModel)]="formDurationMinutes"
+            (input)="durationError = ''"
+          />
+          <span class="input-suffix">minutes</span>
+        </div>
+        <div class="field-error" *ngIf="durationError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ durationError }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--primary" (click)="submitForm()">
+      <i
+        class="fa-solid fa-{{
+          modalMode === 'create' ? 'plus' : 'floppy-disk'
+        }}"
+      ></i>
+      {{ modalMode === "create" ? "Create Quiz" : "Save Changes" }}
+    </button>
+  </div>
+</div>
+
+<!-- ─── View ──────────────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'view' && selectedQuiz">
+  <div class="modal__header">
+    <h3><i class="fa-solid fa-eye"></i> Quiz Details</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <div class="modal__body">
+    <div class="view-showcase">
+      <div class="view-showcase__icon">
+        <i class="fa-solid fa-file-pen"></i>
+      </div>
+      <div>
+        <div class="view-showcase__title">{{ selectedQuiz.title }}</div>
+        <span
+          class="pg-badge pg-badge--purple"
+          *ngIf="getTopicName(selectedQuiz.topicId) !== '—'"
+        >
+          {{ getTopicName(selectedQuiz.topicId) }}
+        </span>
+      </div>
+    </div>
+    <div class="view-detail-grid">
+      <div class="view-detail-item">
+        <div class="view-detail-label">Total Marks</div>
+        <div class="view-detail-val">{{ selectedQuiz.totalMarks }}</div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Passing Marks</div>
+        <div class="view-detail-val">{{ selectedQuiz.passingMarks }}</div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Duration</div>
+        <div class="view-detail-val">
+          {{ selectedQuiz.durationMinutes }} min
+        </div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Questions</div>
+        <div class="view-detail-val">
+          {{ selectedQuiz.questionCount ?? "—" }}
+        </div>
+      </div>
+    </div>
+    <div class="view-detail-block" *ngIf="selectedQuiz.description">
+      <div class="view-detail-label">Description</div>
+      <div class="view-detail-val-desc">{{ selectedQuiz.description }}</div>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+    <button
+      class="pg-btn pg-btn--purple"
+      (click)="openQuestionsModal(selectedQuiz)"
+    >
+      <i class="fa-solid fa-list-check"></i> Questions
+    </button>
+    <button
+      class="pg-btn pg-btn--primary"
+      (click)="openEditModal(selectedQuiz)"
+    >
+      <i class="fa-solid fa-pen-to-square"></i> Edit
+    </button>
+  </div>
+</div>
+
+<!-- ─── Questions Manager ─────────────────────────────── -->
+<div
+  class="modal modal--questions"
+  *ngIf="modalMode === 'questions' && selectedQuiz"
+>
+  <div class="modal__header modal__header--purple">
+    <h3>
+      <i class="fa-solid fa-list-check"></i>
+      Questions — {{ selectedQuiz.title }}
+    </h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <div class="modal__body">
+    <!-- Questions list -->
+    <div class="questions-loading" *ngIf="questionsLoading">
+      <i class="fa-solid fa-spinner fa-spin"></i> Loading questions...
+    </div>
+
+    <div class="questions-list" *ngIf="!questionsLoading">
+      <div class="question-card" *ngFor="let q of questions; let qi = index">
+        <div class="question-card__header">
+          <span class="q-number">Q{{ qi + 1 }}</span>
+          <span class="q-marks-badge"
+            ><i class="fa-solid fa-star"></i> {{ q.marks }} mark{{
+              q.marks > 1 ? "s" : ""
+            }}</span
+          >
+        </div>
+        <div class="q-text">{{ q.questionText }}</div>
+        <div class="q-options">
+          <div
+            class="q-option"
+            *ngFor="let opt of optionKeys"
+            [class.q-option--correct]="q.correctOption === opt"
+          >
+            <span class="q-option-label">{{ opt }}</span>
+            <span class="q-option-text">{{ getOption(q, opt) }}</span>
+            <i
+              class="fa-solid fa-circle-check q-correct-icon"
+              *ngIf="q.correctOption === opt"
+            ></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="questions-empty" *ngIf="questions.length === 0">
+        <i class="fa-solid fa-list-check"></i>
+        <p>No questions yet. Add the first one below.</p>
+      </div>
+    </div>
+
+    <!-- Add Question Panel -->
+    <div class="add-q-toggle" (click)="showAddQuestion = !showAddQuestion">
+      <i class="fa-solid fa-{{ showAddQuestion ? 'chevron-up' : 'plus' }}"></i>
+      {{ showAddQuestion ? "Hide Form" : "Add Question" }}
+    </div>
+
+    <div class="add-q-panel" *ngIf="showAddQuestion">
+      <!-- Question Text -->
+      <div class="form-group" [class.has-error]="qTextError">
+        <label>Question Text <span class="required">*</span></label>
+        <textarea
+          class="form-control"
+          rows="2"
+          placeholder="Enter the question..."
+          [(ngModel)]="qText"
+          (input)="qTextError = ''"
+        ></textarea>
+        <div class="field-error" *ngIf="qTextError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ qTextError }}
+        </div>
+      </div>
+
+      <!-- Options grid -->
+      <div class="options-grid">
+        <div class="form-group" *ngFor="let opt of ['A', 'B', 'C', 'D']">
+          <label
+            class="opt-label"
+            [class.opt-label--correct]="qCorrect === opt"
+          >
+            <span
+              class="opt-badge"
+              [class.opt-badge--correct]="qCorrect === opt"
+              >{{ opt }}</span
+            >
+            Option {{ opt }}
+          </label>
+          <input
+            type="text"
+            class="form-control"
+            [class.form-control--correct]="qCorrect === opt"
+            [placeholder]="'Option ' + opt"
+            [ngModel]="
+              opt === 'A'
+                ? qOptionA
+                : opt === 'B'
+                  ? qOptionB
+                  : opt === 'C'
+                    ? qOptionC
+                    : qOptionD
+            "
+            (ngModelChange)="
+              opt === 'A'
+                ? (qOptionA = $event)
+                : opt === 'B'
+                  ? (qOptionB = $event)
+                  : opt === 'C'
+                    ? (qOptionC = $event)
+                    : (qOptionD = $event)
+            "
+          />
+        </div>
+      </div>
+
+      <!-- Correct answer + Marks -->
+      <div class="q-meta-row">
+        <div class="form-group">
+          <label>Correct Answer <span class="required">*</span></label>
+          <div class="correct-selector">
+            <button
+              *ngFor="let opt of correctOptions"
+              class="correct-btn"
+              [class.correct-btn--active]="qCorrect === opt"
+              (click)="qCorrect = opt"
+            >
+              {{ opt }}
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Marks <span class="required">*</span></label>
+          <input
+            type="number"
+            class="form-control"
+            min="1"
+            [(ngModel)]="qMarks"
+          />
+        </div>
+      </div>
+
+      <div class="add-q-actions">
+        <button
+          class="pg-btn pg-btn--ghost"
+          (click)="resetQuestionForm(); showAddQuestion = false"
+        >
+          Cancel
+        </button>
+        <button
+          class="pg-btn pg-btn--purple"
+          [disabled]="qSaving"
+          (click)="addQuestion()"
+        >
+          <i
+            class="fa-solid"
+            [ngClass]="qSaving ? 'fa-spinner fa-spin' : 'fa-plus'"
+          ></i>
+          Add Question
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <span class="q-count-summary">
+      <i class="fa-solid fa-list-check"></i>
+      {{ questions.length }} question{{ questions.length !== 1 ? "s" : "" }}
+    </span>
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Done</button>
+  </div>
+</div>
+
+<!-- ─── Delete ────────────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'delete' && selectedQuiz">
+  <div class="modal__header modal__header--danger">
+    <h3><i class="fa-solid fa-triangle-exclamation"></i> Delete Quiz</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <div class="modal__body modal__body--center">
+    <div class="delete-icon"><i class="fa-solid fa-trash-can"></i></div>
+    <p class="delete-msg">
+      Are you sure you want to delete<br />
+      <strong>"{{ selectedQuiz.title }}"</strong>?
+    </p>
+    <p class="delete-sub">All questions in this quiz will also be deleted.</p>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--danger" (click)="deleteQuiz()">
+      <i class="fa-solid fa-trash"></i> Delete
+    </button>
   </div>
 </div>

@@ -116,7 +116,6 @@ export class StudentsComponent implements OnInit {
       email: this.formEmail.trim(),
       password: this.formPassword,
       phone: this.formPhone.trim(),
-      userType: 'Student',
       roleId: studentRole?.id ?? '',
     };
     this.userService.createUser(payload).subscribe({
@@ -143,7 +142,6 @@ export class StudentsComponent implements OnInit {
       email: this.formEmail.trim(),
       password: this.formPassword,
       phone: this.formPhone.trim(),
-      userType: 'Student',
       roleId: studentRole?.id ?? this.selectedUser.roleDto?.id,
       isActive: this.formIsActive,
     };

@@ -106,7 +106,6 @@ export class TeachersComponent implements OnInit {
       email: this.formEmail.trim(),
       password: this.formPassword,
       phone: this.formPhone.trim(),
-      userType: 'Teacher',
       roleId: role?.id ?? '',
     };
     this.userService.createUser(payload).subscribe({
@@ -133,7 +132,6 @@ export class TeachersComponent implements OnInit {
       email: this.formEmail.trim(),
       password: this.formPassword,
       phone: this.formPhone.trim(),
-      userType: 'Teacher',
       roleId: role?.id ?? this.selectedUser.roleDto?.id,
       isActive: this.formIsActive,
     };

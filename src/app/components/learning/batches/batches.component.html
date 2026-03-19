@@ -1,5 +1,5 @@
+<!-- batches.component.html -->
 <div class="pg">
-
   <!-- Page Header -->
   <div class="pg-head">
     <div class="pg-head__left">
@@ -12,7 +12,7 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary">
+      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
         <i class="fa-solid fa-plus"></i> Add Batch
       </button>
     </div>
@@ -25,7 +25,7 @@
         <i class="fa-solid fa-layer-group"></i>
       </div>
       <div>
-        <div class="pg-stat__val">68</div>
+        <div class="pg-stat__val">{{ batches.length }}</div>
         <div class="pg-stat__lbl">Total Batches</div>
       </div>
     </div>
@@ -34,7 +34,7 @@
         <i class="fa-solid fa-circle-check"></i>
       </div>
       <div>
-        <div class="pg-stat__val">54</div>
+        <div class="pg-stat__val">{{ totalActive }}</div>
         <div class="pg-stat__lbl">Active</div>
       </div>
     </div>
@@ -43,16 +43,16 @@
         <i class="fa-solid fa-clock"></i>
       </div>
       <div>
-        <div class="pg-stat__val">8</div>
+        <div class="pg-stat__val">{{ totalUpcoming }}</div>
         <div class="pg-stat__lbl">Upcoming</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-gray">
+      <div class="pg-stat__icon chip-indigo">
         <i class="fa-solid fa-flag-checkered"></i>
       </div>
       <div>
-        <div class="pg-stat__val">6</div>
+        <div class="pg-stat__val">{{ totalCompleted }}</div>
         <div class="pg-stat__lbl">Completed</div>
       </div>
     </div>
@@ -61,85 +61,606 @@
   <!-- Table Card -->
   <div class="pg-card">
     <div class="pg-card__head">
-      <div class="pg-card__title">All Batches</div>
+      <span class="pg-card__title">All Batches</span>
       <div class="pg-toolbar">
-        <div class="pg-search">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" placeholder="Search batches..." [(ngModel)]="searchQuery" />
-        </div>
-        <select class="pg-filter" [(ngModel)]="statusFilter">
+        <input
+          class="pg-search"
+          type="text"
+          placeholder="Search batches..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
+        />
+        <select
+          class="pg-filter"
+          [(ngModel)]="statusFilter"
+          (change)="onStatusFilter()"
+        >
           <option value="">All Status</option>
           <option value="active">Active</option>
           <option value="upcoming">Upcoming</option>
           <option value="completed">Completed</option>
+          <option value="inactive">Inactive</option>
         </select>
       </div>
     </div>
 
-    <div class="pg-table-wrap">
+    <div class="pg-loading" *ngIf="isLoading">
+      <i class="fa-solid fa-spinner fa-spin"></i> Loading batches...
+    </div>
+
+    <div class="pg-table-wrap" *ngIf="!isLoading">
       <table class="pg-table">
         <thead>
           <tr>
+            <th>#</th>
             <th>Batch Name</th>
-            <th>Class &amp; Board</th>
             <th>Teacher</th>
             <th>Students</th>
-            <th>Start – End Date</th>
+            <th>Max</th>
+            <th>Start – End</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let batch of filteredBatches">
+          <tr *ngFor="let batch of filteredBatches; let i = index">
+            <td class="idx-cell">{{ i + 1 }}</td>
             <td>
-              <div class="pg-cell__primary">{{ batch.name }}</div>
-            </td>
-            <td>
-              <div class="pg-cell__primary">{{ batch.class }}</div>
-              <div class="pg-cell__sub">{{ batch.board }}</div>
-            </td>
-            <td>
-              <div class="pg-with-avatar">
-                <div class="pg-avatar av-orange">{{ batch.teacher.charAt(0) }}</div>
-                <span class="pg-cell__primary">{{ batch.teacher }}</span>
+              <div class="batch-name-cell">
+                <span class="batch-icon"
+                  ><i class="fa-solid fa-layer-group"></i
+                ></span>
+                <span class="pg-cell__primary">{{ getBatchName(batch) }}</span>
               </div>
             </td>
             <td>
-              <span style="display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;color:#475569;border-radius:20px;padding:3px 10px;font-size:13px;font-weight:600;">
-                <i class="fa-solid fa-users" style="font-size:11px;"></i>
-                {{ batch.students }}
-              </span>
+              <div class="pg-with-avatar" *ngIf="getTeacherName(batch) !== '—'">
+                <div class="pg-avatar av-orange">
+                  {{ getTeacherName(batch).charAt(0) }}
+                </div>
+                <span class="pg-cell__primary">{{
+                  getTeacherName(batch)
+                }}</span>
+              </div>
+              <span class="no-val" *ngIf="getTeacherName(batch) === '—'"
+                >—</span
+              >
             </td>
             <td>
-              <div class="pg-cell__primary">{{ formatDate(batch.startDate) }}</div>
+              <span class="student-count-chip">
+                <i class="fa-solid fa-users"></i>
+                {{ (batch.students || []).length }}
+              </span>
+            </td>
+            <td class="max-cell">{{ batch.maxStudents ?? "—" }}</td>
+            <td>
+              <div class="pg-cell__primary">
+                {{ formatDate(batch.startDate) }}
+              </div>
               <div class="pg-cell__sub">{{ formatDate(batch.endDate) }}</div>
             </td>
             <td>
-              <span [class]="getStatusBadge(batch.status)">{{ batch.status | titlecase }}</span>
+              <span [class]="getStatusBadge(batch)">{{
+                getStatusLabel(batch)
+              }}</span>
             </td>
             <td>
-              <div style="display:flex;gap:6px;">
-                <button class="pg-action-btn" title="View">
+              <div class="action-group">
+                <button
+                  class="pg-action-btn"
+                  title="View"
+                  (click)="openViewModal(batch)"
+                >
                   <i class="fa-solid fa-eye"></i>
                 </button>
-                <button class="pg-action-btn" title="Edit">
-                  <i class="fa-solid fa-pen"></i>
+                <button
+                  class="pg-action-btn"
+                  title="Edit"
+                  (click)="openEditModal(batch)"
+                >
+                  <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button class="pg-action-btn pg-action-btn--danger" title="Delete">
+                <button
+                  class="pg-action-btn pg-action-btn--sky"
+                  title="Manage Students"
+                  (click)="openManageStudents(batch)"
+                >
+                  <i class="fa-solid fa-user-graduate"></i>
+                </button>
+                <button
+                  class="pg-action-btn pg-action-btn--emerald"
+                  title="Manage Teachers"
+                  (click)="openManageTeachers(batch)"
+                >
+                  <i class="fa-solid fa-chalkboard-user"></i>
+                </button>
+                <button
+                  class="pg-action-btn pg-action-btn--danger"
+                  title="Delete"
+                  (click)="openDeleteModal(batch)"
+                >
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
             </td>
           </tr>
           <tr *ngIf="filteredBatches.length === 0">
-            <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">
-              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
-              No batches found
+            <td colspan="8" class="pg-empty">
+              <i class="fa-solid fa-layer-group pg-empty__icon"></i>
+              No batches found.
             </td>
           </tr>
         </tbody>
       </table>
     </div>
   </div>
+</div>
 
+<!-- ═══════════════════════════════════════════════════
+     MODAL OVERLAY
+═══════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
+
+<!-- ─── Create / Edit Modal ─────────────────────────── -->
+<div class="modal" *ngIf="modalMode === 'create' || modalMode === 'edit'">
+  <div class="modal__header">
+    <h3>
+      <i
+        class="fa-solid fa-{{
+          modalMode === 'create' ? 'plus-circle' : 'pen-to-square'
+        }}"
+      ></i>
+      {{ modalMode === "create" ? "Add New Batch" : "Edit Batch" }}
+    </h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="modal__body">
+    <div class="form-grid">
+      <!-- Batch Name -->
+      <div class="form-group form-group--full" [class.has-error]="nameError">
+        <label>Batch Name <span class="required">*</span></label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="e.g. Science Elite – Batch A"
+          [(ngModel)]="formName"
+          (input)="nameError = ''"
+        />
+        <div class="field-error" *ngIf="nameError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ nameError }}
+        </div>
+      </div>
+
+      <!-- Course -->
+      <div class="form-group form-group--full">
+        <label>Course <span class="hint">(optional)</span></label>
+        <select class="form-control form-select" [(ngModel)]="formCourseId">
+          <option value="">— Select a Course —</option>
+          <option *ngFor="let course of courses" [value]="course.id">
+            {{ course.title }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Teacher -->
+      <div class="form-group form-group--full" [class.has-error]="teacherError">
+        <label>Primary Teacher <span class="required">*</span></label>
+        <select
+          class="form-control form-select"
+          [(ngModel)]="formTeacherId"
+          (change)="teacherError = ''"
+        >
+          <option value="">— Select Teacher —</option>
+          <option *ngFor="let t of allTeachers" [value]="t.id">
+            {{ getUserFullName(t) }}
+          </option>
+        </select>
+        <div class="field-error" *ngIf="teacherError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ teacherError }}
+        </div>
+      </div>
+
+      <!-- Start Date -->
+      <div class="form-group" [class.has-error]="startDateError">
+        <label>Start Date <span class="required">*</span></label>
+        <input
+          type="date"
+          class="form-control"
+          [(ngModel)]="formStartDate"
+          (change)="startDateError = ''"
+        />
+        <div class="field-error" *ngIf="startDateError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ startDateError }}
+        </div>
+      </div>
+
+      <!-- End Date -->
+      <div class="form-group" [class.has-error]="endDateError">
+        <label>End Date <span class="required">*</span></label>
+        <input
+          type="date"
+          class="form-control"
+          [(ngModel)]="formEndDate"
+          (change)="endDateError = ''"
+        />
+        <div class="field-error" *ngIf="endDateError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ endDateError }}
+        </div>
+      </div>
+
+      <!-- Max Students (edit only) -->
+      <div class="form-group" *ngIf="modalMode === 'edit'">
+        <label>Max Students</label>
+        <input
+          type="number"
+          class="form-control"
+          min="1"
+          [(ngModel)]="formMaxStudents"
+        />
+      </div>
+
+      <!-- Active Toggle (edit only) -->
+      <div class="form-group" *ngIf="modalMode === 'edit'">
+        <label class="toggle-label">
+          <span>Active Status</span>
+          <div
+            class="toggle-switch"
+            [class.on]="formIsActive"
+            (click)="formIsActive = !formIsActive"
+          >
+            <div class="toggle-thumb"></div>
+          </div>
+          <span class="toggle-val">{{
+            formIsActive ? "Active" : "Inactive"
+          }}</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--primary" (click)="submitForm()">
+      <i
+        class="fa-solid fa-{{
+          modalMode === 'create' ? 'plus' : 'floppy-disk'
+        }}"
+      ></i>
+      {{ modalMode === "create" ? "Create Batch" : "Save Changes" }}
+    </button>
+  </div>
+</div>
+
+<!-- ─── View Modal ───────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'view' && selectedBatch">
+  <div class="modal__header">
+    <h3><i class="fa-solid fa-eye"></i> Batch Details</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <div class="modal__body">
+    <div class="view-showcase">
+      <div class="view-showcase__icon">
+        <i class="fa-solid fa-layer-group"></i>
+      </div>
+      <div>
+        <div class="view-showcase__title">
+          {{ getBatchName(selectedBatch) }}
+        </div>
+        <span [class]="getStatusBadge(selectedBatch)">{{
+          getStatusLabel(selectedBatch)
+        }}</span>
+      </div>
+    </div>
+    <div class="view-detail-grid">
+      <div class="view-detail-item">
+        <div class="view-detail-label">Course</div>
+        <div class="view-detail-val">
+          {{ getCourseTitle(selectedBatch.courseId) }}
+        </div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Teacher</div>
+        <div class="view-detail-val">{{ getTeacherName(selectedBatch) }}</div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Max Students</div>
+        <div class="view-detail-val">
+          {{ selectedBatch.maxStudents ?? "—" }}
+        </div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Start Date</div>
+        <div class="view-detail-val">
+          {{ formatDate(selectedBatch.startDate) }}
+        </div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">End Date</div>
+        <div class="view-detail-val">
+          {{ formatDate(selectedBatch.endDate) }}
+        </div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Students Enrolled</div>
+        <div class="view-detail-val">
+          {{ (selectedBatch.students || []).length }}
+        </div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Teachers Assigned</div>
+        <div class="view-detail-val">
+          {{ (selectedBatch.teachers || []).length }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+    <button
+      class="pg-btn pg-btn--sky"
+      (click)="openManageStudents(selectedBatch)"
+    >
+      <i class="fa-solid fa-user-graduate"></i> Students
+    </button>
+    <button
+      class="pg-btn pg-btn--emerald"
+      (click)="openManageTeachers(selectedBatch)"
+    >
+      <i class="fa-solid fa-chalkboard-user"></i> Teachers
+    </button>
+    <button
+      class="pg-btn pg-btn--primary"
+      (click)="openEditModal(selectedBatch)"
+    >
+      <i class="fa-solid fa-pen-to-square"></i> Edit
+    </button>
+  </div>
+</div>
+
+<!-- ─── Manage Students Modal ─────────────────────────── -->
+<div
+  class="modal modal--members"
+  *ngIf="modalMode === 'manage-students' && selectedBatch"
+>
+  <div class="modal__header modal__header--sky">
+    <h3>
+      <i class="fa-solid fa-user-graduate"></i>
+      Manage Students — {{ getBatchName(selectedBatch) }}
+    </h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <div class="modal__body">
+    <!-- Enrolled students -->
+    <div class="member-section">
+      <div class="member-section__title">
+        <i class="fa-solid fa-circle-check"></i>
+        Enrolled ({{ (selectedBatch.students || []).length }})
+      </div>
+      <div
+        class="member-list"
+        *ngIf="(selectedBatch.students || []).length > 0"
+      >
+        <div
+          class="member-item member-item--enrolled"
+          *ngFor="let s of selectedBatch.students"
+        >
+          <div class="pg-avatar av-indigo member-avatar">
+            {{ getUserInitials(s) }}
+          </div>
+          <div class="member-info">
+            <div class="member-name">{{ getUserFullName(s) }}</div>
+            <div class="member-email">{{ s.email || s.username || "" }}</div>
+          </div>
+          <button
+            class="pg-btn pg-btn--remove"
+            [disabled]="actionLoadingId === s.id"
+            (click)="removeStudent(s.id)"
+          >
+            <i
+              class="fa-solid"
+              [ngClass]="
+                actionLoadingId === s.id ? 'fa-spinner fa-spin' : 'fa-minus'
+              "
+            ></i>
+          </button>
+        </div>
+      </div>
+      <div class="member-empty" *ngIf="!(selectedBatch.students || []).length">
+        No students enrolled yet.
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="member-divider">
+      <span>Add Students</span>
+    </div>
+
+    <!-- Search -->
+    <input
+      class="pg-search member-search"
+      type="text"
+      placeholder="Search students..."
+      [(ngModel)]="memberSearchQuery"
+    />
+
+    <!-- Available students -->
+    <div class="member-list member-list--available">
+      <div
+        class="member-item"
+        *ngFor="let s of filteredMemberStudents"
+        [class.member-item--enrolled]="isStudentInBatch(s.id)"
+      >
+        <div class="pg-avatar av-indigo member-avatar">
+          {{ getUserInitials(s) }}
+        </div>
+        <div class="member-info">
+          <div class="member-name">{{ getUserFullName(s) }}</div>
+          <div class="member-email">{{ s.email || s.username || "" }}</div>
+        </div>
+        <button
+          *ngIf="!isStudentInBatch(s.id)"
+          class="pg-btn pg-btn--add"
+          [disabled]="actionLoadingId === s.id"
+          (click)="addStudent(s.id)"
+        >
+          <i
+            class="fa-solid"
+            [ngClass]="
+              actionLoadingId === s.id ? 'fa-spinner fa-spin' : 'fa-plus'
+            "
+          ></i>
+        </button>
+        <span class="enrolled-tag" *ngIf="isStudentInBatch(s.id)">
+          <i class="fa-solid fa-circle-check"></i> Enrolled
+        </span>
+      </div>
+      <div class="member-empty" *ngIf="filteredMemberStudents.length === 0">
+        No students found.
+      </div>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Done</button>
+  </div>
+</div>
+
+<!-- ─── Manage Teachers Modal ─────────────────────────── -->
+<div
+  class="modal modal--members"
+  *ngIf="modalMode === 'manage-teachers' && selectedBatch"
+>
+  <div class="modal__header modal__header--emerald">
+    <h3>
+      <i class="fa-solid fa-chalkboard-user"></i>
+      Manage Teachers — {{ getBatchName(selectedBatch) }}
+    </h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <div class="modal__body">
+    <!-- Assigned teachers -->
+    <div class="member-section">
+      <div class="member-section__title member-section__title--emerald">
+        <i class="fa-solid fa-circle-check"></i>
+        Assigned ({{ (selectedBatch.teachers || []).length }})
+      </div>
+      <div
+        class="member-list"
+        *ngIf="(selectedBatch.teachers || []).length > 0"
+      >
+        <div
+          class="member-item member-item--enrolled member-item--emerald"
+          *ngFor="let t of selectedBatch.teachers"
+        >
+          <div class="pg-avatar av-emerald member-avatar">
+            {{ getUserInitials(t) }}
+          </div>
+          <div class="member-info">
+            <div class="member-name">{{ getUserFullName(t) }}</div>
+            <div class="member-email">{{ t.email || t.username || "" }}</div>
+          </div>
+          <button
+            class="pg-btn pg-btn--remove"
+            [disabled]="actionLoadingId === t.id"
+            (click)="removeTeacher(t.id)"
+          >
+            <i
+              class="fa-solid"
+              [ngClass]="
+                actionLoadingId === t.id ? 'fa-spinner fa-spin' : 'fa-minus'
+              "
+            ></i>
+          </button>
+        </div>
+      </div>
+      <div class="member-empty" *ngIf="!(selectedBatch.teachers || []).length">
+        No teachers assigned yet.
+      </div>
+    </div>
+
+    <div class="member-divider member-divider--emerald">
+      <span>Add Teachers</span>
+    </div>
+
+    <input
+      class="pg-search member-search"
+      type="text"
+      placeholder="Search teachers..."
+      [(ngModel)]="memberSearchQuery"
+    />
+
+    <div class="member-list member-list--available">
+      <div
+        class="member-item"
+        *ngFor="let t of filteredMemberTeachers"
+        [class.member-item--enrolled]="isTeacherInBatch(t.id)"
+        [class.member-item--emerald]="isTeacherInBatch(t.id)"
+      >
+        <div class="pg-avatar av-emerald member-avatar">
+          {{ getUserInitials(t) }}
+        </div>
+        <div class="member-info">
+          <div class="member-name">{{ getUserFullName(t) }}</div>
+          <div class="member-email">{{ t.email || t.username || "" }}</div>
+        </div>
+        <button
+          *ngIf="!isTeacherInBatch(t.id)"
+          class="pg-btn pg-btn--add pg-btn--add-emerald"
+          [disabled]="actionLoadingId === t.id"
+          (click)="addTeacher(t.id)"
+        >
+          <i
+            class="fa-solid"
+            [ngClass]="
+              actionLoadingId === t.id ? 'fa-spinner fa-spin' : 'fa-plus'
+            "
+          ></i>
+        </button>
+        <span
+          class="enrolled-tag enrolled-tag--emerald"
+          *ngIf="isTeacherInBatch(t.id)"
+        >
+          <i class="fa-solid fa-circle-check"></i> Assigned
+        </span>
+      </div>
+      <div class="member-empty" *ngIf="filteredMemberTeachers.length === 0">
+        No teachers found.
+      </div>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Done</button>
+  </div>
+</div>
+
+<!-- ─── Delete Modal ───────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'delete' && selectedBatch">
+  <div class="modal__header modal__header--danger">
+    <h3><i class="fa-solid fa-triangle-exclamation"></i> Delete Batch</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <div class="modal__body modal__body--center">
+    <div class="delete-icon"><i class="fa-solid fa-trash-can"></i></div>
+    <p class="delete-msg">
+      Are you sure you want to delete<br />
+      <strong>"{{ getBatchName(selectedBatch) }}"</strong>?
+    </p>
+    <p class="delete-sub">This action cannot be undone.</p>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--danger" (click)="deleteBatch()">
+      <i class="fa-solid fa-trash"></i> Delete
+    </button>
+  </div>
 </div>
