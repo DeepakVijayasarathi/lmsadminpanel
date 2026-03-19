@@ -29,6 +29,7 @@ import { ParentsComponent } from './components/users/parents/parents.component';
 import { MenuComponent } from './components/system/menu/menu.component';
 import { TimetableComponent } from './components/learning/timetable/timetable.component';
 import { TeacherDashboardComponent } from './components/teacher-dashboard/teacher-dashboard.component';
+import { StudentDashboardComponent } from './components/student-dashboard/student-dashboard.component';
 
 const AG = [AuthGuard];
 
@@ -38,7 +39,7 @@ const routes: Routes = [
 
   // dashboard
   { path: 'dashboard', component: DashboardComponent, canActivate: AG },
-  { path: 'student-dashboard', component: DashboardComponent, canActivate: AG },
+  { path: 'student-dashboard', component: StudentDashboardComponent, canActivate: AG },
   { path: 'teacher-dashboard', component: TeacherDashboardComponent, canActivate: AG },
 
   // User
