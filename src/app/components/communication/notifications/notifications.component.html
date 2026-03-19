@@ -1,3 +1,4 @@
+<!-- notifications.component.html -->
 <div class="pg">
   <!-- Page Header -->
   <div class="pg-head">
@@ -11,7 +12,7 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary">
+      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
         <i class="fa-solid fa-paper-plane"></i> Send Notification
       </button>
     </div>
@@ -20,24 +21,40 @@
   <!-- Stats -->
   <div class="pg-stats">
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-bell"></i></div>
-      <div class="pg-stat__val">1,284</div>
-      <div class="pg-stat__lbl">Sent Today</div>
+      <div class="pg-stat__icon chip-indigo">
+        <i class="fa-solid fa-bell"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ notifications.length }}</div>
+        <div class="pg-stat__lbl">Total</div>
+      </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-emerald"><i class="fa-brands fa-whatsapp"></i></div>
-      <div class="pg-stat__val">640</div>
-      <div class="pg-stat__lbl">WhatsApp</div>
+      <div class="pg-stat__icon chip-emerald">
+        <i class="fa-brands fa-whatsapp"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ totalByChannel["whatsapp"] || 0 }}</div>
+        <div class="pg-stat__lbl">WhatsApp</div>
+      </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-mobile-screen"></i></div>
-      <div class="pg-stat__val">382</div>
-      <div class="pg-stat__lbl">Push</div>
+      <div class="pg-stat__icon chip-sky">
+        <i class="fa-solid fa-mobile-screen"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ totalByChannel["push"] || 0 }}</div>
+        <div class="pg-stat__lbl">Push</div>
+      </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-amber"><i class="fa-solid fa-clock"></i></div>
-      <div class="pg-stat__val">12</div>
-      <div class="pg-stat__lbl">Pending</div>
+      <div class="pg-stat__icon chip-amber">
+        <i class="fa-solid fa-envelope"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ totalByChannel["email"] || 0 }}</div>
+        <div class="pg-stat__lbl">Email</div>
+      </div>
     </div>
   </div>
 
@@ -46,58 +63,361 @@
     <div class="pg-card__head">
       <span class="pg-card__title">All Notifications</span>
       <div class="pg-toolbar">
-        <input class="pg-search" type="text" placeholder="Search notifications..." />
-        <select class="pg-filter">
+        <input
+          class="pg-search"
+          type="text"
+          placeholder="Search notifications..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
+        />
+        <select
+          class="pg-filter"
+          [(ngModel)]="channelFilter"
+          (change)="onChannelFilter()"
+        >
+          <option value="">All Channels</option>
+          <option *ngFor="let c of channels" [value]="c">
+            {{ c | titlecase }}
+          </option>
+        </select>
+        <select
+          class="pg-filter"
+          [(ngModel)]="typeFilter"
+          (change)="onTypeFilter()"
+        >
           <option value="">All Types</option>
-          <option value="push">Push</option>
-          <option value="whatsapp">WhatsApp</option>
-          <option value="sms">SMS</option>
-          <option value="email">Email</option>
+          <option *ngFor="let t of types" [value]="t">
+            {{ t | titlecase }}
+          </option>
         </select>
       </div>
     </div>
-    <div class="pg-table-wrap">
+
+    <div class="pg-loading" *ngIf="isLoading">
+      <i class="fa-solid fa-spinner fa-spin"></i> Loading notifications...
+    </div>
+
+    <div class="pg-table-wrap" *ngIf="!isLoading">
       <table class="pg-table">
         <thead>
           <tr>
+            <th>#</th>
             <th>Title</th>
+            <th>Recipient</th>
+            <th>Channel</th>
             <th>Type</th>
-            <th>Target</th>
             <th>Message</th>
-            <th>Recipients</th>
             <th>Sent At</th>
-            <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let notif of notifications">
+          <tr *ngFor="let notif of filteredNotifications; let i = index">
+            <td class="idx-cell">{{ i + 1 }}</td>
+
             <td>
-              <div class="pg-cell__primary">{{ notif.title }}</div>
+              <div class="notif-title-cell">
+                <span
+                  class="notif-icon"
+                  [ngClass]="'notif-icon--' + notif.channel"
+                >
+                  <i [class]="channelIcon(notif.channel)"></i>
+                </span>
+                <span class="pg-cell__primary">{{ notif.title }}</span>
+              </div>
             </td>
+
             <td>
-              <span class="pg-badge {{ typeBadge(notif.type) }}">
-                <i class="fa-solid {{ typeIcon(notif.type) }}" style="margin-right:4px;"></i>
-                {{ notif.type }}
+              <span class="pg-cell__primary">{{
+                getUserName(notif.userId)
+              }}</span>
+            </td>
+
+            <td>
+              <span
+                class="pg-badge"
+                [ngClass]="channelBadgeClass(notif.channel)"
+              >
+                <i [class]="channelIcon(notif.channel)"></i>
+                {{ notif.channel | titlecase }}
               </span>
             </td>
-            <td>{{ notif.target }}</td>
+
             <td>
-              <div class="pg-cell__sub">{{ truncate(notif.message) }}</div>
+              <span class="pg-badge" [ngClass]="typeBadgeClass(notif.type)">
+                {{ notif.type | titlecase }}
+              </span>
             </td>
-            <td>{{ notif.recipients | number }}</td>
-            <td>{{ notif.sentAt || '—' }}</td>
-            <td>
-              <span class="pg-badge {{ statusBadge(notif.status) }}">{{ notif.status }}</span>
+
+            <td class="msg-cell">{{ truncate(notif.message) }}</td>
+
+            <td class="date-cell">
+              {{
+                notif.createdAt
+                  ? (notif.createdAt | date: "dd MMM, HH:mm")
+                  : "—"
+              }}
             </td>
+
             <td>
-              <button class="pg-action-btn" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-              <button class="pg-action-btn" title="View"><i class="fa-solid fa-eye"></i></button>
-              <button class="pg-action-btn pg-action-btn--danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+              <div class="action-group">
+                <button
+                  class="pg-action-btn"
+                  title="View"
+                  (click)="openViewModal(notif)"
+                >
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button
+                  class="pg-action-btn pg-action-btn--danger"
+                  title="Delete"
+                  (click)="openDeleteModal(notif)"
+                >
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredNotifications.length === 0">
+            <td colspan="8" class="pg-empty">
+              <i class="fa-solid fa-bell pg-empty__icon"></i>
+              No notifications found.
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     OVERLAY
+═══════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
+
+<!-- ─── Send Notification Modal ─────────────────────── -->
+<div class="modal" *ngIf="modalMode === 'create'">
+  <div class="modal__header">
+    <h3><i class="fa-solid fa-paper-plane"></i> Send Notification</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="modal__body">
+    <div class="form-grid">
+      <!-- Recipient -->
+      <div class="form-group form-group--full" [class.has-error]="userIdError">
+        <label>Recipient <span class="required">*</span></label>
+        <select
+          class="form-control form-select"
+          [(ngModel)]="formUserId"
+          (change)="userIdError = ''"
+        >
+          <option value="">— Select User —</option>
+          <option *ngFor="let u of users" [value]="u.id">
+            {{ u.firstName }} {{ u.lastName
+            }}{{ u.userType ? " (" + u.userType + ")" : "" }}
+          </option>
+        </select>
+        <div class="field-error" *ngIf="userIdError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ userIdError }}
+        </div>
+      </div>
+
+      <!-- Title -->
+      <div class="form-group form-group--full" [class.has-error]="titleError">
+        <label>Title <span class="required">*</span></label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="e.g. Exam Schedule Released"
+          [(ngModel)]="formTitle"
+          (input)="titleError = ''"
+        />
+        <div class="field-error" *ngIf="titleError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ titleError }}
+        </div>
+      </div>
+
+      <!-- Channel -->
+      <div class="form-group" [class.has-error]="channelError">
+        <label>Channel <span class="required">*</span></label>
+        <div class="channel-selector">
+          <button
+            *ngFor="let ch of channels"
+            class="channel-btn"
+            [class.channel-btn--active]="formChannel === ch"
+            [ngClass]="'channel-btn--' + ch"
+            (click)="formChannel = ch; channelError = ''"
+            type="button"
+          >
+            <i [class]="channelIcon(ch)"></i>
+            {{ ch | titlecase }}
+          </button>
+        </div>
+        <div class="field-error" *ngIf="channelError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ channelError }}
+        </div>
+      </div>
+
+      <!-- Type -->
+      <div class="form-group" [class.has-error]="typeError">
+        <label>Type <span class="required">*</span></label>
+        <select
+          class="form-control form-select"
+          [(ngModel)]="formType"
+          (change)="typeError = ''"
+        >
+          <option value="">— Select Type —</option>
+          <option *ngFor="let t of types" [value]="t">
+            {{ t | titlecase }}
+          </option>
+        </select>
+        <div class="field-error" *ngIf="typeError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ typeError }}
+        </div>
+      </div>
+
+      <!-- Message -->
+      <div class="form-group form-group--full" [class.has-error]="messageError">
+        <label>Message <span class="required">*</span></label>
+        <textarea
+          class="form-control"
+          rows="4"
+          placeholder="Write your notification message here..."
+          [(ngModel)]="formMessage"
+          (input)="messageError = ''"
+        ></textarea>
+        <div class="msg-counter">{{ formMessage.length }} characters</div>
+        <div class="field-error" *ngIf="messageError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ messageError }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button
+      class="pg-btn pg-btn--primary"
+      [disabled]="isSending"
+      (click)="submitForm()"
+    >
+      <i
+        class="fa-solid"
+        [ngClass]="isSending ? 'fa-spinner fa-spin' : 'fa-paper-plane'"
+      ></i>
+      {{ isSending ? "Sending…" : "Send Notification" }}
+    </button>
+  </div>
+</div>
+
+<!-- ─── View Modal ────────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'view' && selectedNotif">
+  <div class="modal__header">
+    <h3><i class="fa-solid fa-eye"></i> Notification Details</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <div class="modal__body">
+    <!-- Showcase -->
+    <div
+      class="view-showcase"
+      [ngClass]="'view-showcase--' + selectedNotif.channel"
+    >
+      <div class="view-showcase__icon">
+        <i [class]="channelIcon(selectedNotif.channel)"></i>
+      </div>
+      <div>
+        <div class="view-showcase__title">{{ selectedNotif.title }}</div>
+        <div class="view-badge-row">
+          <span
+            class="pg-badge"
+            [ngClass]="channelBadgeClass(selectedNotif.channel)"
+          >
+            <i [class]="channelIcon(selectedNotif.channel)"></i>
+            {{ selectedNotif.channel | titlecase }}
+          </span>
+          <span class="pg-badge" [ngClass]="typeBadgeClass(selectedNotif.type)">
+            {{ selectedNotif.type | titlecase }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="view-detail-grid">
+      <div class="view-detail-item">
+        <div class="view-detail-label">Recipient</div>
+        <div class="view-detail-val">
+          {{ getUserName(selectedNotif.userId) }}
+        </div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Sent At</div>
+        <div class="view-detail-val">
+          {{
+            selectedNotif.createdAt
+              ? (selectedNotif.createdAt | date: "dd MMM yyyy, HH:mm")
+              : "—"
+          }}
+        </div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Read</div>
+        <div class="view-detail-val">
+          <span
+            class="pg-badge"
+            [ngClass]="
+              selectedNotif.isRead ? 'pg-badge--green' : 'pg-badge--gray'
+            "
+          >
+            <i
+              class="fa-solid"
+              [ngClass]="
+                selectedNotif.isRead ? 'fa-circle-check' : 'fa-circle-xmark'
+              "
+            ></i>
+            {{ selectedNotif.isRead ? "Read" : "Unread" }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="view-message-block">
+      <div class="view-detail-label">Message</div>
+      <div class="view-message-text">{{ selectedNotif.message }}</div>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+  </div>
+</div>
+
+<!-- ─── Delete Modal ──────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'delete' && selectedNotif">
+  <div class="modal__header modal__header--danger">
+    <h3>
+      <i class="fa-solid fa-triangle-exclamation"></i> Delete Notification
+    </h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <div class="modal__body modal__body--center">
+    <div class="delete-icon"><i class="fa-solid fa-trash-can"></i></div>
+    <p class="delete-msg">
+      Are you sure you want to delete<br />
+      <strong>"{{ selectedNotif.title }}"</strong>?
+    </p>
+    <p class="delete-sub">This action cannot be undone.</p>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--danger" (click)="closeModal()">
+      <i class="fa-solid fa-trash"></i> Delete
+    </button>
   </div>
 </div>

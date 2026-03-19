@@ -19,10 +19,9 @@ export interface User {
   lastName: string;
   email: string;
   phone: string;
-  userType: string;
   roleId: string;
   isActive: boolean;
-  role?: Role;
+  roleDto: Role;
   createdAt?: string;
 }
 
@@ -33,7 +32,6 @@ export interface UserPayload {
   email: string;
   password: string;
   phone: string;
-  userType: string;
   roleId: string;
 }
 

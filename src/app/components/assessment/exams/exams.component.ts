@@ -1,43 +1,395 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { CommonService } from '../../../services/common.service';
+import { HttpGeneralService } from '../../../services/http.service';
+import { environment } from '../../../../environments/environment';
 
-export interface Exam {
-  id: number;
-  title: string;
-  subject: string;
-  class: string;
-  teacher: string;
-  duration: number;
-  totalMarks: number;
-  scheduled: string;
-  status: 'upcoming' | 'live' | 'completed' | 'draft';
-  attempts: number;
+const BASE_URL = environment.apiUrl;
+
+export interface Topic {
+  id: string;
+  name: string;
 }
+
+export interface Quiz {
+  id: string;
+  title: string;
+  description: string;
+  totalMarks: number;
+  passingMarks: number;
+  durationMinutes: number;
+  topicId: string | null;
+  topic?: Topic;
+  questionCount?: number;
+  createdAt?: string;
+}
+
+export interface QuizPayload {
+  topicId: string | null;
+  title: string;
+  description: string;
+  totalMarks: number;
+  passingMarks: number;
+  durationMinutes: number;
+}
+
+export interface Question {
+  id?: string;
+  questionText: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+  correctOption: string;
+  marks: number;
+}
+
+type ModalMode = 'create' | 'edit' | 'view' | 'delete' | 'questions' | null;
+
+type OptionKey = 'A' | 'B' | 'C' | 'D';
 
 @Component({
   selector: 'app-exams',
   standalone: false,
   templateUrl: './exams.component.html',
-  styleUrls: ['../../../shared-page.css', './exams.component.css']
+  styleUrls: ['../../../shared-page.css', './exams.component.css'],
 })
-export class ExamsComponent {
-  exams: Exam[] = [
-    { id: 1,  title: 'NEET Full Mock Test #7',              subject: 'Physics + Chemistry + Biology', class: 'NEET 2025 – Batch A', teacher: 'Dr. Vikram Sharma',  duration: 200, totalMarks: 720, scheduled: '2026-03-20', status: 'upcoming',  attempts: 0  },
-    { id: 2,  title: 'JEE Main Mock Test #5 (Live)',        subject: 'Physics + Chemistry + Maths',   class: 'JEE Main 2025 – Batch A', teacher: 'Mr. Arjun Verma', duration: 180, totalMarks: 300, scheduled: '2026-03-17', status: 'live',      attempts: 38 },
-    { id: 3,  title: 'NEET Chapter Test – Mechanics',       subject: 'Physics',                       class: 'NEET 2025 – Batch B', teacher: 'Mr. Rahul Gupta',   duration: 60,  totalMarks: 180, scheduled: '2026-03-15', status: 'completed', attempts: 44 },
-    { id: 4,  title: 'JEE Adv Mock Test #3',               subject: 'Physics + Chemistry + Maths',   class: 'JEE Advanced 2025',       teacher: 'Dr. Kiran Patel',  duration: 180, totalMarks: 360, scheduled: '2026-03-22', status: 'upcoming',  attempts: 0  },
-    { id: 5,  title: 'NEET Biology Grand Test',             subject: 'Biology',                       class: 'NEET 2025 – Batch A', teacher: 'Dr. Meena Krishnan', duration: 90,  totalMarks: 360, scheduled: '2026-04-05', status: 'draft',     attempts: 0  },
-    { id: 6,  title: 'Chemistry Chapter Test – Organic',    subject: 'Chemistry',                     class: 'NEET 2025 – Batch B', teacher: 'Ms. Pooja Iyer',    duration: 60,  totalMarks: 180, scheduled: '2026-03-25', status: 'upcoming',  attempts: 0  },
-    { id: 7,  title: 'JEE Main Mock Test #4',              subject: 'Physics + Chemistry + Maths',   class: 'JEE Main 2025 – Batch B', teacher: 'Dr. Sanjay Mishra', duration: 180, totalMarks: 300, scheduled: '2026-03-14', status: 'completed', attempts: 40 },
-    { id: 8,  title: 'Maths Chapter Test – Calculus (JEE)', subject: 'Mathematics',                   class: 'JEE Main 2025 – Batch A', teacher: 'Mr. Arjun Verma', duration: 60,  totalMarks: 100, scheduled: '2026-03-28', status: 'upcoming',  attempts: 0  },
-  ];
+export class ExamsComponent implements OnInit {
+  quizzes: Quiz[] = [];
+  filteredQuizzes: Quiz[] = [];
+  topics: Topic[] = [];
 
-  statusBadge(status: string): string {
-    const map: Record<string, string> = {
-      live: 'pg-badge--red',
-      upcoming: 'pg-badge--blue',
-      completed: 'pg-badge--green',
-      draft: 'pg-badge--gray'
+  searchQuery: string = '';
+  statusFilter: string = '';
+  isLoading: boolean = false;
+
+  // Modal
+  modalMode: ModalMode = null;
+  selectedQuiz: Quiz | null = null;
+
+  // Quiz form
+  formTitle: string = '';
+  formDescription: string = '';
+  formTopicId: string | null = null;
+  formTotalMarks: number = 100;
+  formPassingMarks: number = 40;
+  formDurationMinutes: number = 60;
+
+  // Questions
+  questions: Question[] = [];
+  questionsLoading: boolean = false;
+
+  // Add question form
+  showAddQuestion: boolean = false;
+  qText: string = '';
+  qOptionA: string = '';
+  qOptionB: string = '';
+  qOptionC: string = '';
+  qOptionD: string = '';
+  qCorrect: string = 'A';
+  qMarks: number = 1;
+  qSaving: boolean = false;
+
+  // Validation
+  titleError: string = '';
+  totalMarksError: string = '';
+  passingMarksError: string = '';
+  durationError: string = '';
+  qTextError: string = '';
+
+  optionKeys: OptionKey[] = ['A', 'B', 'C', 'D'];
+
+  constructor(
+    private commonService: CommonService,
+    private httpService: HttpGeneralService<any>,
+  ) {}
+
+  ngOnInit(): void {
+    this.loadTopics();
+    this.loadQuizzes();
+  }
+
+  // ─── API ─────────────────────────────────────────────────────
+
+  loadTopics(): void {
+    this.httpService.getData(BASE_URL, '/topic').subscribe({
+      next: (res: any) => {
+        this.topics = Array.isArray(res) ? res : (res?.data ?? []);
+      },
+      error: () => {},
+    });
+  }
+
+  loadQuizzes(): void {
+    this.isLoading = true;
+    this.httpService.getData(BASE_URL, '/quiz').subscribe({
+      next: (res: any) => {
+        this.quizzes = Array.isArray(res) ? res : (res?.data ?? []);
+        this.applyFilters();
+        this.isLoading = false;
+      },
+      error: () => {
+        this.commonService.error('Failed to load quizzes.');
+        this.isLoading = false;
+      },
+    });
+  }
+
+
+  getOption(q: Question, opt: OptionKey): string {
+    const key = `option${opt}` as 'optionA' | 'optionB' | 'optionC' | 'optionD';
+    return q[key];
+  }
+
+  createQuiz(): void {
+    const payload = this.buildPayload();
+    this.httpService.postData(BASE_URL, '/quiz', payload).subscribe({
+      next: () => {
+        this.commonService.success(
+          `Quiz "${payload.title}" created successfully.`,
+        );
+        this.closeModal();
+        this.loadQuizzes();
+      },
+      error: (err: any) => {
+        this.commonService.error(
+          err?.error?.message || 'Failed to create quiz.',
+        );
+      },
+    });
+  }
+
+  updateQuiz(): void {
+    if (!this.selectedQuiz) return;
+    const payload = this.buildPayload();
+    this.httpService
+      .putData(BASE_URL, `/quiz/${this.selectedQuiz.id}`, payload)
+      .subscribe({
+        next: () => {
+          this.commonService.success(`Quiz "${payload.title}" updated.`);
+          this.closeModal();
+          this.loadQuizzes();
+        },
+        error: (err: any) => {
+          this.commonService.error(
+            err?.error?.message || 'Failed to update quiz.',
+          );
+        },
+      });
+  }
+
+  deleteQuiz(): void {
+    if (!this.selectedQuiz) return;
+    this.httpService
+      .deleteData(BASE_URL, `/quiz/${this.selectedQuiz.id}`)
+      .subscribe({
+        next: () => {
+          this.commonService.success(
+            `Quiz "${this.selectedQuiz!.title}" deleted.`,
+          );
+          this.closeModal();
+          this.loadQuizzes();
+        },
+        error: (err: any) => {
+          this.commonService.error(
+            err?.error?.message || 'Failed to delete quiz.',
+          );
+        },
+      });
+  }
+
+  loadQuestions(quizId: string): void {
+    this.questionsLoading = true;
+    this.questions = [];
+    this.httpService.getData(BASE_URL, `/quiz/${quizId}/questions`).subscribe({
+      next: (res: any) => {
+        this.questions = Array.isArray(res) ? res : (res?.data ?? []);
+        this.questionsLoading = false;
+      },
+      error: () => {
+        this.commonService.error('Failed to load questions.');
+        this.questionsLoading = false;
+      },
+    });
+  }
+
+  addQuestion(): void {
+    if (!this.selectedQuiz) return;
+    if (!this.qText.trim()) {
+      this.qTextError = 'Question text is required.';
+      return;
+    }
+    const payload: Question = {
+      questionText: this.qText.trim(),
+      optionA: this.qOptionA.trim(),
+      optionB: this.qOptionB.trim(),
+      optionC: this.qOptionC.trim(),
+      optionD: this.qOptionD.trim(),
+      correctOption: this.qCorrect,
+      marks: this.qMarks,
     };
-    return map[status] || 'pg-badge--gray';
+    this.qSaving = true;
+    this.httpService
+      .postData(BASE_URL, `/quiz/${this.selectedQuiz.id}/questions`, payload)
+      .subscribe({
+        next: () => {
+          this.commonService.success('Question added.');
+          this.resetQuestionForm();
+          this.loadQuestions(this.selectedQuiz!.id);
+          this.qSaving = false;
+        },
+        error: (err: any) => {
+          this.commonService.error(
+            err?.error?.message || 'Failed to add question.',
+          );
+          this.qSaving = false;
+        },
+      });
+  }
+
+  // ─── Modal Helpers ────────────────────────────────────────────
+
+  openCreateModal(): void {
+    this.modalMode = 'create';
+    this.selectedQuiz = null;
+    this.formTitle = '';
+    this.formDescription = '';
+    this.formTopicId = null;
+    this.formTotalMarks = 100;
+    this.formPassingMarks = 40;
+    this.formDurationMinutes = 60;
+    this.clearErrors();
+  }
+
+  openEditModal(quiz: Quiz): void {
+    this.modalMode = 'edit';
+    this.selectedQuiz = quiz;
+    this.formTitle = quiz.title;
+    this.formDescription = quiz.description;
+    this.formTopicId = quiz.topicId;
+    this.formTotalMarks = quiz.totalMarks;
+    this.formPassingMarks = quiz.passingMarks;
+    this.formDurationMinutes = quiz.durationMinutes;
+    this.clearErrors();
+  }
+
+  openViewModal(quiz: Quiz): void {
+    this.modalMode = 'view';
+    this.selectedQuiz = quiz;
+  }
+
+  openDeleteModal(quiz: Quiz): void {
+    this.modalMode = 'delete';
+    this.selectedQuiz = quiz;
+  }
+
+  openQuestionsModal(quiz: Quiz): void {
+    this.modalMode = 'questions';
+    this.selectedQuiz = quiz;
+    this.showAddQuestion = false;
+    this.resetQuestionForm();
+    this.loadQuestions(quiz.id);
+  }
+
+  closeModal(): void {
+    this.modalMode = null;
+    this.selectedQuiz = null;
+    this.questions = [];
+    this.showAddQuestion = false;
+    this.clearErrors();
+  }
+
+  submitForm(): void {
+    if (!this.validateForm()) return;
+    if (this.modalMode === 'create') this.createQuiz();
+    else if (this.modalMode === 'edit') this.updateQuiz();
+  }
+
+  // ─── Validation ───────────────────────────────────────────────
+
+  validateForm(): boolean {
+    this.clearErrors();
+    let valid = true;
+    if (!this.formTitle.trim()) {
+      this.titleError = 'Title is required.';
+      valid = false;
+    }
+    if (!this.formTotalMarks || this.formTotalMarks < 1) {
+      this.totalMarksError = 'Total marks must be at least 1.';
+      valid = false;
+    }
+    if (!this.formPassingMarks || this.formPassingMarks < 1) {
+      this.passingMarksError = 'Passing marks must be at least 1.';
+      valid = false;
+    } else if (this.formPassingMarks > this.formTotalMarks) {
+      this.passingMarksError = 'Passing marks cannot exceed total marks.';
+      valid = false;
+    }
+    if (!this.formDurationMinutes || this.formDurationMinutes < 1) {
+      this.durationError = 'Duration must be at least 1 minute.';
+      valid = false;
+    }
+    return valid;
+  }
+
+  clearErrors(): void {
+    this.titleError = '';
+    this.totalMarksError = '';
+    this.passingMarksError = '';
+    this.durationError = '';
+    this.qTextError = '';
+  }
+
+  // ─── Helpers ─────────────────────────────────────────────────
+
+  buildPayload(): QuizPayload {
+    return {
+      topicId: this.formTopicId || null,
+      title: this.formTitle.trim(),
+      description: this.formDescription.trim(),
+      totalMarks: this.formTotalMarks,
+      passingMarks: this.formPassingMarks,
+      durationMinutes: this.formDurationMinutes,
+    };
+  }
+
+  resetQuestionForm(): void {
+    this.qText = '';
+    this.qOptionA = '';
+    this.qOptionB = '';
+    this.qOptionC = '';
+    this.qOptionD = '';
+    this.qCorrect = 'A';
+    this.qMarks = 1;
+    this.qTextError = '';
+  }
+
+  getTopicName(topicId: string | null): string {
+    if (!topicId) return '—';
+    return this.topics.find((t) => t.id === topicId)?.name ?? '—';
+  }
+
+  onSearch(): void {
+    this.applyFilters();
+  }
+  onStatusFilter(): void {
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    const q = this.searchQuery.toLowerCase().trim();
+    this.filteredQuizzes = this.quizzes.filter((quiz) => {
+      const matchSearch =
+        !q ||
+        quiz.title.toLowerCase().includes(q) ||
+        quiz.description?.toLowerCase().includes(q) ||
+        this.getTopicName(quiz.topicId).toLowerCase().includes(q);
+      return matchSearch;
+    });
+  }
+
+  correctOptions = ['A', 'B', 'C', 'D'];
+
+  get totalQuestions(): number {
+    return this.quizzes.reduce((s, q) => s + (q.questionCount ?? 0), 0);
   }
 }

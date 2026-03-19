@@ -10,10 +10,13 @@ export class AuthGuard implements CanActivate {
   constructor(private tokenStorage: TokenStorageService, private router: Router) {}
 
   canActivate(): boolean {
-    if (!this.tokenStorage.getAccessToken() || this.tokenStorage.isTokenExpired()) {
+    const token = this.tokenStorage.getAccessToken();
+
+    if (!token) {
       this.router.navigate(['/login']);
       return false;
     }
+
     return true;
   }
 }
