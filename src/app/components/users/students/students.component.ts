@@ -366,4 +366,23 @@ export class StudentsComponent implements OnInit {
   get totalInactive(): number {
     return this.students.filter((u) => !u.isActive).length;
   }
+
+  onlyNumbers(event: KeyboardEvent) {
+    const charCode = event.which ? event.which : event.keyCode;
+    if (charCode < 48 || charCode > 57) {
+      event.preventDefault();
+    }
+  }
+
+  sanitizeNumber() {
+    this.formPhone = this.formPhone.replace(/[^0-9]/g, '');
+  }
+
+  onPaste(event: ClipboardEvent) {
+    const pastedData = event.clipboardData?.getData('text') || '';
+
+    if (!/^\d+$/.test(pastedData)) {
+      event.preventDefault();
+    }
+  }
 }

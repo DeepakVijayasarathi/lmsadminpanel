@@ -246,8 +246,11 @@
         <input
           type="text"
           class="form-control"
-          placeholder="+91 90001 10001"
+          placeholder="Phone number"
+          maxlength="10"
           [(ngModel)]="formPhone"
+          (keypress)="onlyNumbers($event)"
+          (paste)="onPaste($event)"
         />
       </div>
       <div class="form-group" [class.has-error]="passwordError">

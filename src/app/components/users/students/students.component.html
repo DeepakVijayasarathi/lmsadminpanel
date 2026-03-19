@@ -255,8 +255,11 @@
         <input
           type="text"
           class="form-control"
-          placeholder="+91 98765 43210"
+          placeholder="Phone number"
+          maxlength="10"
           [(ngModel)]="formPhone"
+          (keypress)="onlyNumbers($event)"
+          (paste)="onPaste($event)"
         />
       </div>
 
