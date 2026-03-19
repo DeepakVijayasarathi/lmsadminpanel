@@ -4,16 +4,16 @@
   <div class="pg-head">
     <div class="pg-head__left">
       <div class="pg-head__icon chip-rose">
-        <i class="fa-solid fa-video"></i>
+        <i class="fa-solid fa-circle-play"></i>
       </div>
       <div>
-        <div class="pg-head__title">Live Classes</div>
-        <div class="pg-head__sub">Schedule &amp; manage live sessions</div>
+        <div class="pg-head__title">Live Sessions</div>
+        <div class="pg-head__sub">BigBlueButton online sessions for NEET &amp; JEE batches</div>
       </div>
     </div>
     <div class="pg-head__right">
       <button class="pg-btn pg-btn--primary">
-        <i class="fa-solid fa-plus"></i> Schedule Class
+        <i class="fa-solid fa-plus"></i> Schedule Session
       </button>
     </div>
   </div>
@@ -21,38 +21,30 @@
   <!-- Stats -->
   <div class="pg-stats">
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-rose">
-        <i class="fa-solid fa-calendar-day"></i>
-      </div>
+      <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-calendar-day"></i></div>
       <div>
-        <div class="pg-stat__val">24</div>
-        <div class="pg-stat__lbl">Today's Classes</div>
+        <div class="pg-stat__val">18</div>
+        <div class="pg-stat__lbl">Today's Sessions</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-emerald">
-        <i class="fa-solid fa-circle-dot"></i>
-      </div>
+      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-circle-dot"></i></div>
       <div>
-        <div class="pg-stat__val">3</div>
-        <div class="pg-stat__lbl">Live Now</div>
+        <div class="pg-stat__val">2</div>
+        <div class="pg-stat__lbl">Live Now (BBB)</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-sky">
-        <i class="fa-solid fa-clock"></i>
-      </div>
+      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-clock"></i></div>
       <div>
-        <div class="pg-stat__val">8</div>
+        <div class="pg-stat__val">4</div>
         <div class="pg-stat__lbl">Upcoming</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-indigo">
-        <i class="fa-solid fa-calendar-week"></i>
-      </div>
+      <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-calendar-week"></i></div>
       <div>
-        <div class="pg-stat__val">42</div>
+        <div class="pg-stat__val">86</div>
         <div class="pg-stat__lbl">This Week</div>
       </div>
     </div>
@@ -61,11 +53,11 @@
   <!-- Table Card -->
   <div class="pg-card">
     <div class="pg-card__head">
-      <div class="pg-card__title">All Live Classes</div>
+      <div class="pg-card__title">All Live Sessions</div>
       <div class="pg-toolbar">
         <div class="pg-search">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" placeholder="Search classes..." [(ngModel)]="searchQuery" />
+          <input type="text" placeholder="Search subject, batch..." [(ngModel)]="searchQuery" />
         </div>
         <select class="pg-filter" [(ngModel)]="statusFilter">
           <option value="">All Status</option>
@@ -81,7 +73,8 @@
       <table class="pg-table">
         <thead>
           <tr>
-            <th>Subject &amp; Batch</th>
+            <th>Subject &amp; Topic</th>
+            <th>Batch / Exam</th>
             <th>Teacher</th>
             <th>Date &amp; Time</th>
             <th>Duration</th>
@@ -94,7 +87,13 @@
           <tr *ngFor="let cls of filteredClasses">
             <td>
               <div class="pg-cell__primary">{{ cls.subject }}</div>
-              <div class="pg-cell__sub">{{ cls.batch }}</div>
+              <div class="pg-cell__sub">{{ cls.topic }}</div>
+            </td>
+            <td>
+              <div class="pg-cell__primary">{{ cls.batch }}</div>
+              <span class="lc-exam-tag lc-exam-tag--{{ cls.examType === 'NEET' ? 'neet' : cls.examType === 'JEE Main' ? 'jee' : 'adv' }}">
+                {{ cls.examType }}
+              </span>
             </td>
             <td>
               <div class="pg-with-avatar">
@@ -116,34 +115,31 @@
               </span>
             </td>
             <td>
-              <span [class]="getStatusBadge(cls.status)" [class.status-live]="cls.status === 'live'">
+              <span [class]="getStatusBadge(cls.status)">
                 <i *ngIf="cls.status === 'live'" class="fa-solid fa-circle" style="font-size:8px;"></i>
                 {{ cls.status | titlecase }}
               </span>
             </td>
             <td>
-              <div style="display:flex;gap:6px;">
+              <div style="display:flex;gap:6px;align-items:center;">
                 <a *ngIf="cls.status === 'live' || cls.status === 'upcoming'"
                    [href]="cls.meetingLink" target="_blank"
-                   class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 10px;text-decoration:none;">
-                  <i class="fa-solid fa-video"></i> Join
+                   class="pg-btn pg-btn--primary"
+                   [style.background]="cls.status === 'live' ? '#ef4444' : ''"
+                   style="font-size:12px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
+                  <i class="fa-solid fa-circle-play"></i>
+                  {{ cls.status === 'live' ? 'Join Live' : 'Join BBB' }}
                 </a>
-                <button class="pg-action-btn" title="View">
-                  <i class="fa-solid fa-eye"></i>
-                </button>
-                <button class="pg-action-btn" title="Edit">
-                  <i class="fa-solid fa-pen"></i>
-                </button>
-                <button class="pg-action-btn pg-action-btn--danger" title="Cancel">
-                  <i class="fa-solid fa-xmark"></i>
-                </button>
+                <button class="pg-action-btn" title="View"><i class="fa-solid fa-eye"></i></button>
+                <button class="pg-action-btn" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Cancel"><i class="fa-solid fa-xmark"></i></button>
               </div>
             </td>
           </tr>
           <tr *ngIf="filteredClasses.length === 0">
-            <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">
+            <td colspan="8" style="text-align:center;padding:32px;color:#94a3b8;">
               <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
-              No live classes found
+              No sessions found
             </td>
           </tr>
         </tbody>

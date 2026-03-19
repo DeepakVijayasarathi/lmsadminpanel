@@ -42,6 +42,7 @@ import { AnnouncementsComponent } from './components/communication/announcements
 import { ResultsComponent } from './components/assessment/results/results.component';
 import { ExamsComponent } from './components/assessment/exams/exams.component';
 import { MenuComponent } from './components/system/menu/menu.component';
+import { TimetableComponent } from './components/learning/timetable/timetable.component';
 
 @NgModule({
   declarations: [
@@ -75,6 +76,7 @@ import { MenuComponent } from './components/system/menu/menu.component';
     ResultsComponent,
     ExamsComponent,
     MenuComponent,
+    TimetableComponent,
 
     DeleteConfirmationModalComponent,
     CommonPaginationComponent,

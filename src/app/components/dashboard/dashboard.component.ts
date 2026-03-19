@@ -56,45 +56,45 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   statCards: StatCard[] = [
     {
-      title: 'Total Students',
-      value: '2,847',
-      subtitle: 'Enrolled students',
+      title: 'Total Aspirants',
+      value: '3,214',
+      subtitle: 'NEET + JEE enrolled',
       icon: 'fa-solid fa-user-graduate',
-      trend: 12.5,
+      trend: 14.2,
       trendLabel: 'vs last month',
       colorClass: 'card-indigo',
     },
     {
-      title: 'Total Teachers',
-      value: '143',
-      subtitle: 'Active educators',
+      title: 'Expert Faculty',
+      value: '58',
+      subtitle: 'Subject specialists',
       icon: 'fa-solid fa-chalkboard-user',
-      trend: 4.2,
+      trend: 6.3,
       trendLabel: 'vs last month',
       colorClass: 'card-emerald',
     },
     {
       title: 'Active Batches',
-      value: '68',
-      subtitle: 'Running batches',
+      value: '24',
+      subtitle: 'NEET & JEE batches',
       icon: 'fa-solid fa-layer-group',
-      trend: 8.1,
+      trend: 9.5,
       trendLabel: 'vs last month',
       colorClass: 'card-orange',
     },
     {
-      title: 'Total Courses',
-      value: '312',
-      subtitle: 'Published courses',
+      title: 'Online Courses',
+      value: '86',
+      subtitle: 'Published on BBB',
       icon: 'fa-solid fa-book-open',
-      trend: 18.3,
+      trend: 21.0,
       trendLabel: 'vs last month',
       colorClass: 'card-purple',
     },
     {
-      title: "Today's Live Classes",
-      value: '24',
-      subtitle: 'Classes in session',
+      title: "Today's Live Sessions",
+      value: '18',
+      subtitle: 'BigBlueButton sessions',
       icon: 'fa-solid fa-video',
       trend: 0,
       trendLabel: 'same as yesterday',
@@ -102,10 +102,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     },
     {
       title: 'Monthly Revenue',
-      value: '₹4,82,500',
-      subtitle: 'Payments received',
+      value: '₹8,64,000',
+      subtitle: 'Course fee collected',
       icon: 'fa-solid fa-indian-rupee-sign',
-      trend: 22.7,
+      trend: 28.4,
       trendLabel: 'vs last month',
       colorClass: 'card-rose',
     },
@@ -113,53 +113,53 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   upcomingClasses: UpcomingClass[] = [
     {
-      subject: 'Mathematics - Calculus',
-      teacher: 'Dr. Priya Sharma',
-      batch: 'Batch A - Class 12',
-      time: '10:00 AM',
-      endTime: '11:00 AM',
-      duration: '60 min',
+      subject: 'Physics – Electrostatics (NEET)',
+      teacher: 'Dr. Vikram Sharma',
+      batch: 'NEET 2025 – Batch A',
+      time: '07:00 AM',
+      endTime: '08:30 AM',
+      duration: '90 min',
+      students: 48,
+      status: 'live',
+    },
+    {
+      subject: 'Mathematics – Calculus (JEE)',
+      teacher: 'Mr. Arjun Verma',
+      batch: 'JEE Main 2025 – Batch A',
+      time: '09:00 AM',
+      endTime: '10:30 AM',
+      duration: '90 min',
       students: 42,
       status: 'live',
     },
     {
-      subject: 'Physics - Mechanics',
-      teacher: 'Mr. Arjun Nair',
-      batch: 'Batch B - Class 11',
-      time: '11:30 AM',
-      endTime: '12:15 PM',
-      duration: '45 min',
+      subject: 'Chemistry – Organic Reactions (NEET)',
+      teacher: 'Ms. Pooja Iyer',
+      batch: 'NEET 2025 – Batch B',
+      time: '11:00 AM',
+      endTime: '12:30 PM',
+      duration: '90 min',
       students: 38,
       status: 'upcoming',
     },
     {
-      subject: 'Chemistry - Organic',
-      teacher: 'Ms. Kavitha Reddy',
-      batch: 'Batch C - Class 12',
-      time: '02:00 PM',
-      endTime: '03:00 PM',
-      duration: '60 min',
-      students: 46,
+      subject: 'Biology – Genetics (NEET)',
+      teacher: 'Dr. Meena Krishnan',
+      batch: 'NEET 2026 – Batch A',
+      time: '14:00 PM',
+      endTime: '15:30 PM',
+      duration: '90 min',
+      students: 36,
       status: 'scheduled',
     },
     {
-      subject: 'English Literature',
-      teacher: 'Mr. Rajan Pillai',
-      batch: 'Batch D - Class 10',
-      time: '03:30 PM',
-      endTime: '04:15 PM',
-      duration: '45 min',
-      students: 34,
-      status: 'scheduled',
-    },
-    {
-      subject: 'Biology - Cell Division',
-      teacher: 'Dr. Meena Iyer',
-      batch: 'Batch A - Class 11',
-      time: '04:30 PM',
-      endTime: '05:30 PM',
-      duration: '60 min',
-      students: 40,
+      subject: 'Physics – Fluid Mechanics (JEE Adv)',
+      teacher: 'Dr. Vikram Sharma',
+      batch: 'JEE Advanced 2025',
+      time: '18:00 PM',
+      endTime: '19:30 PM',
+      duration: '90 min',
+      students: 22,
       status: 'scheduled',
     },
   ];
@@ -167,66 +167,66 @@ export class DashboardComponent implements OnInit, OnDestroy {
   recentActivities: RecentActivity[] = [
     {
       type: 'user',
-      message: '15 new students enrolled in Batch A - Class 12',
+      message: '12 new aspirants enrolled in NEET 2025 – Batch A',
       time: '5 min ago',
       icon: 'fa-solid fa-user-plus',
     },
     {
       type: 'payment',
-      message: 'Payment of ₹12,500 received from Rahul Verma',
-      time: '18 min ago',
+      message: 'Course fee ₹18,000 received from Rohan Mehta (JEE Main)',
+      time: '22 min ago',
       icon: 'fa-solid fa-circle-check',
     },
     {
-      type: 'course',
-      message: 'New course "Advanced Physics" published by Dr. Arjun',
-      time: '1 hr ago',
-      icon: 'fa-solid fa-book',
-    },
-    {
       type: 'exam',
-      message: 'Quiz results for "Math Unit 5" are now available',
-      time: '2 hrs ago',
+      message: 'NEET Full Mock Test #4 results published – Avg 68%',
+      time: '1 hr ago',
       icon: 'fa-solid fa-file-circle-check',
     },
     {
+      type: 'course',
+      message: 'New course "Thermodynamics Masterclass" uploaded by Dr. Vikram',
+      time: '2 hrs ago',
+      icon: 'fa-solid fa-book',
+    },
+    {
       type: 'alert',
-      message: '3 students missed today\'s Chemistry live class',
+      message: '5 students missed JEE Main Mock Test #6 session',
       time: '3 hrs ago',
       icon: 'fa-solid fa-triangle-exclamation',
     },
     {
       type: 'user',
-      message: 'Teacher account created for Ms. Deepa Krishnan',
+      message: 'Faculty account created for Dr. Kiran Patel (Mathematics)',
       time: '5 hrs ago',
       icon: 'fa-solid fa-user-tie',
     },
     {
       type: 'payment',
-      message: 'Refund request submitted by Ananya Singh',
+      message: 'Refund request submitted by Priya Desai (NEET Batch B)',
       time: 'Yesterday',
       icon: 'fa-solid fa-rotate-left',
     },
   ];
 
   quickStats: QuickStat[] = [
-    { label: 'Assignment Submission Rate', value: 78, max: 100, color: '#4f46e5' },
-    { label: 'Avg. Class Attendance', value: 85, max: 100, color: '#10b981' },
-    { label: 'Course Completion Rate', value: 62, max: 100, color: '#f59e0b' },
-    { label: 'Student Satisfaction Score', value: 91, max: 100, color: '#06b6d4' },
+    { label: 'Mock Test Attempt Rate',    value: 82, max: 100, color: '#4f46e5' },
+    { label: 'Avg. Session Attendance',   value: 88, max: 100, color: '#10b981' },
+    { label: 'Syllabus Completion Rate',  value: 67, max: 100, color: '#f59e0b' },
+    { label: 'Aspirant Satisfaction',     value: 94, max: 100, color: '#06b6d4' },
   ];
 
   enrollmentData = [
-    { month: 'Oct', value: 180 },
-    { month: 'Nov', value: 240 },
-    { month: 'Dec', value: 210 },
-    { month: 'Jan', value: 290 },
-    { month: 'Feb', value: 340 },
-    { month: 'Mar', value: 380 },
+    { month: 'Oct', value: 310 },
+    { month: 'Nov', value: 420 },
+    { month: 'Dec', value: 390 },
+    { month: 'Jan', value: 510 },
+    { month: 'Feb', value: 620 },
+    { month: 'Mar', value: 740 },
   ];
 
   chartSeries: ApexAxisChartSeries = [
-    { name: 'Students Enrolled', data: [180, 240, 210, 290, 340, 380] }
+    { name: 'Aspirants Enrolled', data: [310, 420, 390, 510, 620, 740] }
   ];
 
   chartConfig: ApexChart = {
@@ -286,20 +286,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   chartTooltip: ApexTooltip = {
     theme: 'light',
-    y: { formatter: (val: number) => `${val} students` }
+    y: { formatter: (val: number) => `${val} aspirants` }
   };
 
   roleDistribution = [
-    { role: 'Students', count: 2847, percentage: 93, color: '#4f46e5' },
-    { role: 'Teachers', count: 143, percentage: 5, color: '#10b981' },
-    { role: 'Parents', count: 62, percentage: 2, color: '#f59e0b' },
+    { role: 'NEET Aspirants', count: 1842, percentage: 57, color: '#10b981' },
+    { role: 'JEE Aspirants',  count: 1186, percentage: 37, color: '#4f46e5' },
+    { role: 'Faculty',        count: 58,   percentage: 4,  color: '#f59e0b' },
+    { role: 'Parents',        count: 128,  percentage: 2,  color: '#06b6d4' },
   ];
 
   systemAlerts = [
-    { type: 'warning', message: '5 teacher accounts pending verification', icon: 'fa-solid fa-clock' },
-    { type: 'info', message: '12 refund requests awaiting review', icon: 'fa-solid fa-info-circle' },
-    { type: 'success', message: 'All scheduled backups completed successfully', icon: 'fa-solid fa-circle-check' },
-    { type: 'error', message: '2 live class sessions reported technical issues', icon: 'fa-solid fa-circle-xmark' },
+    { type: 'warning', message: '4 faculty accounts pending subject verification', icon: 'fa-solid fa-clock' },
+    { type: 'info',    message: '8 refund requests awaiting review',               icon: 'fa-solid fa-info-circle' },
+    { type: 'success', message: 'BBB server health: all 18 rooms running smoothly', icon: 'fa-solid fa-circle-check' },
+    { type: 'error',   message: '1 live session had BBB connection drop – resolved', icon: 'fa-solid fa-circle-xmark' },
   ];
 
   constructor(

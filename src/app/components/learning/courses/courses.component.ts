@@ -23,13 +23,16 @@ export class CoursesComponent {
   statusFilter = '';
 
   courses: Course[] = [
-    { id: 1, title: 'Mathematics – Algebra & Calculus', subject: 'Mathematics', teacher: 'Dr. Anita Sharma', batch: 'Class 10-A', duration: '48 hrs', enrolled: 124, status: 'active', thumbnail: '#4f46e5' },
-    { id: 2, title: 'Physics – Mechanics & Waves', subject: 'Physics', teacher: 'Mr. Rajesh Kumar', batch: 'Class 11-B', duration: '52 hrs', enrolled: 98, status: 'active', thumbnail: '#0ea5e9' },
-    { id: 3, title: 'Chemistry – Organic Compounds', subject: 'Chemistry', teacher: 'Ms. Priya Nair', batch: 'Class 12-A', duration: '40 hrs', enrolled: 87, status: 'active', thumbnail: '#10b981' },
-    { id: 4, title: 'Biology – Cell Biology & Genetics', subject: 'Biology', teacher: 'Dr. Suresh Menon', batch: 'Class 11-A', duration: '36 hrs', enrolled: 76, status: 'active', thumbnail: '#f59e0b' },
-    { id: 5, title: 'English – Literature & Grammar', subject: 'English', teacher: 'Ms. Kavitha Rao', batch: 'Class 9-C', duration: '30 hrs', enrolled: 112, status: 'draft', thumbnail: '#f43f5e' },
-    { id: 6, title: 'History – Modern India', subject: 'History', teacher: 'Mr. Arun Pillai', batch: 'Class 10-B', duration: '28 hrs', enrolled: 65, status: 'archived', thumbnail: '#8b5cf6' },
-    { id: 7, title: 'Computer Science – Data Structures', subject: 'CS', teacher: 'Ms. Deepa Iyer', batch: 'Class 12-B', duration: '44 hrs', enrolled: 58, status: 'active', thumbnail: '#06b6d4' }
+    { id: 1,  title: 'Physics Complete Course – NEET',           subject: 'Physics',           teacher: 'Dr. Vikram Sharma',  batch: 'NEET 2025 – Batch A',     duration: '120 hrs', enrolled: 186, status: 'active',   thumbnail: '#0ea5e9' },
+    { id: 2,  title: 'Chemistry Complete Course – NEET',         subject: 'Chemistry',         teacher: 'Ms. Pooja Iyer',     batch: 'NEET 2025 – Batch A',     duration: '110 hrs', enrolled: 178, status: 'active',   thumbnail: '#10b981' },
+    { id: 3,  title: 'Biology – Botany & Zoology (NEET)',        subject: 'Biology',           teacher: 'Dr. Meena Krishnan', batch: 'NEET 2025 – Batch B',     duration: '130 hrs', enrolled: 162, status: 'active',   thumbnail: '#f59e0b' },
+    { id: 4,  title: 'Physics Complete Course – JEE Main',       subject: 'Physics',           teacher: 'Mr. Rahul Gupta',    batch: 'JEE Main 2025 – Batch A', duration: '140 hrs', enrolled: 148, status: 'active',   thumbnail: '#6366f1' },
+    { id: 5,  title: 'Mathematics Complete Course – JEE',        subject: 'Mathematics',       teacher: 'Mr. Arjun Verma',    batch: 'JEE Main 2025 – Batch A', duration: '150 hrs', enrolled: 142, status: 'active',   thumbnail: '#8b5cf6' },
+    { id: 6,  title: 'Chemistry – Organic & Inorganic (JEE)',    subject: 'Chemistry',         teacher: 'Dr. Sanjay Mishra',  batch: 'JEE Main 2025 – Batch B', duration: '115 hrs', enrolled: 136, status: 'active',   thumbnail: '#f43f5e' },
+    { id: 7,  title: 'JEE Advanced – Physics Masterclass',       subject: 'Physics',           teacher: 'Dr. Vikram Sharma',  batch: 'JEE Advanced 2025',       duration: '160 hrs', enrolled:  88, status: 'active',   thumbnail: '#ef4444' },
+    { id: 8,  title: 'JEE Advanced – Mathematics Deep Dive',     subject: 'Mathematics',       teacher: 'Dr. Kiran Patel',    batch: 'JEE Advanced 2025',       duration: '170 hrs', enrolled:  84, status: 'active',   thumbnail: '#a21caf' },
+    { id: 9,  title: 'NEET Biology Crash Course 2026',           subject: 'Biology',           teacher: 'Ms. Divya Nair',     batch: 'NEET 2026 – Batch A',     duration: '60 hrs',  enrolled:  0,  status: 'draft',    thumbnail: '#16a34a' },
+    { id: 10, title: 'Physical Chemistry – All Topics',          subject: 'Chemistry',         teacher: 'Ms. Pooja Iyer',     batch: 'NEET 2025 – Batch B',     duration: '55 hrs',  enrolled: 122, status: 'archived', thumbnail: '#0891b2' },
   ];
 
   get filteredCourses(): Course[] {

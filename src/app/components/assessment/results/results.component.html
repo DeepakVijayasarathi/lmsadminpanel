@@ -6,8 +6,8 @@
         <i class="fa-solid fa-file-circle-check"></i>
       </div>
       <div>
-        <div class="pg-head__title">Results</div>
-        <div class="pg-head__sub">Student exam results</div>
+        <div class="pg-head__title">Mock Test Results</div>
+        <div class="pg-head__sub">NEET &amp; JEE aspirant performance tracker</div>
       </div>
     </div>
     <div class="pg-head__right">
@@ -21,23 +21,31 @@
   <div class="pg-stats">
     <div class="pg-stat">
       <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-file-circle-check"></i></div>
-      <div class="pg-stat__val">8,420</div>
-      <div class="pg-stat__lbl">Total Submissions</div>
+      <div>
+        <div class="pg-stat__val">12,840</div>
+        <div class="pg-stat__lbl">Total Submissions</div>
+      </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-percent"></i></div>
-      <div class="pg-stat__val">87%</div>
-      <div class="pg-stat__lbl">Pass Rate</div>
+      <div>
+        <div class="pg-stat__val">91%</div>
+        <div class="pg-stat__lbl">Pass Rate</div>
+      </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-chart-simple"></i></div>
-      <div class="pg-stat__val">72%</div>
-      <div class="pg-stat__lbl">Avg Score</div>
+      <div>
+        <div class="pg-stat__val">74%</div>
+        <div class="pg-stat__lbl">Avg Score</div>
+      </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-purple"><i class="fa-solid fa-trophy"></i></div>
-      <div class="pg-stat__val">98%</div>
-      <div class="pg-stat__lbl">Top Score</div>
+      <div>
+        <div class="pg-stat__val">720/720</div>
+        <div class="pg-stat__lbl">Top NEET Score</div>
+      </div>
     </div>
   </div>
 
@@ -46,7 +54,7 @@
     <div class="pg-card__head">
       <span class="pg-card__title">All Results</span>
       <div class="pg-toolbar">
-        <input class="pg-search" type="text" placeholder="Search student or exam..." />
+        <input class="pg-search" type="text" placeholder="Search aspirant or test..." />
         <select class="pg-filter">
           <option value="">All Grades</option>
           <option value="A+">A+</option>
@@ -61,11 +69,12 @@
       <table class="pg-table">
         <thead>
           <tr>
-            <th>Student</th>
-            <th>Exam</th>
-            <th>Subject</th>
+            <th>Aspirant</th>
+            <th>Mock Test</th>
+            <th>Batch</th>
             <th>Score / Total</th>
             <th>Percentage</th>
+            <th>Rank</th>
             <th>Grade</th>
             <th>Status</th>
             <th>Date</th>
@@ -74,22 +83,33 @@
         <tbody>
           <tr *ngFor="let result of results">
             <td>
-              <div class="pg-cell__primary">{{ result.student }}</div>
+              <div class="pg-with-avatar">
+                <div class="pg-avatar av-indigo">{{ result.student.charAt(0) }}</div>
+                <span class="pg-cell__primary">{{ result.student }}</span>
+              </div>
             </td>
             <td>
               <div class="pg-cell__primary">{{ result.exam }}</div>
+              <div class="pg-cell__sub">{{ result.subject }}</div>
             </td>
-            <td>{{ result.subject }}</td>
-            <td>{{ result.score }} / {{ result.totalMarks }}</td>
+            <td>
+              <div class="pg-cell__primary" style="font-size:12px;">{{ result.batch }}</div>
+            </td>
+            <td><strong>{{ result.score }}</strong> / {{ result.totalMarks }}</td>
             <td>
               <strong>{{ result.percentage }}%</strong>
+            </td>
+            <td>
+              <span style="display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;">
+                <i class="fa-solid fa-trophy" style="font-size:10px;"></i> #{{ result.rank }}
+              </span>
             </td>
             <td>
               <span class="pg-badge {{ gradeBadge(result.grade) }}">{{ result.grade }}</span>
             </td>
             <td>
               <span class="pg-badge {{ result.status === 'pass' ? 'pg-badge--green' : 'pg-badge--red' }}">
-                {{ result.status }}
+                {{ result.status | titlecase }}
               </span>
             </td>
             <td>{{ result.submittedAt }}</td>

@@ -23,13 +23,14 @@ export class BatchesComponent {
   statusFilter = '';
 
   batches: Batch[] = [
-    { id: 1, name: 'Science Elite – Batch A', class: 'Class 12', board: 'CBSE', teacher: 'Dr. Anita Sharma', students: 42, startDate: '2025-06-01', endDate: '2026-03-31', status: 'active' },
-    { id: 2, name: 'Commerce Pro – Batch B', class: 'Class 11', board: 'CBSE', teacher: 'Mr. Rajesh Kumar', students: 38, startDate: '2025-06-01', endDate: '2026-03-31', status: 'active' },
-    { id: 3, name: 'Humanities Plus – Batch C', class: 'Class 10', board: 'ICSE', teacher: 'Ms. Priya Nair', students: 35, startDate: '2025-07-01', endDate: '2026-04-30', status: 'active' },
-    { id: 4, name: 'Foundation – Batch D', class: 'Class 9', board: 'CBSE', teacher: 'Dr. Suresh Menon', students: 50, startDate: '2025-06-15', endDate: '2026-04-15', status: 'active' },
-    { id: 5, name: 'JEE Advanced – Batch E', class: 'Class 12', board: 'CBSE', teacher: 'Ms. Kavitha Rao', students: 30, startDate: '2026-04-01', endDate: '2027-03-31', status: 'upcoming' },
-    { id: 6, name: 'NEET Prep – Batch F', class: 'Class 12', board: 'State', teacher: 'Mr. Arun Pillai', students: 28, startDate: '2026-04-15', endDate: '2027-04-14', status: 'upcoming' },
-    { id: 7, name: 'Class 8 – Regular', class: 'Class 8', board: 'CBSE', teacher: 'Ms. Deepa Iyer', students: 45, startDate: '2024-06-01', endDate: '2025-03-31', status: 'completed' }
+    { id: 1, name: 'NEET 2025 – Batch A',        class: 'Class 12', board: 'CBSE',  teacher: 'Dr. Vikram Sharma',  students: 48, startDate: '2025-04-01', endDate: '2026-05-31', status: 'active' },
+    { id: 2, name: 'NEET 2025 – Batch B',        class: 'Class 12', board: 'CBSE',  teacher: 'Dr. Meena Krishnan', students: 44, startDate: '2025-04-01', endDate: '2026-05-31', status: 'active' },
+    { id: 3, name: 'JEE Main 2025 – Batch A',    class: 'Class 12', board: 'CBSE',  teacher: 'Mr. Arjun Verma',    students: 42, startDate: '2025-05-01', endDate: '2026-01-31', status: 'active' },
+    { id: 4, name: 'JEE Main 2025 – Batch B',    class: 'Class 12', board: 'CBSE',  teacher: 'Dr. Kiran Patel',    students: 40, startDate: '2025-05-01', endDate: '2026-01-31', status: 'active' },
+    { id: 5, name: 'JEE Advanced 2025',          class: 'Class 12', board: 'CBSE',  teacher: 'Dr. Vikram Sharma',  students: 22, startDate: '2025-06-01', endDate: '2026-05-31', status: 'active' },
+    { id: 6, name: 'NEET 2026 – Batch A',        class: 'Class 11', board: 'CBSE',  teacher: 'Ms. Pooja Iyer',     students: 50, startDate: '2026-04-01', endDate: '2027-05-31', status: 'upcoming' },
+    { id: 7, name: 'JEE Main 2026 – Batch A',    class: 'Class 11', board: 'CBSE',  teacher: 'Mr. Rahul Gupta',    students: 46, startDate: '2026-05-01', endDate: '2027-01-31', status: 'upcoming' },
+    { id: 8, name: 'NEET 2024 – Batch A',        class: 'Class 12', board: 'State', teacher: 'Dr. Sanjay Mishra',  students: 52, startDate: '2024-04-01', endDate: '2025-05-31', status: 'completed' },
   ];
 
   get filteredBatches(): Batch[] {

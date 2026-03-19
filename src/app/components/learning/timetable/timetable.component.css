@@ -1,0 +1,550 @@
+/* ── View Toggle ────────────────────────────────────────────────────── */
+.tt-view-toggle {
+  display: flex;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.tt-view-toggle button {
+  background: #fff;
+  border: none;
+  padding: 7px 12px;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 14px;
+  transition: background 0.15s, color 0.15s;
+}
+.tt-view-toggle button.active {
+  background: #6366f1;
+  color: #fff;
+}
+
+/* ── Grid ───────────────────────────────────────────────────────────── */
+.tt-grid-wrap {
+  overflow-x: auto;
+  padding: 0 4px 16px;
+}
+.tt-grid {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+}
+.tt-grid thead th {
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  padding: 10px 8px;
+  text-align: center;
+  border-bottom: 2px solid #e2e8f0;
+}
+.tt-session-col { width: 96px; }
+.tt-day-col { min-width: 145px; }
+
+/* Session label */
+.tt-session-label {
+  text-align: center;
+  padding: 8px 6px;
+  background: #f8fafc;
+  border-right: 2px solid #e2e8f0;
+  vertical-align: middle;
+}
+.tt-session-num {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+}
+.tt-session-time {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+/* Data cell */
+.tt-cell {
+  padding: 6px;
+  vertical-align: top;
+  border: 1px solid #f1f5f9;
+  height: 110px;
+}
+
+/* Empty cell */
+.tt-cell-empty {
+  height: 100%;
+  min-height: 98px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #cbd5e1;
+  font-size: 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border: 1.5px dashed #e2e8f0;
+}
+.tt-cell-empty:hover {
+  background: #f0f9ff;
+  color: #6366f1;
+  border-color: #a5b4fc;
+}
+
+/* Slot card */
+.tt-slot {
+  border-radius: 8px;
+  padding: 7px 9px;
+  height: 100%;
+  min-height: 98px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: relative;
+  overflow: hidden;
+}
+.tt-slot__status-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.dot-live      { background: #ef4444; box-shadow: 0 0 0 2px rgba(239,68,68,0.25); animation: pulse 1.5s infinite; }
+.dot-scheduled { background: #3b82f6; }
+.dot-completed { background: #22c55e; }
+.dot-cancelled { background: #94a3b8; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.tt-slot__subject {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 14px;
+}
+.tt-slot__topic {
+  font-size: 10px;
+  opacity: 0.75;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tt-slot__teacher {
+  font-size: 10px;
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tt-slot__meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+.tt-exam-tag {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 20px;
+  display: inline-block;
+}
+.tt-platform-tag {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* Join button inside grid slot */
+.tt-join-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-decoration: none;
+  background: rgba(255,255,255,0.7);
+  color: #1e293b;
+  margin-top: auto;
+  width: fit-content;
+  transition: background 0.15s;
+}
+.tt-join-btn:hover { background: rgba(255,255,255,0.95); }
+.tt-join-btn--live {
+  background: #ef4444;
+  color: #fff;
+}
+.tt-join-btn--live:hover { background: #dc2626; }
+
+/* Action buttons (hover reveal) */
+.tt-slot__actions {
+  display: none;
+  position: absolute;
+  top: 4px;
+  right: 18px;
+  gap: 3px;
+}
+.tt-slot:hover .tt-slot__actions { display: flex; }
+.tt-action {
+  background: rgba(255,255,255,0.85);
+  border: none;
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  transition: background 0.15s;
+}
+.tt-action:hover      { background: #fff; color: #6366f1; }
+.tt-action--del:hover { color: #ef4444; }
+
+/* ── Subject colours ─────────────────────────────────────────────────── */
+.slot-physics  { background: #e0f2fe; color: #075985; }
+.slot-chemistry{ background: #fef9c3; color: #854d0e; }
+.slot-biology  { background: #dcfce7; color: #166534; }
+.slot-zoology  { background: #d1fae5; color: #065f46; }
+.slot-math     { background: #ede9fe; color: #5b21b6; }
+.slot-default  { background: #f1f5f9; color: #334155; }
+
+/* ── Exam type chips ─────────────────────────────────────────────────── */
+.chip-emerald { background: #d1fae5; color: #065f46; }
+.chip-sky     { background: #e0f2fe; color: #075985; }
+.chip-rose    { background: #ffe4e6; color: #9f1239; }
+.chip-indigo  { background: #e0e7ff; color: #3730a3; }
+
+/* ── List view extras ────────────────────────────────────────────────── */
+.tt-list-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.tt-exam-tag-sm {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  display: inline-block;
+  margin-top: 3px;
+}
+.tt-platform-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #475569;
+}
+
+/* ── Modal ───────────────────────────────────────────────────────────── */
+.pg-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+.pg-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1001;
+  background: #fff;
+  border-radius: 16px;
+  width: 680px;
+  max-width: 96vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  overflow: hidden;
+}
+.pg-modal--sm { width: 440px; }
+.pg-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.pg-modal__head h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+}
+.pg-modal__close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.pg-modal__close:hover { background: #f1f5f9; color: #475569; }
+.pg-modal__body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+.pg-modal__foot {
+  padding: 16px 24px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* ── Form ────────────────────────────────────────────────────────────── */
+.pg-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.pg-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pg-form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+.pg-form-group input,
+.pg-form-group select {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+  transition: border-color 0.15s;
+  background: #fff;
+}
+.pg-form-group input:focus,
+.pg-form-group select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+.req { color: #ef4444; }
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.pg-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 8px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; }
+.pg-btn--primary { background: #6366f1; color: #fff; }
+.pg-btn--primary:hover { background: #4f46e5; }
+.pg-btn--ghost   { background: #f1f5f9; color: #475569; }
+.pg-btn--ghost:hover { background: #e2e8f0; }
+.pg-btn--danger  { background: #ef4444; color: #fff; }
+.pg-btn--danger:hover { background: #dc2626; }
+.pg-btn--live    { background: #ef4444 !important; }
+
+/* ── BBB notice (modal) ──────────────────────────────────────────────── */
+.tt-bbb-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #92400e;
+  margin-bottom: 18px;
+}
+.tt-bbb-notice i { font-size: 18px; color: #e74c3c; flex-shrink: 0; }
+
+/* BBB link preview (inside modal) */
+.tt-bbb-preview {
+  margin-top: 18px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+.tt-bbb-preview__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #065f46;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tt-bbb-preview__link {
+  font-size: 12px;
+  color: #047857;
+  word-break: break-all;
+  font-family: monospace;
+  background: #ecfdf5;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+/* ── BBB tags on grid slot ───────────────────────────────────────────── */
+.tt-bbb-tag {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(231,76,60,0.15);
+  color: #c0392b;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* ── BBB cell in list view ───────────────────────────────────────────── */
+.tt-bbb-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 200px;
+}
+.tt-bbb-id {
+  font-size: 11px;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tt-copy-btn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 4px 7px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #64748b;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.tt-copy-btn:hover { background: #e0e7ff; color: #4f46e5; border-color: #a5b4fc; }
+
+/* ── BBB meeting box (view modal) ────────────────────────────────────── */
+.tt-bbb-box {
+  background: #fff5f5;
+  border: 1.5px solid #fecaca;
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tt-bbb-box__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #991b1b;
+}
+.tt-bbb-box__header i { font-size: 18px; color: #e74c3c; }
+.tt-bbb-box__id {
+  font-size: 12px;
+  color: #7f1d1d;
+}
+.tt-bbb-box__link {
+  font-size: 12px;
+  font-family: monospace;
+  color: #b91c1c;
+  word-break: break-all;
+  background: #fee2e2;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+.tt-bbb-box__copy {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.tt-bbb-box__copy:hover { background: #dc2626; }
+
+/* ── View modal detail ───────────────────────────────────────────────── */
+.tt-view-detail { display: flex; flex-direction: column; gap: 16px; }
+.tt-view-hero {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tt-view-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 10px;
+}
+.tt-view-rows { display: flex; flex-direction: column; gap: 10px; }
+.tt-view-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-radius: 8px;
+  gap: 12px;
+}
+.tt-view-label {
+  width: 140px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.tt-view-val {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+}
+.tt-link {
+  font-size: 13px;
+  color: #6366f1;
+  text-decoration: none;
+  word-break: break-all;
+}
+.tt-link:hover { text-decoration: underline; }
+.tt-join-full {
+  width: 100%;
+  justify-content: center;
+  padding: 12px;
+  font-size: 15px;
+  border-radius: 10px;
+  text-decoration: none;
+}

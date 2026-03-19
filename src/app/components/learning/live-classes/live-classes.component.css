@@ -6,3 +6,15 @@
   0%, 100% { opacity: 1; }
   50% { opacity: .65; }
 }
+
+.lc-exam-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  margin-top: 3px;
+}
+.lc-exam-tag--neet { background: #d1fae5; color: #065f46; }
+.lc-exam-tag--jee  { background: #e0f2fe; color: #075985; }
+.lc-exam-tag--adv  { background: #ffe4e6; color: #9f1239; }

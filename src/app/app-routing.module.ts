@@ -27,6 +27,7 @@ import { StudentsComponent } from './components/users/students/students.componen
 import { TeachersComponent } from './components/users/teachers/teachers.component';
 import { ParentsComponent } from './components/users/parents/parents.component';
 import { MenuComponent } from './components/system/menu/menu.component';
+import { TimetableComponent } from './components/learning/timetable/timetable.component';
 
 const AG = [AuthGuard];
 
@@ -53,6 +54,7 @@ const routes: Routes = [
   { path: 'batches',       component: BatchesComponent,     canActivate: AG },
   { path: 'live-classes',  component: LiveClassesComponent, canActivate: AG },
   { path: 'library',       component: LibraryComponent,     canActivate: AG },
+  { path: 'timetable',     component: TimetableComponent,   canActivate: AG },
 
   // Assessment
   { path: 'exams',    component: ExamsComponent,   canActivate: AG },

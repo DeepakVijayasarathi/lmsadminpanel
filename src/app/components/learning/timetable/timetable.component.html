@@ -1,0 +1,449 @@
+<div class="pg">
+
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-indigo">
+        <i class="fa-solid fa-calendar-days"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Timetable Assignment</div>
+        <div class="pg-head__sub">Online session schedule for NEET &amp; JEE batches &mdash; powered by BigBlueButton</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary" (click)="openCreate()">
+        <i class="fa-solid fa-plus"></i> Schedule Session
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-indigo">
+        <i class="fa-solid fa-calendar-check"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ totalSlots }}</div>
+        <div class="pg-stat__lbl">Total Sessions</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-rose">
+        <i class="fa-solid fa-circle-dot"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ liveNow }}</div>
+        <div class="pg-stat__lbl">Live Now</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky">
+        <i class="fa-solid fa-clock"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ scheduledCount }}</div>
+        <div class="pg-stat__lbl">Scheduled</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald">
+        <i class="fa-solid fa-layer-group"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ activeBatches }}</div>
+        <div class="pg-stat__lbl">Active Batches</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <div class="pg-card__title">Weekly Schedule</div>
+      <div class="pg-toolbar">
+        <select class="pg-filter" [(ngModel)]="examFilter">
+          <option value="">All Exams</option>
+          <option value="NEET">NEET</option>
+          <option value="JEE Main">JEE Main</option>
+          <option value="JEE Advanced">JEE Advanced</option>
+        </select>
+        <select class="pg-filter" [(ngModel)]="batchFilter">
+          <option value="">All Batches</option>
+          <option *ngFor="let b of batches" [value]="b">{{ b }}</option>
+        </select>
+        <div class="tt-view-toggle">
+          <button [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" title="Grid view">
+            <i class="fa-solid fa-table-cells"></i>
+          </button>
+          <button [class.active]="viewMode === 'list'" (click)="viewMode = 'list'" title="List view">
+            <i class="fa-solid fa-list"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── GRID VIEW ──────────────────────────────────────────────────── -->
+    <div class="tt-grid-wrap" *ngIf="viewMode === 'grid'">
+      <table class="tt-grid">
+        <thead>
+          <tr>
+            <th class="tt-session-col">Session</th>
+            <th *ngFor="let day of days" class="tt-day-col">{{ day }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let session of sessions">
+            <td class="tt-session-label">
+              <div class="tt-session-num">S{{ session }}</div>
+              <div class="tt-session-time">{{ formatSessionTime(session) }}</div>
+            </td>
+            <td *ngFor="let day of days" class="tt-cell">
+              <ng-container *ngIf="getSlot(day, session) as slot; else emptyCell">
+                <div [class]="'tt-slot ' + getSubjectColor(slot.subject)">
+                  <div class="tt-slot__status-dot" [class]="'dot-' + slot.status"></div>
+
+                  <div class="tt-slot__subject">{{ slot.subject }}</div>
+                  <div class="tt-slot__topic">{{ slot.topic }}</div>
+                  <div class="tt-slot__teacher">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                    {{ slot.teacher.split(' ').slice(-1)[0] }}
+                  </div>
+
+                  <!-- BBB badge + exam tag -->
+                  <div class="tt-slot__meta">
+                    <span [class]="'tt-exam-tag ' + getExamChip(slot.examType)">{{ slot.examType }}</span>
+                    <span class="tt-bbb-tag"><i class="fa-solid fa-circle-play"></i> BBB</span>
+                  </div>
+
+                  <!-- Join button -->
+                  <a *ngIf="canJoin(slot.status)"
+                     [href]="slot.meetingLink" target="_blank"
+                     class="tt-join-btn"
+                     [class.tt-join-btn--live]="slot.status === 'live'">
+                    <i class="fa-solid fa-video"></i>
+                    {{ slot.status === 'live' ? 'Join Live' : 'Join' }}
+                  </a>
+
+                  <div class="tt-slot__actions">
+                    <button class="tt-action" title="View"   (click)="openView(slot)">  <i class="fa-solid fa-eye"></i>   </button>
+                    <button class="tt-action" title="Edit"   (click)="openEdit(slot)">  <i class="fa-solid fa-pen"></i>   </button>
+                    <button class="tt-action tt-action--del" title="Delete" (click)="openDelete(slot)"><i class="fa-solid fa-trash"></i></button>
+                  </div>
+                </div>
+              </ng-container>
+              <ng-template #emptyCell>
+                <div class="tt-cell-empty" (click)="openCreate(day, session)" title="Schedule session">
+                  <i class="fa-solid fa-plus"></i>
+                </div>
+              </ng-template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── LIST VIEW ──────────────────────────────────────────────────── -->
+    <div class="pg-table-wrap" *ngIf="viewMode === 'list'">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Day &amp; Session</th>
+            <th>Subject &amp; Topic</th>
+            <th>Teacher</th>
+            <th>Batch / Exam</th>
+            <th>Time</th>
+            <th>BBB Meeting</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let slot of filteredSlots">
+            <td>
+              <div class="pg-cell__primary">{{ slot.day }}</div>
+              <div class="pg-cell__sub">Session {{ slot.session }}</div>
+            </td>
+            <td>
+              <div class="pg-cell__primary">
+                <span [class]="'tt-list-dot ' + getSubjectColor(slot.subject)"></span>
+                {{ slot.subject }}
+              </div>
+              <div class="pg-cell__sub">{{ slot.topic }}</div>
+            </td>
+            <td>
+              <div class="pg-with-avatar">
+                <div class="pg-avatar av-indigo">{{ slot.teacher.charAt(0) }}</div>
+                <span class="pg-cell__primary">{{ slot.teacher }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="pg-cell__primary">{{ slot.batch }}</div>
+              <span [class]="'tt-exam-tag-sm ' + getExamChip(slot.examType)">{{ slot.examType }}</span>
+            </td>
+            <td>
+              <div class="pg-cell__primary">{{ slot.startTime }} – {{ slot.endTime }}</div>
+            </td>
+            <td>
+              <!-- BBB meeting link column -->
+              <div class="tt-bbb-cell">
+                <span class="tt-bbb-id" title="{{ slot.meetingLink }}">
+                  <i class="fa-solid fa-circle-play" style="color:#e74c3c;"></i>
+                  {{ slot.meetingId }}
+                </span>
+                <button class="tt-copy-btn" (click)="copyLink(slot)" [title]="copiedId === slot.id ? 'Copied!' : 'Copy link'">
+                  <i [class]="copiedId === slot.id ? 'fa-solid fa-check' : 'fa-regular fa-copy'"></i>
+                </button>
+              </div>
+            </td>
+            <td>
+              <span [class]="getStatusClass(slot.status)">
+                <i *ngIf="slot.status === 'live'" class="fa-solid fa-circle" style="font-size:8px;"></i>
+                {{ slot.status | titlecase }}
+              </span>
+            </td>
+            <td>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <a *ngIf="canJoin(slot.status)"
+                   [href]="slot.meetingLink" target="_blank"
+                   class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 10px;text-decoration:none;">
+                  <i class="fa-solid fa-video"></i> Join
+                </a>
+                <button class="pg-action-btn" title="View"   (click)="openView(slot)">  <i class="fa-solid fa-eye"></i>  </button>
+                <button class="pg-action-btn" title="Edit"   (click)="openEdit(slot)">  <i class="fa-solid fa-pen"></i>  </button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDelete(slot)"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredSlots.length === 0">
+            <td colspan="8" style="text-align:center;padding:32px;color:#94a3b8;">
+              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+              No sessions found
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── CREATE / EDIT MODAL ─────────────────────────────────────────────── -->
+<div class="pg-modal-backdrop" *ngIf="modalMode === 'create' || modalMode === 'edit'" (click)="closeModal()"></div>
+<div class="pg-modal" *ngIf="modalMode === 'create' || modalMode === 'edit'">
+  <div class="pg-modal__head">
+    <h3>
+      <i class="fa-solid fa-video" style="color:#6366f1;margin-right:8px;"></i>
+      {{ modalMode === 'create' ? 'Schedule Online Session' : 'Edit Session' }}
+    </h3>
+    <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="pg-modal__body">
+
+    <!-- BBB auto-generate notice -->
+    <div class="tt-bbb-notice">
+      <i class="fa-solid fa-circle-play"></i>
+      <span>A <strong>BigBlueButton</strong> meeting room will be automatically generated for this session.</span>
+    </div>
+
+    <div class="pg-form-grid">
+
+      <div class="pg-form-group">
+        <label>Exam Type <span class="req">*</span></label>
+        <select [(ngModel)]="form.examType" (ngModelChange)="onExamTypeChange()">
+          <option *ngFor="let e of examTypes" [value]="e">{{ e }}</option>
+        </select>
+      </div>
+
+      <div class="pg-form-group">
+        <label>Batch <span class="req">*</span></label>
+        <select [(ngModel)]="form.batch">
+          <option value="">Select Batch</option>
+          <option *ngFor="let b of batches" [value]="b">{{ b }}</option>
+        </select>
+      </div>
+
+      <div class="pg-form-group">
+        <label>Day <span class="req">*</span></label>
+        <select [(ngModel)]="form.day">
+          <option value="">Select Day</option>
+          <option *ngFor="let d of days" [value]="d">{{ d }}</option>
+        </select>
+      </div>
+
+      <div class="pg-form-group">
+        <label>Session Slot <span class="req">*</span></label>
+        <select [(ngModel)]="form.session" (ngModelChange)="onSessionChange()">
+          <option *ngFor="let s of sessions" [value]="s">Session {{ s }} ({{ formatSessionTime(s) }})</option>
+        </select>
+      </div>
+
+      <div class="pg-form-group">
+        <label>Subject <span class="req">*</span></label>
+        <select [(ngModel)]="form.subject" (ngModelChange)="onSubjectChange()">
+          <option value="">Select Subject</option>
+          <option *ngFor="let s of availableSubjects" [value]="s">{{ s }}</option>
+        </select>
+      </div>
+
+      <div class="pg-form-group">
+        <label>Topic / Chapter</label>
+        <select [(ngModel)]="form.topic">
+          <option value="">Select Topic</option>
+          <option *ngFor="let t of availableTopics" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+
+      <div class="pg-form-group">
+        <label>Teacher <span class="req">*</span></label>
+        <select [(ngModel)]="form.teacher">
+          <option value="">Select Teacher</option>
+          <option *ngFor="let t of teachers" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+
+      <div class="pg-form-group">
+        <label>Status</label>
+        <select [(ngModel)]="form.status">
+          <option *ngFor="let s of statuses" [value]="s">{{ s | titlecase }}</option>
+        </select>
+      </div>
+
+      <div class="pg-form-group">
+        <label>Start Time</label>
+        <input type="time" [(ngModel)]="form.startTime" />
+      </div>
+
+      <div class="pg-form-group">
+        <label>End Time</label>
+        <input type="time" [(ngModel)]="form.endTime" />
+      </div>
+
+    </div>
+
+    <!-- Preview of auto-generated BBB link -->
+    <div class="tt-bbb-preview" *ngIf="form.batch && form.subject && form.day && form.session">
+      <div class="tt-bbb-preview__label">
+        <i class="fa-solid fa-link"></i> Auto-generated BigBlueButton Room
+      </div>
+      <div class="tt-bbb-preview__link">
+        {{ 'https://bbb.edulanz.com/b/' + generateMeetingId(form.batch, form.subject, form.day, form.session) }}
+      </div>
+    </div>
+
+  </div>
+  <div class="pg-modal__foot">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--primary" (click)="saveSlot()">
+      <i class="fa-solid fa-circle-play"></i>
+      {{ modalMode === 'create' ? 'Create & Generate Room' : 'Save Changes' }}
+    </button>
+  </div>
+</div>
+
+<!-- ── VIEW MODAL ──────────────────────────────────────────────────────── -->
+<div class="pg-modal-backdrop" *ngIf="modalMode === 'view'" (click)="closeModal()"></div>
+<div class="pg-modal" *ngIf="modalMode === 'view' && selectedSlot">
+  <div class="pg-modal__head">
+    <h3>Session Details</h3>
+    <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="pg-modal__body">
+    <div class="tt-view-detail">
+
+      <!-- Hero -->
+      <div class="tt-view-hero">
+        <div [class]="'tt-view-badge ' + getSubjectColor(selectedSlot.subject)">
+          <i class="fa-solid fa-book-open"></i> {{ selectedSlot.subject }}
+        </div>
+        <span [class]="'tt-exam-tag ' + getExamChip(selectedSlot.examType)">{{ selectedSlot.examType }}</span>
+        <span [class]="getStatusClass(selectedSlot.status)">
+          <i *ngIf="selectedSlot.status === 'live'" class="fa-solid fa-circle" style="font-size:8px;"></i>
+          {{ selectedSlot.status | titlecase }}
+        </span>
+      </div>
+
+      <div class="tt-view-rows">
+        <div class="tt-view-row">
+          <span class="tt-view-label"><i class="fa-solid fa-book"></i> Topic</span>
+          <span class="tt-view-val">{{ selectedSlot.topic || '—' }}</span>
+        </div>
+        <div class="tt-view-row">
+          <span class="tt-view-label"><i class="fa-solid fa-layer-group"></i> Batch</span>
+          <span class="tt-view-val">{{ selectedSlot.batch }}</span>
+        </div>
+        <div class="tt-view-row">
+          <span class="tt-view-label"><i class="fa-solid fa-calendar"></i> Day</span>
+          <span class="tt-view-val">{{ selectedSlot.day }}</span>
+        </div>
+        <div class="tt-view-row">
+          <span class="tt-view-label"><i class="fa-solid fa-hashtag"></i> Session</span>
+          <span class="tt-view-val">Session {{ selectedSlot.session }}</span>
+        </div>
+        <div class="tt-view-row">
+          <span class="tt-view-label"><i class="fa-solid fa-chalkboard-user"></i> Teacher</span>
+          <span class="tt-view-val">{{ selectedSlot.teacher }}</span>
+        </div>
+        <div class="tt-view-row">
+          <span class="tt-view-label"><i class="fa-solid fa-clock"></i> Time</span>
+          <span class="tt-view-val">{{ selectedSlot.startTime }} – {{ selectedSlot.endTime }}</span>
+        </div>
+      </div>
+
+      <!-- BBB meeting box -->
+      <div class="tt-bbb-box">
+        <div class="tt-bbb-box__header">
+          <i class="fa-solid fa-circle-play"></i>
+          <span>BigBlueButton Meeting Room</span>
+        </div>
+        <div class="tt-bbb-box__id">Room ID: <strong>{{ selectedSlot.meetingId }}</strong></div>
+        <div class="tt-bbb-box__link">{{ selectedSlot.meetingLink }}</div>
+        <button class="tt-bbb-box__copy" (click)="copyLink(selectedSlot)">
+          <i [class]="copiedId === selectedSlot.id ? 'fa-solid fa-check' : 'fa-regular fa-copy'"></i>
+          {{ copiedId === selectedSlot.id ? 'Copied!' : 'Copy Link' }}
+        </button>
+      </div>
+
+      <!-- Join button -->
+      <a *ngIf="canJoin(selectedSlot.status)"
+         [href]="selectedSlot.meetingLink" target="_blank"
+         class="pg-btn pg-btn--primary tt-join-full"
+         [class.pg-btn--live]="selectedSlot.status === 'live'">
+        <i class="fa-solid fa-video"></i>
+        {{ selectedSlot.status === 'live' ? 'Join Live Session on BBB' : 'Join Session on BBB' }}
+      </a>
+
+    </div>
+  </div>
+  <div class="pg-modal__foot">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+    <button class="pg-btn pg-btn--primary" (click)="openEdit(selectedSlot); modalMode = 'edit'">
+      <i class="fa-solid fa-pen"></i> Edit
+    </button>
+  </div>
+</div>
+
+<!-- ── DELETE MODAL ────────────────────────────────────────────────────── -->
+<div class="pg-modal-backdrop" *ngIf="modalMode === 'delete'" (click)="closeModal()"></div>
+<div class="pg-modal pg-modal--sm" *ngIf="modalMode === 'delete' && selectedSlot">
+  <div class="pg-modal__head">
+    <h3>Remove Session</h3>
+    <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="pg-modal__body" style="text-align:center;padding:24px 32px;">
+    <div style="font-size:40px;color:#ef4444;margin-bottom:12px;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <p style="margin:0 0 8px;font-weight:600;font-size:15px;color:#1e293b;">Remove this session?</p>
+    <p style="margin:0;color:#64748b;font-size:14px;">
+      <strong>{{ selectedSlot.subject }}</strong> – {{ selectedSlot.topic }}<br/>
+      {{ selectedSlot.day }}, Session {{ selectedSlot.session }} &nbsp;|&nbsp; {{ selectedSlot.batch }}
+    </p>
+    <p style="margin:8px 0 0;color:#94a3b8;font-size:12px;">BBB Room: {{ selectedSlot.meetingId }}</p>
+  </div>
+  <div class="pg-modal__foot">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--danger" (click)="confirmDelete()">
+      <i class="fa-solid fa-trash"></i> Remove
+    </button>
+  </div>
+</div>

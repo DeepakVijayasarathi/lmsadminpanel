@@ -5,9 +5,11 @@ export interface ExamResult {
   student: string;
   exam: string;
   subject: string;
+  batch: string;
   score: number;
   totalMarks: number;
   percentage: number;
+  rank: number;
   grade: 'A+' | 'A' | 'B' | 'C' | 'F';
   submittedAt: string;
   status: 'pass' | 'fail';
@@ -21,13 +23,16 @@ export interface ExamResult {
 })
 export class ResultsComponent {
   results: ExamResult[] = [
-    { id: 1, student: 'Aarav Singh', exam: 'Mid-Term Mathematics', subject: 'Mathematics', score: 95, totalMarks: 100, percentage: 95, grade: 'A+', submittedAt: '2026-03-15', status: 'pass' },
-    { id: 2, student: 'Priya Sharma', exam: 'English Grammar Quiz', subject: 'English', score: 21, totalMarks: 25, percentage: 84, grade: 'A', submittedAt: '2026-03-15', status: 'pass' },
-    { id: 3, student: 'Rahul Verma', exam: 'Science Unit Test', subject: 'Science', score: 35, totalMarks: 50, percentage: 70, grade: 'B', submittedAt: '2026-03-16', status: 'pass' },
-    { id: 4, student: 'Neha Patel', exam: 'History Chapter Test', subject: 'History', score: 28, totalMarks: 40, percentage: 70, grade: 'B', submittedAt: '2026-03-14', status: 'pass' },
-    { id: 5, student: 'Kiran Mehta', exam: 'Computer Science Quiz', subject: 'Computer Science', score: 18, totalMarks: 30, percentage: 60, grade: 'C', submittedAt: '2026-03-14', status: 'pass' },
-    { id: 6, student: 'Saurabh Joshi', exam: 'Physics Final Exam', subject: 'Physics', score: 98, totalMarks: 100, percentage: 98, grade: 'A+', submittedAt: '2026-03-13', status: 'pass' },
-    { id: 7, student: 'Divya Nair', exam: 'Chemistry Practical', subject: 'Chemistry', score: 22, totalMarks: 60, percentage: 37, grade: 'F', submittedAt: '2026-03-12', status: 'fail' }
+    { id: 1,  student: 'Aarav Singh',    exam: 'NEET Full Mock Test #6',       subject: 'Physics + Chemistry + Biology', batch: 'NEET 2025 – Batch A',     score: 648, totalMarks: 720, percentage: 90, rank: 3,   grade: 'A+', submittedAt: '2026-03-15', status: 'pass' },
+    { id: 2,  student: 'Priya Sharma',   exam: 'NEET Full Mock Test #6',       subject: 'Physics + Chemistry + Biology', batch: 'NEET 2025 – Batch A',     score: 612, totalMarks: 720, percentage: 85, rank: 8,   grade: 'A',  submittedAt: '2026-03-15', status: 'pass' },
+    { id: 3,  student: 'Rohan Mehta',    exam: 'JEE Main Mock Test #4',        subject: 'Physics + Chemistry + Maths',   batch: 'JEE Main 2025 – Batch A', score: 261, totalMarks: 300, percentage: 87, rank: 5,   grade: 'A+', submittedAt: '2026-03-14', status: 'pass' },
+    { id: 4,  student: 'Kavya Reddy',    exam: 'JEE Main Mock Test #4',        subject: 'Physics + Chemistry + Maths',   batch: 'JEE Main 2025 – Batch A', score: 234, totalMarks: 300, percentage: 78, rank: 12,  grade: 'A',  submittedAt: '2026-03-14', status: 'pass' },
+    { id: 5,  student: 'Saurabh Joshi',  exam: 'NEET Chapter Test – Mechanics', subject: 'Physics',                      batch: 'NEET 2025 – Batch B',     score: 156, totalMarks: 180, percentage: 87, rank: 2,   grade: 'A+', submittedAt: '2026-03-15', status: 'pass' },
+    { id: 6,  student: 'Neha Patel',     exam: 'NEET Chapter Test – Mechanics', subject: 'Physics',                      batch: 'NEET 2025 – Batch B',     score: 108, totalMarks: 180, percentage: 60, rank: 28,  grade: 'C',  submittedAt: '2026-03-15', status: 'pass' },
+    { id: 7,  student: 'Arjun Desai',    exam: 'JEE Adv Mock Test #2',         subject: 'Physics + Chemistry + Maths',   batch: 'JEE Advanced 2025',       score: 298, totalMarks: 360, percentage: 83, rank: 4,   grade: 'A',  submittedAt: '2026-03-13', status: 'pass' },
+    { id: 8,  student: 'Divya Nair',     exam: 'NEET Full Mock Test #6',       subject: 'Physics + Chemistry + Biology', batch: 'NEET 2025 – Batch A',     score: 360, totalMarks: 720, percentage: 50, rank: 44,  grade: 'C',  submittedAt: '2026-03-15', status: 'pass' },
+    { id: 9,  student: 'Kiran Mehta',    exam: 'JEE Main Mock Test #4',        subject: 'Physics + Chemistry + Maths',   batch: 'JEE Main 2025 – Batch B', score: 105, totalMarks: 300, percentage: 35, rank: 38,  grade: 'F',  submittedAt: '2026-03-14', status: 'fail' },
+    { id: 10, student: 'Sneha Kulkarni', exam: 'NEET Full Mock Test #6',       subject: 'Physics + Chemistry + Biology', batch: 'NEET 2025 – Batch B',     score: 576, totalMarks: 720, percentage: 80, rank: 14,  grade: 'A',  submittedAt: '2026-03-15', status: 'pass' },
   ];
 
   gradeBadge(grade: string): string {

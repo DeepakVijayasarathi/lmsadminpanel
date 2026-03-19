@@ -3,8 +3,10 @@ import { Component } from '@angular/core';
 interface LiveClass {
   id: number;
   subject: string;
+  topic: string;
   teacher: string;
   batch: string;
+  examType: 'NEET' | 'JEE Main' | 'JEE Advanced';
   date: string;
   startTime: string;
   endTime: string;
@@ -24,21 +26,27 @@ export class LiveClassesComponent {
   statusFilter = '';
 
   liveClasses: LiveClass[] = [
-    { id: 1, subject: 'Mathematics – Calculus', teacher: 'Dr. Anita Sharma', batch: 'Class 12-A', date: '2026-03-16', startTime: '10:00 AM', endTime: '11:30 AM', students: 42, status: 'live', meetingLink: 'https://meet.example.com/math-calc' },
-    { id: 2, subject: 'Physics – Electromagnetism', teacher: 'Mr. Rajesh Kumar', batch: 'Class 11-B', date: '2026-03-16', startTime: '12:00 PM', endTime: '01:00 PM', students: 38, status: 'live', meetingLink: 'https://meet.example.com/phy-em' },
-    { id: 3, subject: 'Chemistry – Organic Reactions', teacher: 'Ms. Priya Nair', batch: 'Class 12-B', date: '2026-03-16', startTime: '02:00 PM', endTime: '03:30 PM', students: 35, status: 'upcoming', meetingLink: 'https://meet.example.com/chem-org' },
-    { id: 4, subject: 'Biology – Genetics', teacher: 'Dr. Suresh Menon', batch: 'Class 11-A', date: '2026-03-16', startTime: '04:00 PM', endTime: '05:00 PM', students: 30, status: 'upcoming', meetingLink: 'https://meet.example.com/bio-gen' },
-    { id: 5, subject: 'English – Poetry Analysis', teacher: 'Ms. Kavitha Rao', batch: 'Class 10-A', date: '2026-03-15', startTime: '09:00 AM', endTime: '10:00 AM', students: 48, status: 'completed', meetingLink: 'https://meet.example.com/eng-poetry' },
-    { id: 6, subject: 'History – World War II', teacher: 'Mr. Arun Pillai', batch: 'Class 10-B', date: '2026-03-15', startTime: '11:00 AM', endTime: '12:00 PM', students: 40, status: 'completed', meetingLink: 'https://meet.example.com/hist-ww2' },
-    { id: 7, subject: 'Computer Science – Algorithms', teacher: 'Ms. Deepa Iyer', batch: 'Class 12-C', date: '2026-03-14', startTime: '03:00 PM', endTime: '04:30 PM', students: 25, status: 'cancelled', meetingLink: 'https://meet.example.com/cs-algo' }
+    { id: 1,  subject: 'Physics',     topic: 'Electrostatics',          teacher: 'Dr. Vikram Sharma',  batch: 'NEET 2025 – Batch A',     examType: 'NEET',         date: '2026-03-17', startTime: '07:00 AM', endTime: '08:30 AM', students: 48, status: 'live',      meetingLink: 'https://bbb.edulanz.com/b/neet-2025-batch-a-physics-monday-s1' },
+    { id: 2,  subject: 'Mathematics', topic: 'Calculus – Integration',  teacher: 'Mr. Arjun Verma',    batch: 'JEE Main 2025 – Batch A', examType: 'JEE Main',     date: '2026-03-17', startTime: '09:00 AM', endTime: '10:30 AM', students: 42, status: 'live',      meetingLink: 'https://bbb.edulanz.com/b/jee-main-2025-batch-a-mathematics-monday-s2' },
+    { id: 3,  subject: 'Chemistry',   topic: 'Organic Reactions',       teacher: 'Ms. Pooja Iyer',     batch: 'NEET 2025 – Batch B',     examType: 'NEET',         date: '2026-03-17', startTime: '11:00 AM', endTime: '12:30 PM', students: 44, status: 'upcoming',  meetingLink: 'https://bbb.edulanz.com/b/neet-2025-batch-b-chemistry-monday-s3' },
+    { id: 4,  subject: 'Physics',     topic: 'Mechanics – Dynamics',    teacher: 'Mr. Rahul Gupta',    batch: 'JEE Main 2025 – Batch A', examType: 'JEE Main',     date: '2026-03-17', startTime: '02:00 PM', endTime: '03:30 PM', students: 42, status: 'upcoming',  meetingLink: 'https://bbb.edulanz.com/b/jee-main-2025-batch-a-physics-monday-s4' },
+    { id: 5,  subject: 'Biology',     topic: 'Genetics & Evolution',    teacher: 'Dr. Meena Krishnan', batch: 'NEET 2025 – Batch A',     examType: 'NEET',         date: '2026-03-17', startTime: '04:00 PM', endTime: '05:30 PM', students: 48, status: 'upcoming',  meetingLink: 'https://bbb.edulanz.com/b/neet-2025-batch-a-biology-monday-s5' },
+    { id: 6,  subject: 'Mathematics', topic: 'Matrices & Determinants', teacher: 'Dr. Kiran Patel',    batch: 'JEE Advanced 2025',       examType: 'JEE Advanced', date: '2026-03-17', startTime: '06:00 PM', endTime: '07:30 PM', students: 22, status: 'upcoming',  meetingLink: 'https://bbb.edulanz.com/b/jee-advanced-2025-mathematics-monday-s6' },
+    { id: 7,  subject: 'Physics',     topic: 'Thermodynamics',          teacher: 'Dr. Vikram Sharma',  batch: 'NEET 2025 – Batch A',     examType: 'NEET',         date: '2026-03-16', startTime: '07:00 AM', endTime: '08:30 AM', students: 46, status: 'completed', meetingLink: 'https://bbb.edulanz.com/b/neet-2025-batch-a-physics-sunday-s1' },
+    { id: 8,  subject: 'Chemistry',   topic: 'Inorganic Chemistry',     teacher: 'Dr. Sanjay Mishra',  batch: 'JEE Main 2025 – Batch B', examType: 'JEE Main',     date: '2026-03-16', startTime: '09:00 AM', endTime: '10:30 AM', students: 40, status: 'completed', meetingLink: 'https://bbb.edulanz.com/b/jee-main-2025-batch-b-chemistry-sunday-s2' },
+    { id: 9,  subject: 'Biology',     topic: 'Human Physiology',        teacher: 'Ms. Divya Nair',     batch: 'NEET 2025 – Batch B',     examType: 'NEET',         date: '2026-03-16', startTime: '11:00 AM', endTime: '12:30 PM', students: 44, status: 'completed', meetingLink: 'https://bbb.edulanz.com/b/neet-2025-batch-b-biology-sunday-s3' },
+    { id: 10, subject: 'Mathematics', topic: 'Coordinate Geometry',     teacher: 'Mr. Arjun Verma',    batch: 'JEE Main 2025 – Batch A', examType: 'JEE Main',     date: '2026-03-15', startTime: '09:00 AM', endTime: '10:30 AM', students: 42, status: 'cancelled', meetingLink: 'https://bbb.edulanz.com/b/jee-main-2025-batch-a-mathematics-saturday-s2' },
   ];
 
   get filteredClasses(): LiveClass[] {
     return this.liveClasses.filter(lc => {
-      const matchesSearch = !this.searchQuery ||
-        lc.subject.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        lc.teacher.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        lc.batch.toLowerCase().includes(this.searchQuery.toLowerCase());
+      const q = this.searchQuery.toLowerCase();
+      const matchesSearch = !q ||
+        lc.subject.toLowerCase().includes(q) ||
+        lc.topic.toLowerCase().includes(q) ||
+        lc.teacher.toLowerCase().includes(q) ||
+        lc.batch.toLowerCase().includes(q) ||
+        lc.examType.toLowerCase().includes(q);
       const matchesStatus = !this.statusFilter || lc.status === this.statusFilter;
       return matchesSearch && matchesStatus;
     });
