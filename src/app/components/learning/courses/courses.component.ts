@@ -5,6 +5,12 @@ import { environment } from '../../../../environments/environment';
 
 const BASE_URL = environment.apiUrl;
 
+// ─── Interfaces ───────────────────────────────────────────────────────────────
+
+/**
+ * Course model — mirrors the API response shape.
+ * The API uses `price` (not totalAmount / discountAmount).
+ */
 export interface Course {
   id: string;
   title: string;
@@ -15,13 +21,16 @@ export interface Course {
   isPublished?: boolean;
   durationHours?: number;
   durationInMonths?: number;
-  totalAmount?: number;
+  price?: number;               // ← API field name
   isPartialAllowed?: boolean;
   installmentCount?: number | null;
-  discountAmount?: number | null;
   createdAt?: string;
 }
 
+/**
+ * Payload for POST /courses  and  PUT /courses/{id}
+ * Matches the curl bodies exactly.
+ */
 export interface CoursePayload {
   title: string;
   description: string;
@@ -30,17 +39,14 @@ export interface CoursePayload {
   level: string;
   durationHours: number;
   durationInMonths: number;
-  totalAmount: number;
+  price: number;                // ← API field name
   isPartialAllowed: boolean;
   installmentCount: number | null;
-  discountAmount: number | null;
-}
-
-export interface CourseUpdatePayload extends CoursePayload {
-  isPublished: boolean;
 }
 
 type ModalMode = 'create' | 'edit' | 'view' | 'delete' | 'publish' | null;
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 @Component({
   selector: 'app-courses',
@@ -56,11 +62,11 @@ export class CoursesComponent implements OnInit {
   statusFilter: string = '';
   isLoading: boolean = false;
 
-  // Modal
+  // ── Modal state ────────────────────────────────────────────────
   modalMode: ModalMode = null;
   selectedCourse: Course | null = null;
 
-  // Form fields
+  // ── Form fields ────────────────────────────────────────────────
   formTitle: string = '';
   formDescription: string = '';
   formThumbnailUrl: string = '';
@@ -69,15 +75,15 @@ export class CoursesComponent implements OnInit {
   formIsPublished: boolean = false;
   formDurationHours: number = 1;
   formDurationInMonths: number = 1;
-  formTotalAmount: number = 0;
+  formPrice: number = 0;        // ← replaces formTotalAmount
   formIsPartialAllowed: boolean = false;
   formInstallmentCount: number | null = null;
-  formDiscountAmount: number | null = null;
 
-  // Validation
+  // ── Validation ─────────────────────────────────────────────────
   titleError: string = '';
-  totalAmountError: string = '';
+  priceError: string = '';      // ← replaces totalAmountError
 
+  // ── Constants ──────────────────────────────────────────────────
   readonly LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
   readonly CATEGORIES = [
     'Mathematics',
@@ -99,8 +105,11 @@ export class CoursesComponent implements OnInit {
     this.loadCourses();
   }
 
-  // ─── API ─────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════
+  //  API CALLS
+  // ════════════════════════════════════════════════════════════════
 
+  /** GET /courses */
   loadCourses(): void {
     this.isLoading = true;
     this.httpService.getData(BASE_URL, '/courses').subscribe({
@@ -116,58 +125,46 @@ export class CoursesComponent implements OnInit {
     });
   }
 
-  createCourse(): void {
-    const payload: CoursePayload = {
-      title: this.formTitle.trim(),
-      description: this.formDescription.trim(),
-      thumbnailUrl: this.formThumbnailUrl.trim(),
-      category: this.formCategory.trim(),
-      level: this.formLevel.trim(),
-      durationHours: this.formDurationHours,
-      durationInMonths: this.formDurationInMonths,
-      totalAmount: this.formTotalAmount,
-      isPartialAllowed: this.formIsPartialAllowed,
-      installmentCount: this.formIsPartialAllowed
-        ? this.formInstallmentCount
-        : null,
-      discountAmount: this.formDiscountAmount,
-    };
-    this.httpService
-      .postData(BASE_URL, '/courses/course-pricing', payload)
-      .subscribe({
-        next: () => {
-          this.commonService.success(
-            `Course "${payload.title}" created successfully.`,
-          );
-          this.closeModal();
-          this.loadCourses();
-        },
-        error: (err: any) => {
-          this.commonService.error(
-            err?.error?.message || 'Failed to create course.',
-          );
-        },
-      });
+  /** GET /courses/{id} */
+  getCourseById(id: string): void {
+    this.httpService.getData(BASE_URL, `/courses/${id}`).subscribe({
+      next: (res: any) => {
+        // Useful when you need a fresh detail view.
+        // Currently openViewModal uses the list data directly;
+        // swap to this call if you need server-fresh data.
+        this.selectedCourse = res?.data ?? res;
+      },
+      error: (err: any) => {
+        this.commonService.error(
+          err?.error?.message || 'Failed to load course details.',
+        );
+      },
+    });
   }
 
+  /** POST /courses */
+  createCourse(): void {
+    const payload: CoursePayload = this.buildPayload();
+    this.httpService.postData(BASE_URL, '/courses', payload).subscribe({
+      next: () => {
+        this.commonService.success(
+          `Course "${payload.title}" created successfully.`,
+        );
+        this.closeModal();
+        this.loadCourses();
+      },
+      error: (err: any) => {
+        this.commonService.error(
+          err?.error?.message || 'Failed to create course.',
+        );
+      },
+    });
+  }
+
+  /** PUT /courses/{id} */
   updateCourse(): void {
     if (!this.selectedCourse) return;
-    const payload: CourseUpdatePayload = {
-      title: this.formTitle.trim(),
-      description: this.formDescription.trim(),
-      thumbnailUrl: this.formThumbnailUrl.trim(),
-      category: this.formCategory.trim(),
-      level: this.formLevel.trim(),
-      isPublished: this.formIsPublished,
-      durationHours: this.formDurationHours,
-      durationInMonths: this.formDurationInMonths,
-      totalAmount: this.formTotalAmount,
-      isPartialAllowed: this.formIsPartialAllowed,
-      installmentCount: this.formIsPartialAllowed
-        ? this.formInstallmentCount
-        : null,
-      discountAmount: this.formDiscountAmount,
-    };
+    const payload: CoursePayload = this.buildPayload();
     this.httpService
       .putData(BASE_URL, `/courses/${this.selectedCourse.id}`, payload)
       .subscribe({
@@ -186,6 +183,7 @@ export class CoursesComponent implements OnInit {
       });
   }
 
+  /** DELETE /courses/{id} */
   deleteCourse(): void {
     if (!this.selectedCourse) return;
     this.httpService
@@ -206,6 +204,7 @@ export class CoursesComponent implements OnInit {
       });
   }
 
+  /** PUT /courses/{id}/publish */
   publishCourse(course: Course): void {
     this.httpService
       .putData(BASE_URL, `/courses/${course.id}/publish`, {})
@@ -223,6 +222,7 @@ export class CoursesComponent implements OnInit {
       });
   }
 
+  /** PUT /courses/{id}/unpublish */
   unpublishCourse(course: Course): void {
     this.httpService
       .putData(BASE_URL, `/courses/${course.id}/unpublish`, {})
@@ -240,53 +240,54 @@ export class CoursesComponent implements OnInit {
       });
   }
 
-  // ─── Modals ──────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════
+  //  MODAL HELPERS
+  // ════════════════════════════════════════════════════════════════
 
   openCreateModal(): void {
-    this.modalMode = 'create';
-    this.selectedCourse = null;
     this.resetForm();
+    this.selectedCourse = null;
+    this.modalMode = 'create';
   }
 
   openEditModal(course: Course): void {
-    this.modalMode = 'edit';
     this.selectedCourse = course;
     this.formTitle = course.title;
-    this.formDescription = course.description;
-    this.formThumbnailUrl = course.thumbnailUrl;
+    this.formDescription = course.description ?? '';
+    this.formThumbnailUrl = course.thumbnailUrl ?? '';
     this.formCategory = course.category ?? '';
     this.formLevel = course.level ?? '';
     this.formIsPublished = course.isPublished ?? false;
     this.formDurationHours = course.durationHours ?? 1;
     this.formDurationInMonths = course.durationInMonths ?? 1;
-    this.formTotalAmount = course.totalAmount ?? 0;
+    this.formPrice = course.price ?? 0;
     this.formIsPartialAllowed = course.isPartialAllowed ?? false;
     this.formInstallmentCount = course.installmentCount ?? null;
-    this.formDiscountAmount = course.discountAmount ?? null;
     this.titleError = '';
-    this.totalAmountError = '';
+    this.priceError = '';
+    this.modalMode = 'edit';
   }
 
   openViewModal(course: Course): void {
-    this.modalMode = 'view';
     this.selectedCourse = course;
+    this.modalMode = 'view';
   }
 
   openDeleteModal(course: Course): void {
-    this.modalMode = 'delete';
     this.selectedCourse = course;
+    this.modalMode = 'delete';
   }
 
   openPublishModal(course: Course): void {
-    this.modalMode = 'publish';
     this.selectedCourse = course;
+    this.modalMode = 'publish';
   }
 
   closeModal(): void {
     this.modalMode = null;
     this.selectedCourse = null;
     this.titleError = '';
-    this.totalAmountError = '';
+    this.priceError = '';
   }
 
   submitForm(): void {
@@ -295,9 +296,34 @@ export class CoursesComponent implements OnInit {
     else if (this.modalMode === 'edit') this.updateCourse();
   }
 
+  // ════════════════════════════════════════════════════════════════
+  //  FORM UTILITIES
+  // ════════════════════════════════════════════════════════════════
+
+  /**
+   * Builds the POST / PUT payload.
+   * Both endpoints share the same body shape per the API spec.
+   */
+  private buildPayload(): CoursePayload {
+    return {
+      title: this.formTitle.trim(),
+      description: this.formDescription.trim(),
+      thumbnailUrl: this.formThumbnailUrl.trim(),
+      category: this.formCategory.trim(),
+      level: this.formLevel.trim(),
+      durationHours: this.formDurationHours,
+      durationInMonths: this.formDurationInMonths,
+      price: this.formPrice,
+      isPartialAllowed: this.formIsPartialAllowed,
+      installmentCount: this.formIsPartialAllowed
+        ? this.formInstallmentCount
+        : null,
+    };
+  }
+
   validateForm(): boolean {
     this.titleError = '';
-    this.totalAmountError = '';
+    this.priceError = '';
     let valid = true;
 
     if (!this.formTitle.trim()) {
@@ -315,8 +341,8 @@ export class CoursesComponent implements OnInit {
       }
     }
 
-    if (this.formTotalAmount == null || this.formTotalAmount < 0) {
-      this.totalAmountError = 'Total amount must be 0 or greater.';
+    if (this.formPrice == null || this.formPrice < 0) {
+      this.priceError = 'Price must be 0 or greater.';
       valid = false;
     }
 
@@ -332,30 +358,34 @@ export class CoursesComponent implements OnInit {
     this.formIsPublished = false;
     this.formDurationHours = 1;
     this.formDurationInMonths = 1;
-    this.formTotalAmount = 0;
+    this.formPrice = 0;
     this.formIsPartialAllowed = false;
     this.formInstallmentCount = null;
-    this.formDiscountAmount = null;
     this.titleError = '';
-    this.totalAmountError = '';
+    this.priceError = '';
   }
 
-  // ─── Filters & Helpers ───────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════
+  //  FILTERS & DISPLAY HELPERS
+  // ════════════════════════════════════════════════════════════════
 
   onSearch(): void {
     this.applyFilters();
   }
+
   onStatusFilter(): void {
     this.applyFilters();
   }
 
   applyFilters(): void {
     let list = [...this.courses];
+
     if (this.statusFilter === 'published') {
       list = list.filter((c) => c.isPublished);
     } else if (this.statusFilter === 'unpublished') {
       list = list.filter((c) => !c.isPublished);
     }
+
     const q = this.searchQuery.toLowerCase().trim();
     if (q) {
       list = list.filter(
@@ -365,6 +395,7 @@ export class CoursesComponent implements OnInit {
           c.category?.toLowerCase().includes(q),
       );
     }
+
     this.filteredCourses = list;
   }
 
@@ -398,6 +429,7 @@ export class CoursesComponent implements OnInit {
   get totalPublished(): number {
     return this.courses.filter((c) => c.isPublished).length;
   }
+
   get totalUnpublished(): number {
     return this.courses.filter((c) => !c.isPublished).length;
   }

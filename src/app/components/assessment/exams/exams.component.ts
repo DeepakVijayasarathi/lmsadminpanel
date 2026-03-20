@@ -5,6 +5,8 @@ import { environment } from '../../../../environments/environment';
 
 const BASE_URL = environment.apiUrl;
 
+// ─── Interfaces ───────────────────────────────────────────────────────────────
+
 export interface Topic {
   id: string;
   name: string;
@@ -44,8 +46,9 @@ export interface Question {
 }
 
 type ModalMode = 'create' | 'edit' | 'view' | 'delete' | 'questions' | null;
-
 type OptionKey = 'A' | 'B' | 'C' | 'D';
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 @Component({
   selector: 'app-exams',
@@ -59,14 +62,13 @@ export class ExamsComponent implements OnInit {
   topics: Topic[] = [];
 
   searchQuery: string = '';
-  statusFilter: string = '';
   isLoading: boolean = false;
 
-  // Modal
+  // ── Modal state ────────────────────────────────────────────────
   modalMode: ModalMode = null;
   selectedQuiz: Quiz | null = null;
 
-  // Quiz form
+  // ── Quiz form fields ───────────────────────────────────────────
   formTitle: string = '';
   formDescription: string = '';
   formTopicId: string | null = null;
@@ -74,11 +76,11 @@ export class ExamsComponent implements OnInit {
   formPassingMarks: number = 40;
   formDurationMinutes: number = 60;
 
-  // Questions
+  // ── Questions state ────────────────────────────────────────────
   questions: Question[] = [];
   questionsLoading: boolean = false;
 
-  // Add question form
+  // ── Add-question form ──────────────────────────────────────────
   showAddQuestion: boolean = false;
   qText: string = '';
   qOptionA: string = '';
@@ -89,14 +91,16 @@ export class ExamsComponent implements OnInit {
   qMarks: number = 1;
   qSaving: boolean = false;
 
-  // Validation
+  // ── Validation ─────────────────────────────────────────────────
   titleError: string = '';
   totalMarksError: string = '';
   passingMarksError: string = '';
   durationError: string = '';
   qTextError: string = '';
 
-  optionKeys: OptionKey[] = ['A', 'B', 'C', 'D'];
+  // ── Constants ──────────────────────────────────────────────────
+  readonly optionKeys: OptionKey[] = ['A', 'B', 'C', 'D'];
+  readonly correctOptions = ['A', 'B', 'C', 'D'];
 
   constructor(
     private commonService: CommonService,
@@ -108,17 +112,11 @@ export class ExamsComponent implements OnInit {
     this.loadQuizzes();
   }
 
-  // ─── API ─────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════
+  //  API CALLS
+  // ════════════════════════════════════════════════════════════════
 
-  loadTopics(): void {
-    this.httpService.getData(BASE_URL, '/topic').subscribe({
-      next: (res: any) => {
-        this.topics = Array.isArray(res) ? res : (res?.data ?? []);
-      },
-      error: () => {},
-    });
-  }
-
+  /** GET /api/quiz */
   loadQuizzes(): void {
     this.isLoading = true;
     this.httpService.getData(BASE_URL, '/quiz').subscribe({
@@ -134,30 +132,34 @@ export class ExamsComponent implements OnInit {
     });
   }
 
-
-  getOption(q: Question, opt: OptionKey): string {
-    const key = `option${opt}` as 'optionA' | 'optionB' | 'optionC' | 'optionD';
-    return q[key];
-  }
-
-  createQuiz(): void {
-    const payload = this.buildPayload();
-    this.httpService.postData(BASE_URL, '/quiz', payload).subscribe({
-      next: () => {
-        this.commonService.success(
-          `Quiz "${payload.title}" created successfully.`,
-        );
-        this.closeModal();
-        this.loadQuizzes();
+  /** GET /api/topic (topics for dropdown) */
+  loadTopics(): void {
+    this.httpService.getData(BASE_URL, '/topic').subscribe({
+      next: (res: any) => {
+        this.topics = Array.isArray(res) ? res : (res?.data ?? []);
       },
-      error: (err: any) => {
-        this.commonService.error(
-          err?.error?.message || 'Failed to create quiz.',
-        );
+      error: () => {
+        // Topics are optional; swallow the error silently
       },
     });
   }
 
+  /** POST /api/quiz */
+  createQuiz(): void {
+    const payload = this.buildPayload();
+    this.httpService.postData(BASE_URL, '/quiz', payload).subscribe({
+      next: () => {
+        this.commonService.success(`Quiz "${payload.title}" created successfully.`);
+        this.closeModal();
+        this.loadQuizzes();
+      },
+      error: (err: any) => {
+        this.commonService.error(err?.error?.message || 'Failed to create quiz.');
+      },
+    });
+  }
+
+  /** PUT /api/quiz/{id} */
   updateQuiz(): void {
     if (!this.selectedQuiz) return;
     const payload = this.buildPayload();
@@ -170,33 +172,29 @@ export class ExamsComponent implements OnInit {
           this.loadQuizzes();
         },
         error: (err: any) => {
-          this.commonService.error(
-            err?.error?.message || 'Failed to update quiz.',
-          );
+          this.commonService.error(err?.error?.message || 'Failed to update quiz.');
         },
       });
   }
 
+  /** DELETE /api/quiz/{id} */
   deleteQuiz(): void {
     if (!this.selectedQuiz) return;
     this.httpService
       .deleteData(BASE_URL, `/quiz/${this.selectedQuiz.id}`)
       .subscribe({
         next: () => {
-          this.commonService.success(
-            `Quiz "${this.selectedQuiz!.title}" deleted.`,
-          );
+          this.commonService.success(`Quiz "${this.selectedQuiz!.title}" deleted.`);
           this.closeModal();
           this.loadQuizzes();
         },
         error: (err: any) => {
-          this.commonService.error(
-            err?.error?.message || 'Failed to delete quiz.',
-          );
+          this.commonService.error(err?.error?.message || 'Failed to delete quiz.');
         },
       });
   }
 
+  /** GET /api/quiz/{id}/questions */
   loadQuestions(quizId: string): void {
     this.questionsLoading = true;
     this.questions = [];
@@ -212,12 +210,14 @@ export class ExamsComponent implements OnInit {
     });
   }
 
+  /** POST /api/quiz/{id}/questions */
   addQuestion(): void {
     if (!this.selectedQuiz) return;
     if (!this.qText.trim()) {
       this.qTextError = 'Question text is required.';
       return;
     }
+
     const payload: Question = {
       questionText: this.qText.trim(),
       optionA: this.qOptionA.trim(),
@@ -227,6 +227,7 @@ export class ExamsComponent implements OnInit {
       correctOption: this.qCorrect,
       marks: this.qMarks,
     };
+
     this.qSaving = true;
     this.httpService
       .postData(BASE_URL, `/quiz/${this.selectedQuiz.id}/questions`, payload)
@@ -234,59 +235,54 @@ export class ExamsComponent implements OnInit {
         next: () => {
           this.commonService.success('Question added.');
           this.resetQuestionForm();
+          this.showAddQuestion = false;
           this.loadQuestions(this.selectedQuiz!.id);
           this.qSaving = false;
         },
         error: (err: any) => {
-          this.commonService.error(
-            err?.error?.message || 'Failed to add question.',
-          );
+          this.commonService.error(err?.error?.message || 'Failed to add question.');
           this.qSaving = false;
         },
       });
   }
 
-  // ─── Modal Helpers ────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════
+  //  MODAL HELPERS
+  // ════════════════════════════════════════════════════════════════
 
   openCreateModal(): void {
-    this.modalMode = 'create';
+    this.resetForm();
     this.selectedQuiz = null;
-    this.formTitle = '';
-    this.formDescription = '';
-    this.formTopicId = null;
-    this.formTotalMarks = 100;
-    this.formPassingMarks = 40;
-    this.formDurationMinutes = 60;
-    this.clearErrors();
+    this.modalMode = 'create';
   }
 
   openEditModal(quiz: Quiz): void {
-    this.modalMode = 'edit';
     this.selectedQuiz = quiz;
     this.formTitle = quiz.title;
-    this.formDescription = quiz.description;
+    this.formDescription = quiz.description ?? '';
     this.formTopicId = quiz.topicId;
     this.formTotalMarks = quiz.totalMarks;
     this.formPassingMarks = quiz.passingMarks;
     this.formDurationMinutes = quiz.durationMinutes;
     this.clearErrors();
+    this.modalMode = 'edit';
   }
 
   openViewModal(quiz: Quiz): void {
-    this.modalMode = 'view';
     this.selectedQuiz = quiz;
+    this.modalMode = 'view';
   }
 
   openDeleteModal(quiz: Quiz): void {
-    this.modalMode = 'delete';
     this.selectedQuiz = quiz;
+    this.modalMode = 'delete';
   }
 
   openQuestionsModal(quiz: Quiz): void {
-    this.modalMode = 'questions';
     this.selectedQuiz = quiz;
     this.showAddQuestion = false;
     this.resetQuestionForm();
+    this.modalMode = 'questions';
     this.loadQuestions(quiz.id);
   }
 
@@ -304,11 +300,14 @@ export class ExamsComponent implements OnInit {
     else if (this.modalMode === 'edit') this.updateQuiz();
   }
 
-  // ─── Validation ───────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════
+  //  VALIDATION & FORM UTILITIES
+  // ════════════════════════════════════════════════════════════════
 
   validateForm(): boolean {
     this.clearErrors();
     let valid = true;
+
     if (!this.formTitle.trim()) {
       this.titleError = 'Title is required.';
       valid = false;
@@ -328,6 +327,7 @@ export class ExamsComponent implements OnInit {
       this.durationError = 'Duration must be at least 1 minute.';
       valid = false;
     }
+
     return valid;
   }
 
@@ -339,9 +339,7 @@ export class ExamsComponent implements OnInit {
     this.qTextError = '';
   }
 
-  // ─── Helpers ─────────────────────────────────────────────────
-
-  buildPayload(): QuizPayload {
+  private buildPayload(): QuizPayload {
     return {
       topicId: this.formTopicId || null,
       title: this.formTitle.trim(),
@@ -350,6 +348,16 @@ export class ExamsComponent implements OnInit {
       passingMarks: this.formPassingMarks,
       durationMinutes: this.formDurationMinutes,
     };
+  }
+
+  private resetForm(): void {
+    this.formTitle = '';
+    this.formDescription = '';
+    this.formTopicId = null;
+    this.formTotalMarks = 100;
+    this.formPassingMarks = 40;
+    this.formDurationMinutes = 60;
+    this.clearErrors();
   }
 
   resetQuestionForm(): void {
@@ -363,31 +371,35 @@ export class ExamsComponent implements OnInit {
     this.qTextError = '';
   }
 
+  // ════════════════════════════════════════════════════════════════
+  //  DISPLAY HELPERS
+  // ════════════════════════════════════════════════════════════════
+
   getTopicName(topicId: string | null): string {
     if (!topicId) return '—';
     return this.topics.find((t) => t.id === topicId)?.name ?? '—';
   }
 
-  onSearch(): void {
-    this.applyFilters();
+  getOption(q: Question, opt: OptionKey): string {
+    const key = `option${opt}` as keyof Pick<Question, 'optionA' | 'optionB' | 'optionC' | 'optionD'>;
+    return q[key];
   }
-  onStatusFilter(): void {
+
+  onSearch(): void {
     this.applyFilters();
   }
 
   applyFilters(): void {
     const q = this.searchQuery.toLowerCase().trim();
     this.filteredQuizzes = this.quizzes.filter((quiz) => {
-      const matchSearch =
+      return (
         !q ||
         quiz.title.toLowerCase().includes(q) ||
         quiz.description?.toLowerCase().includes(q) ||
-        this.getTopicName(quiz.topicId).toLowerCase().includes(q);
-      return matchSearch;
+        this.getTopicName(quiz.topicId).toLowerCase().includes(q)
+      );
     });
   }
-
-  correctOptions = ['A', 'B', 'C', 'D'];
 
   get totalQuestions(): number {
     return this.quizzes.reduce((s, q) => s + (q.questionCount ?? 0), 0);

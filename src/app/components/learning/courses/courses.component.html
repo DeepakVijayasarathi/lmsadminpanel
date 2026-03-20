@@ -1,4 +1,3 @@
-<!-- courses.component.html -->
 <div class="pg">
   <!-- Page Header -->
   <div class="pg-head">
@@ -123,18 +122,13 @@
             <!-- Category / Level -->
             <td>
               <div class="meta-stack">
-                <span
-                  class="meta-chip meta-chip--indigo"
-                  *ngIf="course.category"
-                >
+                <span class="meta-chip meta-chip--indigo" *ngIf="course.category">
                   <i class="fa-solid fa-tag"></i> {{ course.category }}
                 </span>
                 <span class="meta-chip meta-chip--slate" *ngIf="course.level">
                   <i class="fa-solid fa-signal"></i> {{ course.level }}
                 </span>
-                <span class="no-val" *ngIf="!course.category && !course.level"
-                  >—</span
-                >
+                <span class="no-val" *ngIf="!course.category && !course.level">—</span>
               </div>
             </td>
 
@@ -163,12 +157,7 @@
             <!-- Pricing -->
             <td>
               <div class="price-cell">
-                <span class="price-amount">{{
-                  formatCurrency(course.totalAmount)
-                }}</span>
-                <span class="price-discount" *ngIf="course.discountAmount">
-                  -{{ formatCurrency(course.discountAmount) }}
-                </span>
+                <span class="price-amount">{{ formatCurrency(course.price) }}</span>
                 <span
                   class="meta-chip meta-chip--emerald"
                   *ngIf="course.isPartialAllowed"
@@ -220,9 +209,7 @@
                 >
                   <i
                     class="fa-solid"
-                    [ngClass]="
-                      course.isPublished ? 'fa-eye-slash' : 'fa-upload'
-                    "
+                    [ngClass]="course.isPublished ? 'fa-eye-slash' : 'fa-upload'"
                   ></i>
                 </button>
                 <button
@@ -382,39 +369,22 @@
       <i class="fa-solid fa-indian-rupee-sign"></i> Pricing
     </div>
 
-    <div class="form-grid">
-      <!-- Total Amount -->
-      <div class="form-group" [class.has-error]="totalAmountError">
-        <label>Total Amount <span class="required">*</span></label>
-        <div class="input-prefix-wrap">
-          <span class="input-prefix">₹</span>
-          <input
-            type="number"
-            class="form-control form-control--prefixed"
-            min="0"
-            placeholder="0"
-            [(ngModel)]="formTotalAmount"
-            (input)="totalAmountError = ''"
-          />
-        </div>
-        <div class="field-error" *ngIf="totalAmountError">
-          <i class="fa-solid fa-circle-exclamation"></i> {{ totalAmountError }}
-        </div>
+    <!-- Price -->
+    <div class="form-group" [class.has-error]="priceError">
+      <label>Price <span class="required">*</span></label>
+      <div class="input-prefix-wrap">
+        <span class="input-prefix">₹</span>
+        <input
+          type="number"
+          class="form-control form-control--prefixed"
+          min="0"
+          placeholder="0"
+          [(ngModel)]="formPrice"
+          (input)="priceError = ''"
+        />
       </div>
-
-      <!-- Discount Amount -->
-      <div class="form-group">
-        <label>Discount Amount <span class="hint">(optional)</span></label>
-        <div class="input-prefix-wrap">
-          <span class="input-prefix">₹</span>
-          <input
-            type="number"
-            class="form-control form-control--prefixed"
-            min="0"
-            placeholder="0"
-            [(ngModel)]="formDiscountAmount"
-          />
-        </div>
+      <div class="field-error" *ngIf="priceError">
+        <i class="fa-solid fa-circle-exclamation"></i> {{ priceError }}
       </div>
     </div>
 
@@ -552,19 +522,9 @@
         </div>
       </div>
       <div class="view-detail-item">
-        <div class="view-detail-label">Total Amount</div>
+        <div class="view-detail-label">Price</div>
         <div class="view-detail-val">
-          {{ formatCurrency(selectedCourse.totalAmount) }}
-        </div>
-      </div>
-      <div class="view-detail-item">
-        <div class="view-detail-label">Discount</div>
-        <div class="view-detail-val">
-          {{
-            selectedCourse.discountAmount
-              ? formatCurrency(selectedCourse.discountAmount)
-              : "—"
-          }}
+          {{ formatCurrency(selectedCourse.price) }}
         </div>
       </div>
       <div class="view-detail-item">
