@@ -10,18 +10,14 @@ export interface Batch {
   name?: string;
   batchName?: string;
   courseId: string;
-  teacherId: string;
+  teacherIds: string[];
+  studentIds: string[];
   startDate: string;
   endDate: string;
   maxStudents?: number;
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string | null;
-  // Populated relations (if returned by API)
-  course?: { id: string; name: string };
-  teacher?: { id: string; firstName: string; lastName: string };
-  students?: UserRef[];
-  teachers?: UserRef[];
 }
 
 export interface UserRef {
@@ -39,18 +35,20 @@ export interface Course {
   thumbnailUrl: string;
 }
 
-export interface BatchPayload {
+export interface CreateBatchPayload {
   name: string;
   courseId: string;
-  teacherId: string;
+  teacherIds: string[];
   startDate: string;
   endDate: string;
+  maxStudents: number;
 }
 
-export interface BatchUpdatePayload {
+export interface UpdateBatchPayload {
   batchName: string;
   courseId: string;
-  teacherId: string;
+  teacherIds: string[];
+  studentIds: string[];
   startDate: string;
   endDate: string;
   maxStudents: number;
@@ -58,13 +56,8 @@ export interface BatchUpdatePayload {
 }
 
 type ModalMode =
-  | 'create'
-  | 'edit'
-  | 'view'
-  | 'delete'
-  | 'manage-students'
-  | 'manage-teachers'
-  | null;
+  | 'create' | 'edit' | 'view' | 'delete'
+  | 'manage-students' | 'manage-teachers' | null;
 
 @Component({
   selector: 'app-batches',
@@ -73,38 +66,37 @@ type ModalMode =
   styleUrls: ['../../../shared-page.css', './batches.component.css'],
 })
 export class BatchesComponent implements OnInit {
+
   batches: Batch[] = [];
   filteredBatches: Batch[] = [];
   allStudents: UserRef[] = [];
   allTeachers: UserRef[] = [];
   courses: Course[] = [];
 
-  searchQuery: string = '';
-  statusFilter: string = '';
-  isLoading: boolean = false;
+  searchQuery = '';
+  statusFilter = '';
+  isLoading = false;
+  isSaving = false;
 
-  // Modal state
   modalMode: ModalMode = null;
   selectedBatch: Batch | null = null;
 
-  // Form fields
-  formName: string = '';
-  formCourseId: string = '';
-  formTeacherId: string = '';
-  formStartDate: string = '';
-  formEndDate: string = '';
-  formMaxStudents: number = 30;
-  formIsActive: boolean = true;
+  formName = '';
+  formCourseId = '';
+  formTeacherIds: string[] = [];
+  formStudentIds: string[] = [];
+  formStartDate = '';
+  formEndDate = '';
+  formMaxStudents = 30;
+  formIsActive = true;
 
-  // Manage members
-  memberSearchQuery: string = '';
-  actionLoadingId: string = '';
+  memberSearchQuery = '';
+  actionLoadingId = '';
 
-  // Validation
-  nameError: string = '';
-  teacherError: string = '';
-  startDateError: string = '';
-  endDateError: string = '';
+  nameError = '';
+  teacherError = '';
+  startDateError = '';
+  endDateError = '';
 
   constructor(
     private commonService: CommonService,
@@ -117,13 +109,20 @@ export class BatchesComponent implements OnInit {
     this.loadCourses();
   }
 
-  // ─── API Calls ──────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════
+  //                   API CALLS
+  // ═══════════════════════════════════════════════════
 
   loadBatches(): void {
     this.isLoading = true;
     this.httpService.getData(BASE_URL, '/batches').subscribe({
       next: (res: any) => {
-        this.batches = Array.isArray(res) ? res : (res?.data ?? []);
+        const raw: any[] = Array.isArray(res) ? res : (res?.data ?? []);
+        this.batches = raw.map(b => ({
+          ...b,
+          teacherIds: b.teacherIds || [],
+          studentIds: b.studentIds || [],
+        }));
         this.applyFilters();
         this.isLoading = false;
       },
@@ -138,29 +137,27 @@ export class BatchesComponent implements OnInit {
     this.httpService.getData(BASE_URL, '/role').subscribe({
       next: (rolesRes: any) => {
         const roles: any[] = Array.isArray(rolesRes) ? rolesRes : (rolesRes?.data ?? []);
-        const teacherRole = roles.find((r: any) => r.name === 'Teacher');
-        const studentRole = roles.find((r: any) => r.name === 'Student');
-
+        const teacherRole = roles.find((r: any) => r.name?.toLowerCase() === 'teacher');
+        const studentRole = roles.find((r: any) => r.name?.toLowerCase() === 'student');
         this.httpService.getData(BASE_URL, '/users').subscribe({
           next: (res: any) => {
             const users: any[] = Array.isArray(res) ? res : (res?.data ?? []);
-            this.allTeachers = users.filter(u => u.roleDto?.id === teacherRole?.id);
-            this.allStudents = users.filter(u => u.roleDto?.id === studentRole?.id);
+            this.allTeachers = teacherRole
+              ? users.filter(u => u.roleDto?.id === teacherRole.id)
+              : users.filter(u => (u.roleDto?.name ?? '').toLowerCase() === 'teacher');
+            this.allStudents = studentRole
+              ? users.filter(u => u.roleDto?.id === studentRole.id)
+              : users.filter(u => (u.roleDto?.name ?? '').toLowerCase() === 'student');
           },
-          error: () => {},
         });
       },
       error: () => {
-        // fallback to name-based filter
         this.httpService.getData(BASE_URL, '/users').subscribe({
           next: (res: any) => {
             const users: any[] = Array.isArray(res) ? res : (res?.data ?? []);
-            const roleOf = (u: any): string =>
-              (u.roleDto?.name ?? u.role?.name ?? u.userType ?? '').toLowerCase();
-            this.allTeachers = users.filter(u => roleOf(u) === 'teacher');
-            this.allStudents = users.filter(u => roleOf(u) === 'student');
+            this.allTeachers = users.filter(u => (u.roleDto?.name ?? '').toLowerCase() === 'teacher');
+            this.allStudents = users.filter(u => (u.roleDto?.name ?? '').toLowerCase() === 'student');
           },
-          error: () => {},
         });
       },
     });
@@ -171,202 +168,194 @@ export class BatchesComponent implements OnInit {
       next: (res: any) => {
         this.courses = Array.isArray(res) ? res : (res?.data ?? []);
       },
-      error: () => {
-        this.commonService.error('Failed to load courses.');
-      },
+      error: () => this.commonService.error('Failed to load courses.'),
     });
   }
 
+  // ── POST /batches ────────────────────────────────────
   createBatch(): void {
-    const payload: BatchPayload = {
+    const payload: CreateBatchPayload = {
       name: this.formName.trim(),
-      courseId: this.formCourseId.trim(),
-      teacherId: this.formTeacherId,
-      startDate: this.formStartDate,
-      endDate: this.formEndDate,
+      courseId: this.formCourseId,
+      teacherIds: [...this.formTeacherIds],
+      startDate: new Date(this.formStartDate).toISOString(),
+      endDate: new Date(this.formEndDate).toISOString(),
+      maxStudents: this.formMaxStudents,
     };
+    this.isSaving = true;
     this.httpService.postData(BASE_URL, '/batches', payload).subscribe({
       next: () => {
-        this.commonService.success(
-          `Batch "${payload.name}" created successfully.`,
-        );
+        this.commonService.success(`Batch "${payload.name}" created successfully.`);
+        this.isSaving = false;
         this.closeModal();
         this.loadBatches();
       },
       error: (err: any) => {
-        this.commonService.error(
-          err?.error?.message || 'Failed to create batch.',
-        );
+        this.commonService.error(err?.error?.message || 'Failed to create batch.');
+        this.isSaving = false;
       },
     });
   }
 
+  // ── PUT /batches/update/{id} — core fields only ──────
+  // Students/teachers managed via dedicated endpoints
   updateBatch(): void {
     if (!this.selectedBatch) return;
-    const payload: BatchUpdatePayload = {
+    const payload: UpdateBatchPayload = {
       batchName: this.formName.trim(),
-      courseId: this.formCourseId.trim(),
-      teacherId: this.formTeacherId,
-      startDate: this.formStartDate,
-      endDate: this.formEndDate,
+      courseId: this.formCourseId,
+      teacherIds: [...this.formTeacherIds],
+      studentIds: [...(this.selectedBatch.studentIds || [])],
+      startDate: new Date(this.formStartDate).toISOString(),
+      endDate: new Date(this.formEndDate).toISOString(),
       maxStudents: this.formMaxStudents,
       isActive: this.formIsActive,
     };
-    this.httpService
-      .putData(BASE_URL, `/batches/update/${this.selectedBatch.id}`, payload)
-      .subscribe({
-        next: () => {
-          this.commonService.success(`Batch updated successfully.`);
-          this.closeModal();
-          this.loadBatches();
-        },
-        error: (err: any) => {
-          this.commonService.error(
-            err?.error?.message || 'Failed to update batch.',
-          );
-        },
-      });
+    this.isSaving = true;
+    this.httpService.putData(BASE_URL, `/batches/update/${this.selectedBatch.id}`, payload).subscribe({
+      next: () => {
+        this.commonService.success('Batch updated successfully.');
+        this.isSaving = false;
+        this.closeModal();
+        this.loadBatches();
+      },
+      error: (err: any) => {
+        this.commonService.error(err?.error?.message || 'Failed to update batch.');
+        this.isSaving = false;
+      },
+    });
   }
 
+  // ── PUT /batches/delete/{id} ─────────────────────────
   deleteBatch(): void {
     if (!this.selectedBatch) return;
-    this.httpService
-      .putData(BASE_URL, `/batches/delete/${this.selectedBatch.id}`, {})
-      .subscribe({
-        next: () => {
-          this.commonService.success(
-            `Batch "${this.getBatchName(this.selectedBatch!)}" deleted.`,
-          );
-          this.closeModal();
-          this.loadBatches();
-        },
-        error: (err: any) => {
-          this.commonService.error(
-            err?.error?.message || 'Failed to delete batch.',
-          );
-        },
-      });
+    this.isSaving = true;
+    this.httpService.putData(BASE_URL, `/batches/delete/${this.selectedBatch.id}`, {}).subscribe({
+      next: () => {
+        this.commonService.success(`Batch "${this.getBatchName(this.selectedBatch!)}" deleted.`);
+        this.isSaving = false;
+        this.closeModal();
+        this.loadBatches();
+      },
+      error: (err: any) => {
+        this.commonService.error(err?.error?.message || 'Failed to delete batch.');
+        this.isSaving = false;
+      },
+    });
   }
 
+  // ── POST /batches/add-student?batchId=&studentId= ───
   addStudent(studentId: string): void {
     if (!this.selectedBatch) return;
     this.actionLoadingId = studentId;
-    this.httpService
-      .postData(
-        BASE_URL,
-        `/batches/add-student?batchId=${this.selectedBatch.id}&studentId=${studentId}`,
-        {},
-      )
-      .subscribe({
-        next: () => {
-          this.commonService.success('Student added to batch.');
-          this.actionLoadingId = '';
-          this.refreshBatch();
-        },
-        error: (err: any) => {
-          this.commonService.error(
-            err?.error?.message || 'Failed to add student.',
-          );
-          this.actionLoadingId = '';
-        },
-      });
+    this.httpService.postData(
+      BASE_URL,
+      `/batches/add-student?batchId=${this.selectedBatch.id}&studentId=${studentId}`,
+      {}
+    ).subscribe({
+      next: () => {
+        this.commonService.success('Student added to batch.');
+        this.actionLoadingId = '';
+        this.refreshBatch();
+      },
+      error: (err: any) => {
+        this.commonService.error(err?.error?.message || 'Failed to add student.');
+        this.actionLoadingId = '';
+      },
+    });
   }
 
+  // ── POST /batches/remove-student?batchId=&studentId= ─
   removeStudent(studentId: string): void {
     if (!this.selectedBatch) return;
     this.actionLoadingId = studentId;
-    this.httpService
-      .postData(
-        BASE_URL,
-        `/batches/remove-student?batchId=${this.selectedBatch.id}&studentId=${studentId}`,
-        {},
-      )
-      .subscribe({
-        next: () => {
-          this.commonService.success('Student removed from batch.');
-          this.actionLoadingId = '';
-          this.refreshBatch();
-        },
-        error: (err: any) => {
-          this.commonService.error(
-            err?.error?.message || 'Failed to remove student.',
-          );
-          this.actionLoadingId = '';
-        },
-      });
+    this.httpService.postData(
+      BASE_URL,
+      `/batches/remove-student?batchId=${this.selectedBatch.id}&studentId=${studentId}`,
+      {}
+    ).subscribe({
+      next: () => {
+        this.commonService.success('Student removed from batch.');
+        this.actionLoadingId = '';
+        this.refreshBatch();
+      },
+      error: (err: any) => {
+        this.commonService.error(err?.error?.message || 'Failed to remove student.');
+        this.actionLoadingId = '';
+      },
+    });
   }
 
+  // ── POST /batches/add-teachers?batchId=&teacherId= ──
   addTeacher(teacherId: string): void {
     if (!this.selectedBatch) return;
     this.actionLoadingId = teacherId;
-    this.httpService
-      .postData(
-        BASE_URL,
-        `/batches/add-teachers?batchId=${this.selectedBatch.id}&teacherId=${teacherId}`,
-        {},
-      )
-      .subscribe({
-        next: () => {
-          this.commonService.success('Teacher added to batch.');
-          this.actionLoadingId = '';
-          this.refreshBatch();
-        },
-        error: (err: any) => {
-          this.commonService.error(
-            err?.error?.message || 'Failed to add teacher.',
-          );
-          this.actionLoadingId = '';
-        },
-      });
+    this.httpService.postData(
+      BASE_URL,
+      `/batches/add-teachers?batchId=${this.selectedBatch.id}&teacherId=${teacherId}`,
+      {}
+    ).subscribe({
+      next: () => {
+        this.commonService.success('Teacher added to batch.');
+        this.actionLoadingId = '';
+        this.refreshBatch();
+      },
+      error: (err: any) => {
+        this.commonService.error(err?.error?.message || 'Failed to add teacher.');
+        this.actionLoadingId = '';
+      },
+    });
   }
 
+  // ── POST /batches/remove-teachers?batchId=&teacherId= ─
   removeTeacher(teacherId: string): void {
     if (!this.selectedBatch) return;
     this.actionLoadingId = teacherId;
-    this.httpService
-      .postData(
-        BASE_URL,
-        `/batches/remove-teachers?batchId=${this.selectedBatch.id}&teacherId=${teacherId}`,
-        {},
-      )
-      .subscribe({
-        next: () => {
-          this.commonService.success('Teacher removed from batch.');
-          this.actionLoadingId = '';
-          this.refreshBatch();
-        },
-        error: (err: any) => {
-          this.commonService.error(
-            err?.error?.message || 'Failed to remove teacher.',
-          );
-          this.actionLoadingId = '';
-        },
-      });
+    this.httpService.postData(
+      BASE_URL,
+      `/batches/remove-teachers?batchId=${this.selectedBatch.id}&teacherId=${teacherId}`,
+      {}
+    ).subscribe({
+      next: () => {
+        this.commonService.success('Teacher removed from batch.');
+        this.actionLoadingId = '';
+        this.refreshBatch();
+      },
+      error: (err: any) => {
+        this.commonService.error(err?.error?.message || 'Failed to remove teacher.');
+        this.actionLoadingId = '';
+      },
+    });
   }
 
   refreshBatch(): void {
     this.httpService.getData(BASE_URL, '/batches').subscribe({
       next: (res: any) => {
-        const all: Batch[] = Array.isArray(res) ? res : (res?.data ?? []);
+        const all: Batch[] = (Array.isArray(res) ? res : (res?.data ?? [])).map((b: any) => ({
+          ...b,
+          teacherIds: b.teacherIds || [],
+          studentIds: b.studentIds || [],
+        }));
         this.batches = all;
         if (this.selectedBatch) {
-          this.selectedBatch =
-            all.find((b) => b.id === this.selectedBatch!.id) ??
-            this.selectedBatch;
+          this.selectedBatch = all.find(b => b.id === this.selectedBatch!.id) ?? this.selectedBatch;
         }
         this.applyFilters();
       },
     });
   }
 
-  // ─── Modals ──────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════
+  //                   MODALS
+  // ═══════════════════════════════════════════════════
 
   openCreateModal(): void {
     this.modalMode = 'create';
     this.selectedBatch = null;
     this.formName = '';
     this.formCourseId = '';
-    this.formTeacherId = '';
+    this.formTeacherIds = [];
+    this.formStudentIds = [];
     this.formStartDate = '';
     this.formEndDate = '';
     this.formMaxStudents = 30;
@@ -379,10 +368,9 @@ export class BatchesComponent implements OnInit {
     this.selectedBatch = batch;
     this.formName = this.getBatchName(batch);
     this.formCourseId = batch.courseId ?? '';
-    this.formTeacherId = batch.teacherId ?? '';
-    this.formStartDate = batch.startDate
-      ? batch.startDate.substring(0, 10)
-      : '';
+    this.formTeacherIds = [...(batch.teacherIds || [])];
+    this.formStudentIds = [...(batch.studentIds || [])];
+    this.formStartDate = batch.startDate ? batch.startDate.substring(0, 10) : '';
     this.formEndDate = batch.endDate ? batch.endDate.substring(0, 10) : '';
     this.formMaxStudents = batch.maxStudents ?? 30;
     this.formIsActive = batch.isActive ?? true;
@@ -427,28 +415,13 @@ export class BatchesComponent implements OnInit {
   validateForm(): boolean {
     this.clearErrors();
     let valid = true;
-    if (!this.formName.trim()) {
-      this.nameError = 'Batch name is required.';
-      valid = false;
-    }
-    if (!this.formTeacherId) {
-      this.teacherError = 'Please select a teacher.';
-      valid = false;
-    }
-    if (!this.formStartDate) {
-      this.startDateError = 'Start date is required.';
-      valid = false;
-    }
+    if (!this.formName.trim()) { this.nameError = 'Batch name is required.'; valid = false; }
+    if (this.formTeacherIds.length === 0) { this.teacherError = 'Please assign at least one teacher.'; valid = false; }
+    if (!this.formStartDate) { this.startDateError = 'Start date is required.'; valid = false; }
     if (!this.formEndDate) {
-      this.endDateError = 'End date is required.';
-      valid = false;
-    } else if (
-      this.formStartDate &&
-      this.formEndDate &&
-      this.formEndDate <= this.formStartDate
-    ) {
-      this.endDateError = 'End date must be after start date.';
-      valid = false;
+      this.endDateError = 'End date is required.'; valid = false;
+    } else if (this.formStartDate && this.formEndDate && this.formEndDate <= this.formStartDate) {
+      this.endDateError = 'End date must be after start date.'; valid = false;
     }
     return valid;
   }
@@ -460,126 +433,111 @@ export class BatchesComponent implements OnInit {
     this.endDateError = '';
   }
 
-  // ─── Member helpers ───────────────────────────────────────────
+  // ── Teacher multi-select (form) ──────────────────────
+  onAddTeacherId(event: Event): void {
+    const id = (event.target as HTMLSelectElement).value;
+    if (id && !this.formTeacherIds.includes(id)) {
+      this.formTeacherIds = [...this.formTeacherIds, id];
+      this.teacherError = '';
+    }
+    (event.target as HTMLSelectElement).value = '';
+  }
 
+  removeTeacherId(id: string): void {
+    this.formTeacherIds = this.formTeacherIds.filter(tid => tid !== id);
+  }
+
+  get availableTeachersForForm(): UserRef[] {
+    return this.allTeachers.filter(t => !this.formTeacherIds.includes(t.id));
+  }
+
+  // ── Member modal helpers ─────────────────────────────
   isStudentInBatch(studentId: string): boolean {
-    return (this.selectedBatch?.students ?? []).some((s) => s.id === studentId);
+    return (this.selectedBatch?.studentIds ?? []).includes(studentId);
   }
 
   isTeacherInBatch(teacherId: string): boolean {
-    return (this.selectedBatch?.teachers ?? []).some((t) => t.id === teacherId);
+    return (this.selectedBatch?.teacherIds ?? []).includes(teacherId);
   }
 
   get filteredMemberStudents(): UserRef[] {
     const q = this.memberSearchQuery.toLowerCase().trim();
     return q
-      ? this.allStudents.filter(
-          (s) =>
-            `${s.firstName} ${s.lastName}`.toLowerCase().includes(q) ||
-            s.email?.toLowerCase().includes(q),
-        )
+      ? this.allStudents.filter(s =>
+          `${s.firstName} ${s.lastName}`.toLowerCase().includes(q) ||
+          s.email?.toLowerCase().includes(q))
       : this.allStudents;
   }
 
   get filteredMemberTeachers(): UserRef[] {
     const q = this.memberSearchQuery.toLowerCase().trim();
     return q
-      ? this.allTeachers.filter(
-          (t) =>
-            `${t.firstName} ${t.lastName}`.toLowerCase().includes(q) ||
-            t.email?.toLowerCase().includes(q),
-        )
+      ? this.allTeachers.filter(t =>
+          `${t.firstName} ${t.lastName}`.toLowerCase().includes(q) ||
+          t.email?.toLowerCase().includes(q))
       : this.allTeachers;
   }
 
-  // ─── Display helpers ─────────────────────────────────────────
+  // ── Display helpers ──────────────────────────────────
+  getBatchName(batch: Batch): string { return batch.batchName || batch.name || '—'; }
+  getCourseTitle(courseId: string): string { return this.courses.find(c => c.id === courseId)?.title ?? '—'; }
 
-  getBatchName(batch: Batch): string {
-    return batch.batchName || batch.name || '—';
+  getTeacherNameById(id: string): string {
+    const t = this.allTeachers.find(u => u.id === id);
+    return t ? `${t.firstName} ${t.lastName}`.trim() : id.substring(0, 8) + '...';
   }
+  getTeacherEmailById(id: string): string { return this.allTeachers.find(u => u.id === id)?.email ?? ''; }
 
-  getCourseTitle(courseId: string): string {
-    return this.courses.find((c) => c.id === courseId)?.title ?? '—';
+  getStudentNameById(id: string): string {
+    const s = this.allStudents.find(u => u.id === id);
+    return s ? `${s.firstName} ${s.lastName}`.trim() : id.substring(0, 8) + '...';
   }
-  getTeacherName(batch: Batch): string {
-    if (batch.teacher)
-      return `${batch.teacher.firstName} ${batch.teacher.lastName}`.trim();
-    const t = this.allTeachers.find((u) => u.id === batch.teacherId);
-    return t ? `${t.firstName} ${t.lastName}`.trim() : '—';
+  getStudentEmailById(id: string): string { return this.allStudents.find(u => u.id === id)?.email ?? ''; }
+
+  getInitialsById(id: string, type: 'teacher' | 'student'): string {
+    const list = type === 'teacher' ? this.allTeachers : this.allStudents;
+    const u = list.find(x => x.id === id);
+    return u ? `${(u.firstName || '').charAt(0)}${(u.lastName || '').charAt(0)}`.toUpperCase() : '?';
   }
 
   getUserInitials(u: UserRef): string {
     return `${(u.firstName || '').charAt(0)}${(u.lastName || '').charAt(0)}`.toUpperCase();
   }
-
-  getUserFullName(u: UserRef): string {
-    return `${u.firstName || ''} ${u.lastName || ''}`.trim();
-  }
+  getUserFullName(u: UserRef): string { return `${u.firstName || ''} ${u.lastName || ''}`.trim(); }
 
   getStatusBadge(batch: Batch): string {
     if (!batch.isActive) return 'pg-badge pg-badge--gray';
-    const now = new Date();
-    const start = new Date(batch.startDate);
-    const end = new Date(batch.endDate);
+    const now = new Date(), start = new Date(batch.startDate), end = new Date(batch.endDate);
     if (now < start) return 'pg-badge pg-badge--blue';
-    if (now > end) return 'pg-badge pg-badge--gray';
+    if (now > end)   return 'pg-badge pg-badge--gray';
     return 'pg-badge pg-badge--green';
   }
 
   getStatusLabel(batch: Batch): string {
     if (!batch.isActive) return 'Inactive';
-    const now = new Date();
-    const start = new Date(batch.startDate);
-    const end = new Date(batch.endDate);
+    const now = new Date(), start = new Date(batch.startDate), end = new Date(batch.endDate);
     if (now < start) return 'Upcoming';
-    if (now > end) return 'Completed';
+    if (now > end)   return 'Completed';
     return 'Active';
   }
 
   formatDate(dateStr: string): string {
     if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
+    return new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
-  onSearch(): void {
-    this.applyFilters();
-  }
-  onStatusFilter(): void {
-    this.applyFilters();
-  }
+  onSearch(): void { this.applyFilters(); }
+  onStatusFilter(): void { this.applyFilters(); }
 
   applyFilters(): void {
     let list = [...this.batches];
-    if (this.statusFilter) {
-      list = list.filter(
-        (b) => this.getStatusLabel(b).toLowerCase() === this.statusFilter,
-      );
-    }
+    if (this.statusFilter) list = list.filter(b => this.getStatusLabel(b).toLowerCase() === this.statusFilter);
     const q = this.searchQuery.toLowerCase().trim();
-    if (q) {
-      list = list.filter(
-        (b) =>
-          this.getBatchName(b).toLowerCase().includes(q) ||
-          this.getTeacherName(b).toLowerCase().includes(q),
-      );
-    }
+    if (q) list = list.filter(b => this.getBatchName(b).toLowerCase().includes(q) || this.getCourseTitle(b.courseId).toLowerCase().includes(q));
     this.filteredBatches = list;
   }
 
-  get totalActive(): number {
-    return this.batches.filter((b) => this.getStatusLabel(b) === 'Active')
-      .length;
-  }
-  get totalUpcoming(): number {
-    return this.batches.filter((b) => this.getStatusLabel(b) === 'Upcoming')
-      .length;
-  }
-  get totalCompleted(): number {
-    return this.batches.filter((b) => this.getStatusLabel(b) === 'Completed')
-      .length;
-  }
+  get totalActive():    number { return this.batches.filter(b => this.getStatusLabel(b) === 'Active').length; }
+  get totalUpcoming():  number { return this.batches.filter(b => this.getStatusLabel(b) === 'Upcoming').length; }
+  get totalCompleted(): number { return this.batches.filter(b => this.getStatusLabel(b) === 'Completed').length; }
 }

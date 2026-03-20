@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 declare var Razorpay: any;
 
@@ -168,25 +169,51 @@ export class RegistrationComponent implements OnInit {
     this.coursesLoading = false;
   }
 
+  // async selectCourse(course: Course) {
+  //   this.selectedCourse = course;
+  //   this.selectedBatch = null;
+  //   delete this.errors['course'];
+
+  //   try {
+  //     console.log('Fetching batches for course:', course.id);
+  //       console.log('Fetching batches for course:', this.selectedCourse!.id);
+  //     if (!this.batches.length) {
+  //       const data: any = await this.http.get(`${this.API}/batches/get-batch-by-id/${this.selectedCourse!.id}`).toPromise();
+  //       this.batches = Array.isArray(data) ? data : data?.data || [];
+  //       const batch = this.batches.find((b) => b.isActive === true);
+  //       this.selectedBatch = batch || null;
+  //       console.log('Batches loaded:', this.batches);
+  //       console.log('Batches loaded:', batch);
+  //     }
+  //   } catch {
+  //     console.warn('Batches fetch failed');
+  //   }
+  // }
   async selectCourse(course: Course) {
     this.selectedCourse = course;
     this.selectedBatch = null;
     delete this.errors['course'];
 
     try {
-      console.log('Fetching batches for course:', course.id);
-        console.log('Fetching batches for course:', this.selectedCourse!.id);
-      if (!this.batches.length) {
-        const data: any = await this.http.get(`${this.API}/batches/get-batch-by-id/${this.selectedCourse!.id}`).toPromise();
-        this.batches = Array.isArray(data) ? data : data?.data || [];
-      }
-      const batch = this.batches.find(
-        (b) => b.courseId === this.selectedCourse!.id && b.isActive === true
+      console.log('Fetching batch for course:', this.selectedCourse!.id);
+
+      const response: any = await firstValueFrom(
+        this.http.get(`${this.API}/batches/get-batch-by-id/${this.selectedCourse!.id}`)
       );
-      this.selectedBatch = batch || null;
-      console.log('Selected batch:', batch);
-    } catch {
-      console.warn('Batches fetch failed');
+
+      console.log('API Response:', response);
+
+      // ✅ Since API returns single object
+      if (response && response.isActive) {
+        this.selectedBatch = response;
+      } else {
+        this.selectedBatch = null;
+      }
+
+      console.log('Selected Batch:', this.selectedBatch);
+
+    } catch (error) {
+      console.warn('Batch fetch failed', error);
     }
   }
 
@@ -472,6 +499,7 @@ export class RegistrationComponent implements OnInit {
       favoriteSubjects: s.favoriteSubjects,
       hobbies: s.hobbies.trim(),
       learningGoals: s.learningGoals.trim(),
+      batchId: this.selectedBatch?.id || null,
     };
   }
 
