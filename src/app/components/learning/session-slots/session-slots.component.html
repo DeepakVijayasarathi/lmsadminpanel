@@ -1,0 +1,258 @@
+<!-- session-slots.component.html -->
+<div class="pg">
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-sky">
+        <i class="fa-solid fa-calendar-check"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Session Slots</div>
+        <div class="pg-head__sub">Manage session time slots</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
+        <i class="fa-solid fa-plus"></i> Add Slot
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky">
+        <i class="fa-solid fa-calendar-check"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ slots.length }}</div>
+        <div class="pg-stat__lbl">Total Slots</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <span class="pg-card__title">All Session Slots</span>
+      <div class="pg-toolbar">
+        <input
+          class="pg-search"
+          type="text"
+          placeholder="Search slots..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
+        />
+      </div>
+    </div>
+
+    <div class="pg-loading" *ngIf="isLoading">
+      <i class="fa-solid fa-spinner fa-spin"></i> Loading session slots...
+    </div>
+
+    <div class="pg-table-wrap" *ngIf="!isLoading">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Slot No.</th>
+            <th>Name</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let slot of filteredSlots; let i = index">
+            <td class="idx-cell">{{ i + 1 }}</td>
+            <td>
+              <span class="slot-number-chip">{{ slot.slotNumber }}</span>
+            </td>
+            <td>
+              <span class="pg-cell__primary">{{ slot.name || '—' }}</span>
+            </td>
+            <td>
+              <span class="time-val">{{ formatTime(slot.startTime) }}</span>
+            </td>
+            <td>
+              <span class="time-val">{{ formatTime(slot.endTime) }}</span>
+            </td>
+            <td>
+              <div class="action-group">
+                <button class="pg-action-btn" title="View" (click)="openViewModal(slot)">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button class="pg-action-btn" title="Edit" (click)="openEditModal(slot)">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDeleteModal(slot)">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredSlots.length === 0">
+            <td colspan="6" class="pg-empty">
+              <i class="fa-solid fa-calendar-check pg-empty__icon"></i>
+              No session slots found.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     MODAL OVERLAY
+═══════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
+
+<!-- ─── Create / Edit Modal ─────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'create' || modalMode === 'edit'">
+  <div class="modal__header">
+    <h3>
+      <i class="fa-solid fa-{{ modalMode === 'create' ? 'plus-circle' : 'pen-to-square' }}"></i>
+      {{ modalMode === 'create' ? 'Add Session Slot' : 'Edit Session Slot' }}
+    </h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="modal__body">
+    <div class="form-grid">
+      <!-- Slot Number -->
+      <div class="form-group" [class.has-error]="formErrors['slotNumber']">
+        <label>Slot Number <span class="required">*</span></label>
+        <input
+          type="number"
+          class="form-control"
+          min="1"
+          placeholder="e.g. 1"
+          [(ngModel)]="formSlotNumber"
+          (input)="formErrors['slotNumber'] = ''"
+        />
+        <div class="field-error" *ngIf="formErrors['slotNumber']">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['slotNumber'] }}
+        </div>
+      </div>
+
+      <!-- Name -->
+      <div class="form-group">
+        <label>Name <span class="hint">(optional)</span></label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="e.g. Morning Session"
+          [(ngModel)]="formName"
+        />
+      </div>
+
+      <!-- Start Time -->
+      <div class="form-group" [class.has-error]="formErrors['startTime']">
+        <label>Start Time <span class="required">*</span></label>
+        <input
+          type="time"
+          class="form-control"
+          [(ngModel)]="formStartTime"
+          (change)="formErrors['startTime'] = ''"
+        />
+        <div class="field-error" *ngIf="formErrors['startTime']">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['startTime'] }}
+        </div>
+      </div>
+
+      <!-- End Time -->
+      <div class="form-group" [class.has-error]="formErrors['endTime']">
+        <label>End Time <span class="required">*</span></label>
+        <input
+          type="time"
+          class="form-control"
+          [(ngModel)]="formEndTime"
+          (change)="formErrors['endTime'] = ''"
+        />
+        <div class="field-error" *ngIf="formErrors['endTime']">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['endTime'] }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--primary" (click)="submitForm()" [disabled]="isSaving">
+      <i class="fa-solid" [ngClass]="isSaving ? 'fa-spinner fa-spin' : (modalMode === 'create' ? 'fa-plus' : 'fa-floppy-disk')"></i>
+      {{ isSaving ? 'Saving...' : (modalMode === 'create' ? 'Create Slot' : 'Save Changes') }}
+    </button>
+  </div>
+</div>
+
+<!-- ─── View Modal ───────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'view' && selectedSlot">
+  <div class="modal__header">
+    <h3><i class="fa-solid fa-eye"></i> Slot Details</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <div class="modal__body">
+    <div class="view-showcase">
+      <div class="view-showcase__icon">
+        <i class="fa-solid fa-calendar-check"></i>
+      </div>
+      <div>
+        <div class="view-showcase__title">
+          Slot {{ selectedSlot.slotNumber }}{{ selectedSlot.name ? ' — ' + selectedSlot.name : '' }}
+        </div>
+      </div>
+    </div>
+    <div class="view-detail-grid">
+      <div class="view-detail-item">
+        <div class="view-detail-label">Slot Number</div>
+        <div class="view-detail-val">{{ selectedSlot.slotNumber }}</div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Name</div>
+        <div class="view-detail-val">{{ selectedSlot.name || '—' }}</div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Start Time</div>
+        <div class="view-detail-val">{{ formatTime(selectedSlot.startTime) }}</div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">End Time</div>
+        <div class="view-detail-val">{{ formatTime(selectedSlot.endTime) }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+    <button class="pg-btn pg-btn--primary" (click)="openEditModal(selectedSlot)">
+      <i class="fa-solid fa-pen-to-square"></i> Edit
+    </button>
+  </div>
+</div>
+
+<!-- ─── Delete Modal ───────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'delete' && selectedSlot">
+  <div class="modal__header modal__header--danger">
+    <h3><i class="fa-solid fa-triangle-exclamation"></i> Delete Slot</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <div class="modal__body modal__body--center">
+    <div class="delete-icon"><i class="fa-solid fa-trash-can"></i></div>
+    <p class="delete-msg">
+      Delete <strong>Slot {{ selectedSlot.slotNumber }}{{ selectedSlot.name ? ' — ' + selectedSlot.name : '' }}</strong>?
+    </p>
+    <p class="delete-sub">This action cannot be undone.</p>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--danger" (click)="deleteSlot()">
+      <i class="fa-solid fa-trash"></i> Delete
+    </button>
+  </div>
+</div>

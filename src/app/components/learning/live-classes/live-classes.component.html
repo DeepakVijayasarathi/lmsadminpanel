@@ -57,7 +57,7 @@
       <div class="pg-toolbar">
         <div class="pg-search">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" placeholder="Search subject, batch..." [(ngModel)]="searchQuery" />
+          <input type="text" placeholder="Search title, batch..." [(ngModel)]="searchQuery" />
         </div>
         <select class="pg-filter" [(ngModel)]="statusFilter">
           <option value="">All Status</option>
@@ -73,72 +73,91 @@
       <table class="pg-table">
         <thead>
           <tr>
-            <th>Subject &amp; Topic</th>
-            <th>Batch / Exam</th>
+            <th>Title</th>
+            <th>Batch</th>
             <th>Teacher</th>
             <th>Date &amp; Time</th>
             <th>Duration</th>
-            <th>Students</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let cls of filteredClasses">
-            <td>
-              <div class="pg-cell__primary">{{ cls.subject }}</div>
-              <div class="pg-cell__sub">{{ cls.topic }}</div>
-            </td>
-            <td>
-              <div class="pg-cell__primary">{{ cls.batch }}</div>
-            </td>
-            <td>
-              <div class="pg-with-avatar">
-                <div class="pg-avatar av-rose">{{ cls.teacher.charAt(0) }}</div>
-                <span class="pg-cell__primary">{{ cls.teacher }}</span>
-              </div>
-            </td>
-            <td>
-              <div class="pg-cell__primary">{{ formatDate(cls.date) }}</div>
-              <div class="pg-cell__sub">{{ cls.startTime }} – {{ cls.endTime }}</div>
-            </td>
-            <td>
-              <span class="pg-cell__primary">{{ getDuration(cls.startTime, cls.endTime) }}</span>
-            </td>
-            <td>
-              <span style="display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;color:#475569;border-radius:20px;padding:3px 10px;font-size:13px;font-weight:600;">
-                <i class="fa-solid fa-users" style="font-size:11px;"></i>
-                {{ cls.students }}
-              </span>
-            </td>
-            <td>
-              <span [class]="getStatusBadge(cls.status)">
-                <i *ngIf="cls.status === 'live'" class="fa-solid fa-circle" style="font-size:8px;"></i>
-                {{ cls.status | titlecase }}
-              </span>
-            </td>
-            <td>
-              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                <a *ngIf="cls.status === 'live' || cls.status === 'upcoming'"
-                   [href]="cls.meetingLink" target="_blank"
-                   class="pg-btn pg-btn--primary"
-                   [style.background]="cls.status === 'live' ? '#ef4444' : ''"
-                   style="font-size:12px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
-                  <i class="fa-solid fa-circle-play"></i>
-                  {{ cls.status === 'live' ? 'Join Live' : 'Join BBB' }}
-                </a>
-                <button class="pg-action-btn" title="View" (click)="openViewModal(cls)"><i class="fa-solid fa-eye"></i></button>
-                <button class="pg-action-btn" title="Edit" (click)="openEditModal(cls)" [disabled]="cls.status === 'completed' || cls.status === 'cancelled'"><i class="fa-solid fa-pen"></i></button>
-                <button class="pg-action-btn pg-action-btn--danger" title="Cancel" (click)="openCancelModal(cls)" [disabled]="cls.status !== 'upcoming'"><i class="fa-solid fa-xmark"></i></button>
-              </div>
+          <!-- Loading -->
+          <tr *ngIf="isLoading">
+            <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">
+              <i class="fa-solid fa-circle-notch fa-spin" style="font-size:20px;display:block;margin-bottom:8px;"></i>
+              Loading sessions…
             </td>
           </tr>
-          <tr *ngIf="filteredClasses.length === 0">
-            <td colspan="8" style="text-align:center;padding:32px;color:#94a3b8;">
-              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
-              No sessions found
-            </td>
-          </tr>
+
+          <ng-container *ngIf="!isLoading">
+            <tr *ngFor="let cls of filteredClasses">
+              <td>
+                <div class="pg-cell__primary">{{ cls.subject }}</div>
+                <div class="pg-cell__sub">{{ cls.topic !== cls.subject ? cls.topic : '' }}</div>
+              </td>
+              <td>
+                <div class="pg-cell__primary">{{ cls.batch }}</div>
+              </td>
+              <td>
+                <div class="pg-with-avatar">
+                  <div class="pg-avatar av-rose">{{ cls.teacher.charAt(0) }}</div>
+                  <span class="pg-cell__primary">{{ cls.teacher }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="pg-cell__primary">{{ formatDate(cls.date) }}</div>
+                <div class="pg-cell__sub">{{ cls.startTime }} – {{ cls.endTime }}</div>
+              </td>
+              <td>
+                <span class="pg-cell__primary">{{ getDuration(cls.startTime, cls.endTime) }}</span>
+              </td>
+              <td>
+                <span [class]="getStatusBadge(cls.status)">
+                  <i *ngIf="cls.status === 'live'" class="fa-solid fa-circle" style="font-size:8px;"></i>
+                  {{ cls.status | titlecase }}
+                </span>
+              </td>
+              <td>
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                  <!-- BBB Join button (calls API for signed URL) -->
+                  <button
+                    *ngIf="cls.status === 'live' || cls.status === 'upcoming'"
+                    class="pg-btn pg-btn--primary"
+                    [style.background]="cls.status === 'live' ? '#ef4444' : ''"
+                    style="font-size:12px;padding:5px 12px;"
+                    [disabled]="joiningId === cls.id"
+                    (click)="joinLive(cls)">
+                    <i class="fa-solid"
+                       [class.fa-circle-notch]="joiningId === cls.id"
+                       [class.fa-spin]="joiningId === cls.id"
+                       [class.fa-circle-play]="joiningId !== cls.id"></i>
+                    {{ cls.status === 'live' ? 'Join Live' : 'Join BBB' }}
+                  </button>
+
+                  <button class="pg-action-btn" title="View" (click)="openViewModal(cls)">
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
+                  <button class="pg-action-btn" title="Edit" (click)="openEditModal(cls)"
+                    [disabled]="cls.status === 'completed' || cls.status === 'cancelled'">
+                    <i class="fa-solid fa-pen"></i>
+                  </button>
+                  <button class="pg-action-btn pg-action-btn--danger" title="Cancel" (click)="openCancelModal(cls)"
+                    [disabled]="cls.status !== 'upcoming'">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <tr *ngIf="filteredClasses.length === 0">
+              <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">
+                <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+                No sessions found
+              </td>
+            </tr>
+          </ng-container>
         </tbody>
       </table>
     </div>
@@ -149,7 +168,7 @@
 <!-- Modal Overlay -->
 <div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
 
-<!-- Schedule / Edit Modal -->
+<!-- ══ Schedule / Edit Modal ══ -->
 <div class="modal modal--lg" *ngIf="modalMode === 'create' || modalMode === 'edit'">
   <div class="modal__header">
     <h3>
@@ -160,47 +179,81 @@
   </div>
   <div class="modal__body">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-      <div class="form-group" [class.has-error]="formSubjectError">
-        <label>Subject <span class="required">*</span></label>
-        <input type="text" class="form-control" placeholder="e.g. Physics" [(ngModel)]="formSubject" (input)="formSubjectError=''" />
-        <div class="field-error" *ngIf="formSubjectError"><i class="fa-solid fa-circle-exclamation"></i> {{ formSubjectError }}</div>
+
+      <!-- Title (full width) -->
+      <div class="form-group" [class.has-error]="formTitleError" style="grid-column:1/-1;">
+        <label>Session Title <span class="required">*</span></label>
+        <input type="text" class="form-control"
+          placeholder="e.g. Physics – Newton's Laws"
+          [(ngModel)]="formTitle" (input)="formTitleError=''" />
+        <div class="field-error" *ngIf="formTitleError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ formTitleError }}
+        </div>
       </div>
-      <div class="form-group" [class.has-error]="formTopicError">
-        <label>Topic <span class="required">*</span></label>
-        <input type="text" class="form-control" placeholder="e.g. Electrostatics" [(ngModel)]="formTopic" (input)="formTopicError=''" />
-        <div class="field-error" *ngIf="formTopicError"><i class="fa-solid fa-circle-exclamation"></i> {{ formTopicError }}</div>
+
+      <!-- Batch ID -->
+      <div class="form-group" [class.has-error]="formBatchIdError">
+        <label>Batch ID <span class="required">*</span></label>
+        <input type="text" class="form-control"
+          placeholder="e.g. 3fa85f64-5717-4562-b3fc-…"
+          [(ngModel)]="formBatchId" (input)="formBatchIdError=''" />
+        <div class="field-error" *ngIf="formBatchIdError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ formBatchIdError }}
+        </div>
       </div>
-      <div class="form-group" [class.has-error]="formTeacherError">
-        <label>Teacher <span class="required">*</span></label>
-        <input type="text" class="form-control" placeholder="e.g. Dr. Vikram Sharma" [(ngModel)]="formTeacher" (input)="formTeacherError=''" />
-        <div class="field-error" *ngIf="formTeacherError"><i class="fa-solid fa-circle-exclamation"></i> {{ formTeacherError }}</div>
+
+      <!-- Course ID -->
+      <div class="form-group" [class.has-error]="formCourseIdError">
+        <label>Course ID <span class="required">*</span></label>
+        <input type="text" class="form-control"
+          placeholder="e.g. 3fa85f64-5717-4562-b3fc-…"
+          [(ngModel)]="formCourseId" (input)="formCourseIdError=''" />
+        <div class="field-error" *ngIf="formCourseIdError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ formCourseIdError }}
+        </div>
       </div>
-      <div class="form-group" [class.has-error]="formBatchError">
-        <label>Batch <span class="required">*</span></label>
-        <input type="text" class="form-control" placeholder="e.g. Grade 10 – Batch A" [(ngModel)]="formBatch" (input)="formBatchError=''" />
-        <div class="field-error" *ngIf="formBatchError"><i class="fa-solid fa-circle-exclamation"></i> {{ formBatchError }}</div>
+
+      <!-- Teacher ID -->
+      <div class="form-group" [class.has-error]="formTeacherIdError">
+        <label>Teacher ID <span class="required">*</span></label>
+        <input type="text" class="form-control"
+          placeholder="e.g. 3fa85f64-5717-4562-b3fc-…"
+          [(ngModel)]="formTeacherId" (input)="formTeacherIdError=''" />
+        <div class="field-error" *ngIf="formTeacherIdError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ formTeacherIdError }}
+        </div>
       </div>
-      <div class="form-group">
-        <label>Expected Students</label>
-        <input type="number" class="form-control" [(ngModel)]="formStudents" min="1" max="200" />
-      </div>
+
+      <!-- Date -->
       <div class="form-group" [class.has-error]="formDateError">
         <label>Date <span class="required">*</span></label>
-        <input type="date" class="form-control" [(ngModel)]="formDate" (change)="formDateError=''" />
-        <div class="field-error" *ngIf="formDateError"><i class="fa-solid fa-circle-exclamation"></i> {{ formDateError }}</div>
+        <input type="date" class="form-control"
+          [(ngModel)]="formDate" (change)="formDateError=''" />
+        <div class="field-error" *ngIf="formDateError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ formDateError }}
+        </div>
       </div>
+
+      <!-- Start & End Time -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div class="form-group" [class.has-error]="formStartTimeError">
           <label>Start Time <span class="required">*</span></label>
-          <input type="text" class="form-control" placeholder="e.g. 09:00 AM" [(ngModel)]="formStartTime" (input)="formStartTimeError=''" />
-          <div class="field-error" *ngIf="formStartTimeError"><i class="fa-solid fa-circle-exclamation"></i> {{ formStartTimeError }}</div>
+          <input type="time" class="form-control"
+            [(ngModel)]="formStartTime" (change)="formStartTimeError=''" />
+          <div class="field-error" *ngIf="formStartTimeError">
+            <i class="fa-solid fa-circle-exclamation"></i> {{ formStartTimeError }}
+          </div>
         </div>
         <div class="form-group" [class.has-error]="formEndTimeError">
           <label>End Time <span class="required">*</span></label>
-          <input type="text" class="form-control" placeholder="e.g. 10:30 AM" [(ngModel)]="formEndTime" (input)="formEndTimeError=''" />
-          <div class="field-error" *ngIf="formEndTimeError"><i class="fa-solid fa-circle-exclamation"></i> {{ formEndTimeError }}</div>
+          <input type="time" class="form-control"
+            [(ngModel)]="formEndTime" (change)="formEndTimeError=''" />
+          <div class="field-error" *ngIf="formEndTimeError">
+            <i class="fa-solid fa-circle-exclamation"></i> {{ formEndTimeError }}
+          </div>
         </div>
       </div>
+
     </div>
   </div>
   <div class="modal__footer">
@@ -212,7 +265,7 @@
   </div>
 </div>
 
-<!-- View Modal -->
+<!-- ══ View Modal ══ -->
 <div class="modal modal--md" *ngIf="modalMode === 'view' && selectedClass">
   <div class="modal__header">
     <h3><i class="fa-solid fa-eye"></i> Session Details</h3>
@@ -224,12 +277,18 @@
         <i class="fa-solid fa-circle-play"></i>
       </div>
       <div>
-        <div class="view-showcase__title">{{ selectedClass.subject }} — {{ selectedClass.topic }}</div>
+        <div class="view-showcase__title">{{ selectedClass.subject }}
+          <span *ngIf="selectedClass.topic !== selectedClass.subject"> — {{ selectedClass.topic }}</span>
+        </div>
         <div class="view-showcase__sub">
-          <span [class]="getStatusBadge(selectedClass.status)">{{ selectedClass.status | titlecase }}</span>
+          <span [class]="getStatusBadge(selectedClass.status)">
+            <i *ngIf="selectedClass.status === 'live'" class="fa-solid fa-circle" style="font-size:8px;"></i>
+            {{ selectedClass.status | titlecase }}
+          </span>
         </div>
       </div>
     </div>
+
     <div class="view-detail-block">
       <div class="view-detail-label">Teacher</div>
       <div class="view-detail-val">{{ selectedClass.teacher }}</div>
@@ -240,26 +299,40 @@
     </div>
     <div class="view-detail-block">
       <div class="view-detail-label">Date &amp; Time</div>
-      <div class="view-detail-val">{{ formatDate(selectedClass.date) }} &nbsp;·&nbsp; {{ selectedClass.startTime }} – {{ selectedClass.endTime }} ({{ getDuration(selectedClass.startTime, selectedClass.endTime) }})</div>
+      <div class="view-detail-val">
+        {{ formatDate(selectedClass.date) }} &nbsp;·&nbsp;
+        {{ selectedClass.startTime }} – {{ selectedClass.endTime }}
+        ({{ getDuration(selectedClass.startTime, selectedClass.endTime) }})
+      </div>
     </div>
     <div class="view-detail-block">
-      <div class="view-detail-label">Students</div>
-      <div class="view-detail-val">{{ selectedClass.students }}</div>
-    </div>
-    <div class="view-detail-block">
-      <div class="view-detail-label">Meeting Link</div>
-      <div class="view-detail-val" style="font-size:12px;word-break:break-all;color:#4f46e5;">{{ selectedClass.meetingLink }}</div>
+      <div class="view-detail-label">Meeting URL</div>
+      <div class="view-detail-val" style="font-size:12px;word-break:break-all;color:#4f46e5;">
+        {{ selectedClass.meetingLink || '—' }}
+      </div>
     </div>
   </div>
   <div class="modal__footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
-    <button class="pg-btn pg-btn--primary" (click)="openEditModal(selectedClass)" *ngIf="selectedClass.status === 'upcoming'">
+    <button class="pg-btn pg-btn--primary"
+      *ngIf="selectedClass.status === 'live' || selectedClass.status === 'upcoming'"
+      [disabled]="joiningId === selectedClass.id"
+      (click)="joinLive(selectedClass); closeModal()">
+      <i class="fa-solid"
+         [class.fa-circle-notch]="joiningId === selectedClass.id"
+         [class.fa-spin]="joiningId === selectedClass.id"
+         [class.fa-circle-play]="joiningId !== selectedClass.id"></i>
+      {{ selectedClass.status === 'live' ? 'Join Live' : 'Join BBB' }}
+    </button>
+    <button class="pg-btn pg-btn--primary" style="background:#4f46e5;"
+      *ngIf="selectedClass.status === 'upcoming'"
+      (click)="openEditModal(selectedClass)">
       <i class="fa-solid fa-pen-to-square"></i> Edit
     </button>
   </div>
 </div>
 
-<!-- Cancel Confirm Modal -->
+<!-- ══ Cancel Confirm Modal ══ -->
 <div class="modal modal--sm" *ngIf="modalMode === 'cancel' && selectedClass">
   <div class="modal__header modal__header--danger">
     <h3><i class="fa-solid fa-triangle-exclamation"></i> Cancel Session</h3>
@@ -272,6 +345,8 @@
   </div>
   <div class="modal__footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Keep Session</button>
-    <button class="pg-btn pg-btn--danger" (click)="confirmCancel()"><i class="fa-solid fa-xmark"></i> Cancel Session</button>
+    <button class="pg-btn pg-btn--danger" (click)="confirmCancel()">
+      <i class="fa-solid fa-xmark"></i> Cancel Session
+    </button>
   </div>
 </div>

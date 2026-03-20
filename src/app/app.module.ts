@@ -43,6 +43,7 @@ import { ResultsComponent } from './components/assessment/results/results.compon
 import { ExamsComponent } from './components/assessment/exams/exams.component';
 import { MenuComponent } from './components/system/menu/menu.component';
 import { TimetableComponent } from './components/learning/timetable/timetable.component';
+import { SessionSlotsComponent } from './components/learning/session-slots/session-slots.component';
 import { RegistrationComponent } from './components/registration/registration.component';
 
 @NgModule({
@@ -78,6 +79,7 @@ import { RegistrationComponent } from './components/registration/registration.co
     ExamsComponent,
     MenuComponent,
     TimetableComponent,
+    SessionSlotsComponent,
 
     DeleteConfirmationModalComponent,
     CommonPaginationComponent,

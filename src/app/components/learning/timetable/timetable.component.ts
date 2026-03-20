@@ -1,9 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { TimetableService } from '../../../services/timetable.service';
+import { CommonService } from '../../../services/common.service';
+import { HttpGeneralService } from '../../../services/http.service';
+import { environment } from '../../../../environments/environment';
 
-const BBB_SERVER = 'https://bbb.edulanz.com';
+const BASE_URL = environment.apiUrl;
 
 export interface TimetableSlot {
-  id: number;
+  id: string;
   day: string;
   session: number;
   subject: string;
@@ -13,8 +17,8 @@ export interface TimetableSlot {
   category: 'Foundation' | 'Standard' | 'Advanced';
   startTime: string;
   endTime: string;
-  meetingId: string;      // auto-generated BBB room ID
-  meetingLink: string;    // auto-generated BBB join URL
+  meetingId: string;
+  meetingLink: string;
   status: 'scheduled' | 'live' | 'completed' | 'cancelled';
 }
 
@@ -39,59 +43,34 @@ type ModalMode = 'create' | 'edit' | 'view' | 'delete' | null;
   templateUrl: './timetable.component.html',
   styleUrls: ['../../../shared-page.css', './timetable.component.css']
 })
-export class TimetableComponent {
+export class TimetableComponent implements OnInit {
 
   // ── Filters ───────────────────────────────────────────────────────────────
   batchFilter = '';
   categoryFilter = '';
   viewMode: 'grid' | 'list' = 'grid';
 
-  // ── Reference data ────────────────────────────────────────────────────────
-  readonly days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  // ── Loading ───────────────────────────────────────────────────────────────
+  isLoading = false;
+  isSaving = false;
+  joiningId = '';
+
+  // ── Form validation ───────────────────────────────────────────────────────
+  formErrors: Record<string, string> = {};
+  readonly Object = Object;
+
+  // ── Dynamic reference data (from API) ─────────────────────────────────────
+  apiBatches: any[]   = [];
+  apiTeachers: any[]  = [];
+  apiSubjects: any[]  = [];
+  apiTopics: any[]    = [];
+  filteredTopicsList: any[] = [];
+
+  // ── Static reference data ─────────────────────────────────────────────────
+  readonly days     = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   readonly sessions = [1, 2, 3, 4, 5, 6, 7];
-
-  readonly batches = [
-    'Grade 9 – Batch A',
-    'Grade 9 – Batch B',
-    'Grade 10 – Batch A',
-    'Grade 10 – Batch B',
-    'Grade 11 – Batch A',
-    'Grade 11 – Batch B',
-    'Grade 12 – Batch A',
-  ];
-
   readonly categories: Array<'Foundation' | 'Standard' | 'Advanced'> = ['Foundation', 'Standard', 'Advanced'];
-
-  readonly subjectsByCategory: Record<string, string[]> = {
-    'Foundation': ['Mathematics', 'Science', 'English', 'History', 'Computer Sci.'],
-    'Standard':   ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'English'],
-    'Advanced':   ['Physics', 'Chemistry', 'Mathematics', 'Computer Sci.', 'Economics'],
-  };
-
-  readonly topicsBySubject: Record<string, string[]> = {
-    'Physics':        ['Mechanics', 'Thermodynamics', 'Optics', 'Electrostatics', 'Magnetism', 'Modern Physics', 'Waves & Sound', 'Fluid Mechanics'],
-    'Chemistry':      ['Organic Chemistry', 'Inorganic Chemistry', 'Physical Chemistry', 'Electrochemistry', 'Chemical Bonding', 'Coordination Compounds'],
-    'Biology':        ['Cell Biology', 'Plant Physiology', 'Genetics', 'Ecology', 'Human Physiology', 'Animal Kingdom', 'Reproduction', 'Biomolecules'],
-    'Mathematics':    ['Calculus', 'Algebra', 'Coordinate Geometry', 'Trigonometry', 'Vectors & 3D', 'Probability', 'Matrices & Determinants'],
-    'Science':        ['Motion & Forces', 'Light & Sound', 'Electricity', 'Chemical Reactions', 'Living World'],
-    'English':        ['Essay Writing', 'Grammar', 'Reading Comprehension', 'Literature', 'Creative Writing'],
-    'History':        ['Ancient Civilisations', 'Medieval Period', 'Modern History', 'World Wars', 'Indian Independence'],
-    'Computer Sci.':  ['Data Structures', 'Algorithms', 'Databases', 'Networking', 'Programming Basics'],
-    'Economics':      ['Microeconomics', 'Macroeconomics', 'Supply & Demand', 'National Income', 'Money & Banking'],
-  };
-
-  readonly teachers = [
-    'Dr. Vikram Sharma',
-    'Mr. Rahul Gupta',
-    'Ms. Pooja Iyer',
-    'Dr. Sanjay Mishra',
-    'Dr. Meena Krishnan',
-    'Ms. Divya Nair',
-    'Mr. Arjun Verma',
-    'Dr. Kiran Patel',
-  ];
-
-  readonly statuses: Array<'scheduled' | 'live' | 'completed' | 'cancelled'> = ['scheduled', 'live', 'completed', 'cancelled'];
+  readonly statuses:   Array<'scheduled' | 'live' | 'completed' | 'cancelled'> = ['scheduled', 'live', 'completed', 'cancelled'];
 
   readonly sessionTimes: Record<number, { start: string; end: string }> = {
     1: { start: '07:00', end: '08:30' },
@@ -103,58 +82,16 @@ export class TimetableComponent {
     7: { start: '20:00', end: '21:30' },
   };
 
-  // ── BBB link generation ───────────────────────────────────────────────────
-  private slugify(text: string): string {
-    return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  // ── Slots ─────────────────────────────────────────────────────────────────
+  slots: TimetableSlot[] = [];
+
+  // ── Display helpers ───────────────────────────────────────────────────────
+  getBatchName(b: any): string {
+    return b?.name ?? b?.batchName ?? '';
   }
 
-  generateMeetingId(batch: string, subject: string, day: string, session: number): string {
-    return `${this.slugify(batch)}-${this.slugify(subject)}-${this.slugify(day)}-s${session}`;
-  }
-
-  buildMeetingLink(meetingId: string): string {
-    return `${BBB_SERVER}/b/${meetingId}`;
-  }
-
-  // ── Sample data ───────────────────────────────────────────────────────────
-  slots: TimetableSlot[] = [
-    // Grade 10 – Batch A (Foundation)
-    { id: 1,  day: 'Monday',    session: 1, subject: 'Physics',      topic: 'Mechanics',          teacher: 'Dr. Vikram Sharma',  batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '07:00', endTime: '08:30', meetingId: 'grade-10-batch-a-physics-monday-s1',      meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-physics-monday-s1`,      status: 'completed' },
-    { id: 2,  day: 'Monday',    session: 3, subject: 'Chemistry',    topic: 'Organic Chemistry',  teacher: 'Ms. Pooja Iyer',     batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '11:00', endTime: '12:30', meetingId: 'grade-10-batch-a-chemistry-monday-s3',    meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-chemistry-monday-s3`,    status: 'completed' },
-    { id: 3,  day: 'Monday',    session: 5, subject: 'Biology',      topic: 'Cell Biology',       teacher: 'Dr. Meena Krishnan', batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '16:00', endTime: '17:30', meetingId: 'grade-10-batch-a-biology-monday-s5',      meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-biology-monday-s5`,      status: 'live' },
-    { id: 4,  day: 'Tuesday',   session: 1, subject: 'Physics',      topic: 'Thermodynamics',     teacher: 'Dr. Vikram Sharma',  batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '07:00', endTime: '08:30', meetingId: 'grade-10-batch-a-physics-tuesday-s1',     meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-physics-tuesday-s1`,     status: 'scheduled' },
-    { id: 5,  day: 'Tuesday',   session: 3, subject: 'Biology',      topic: 'Human Physiology',   teacher: 'Ms. Divya Nair',     batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '11:00', endTime: '12:30', meetingId: 'grade-10-batch-a-biology-tuesday-s3',     meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-biology-tuesday-s3`,     status: 'scheduled' },
-    { id: 6,  day: 'Wednesday', session: 2, subject: 'Chemistry',    topic: 'Inorganic Chemistry',teacher: 'Ms. Pooja Iyer',     batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '09:00', endTime: '10:30', meetingId: 'grade-10-batch-a-chemistry-wednesday-s2', meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-chemistry-wednesday-s2`, status: 'scheduled' },
-    { id: 7,  day: 'Wednesday', session: 5, subject: 'Physics',      topic: 'Optics',             teacher: 'Mr. Rahul Gupta',    batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '16:00', endTime: '17:30', meetingId: 'grade-10-batch-a-physics-wednesday-s5',   meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-physics-wednesday-s5`,   status: 'scheduled' },
-    { id: 8,  day: 'Thursday',  session: 1, subject: 'Biology',      topic: 'Plant Physiology',   teacher: 'Dr. Meena Krishnan', batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '07:00', endTime: '08:30', meetingId: 'grade-10-batch-a-biology-thursday-s1',    meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-biology-thursday-s1`,    status: 'scheduled' },
-    { id: 9,  day: 'Thursday',  session: 4, subject: 'Chemistry',    topic: 'Physical Chemistry', teacher: 'Dr. Sanjay Mishra',  batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '14:00', endTime: '15:30', meetingId: 'grade-10-batch-a-chemistry-thursday-s4',  meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-chemistry-thursday-s4`,  status: 'scheduled' },
-    { id: 10, day: 'Friday',    session: 2, subject: 'Physics',      topic: 'Electrostatics',     teacher: 'Dr. Vikram Sharma',  batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '09:00', endTime: '10:30', meetingId: 'grade-10-batch-a-physics-friday-s2',      meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-physics-friday-s2`,      status: 'scheduled' },
-    { id: 11, day: 'Friday',    session: 5, subject: 'Biology',      topic: 'Reproduction',       teacher: 'Ms. Divya Nair',     batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '16:00', endTime: '17:30', meetingId: 'grade-10-batch-a-biology-friday-s5',      meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-biology-friday-s5`,      status: 'scheduled' },
-    { id: 12, day: 'Saturday',  session: 1, subject: 'Chemistry',    topic: 'Electrochemistry',   teacher: 'Ms. Pooja Iyer',     batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '07:00', endTime: '08:30', meetingId: 'grade-10-batch-a-chemistry-saturday-s1',  meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-chemistry-saturday-s1`,  status: 'scheduled' },
-    { id: 13, day: 'Saturday',  session: 3, subject: 'Physics',      topic: 'Modern Physics',     teacher: 'Mr. Rahul Gupta',    batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '11:00', endTime: '12:30', meetingId: 'grade-10-batch-a-physics-saturday-s3',    meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-physics-saturday-s3`,    status: 'scheduled' },
-
-    // Grade 11 – Batch A (Standard)
-    { id: 14, day: 'Monday',    session: 2, subject: 'Mathematics',  topic: 'Calculus',            teacher: 'Mr. Arjun Verma',    batch: 'Grade 11 – Batch A', category: 'Standard',   startTime: '09:00', endTime: '10:30', meetingId: 'grade-11-batch-a-mathematics-monday-s2',  meetingLink: `${BBB_SERVER}/b/grade-11-batch-a-mathematics-monday-s2`,  status: 'completed' },
-    { id: 15, day: 'Monday',    session: 4, subject: 'Physics',      topic: 'Mechanics',           teacher: 'Mr. Rahul Gupta',    batch: 'Grade 11 – Batch A', category: 'Standard',   startTime: '14:00', endTime: '15:30', meetingId: 'grade-11-batch-a-physics-monday-s4',      meetingLink: `${BBB_SERVER}/b/grade-11-batch-a-physics-monday-s4`,      status: 'live' },
-    { id: 16, day: 'Tuesday',   session: 2, subject: 'Chemistry',    topic: 'Chemical Bonding',    teacher: 'Dr. Sanjay Mishra',  batch: 'Grade 11 – Batch A', category: 'Standard',   startTime: '09:00', endTime: '10:30', meetingId: 'grade-11-batch-a-chemistry-tuesday-s2',   meetingLink: `${BBB_SERVER}/b/grade-11-batch-a-chemistry-tuesday-s2`,   status: 'scheduled' },
-    { id: 17, day: 'Tuesday',   session: 4, subject: 'Mathematics',  topic: 'Coordinate Geometry', teacher: 'Dr. Kiran Patel',    batch: 'Grade 11 – Batch A', category: 'Standard',   startTime: '14:00', endTime: '15:30', meetingId: 'grade-11-batch-a-mathematics-tuesday-s4', meetingLink: `${BBB_SERVER}/b/grade-11-batch-a-mathematics-tuesday-s4`, status: 'scheduled' },
-    { id: 18, day: 'Wednesday', session: 1, subject: 'Physics',      topic: 'Electrostatics',      teacher: 'Dr. Vikram Sharma',  batch: 'Grade 11 – Batch A', category: 'Standard',   startTime: '07:00', endTime: '08:30', meetingId: 'grade-11-batch-a-physics-wednesday-s1',   meetingLink: `${BBB_SERVER}/b/grade-11-batch-a-physics-wednesday-s1`,   status: 'scheduled' },
-    { id: 19, day: 'Thursday',  session: 3, subject: 'Mathematics',  topic: 'Vectors & 3D',        teacher: 'Mr. Arjun Verma',    batch: 'Grade 11 – Batch A', category: 'Standard',   startTime: '11:00', endTime: '12:30', meetingId: 'grade-11-batch-a-mathematics-thursday-s3',meetingLink: `${BBB_SERVER}/b/grade-11-batch-a-mathematics-thursday-s3`,status: 'scheduled' },
-    { id: 20, day: 'Friday',    session: 1, subject: 'Chemistry',    topic: 'Organic Chemistry',   teacher: 'Ms. Pooja Iyer',     batch: 'Grade 11 – Batch A', category: 'Standard',   startTime: '07:00', endTime: '08:30', meetingId: 'grade-11-batch-a-chemistry-friday-s1',    meetingLink: `${BBB_SERVER}/b/grade-11-batch-a-chemistry-friday-s1`,    status: 'scheduled' },
-
-    // Grade 12 – Batch A (Advanced)
-    { id: 21, day: 'Monday',    session: 6, subject: 'Mathematics',  topic: 'Matrices & Determinants', teacher: 'Dr. Kiran Patel',  batch: 'Grade 12 – Batch A', category: 'Advanced',   startTime: '18:00', endTime: '19:30', meetingId: 'grade-12-batch-a-mathematics-monday-s6',  meetingLink: `${BBB_SERVER}/b/grade-12-batch-a-mathematics-monday-s6`,  status: 'scheduled' },
-    { id: 22, day: 'Wednesday', session: 6, subject: 'Physics',      topic: 'Fluid Mechanics',         teacher: 'Dr. Vikram Sharma',batch: 'Grade 12 – Batch A', category: 'Advanced',   startTime: '18:00', endTime: '19:30', meetingId: 'grade-12-batch-a-physics-wednesday-s6',   meetingLink: `${BBB_SERVER}/b/grade-12-batch-a-physics-wednesday-s6`,   status: 'scheduled' },
-    { id: 23, day: 'Friday',    session: 6, subject: 'Chemistry',    topic: 'Coordination Compounds',  teacher: 'Dr. Sanjay Mishra',batch: 'Grade 12 – Batch A', category: 'Advanced',   startTime: '18:00', endTime: '19:30', meetingId: 'grade-12-batch-a-chemistry-friday-s6',    meetingLink: `${BBB_SERVER}/b/grade-12-batch-a-chemistry-friday-s6`,    status: 'scheduled' },
-  ];
-
-  // ── Derived form lists ────────────────────────────────────────────────────
-  get availableSubjects(): string[] {
-    return this.subjectsByCategory[this.form.category] ?? [];
-  }
-
-  get availableTopics(): string[] {
-    return this.topicsBySubject[this.form.subject] ?? [];
+  getTeacherName(t: any): string {
+    return `${t?.firstName ?? ''} ${t?.lastName ?? ''}`.trim();
   }
 
   // ── Stats ─────────────────────────────────────────────────────────────────
@@ -163,7 +100,7 @@ export class TimetableComponent {
   get scheduledCount(): number { return this.slots.filter(s => s.status === 'scheduled').length; }
   get activeBatches(): number  { return new Set(this.slots.map(s => s.batch)).size; }
 
-  // ── Filtered ──────────────────────────────────────────────────────────────
+  // ── Filtered slots ────────────────────────────────────────────────────────
   get filteredSlots(): TimetableSlot[] {
     return this.slots.filter(s => {
       const matchBatch    = !this.batchFilter    || s.batch === this.batchFilter;
@@ -215,7 +152,7 @@ export class TimetableComponent {
   }
 
   // ── Clipboard ─────────────────────────────────────────────────────────────
-  copiedId: number | null = null;
+  copiedId: string | null = null;
 
   copyLink(slot: TimetableSlot): void {
     navigator.clipboard.writeText(slot.meetingLink).then(() => {
@@ -224,10 +161,24 @@ export class TimetableComponent {
     });
   }
 
+  // ── Join (BBB signed URL) ─────────────────────────────────────────────────
+  joinSlot(slot: TimetableSlot, isModerator = false): void {
+    this.joiningId = slot.id;
+    this.timetableService.getJoinUrl(slot.id, 'Admin', isModerator).subscribe({
+      next: ({ joinUrl }) => {
+        window.open(joinUrl, '_blank');
+        this.joiningId = '';
+      },
+      error: () => {
+        if (slot.meetingLink) window.open(slot.meetingLink, '_blank');
+        this.joiningId = '';
+      }
+    });
+  }
+
   // ── Modal ─────────────────────────────────────────────────────────────────
   modalMode: ModalMode = null;
   selectedSlot: TimetableSlot | null = null;
-  nextId = 30;
 
   form: TimetablePayload = this.emptyForm();
 
@@ -242,17 +193,14 @@ export class TimetableComponent {
 
   openCreate(day?: string, session?: number): void {
     this.form = this.emptyForm();
+    this.filteredTopicsList = [];
     if (day)     this.form.day = day;
     if (session) {
       this.form.session = session;
       const st = this.sessionTimes[session];
       if (st) { this.form.startTime = st.start; this.form.endTime = st.end; }
     }
-    if (this.batchFilter) {
-      this.form.batch = this.batchFilter;
-      const found = this.slots.find(s => s.batch === this.batchFilter);
-      if (found) this.form.category = found.category;
-    }
+    if (this.batchFilter)    this.form.batch    = this.batchFilter;
     if (this.categoryFilter) this.form.category = this.categoryFilter as any;
     this.modalMode = 'create';
   }
@@ -265,23 +213,18 @@ export class TimetableComponent {
       category: slot.category, startTime: slot.startTime, endTime: slot.endTime,
       status: slot.status
     };
+    // Pre-populate filtered topics for the slot's subject
+    const subj = this.apiSubjects.find(s => s.name === slot.subject);
+    this.filteredTopicsList = subj
+      ? this.apiTopics.filter(t => t.subjectId === subj.id)
+      : this.apiTopics;
     this.modalMode = 'edit';
   }
 
-  openView(slot: TimetableSlot): void {
-    this.selectedSlot = slot;
-    this.modalMode = 'view';
-  }
+  openView(slot: TimetableSlot): void   { this.selectedSlot = slot; this.modalMode = 'view'; }
+  openDelete(slot: TimetableSlot): void { this.selectedSlot = slot; this.modalMode = 'delete'; }
 
-  openDelete(slot: TimetableSlot): void {
-    this.selectedSlot = slot;
-    this.modalMode = 'delete';
-  }
-
-  closeModal(): void {
-    this.modalMode = null;
-    this.selectedSlot = null;
-  }
+  closeModal(): void { this.modalMode = null; this.selectedSlot = null; this.formErrors = {}; }
 
   onSessionChange(): void {
     const st = this.sessionTimes[this.form.session];
@@ -291,14 +234,25 @@ export class TimetableComponent {
   onCategoryChange(): void {
     this.form.subject = '';
     this.form.topic   = '';
+    this.filteredTopicsList = [];
   }
 
   onSubjectChange(): void {
     this.form.topic = '';
+    const subj = this.apiSubjects.find(s => s.name === this.form.subject);
+    this.filteredTopicsList = subj
+      ? this.apiTopics.filter(t => t.subjectId === subj.id)
+      : this.apiTopics;
   }
 
+  // ── Save (API) ────────────────────────────────────────────────────────────
   saveSlot(): void {
-    if (!this.form.day || !this.form.subject || !this.form.teacher || !this.form.batch) return;
+    this.formErrors = {};
+    if (!this.form.day)     this.formErrors['day']     = 'Day is required.';
+    if (!this.form.batch)   this.formErrors['batch']   = 'Batch is required.';
+    if (!this.form.subject) this.formErrors['subject'] = 'Subject is required.';
+    if (!this.form.teacher) this.formErrors['teacher'] = 'Teacher is required.';
+    if (Object.keys(this.formErrors).length > 0) return;
 
     const conflict = this.slots.find(s =>
       s.day === this.form.day &&
@@ -307,21 +261,55 @@ export class TimetableComponent {
       (this.modalMode === 'create' || s.id !== this.selectedSlot?.id)
     );
     if (conflict) {
-      alert(`Conflict: ${this.form.batch} already has a session ${this.form.session} on ${this.form.day}.`);
+      this.formErrors['conflict'] = `${this.form.batch} already has Session ${this.form.session} on ${this.form.day}.`;
       return;
     }
 
-    // Auto-generate BBB meeting ID & link
-    const meetingId   = this.generateMeetingId(this.form.batch, this.form.subject, this.form.day, this.form.session);
-    const meetingLink = this.buildMeetingLink(meetingId);
+    this.isSaving = true;
 
     if (this.modalMode === 'create') {
-      this.slots.push({ id: this.nextId++, ...this.form, meetingId, meetingLink });
+      this.timetableService.createSlot(this.form).subscribe({
+        next: (result) => {
+          this.slots.push({
+            id: result.id, day: result.day, session: result.session,
+            subject: result.subject, topic: result.topic, teacher: result.teacher,
+            batch: result.batch, category: result.category as any,
+            startTime: result.startTime, endTime: result.endTime,
+            status: result.status as any, meetingId: result.meetingId,
+            meetingLink: result.meetingLink,
+          });
+          this.isSaving = false;
+          this.closeModal();
+        },
+        error: (err) => {
+          this.isSaving = false;
+          alert('Failed to create session: ' + (err.error?.message ?? 'Unknown error'));
+        }
+      });
+
     } else if (this.modalMode === 'edit' && this.selectedSlot) {
-      const idx = this.slots.findIndex(s => s.id === this.selectedSlot!.id);
-      if (idx > -1) this.slots[idx] = { id: this.selectedSlot.id, ...this.form, meetingId, meetingLink };
+      this.timetableService.updateSlot(this.selectedSlot.id, this.form).subscribe({
+        next: (result) => {
+          const idx = this.slots.findIndex(s => s.id === this.selectedSlot!.id);
+          if (idx > -1) {
+            this.slots[idx] = {
+              ...this.slots[idx],
+              day: result.day, session: result.session, subject: result.subject,
+              topic: result.topic, teacher: result.teacher, batch: result.batch,
+              category: result.category as any, startTime: result.startTime,
+              endTime: result.endTime, status: result.status as any,
+              meetingId: result.meetingId, meetingLink: result.meetingLink,
+            };
+          }
+          this.isSaving = false;
+          this.closeModal();
+        },
+        error: (err) => {
+          this.isSaving = false;
+          alert('Failed to update session: ' + (err.error?.message ?? 'Unknown error'));
+        }
+      });
     }
-    this.closeModal();
   }
 
   confirmDelete(): void {
@@ -335,4 +323,72 @@ export class TimetableComponent {
     const st = this.sessionTimes[session];
     return st ? `${st.start} – ${st.end}` : '';
   }
+
+  // ── API loaders ───────────────────────────────────────────────────────────
+  ngOnInit(): void {
+    this.loadBatches();
+    this.loadTeachers();
+    this.loadSubjects();
+    this.loadTopics();
+  }
+
+  private loadBatches(): void {
+    this.httpService.getData(BASE_URL, '/batches').subscribe({
+      next: (res: any) => {
+        this.apiBatches = Array.isArray(res) ? res : (res?.data ?? []);
+      },
+      error: () => this.commonService.error('Failed to load batches.')
+    });
+  }
+
+  private loadTeachers(): void {
+    this.httpService.getData(BASE_URL, '/role').subscribe({
+      next: (rolesRes: any) => {
+        const roles: any[] = Array.isArray(rolesRes) ? rolesRes : (rolesRes?.data ?? []);
+        const teacherRole = roles.find((r: any) => r.name === 'Teacher');
+        this.httpService.getData(BASE_URL, '/users').subscribe({
+          next: (res: any) => {
+            const users: any[] = Array.isArray(res) ? res : (res?.data ?? []);
+            this.apiTeachers = users.filter(u => u.roleDto?.id === teacherRole?.id);
+          },
+          error: () => {}
+        });
+      },
+      error: () => {
+        this.httpService.getData(BASE_URL, '/users').subscribe({
+          next: (res: any) => {
+            const users: any[] = Array.isArray(res) ? res : (res?.data ?? []);
+            this.apiTeachers = users.filter(u =>
+              (u.roleDto?.name ?? u.role?.name ?? u.userType ?? '').toLowerCase() === 'teacher'
+            );
+          },
+          error: () => {}
+        });
+      }
+    });
+  }
+
+  private loadSubjects(): void {
+    this.httpService.getData(BASE_URL, '/subject').subscribe({
+      next: (res: any) => {
+        this.apiSubjects = Array.isArray(res) ? res : (res?.data ?? []);
+      },
+      error: () => this.commonService.error('Failed to load subjects.')
+    });
+  }
+
+  private loadTopics(): void {
+    this.httpService.getData(BASE_URL, '/topic').subscribe({
+      next: (res: any) => {
+        this.apiTopics = Array.isArray(res) ? res : (res?.data ?? []);
+      },
+      error: () => {}
+    });
+  }
+
+  constructor(
+    private timetableService: TimetableService,
+    private commonService: CommonService,
+    private httpService: HttpGeneralService<any>
+  ) {}
 }

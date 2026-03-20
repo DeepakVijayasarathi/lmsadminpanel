@@ -48,15 +48,13 @@ export interface BatchPayload {
 }
 
 export interface BatchUpdatePayload {
-  id: string;
   batchName: string;
   courseId: string;
+  teacherId: string;
   startDate: string;
   endDate: string;
   maxStudents: number;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string | null;
 }
 
 type ModalMode =
@@ -137,22 +135,34 @@ export class BatchesComponent implements OnInit {
   }
 
   loadUsers(): void {
-    this.httpService.getData(BASE_URL, '/users').subscribe({
-      next: (res: any) => {
-        const users: any[] = Array.isArray(res) ? res : (res?.data ?? []);
-        // Separate by role name or userType
-        this.allStudents = users.filter(
-          (u) =>
-            u.userType?.toLowerCase() === 'student' ||
-            u.role?.name?.toLowerCase() === 'student',
-        );
-        this.allTeachers = users.filter(
-          (u) =>
-            u.userType?.toLowerCase() === 'teacher' ||
-            u.role?.name?.toLowerCase() === 'teacher',
-        );
+    this.httpService.getData(BASE_URL, '/role').subscribe({
+      next: (rolesRes: any) => {
+        const roles: any[] = Array.isArray(rolesRes) ? rolesRes : (rolesRes?.data ?? []);
+        const teacherRole = roles.find((r: any) => r.name === 'Teacher');
+        const studentRole = roles.find((r: any) => r.name === 'Student');
+
+        this.httpService.getData(BASE_URL, '/users').subscribe({
+          next: (res: any) => {
+            const users: any[] = Array.isArray(res) ? res : (res?.data ?? []);
+            this.allTeachers = users.filter(u => u.roleDto?.id === teacherRole?.id);
+            this.allStudents = users.filter(u => u.roleDto?.id === studentRole?.id);
+          },
+          error: () => {},
+        });
       },
-      error: () => {},
+      error: () => {
+        // fallback to name-based filter
+        this.httpService.getData(BASE_URL, '/users').subscribe({
+          next: (res: any) => {
+            const users: any[] = Array.isArray(res) ? res : (res?.data ?? []);
+            const roleOf = (u: any): string =>
+              (u.roleDto?.name ?? u.role?.name ?? u.userType ?? '').toLowerCase();
+            this.allTeachers = users.filter(u => roleOf(u) === 'teacher');
+            this.allStudents = users.filter(u => roleOf(u) === 'student');
+          },
+          error: () => {},
+        });
+      },
     });
   }
 
@@ -194,15 +204,13 @@ export class BatchesComponent implements OnInit {
   updateBatch(): void {
     if (!this.selectedBatch) return;
     const payload: BatchUpdatePayload = {
-      id: this.selectedBatch.id,
       batchName: this.formName.trim(),
       courseId: this.formCourseId.trim(),
+      teacherId: this.formTeacherId,
       startDate: this.formStartDate,
       endDate: this.formEndDate,
       maxStudents: this.formMaxStudents,
       isActive: this.formIsActive,
-      createdAt: this.selectedBatch.createdAt ?? new Date().toISOString(),
-      updatedAt: null,
     };
     this.httpService
       .putData(BASE_URL, `/batches/update/${this.selectedBatch.id}`, payload)
