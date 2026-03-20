@@ -488,7 +488,7 @@ export class RegistrationComponent implements OnInit {
 
     const options = {
       key: environment.razorpayKey,
-      amount: Math.round(amount * 100), // paise, must be integer
+      amount: Math.round(amount * 100),
       currency: 'INR',
       name: 'B2P Teachers',
       description: this.selectedCourse?.title || 'Course Subscription',
