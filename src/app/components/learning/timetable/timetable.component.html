@@ -21,36 +21,28 @@
   <!-- Stats -->
   <div class="pg-stats">
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-indigo">
-        <i class="fa-solid fa-calendar-check"></i>
-      </div>
+      <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-calendar-check"></i></div>
       <div>
         <div class="pg-stat__val">{{ totalSlots }}</div>
         <div class="pg-stat__lbl">Total Sessions</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-rose">
-        <i class="fa-solid fa-circle-dot"></i>
-      </div>
+      <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-circle-dot"></i></div>
       <div>
         <div class="pg-stat__val">{{ liveNow }}</div>
         <div class="pg-stat__lbl">Live Now</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-sky">
-        <i class="fa-solid fa-clock"></i>
-      </div>
+      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-clock"></i></div>
       <div>
         <div class="pg-stat__val">{{ scheduledCount }}</div>
         <div class="pg-stat__lbl">Scheduled</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-emerald">
-        <i class="fa-solid fa-layer-group"></i>
-      </div>
+      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-layer-group"></i></div>
       <div>
         <div class="pg-stat__val">{{ activeBatches }}</div>
         <div class="pg-stat__lbl">Active Batches</div>
@@ -71,7 +63,7 @@
         </select>
         <select class="pg-filter" [(ngModel)]="batchFilter">
           <option value="">All Batches</option>
-          <option *ngFor="let b of batches" [value]="b">{{ b }}</option>
+          <option *ngFor="let b of apiBatches" [value]="getBatchName(b)">{{ getBatchName(b) }}</option>
         </select>
         <div class="tt-view-toggle">
           <button [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" title="Grid view">
@@ -111,20 +103,23 @@
                     {{ slot.teacher.split(' ').slice(-1)[0] }}
                   </div>
 
-                  <!-- BBB badge + category tag -->
                   <div class="tt-slot__meta">
                     <span [class]="'tt-exam-tag ' + getCategoryChip(slot.category)">{{ slot.category }}</span>
                     <span class="tt-bbb-tag"><i class="fa-solid fa-circle-play"></i> BBB</span>
                   </div>
 
-                  <!-- Join button -->
-                  <a *ngIf="canJoin(slot.status)"
-                     [href]="slot.meetingLink" target="_blank"
-                     class="tt-join-btn"
-                     [class.tt-join-btn--live]="slot.status === 'live'">
-                    <i class="fa-solid fa-video"></i>
+                  <!-- Join button → calls API for signed URL -->
+                  <button *ngIf="canJoin(slot.status)"
+                    class="tt-join-btn"
+                    [class.tt-join-btn--live]="slot.status === 'live'"
+                    [disabled]="joiningId === slot.id"
+                    (click)="joinSlot(slot, slot.status === 'live')">
+                    <i class="fa-solid"
+                       [class.fa-circle-notch]="joiningId === slot.id"
+                       [class.fa-spin]="joiningId === slot.id"
+                       [class.fa-video]="joiningId !== slot.id"></i>
                     {{ slot.status === 'live' ? 'Join Live' : 'Join' }}
-                  </a>
+                  </button>
 
                   <div class="tt-slot__actions">
                     <button class="tt-action" title="View"   (click)="openView(slot)">  <i class="fa-solid fa-eye"></i>   </button>
@@ -186,7 +181,6 @@
               <div class="pg-cell__primary">{{ slot.startTime }} – {{ slot.endTime }}</div>
             </td>
             <td>
-              <!-- BBB meeting link column -->
               <div class="tt-bbb-cell">
                 <span class="tt-bbb-id" title="{{ slot.meetingLink }}">
                   <i class="fa-solid fa-circle-play" style="color:#e74c3c;"></i>
@@ -205,11 +199,17 @@
             </td>
             <td>
               <div style="display:flex;gap:6px;align-items:center;">
-                <a *ngIf="canJoin(slot.status)"
-                   [href]="slot.meetingLink" target="_blank"
-                   class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 10px;text-decoration:none;">
-                  <i class="fa-solid fa-video"></i> Join
-                </a>
+                <!-- Join → API signed URL -->
+                <button *ngIf="canJoin(slot.status)"
+                  class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 10px;"
+                  [disabled]="joiningId === slot.id"
+                  (click)="joinSlot(slot, slot.status === 'live')">
+                  <i class="fa-solid"
+                     [class.fa-circle-notch]="joiningId === slot.id"
+                     [class.fa-spin]="joiningId === slot.id"
+                     [class.fa-video]="joiningId !== slot.id"></i>
+                  Join
+                </button>
                 <button class="pg-action-btn" title="View"   (click)="openView(slot)">  <i class="fa-solid fa-eye"></i>  </button>
                 <button class="pg-action-btn" title="Edit"   (click)="openEdit(slot)">  <i class="fa-solid fa-pen"></i>  </button>
                 <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDelete(slot)"><i class="fa-solid fa-trash"></i></button>
@@ -241,10 +241,17 @@
   </div>
   <div class="pg-modal__body">
 
-    <!-- BBB auto-generate notice -->
+    <!-- BBB notice -->
     <div class="tt-bbb-notice">
       <i class="fa-solid fa-circle-play"></i>
-      <span>A <strong>BigBlueButton</strong> meeting room will be automatically generated for this session.</span>
+      <span>A <strong>BigBlueButton</strong> meeting room will be automatically created via the API.</span>
+    </div>
+
+    <!-- Validation errors -->
+    <div *ngIf="Object.keys(formErrors).length > 0" style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;margin-bottom:12px;">
+      <div *ngFor="let key of Object.keys(formErrors)" style="font-size:13px;color:#dc2626;display:flex;align-items:center;gap:6px;">
+        <i class="fa-solid fa-circle-exclamation"></i> {{ formErrors[key] }}
+      </div>
     </div>
 
     <div class="pg-form-grid">
@@ -256,20 +263,22 @@
         </select>
       </div>
 
-      <div class="pg-form-group">
+      <div class="pg-form-group" [class.has-error]="formErrors['batch']">
         <label>Batch <span class="req">*</span></label>
-        <select [(ngModel)]="form.batch">
+        <select [(ngModel)]="form.batch" (ngModelChange)="formErrors['batch']=''">
           <option value="">Select Batch</option>
-          <option *ngFor="let b of batches" [value]="b">{{ b }}</option>
+          <option *ngFor="let b of apiBatches" [value]="getBatchName(b)">{{ getBatchName(b) }}</option>
         </select>
+        <div class="field-error" *ngIf="formErrors['batch']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['batch'] }}</div>
       </div>
 
-      <div class="pg-form-group">
+      <div class="pg-form-group" [class.has-error]="formErrors['day']">
         <label>Day <span class="req">*</span></label>
-        <select [(ngModel)]="form.day">
+        <select [(ngModel)]="form.day" (ngModelChange)="formErrors['day']=''">
           <option value="">Select Day</option>
           <option *ngFor="let d of days" [value]="d">{{ d }}</option>
         </select>
+        <div class="field-error" *ngIf="formErrors['day']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['day'] }}</div>
       </div>
 
       <div class="pg-form-group">
@@ -279,28 +288,30 @@
         </select>
       </div>
 
-      <div class="pg-form-group">
+      <div class="pg-form-group" [class.has-error]="formErrors['subject']">
         <label>Subject <span class="req">*</span></label>
-        <select [(ngModel)]="form.subject" (ngModelChange)="onSubjectChange()">
+        <select [(ngModel)]="form.subject" (ngModelChange)="onSubjectChange(); formErrors['subject']=''">
           <option value="">Select Subject</option>
-          <option *ngFor="let s of availableSubjects" [value]="s">{{ s }}</option>
+          <option *ngFor="let s of apiSubjects" [value]="s.name">{{ s.name }}</option>
         </select>
+        <div class="field-error" *ngIf="formErrors['subject']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['subject'] }}</div>
       </div>
 
       <div class="pg-form-group">
         <label>Topic / Chapter</label>
         <select [(ngModel)]="form.topic">
           <option value="">Select Topic</option>
-          <option *ngFor="let t of availableTopics" [value]="t">{{ t }}</option>
+          <option *ngFor="let t of filteredTopicsList" [value]="t.name">{{ t.name }}</option>
         </select>
       </div>
 
-      <div class="pg-form-group">
+      <div class="pg-form-group" [class.has-error]="formErrors['teacher']">
         <label>Teacher <span class="req">*</span></label>
-        <select [(ngModel)]="form.teacher">
+        <select [(ngModel)]="form.teacher" (ngModelChange)="formErrors['teacher']=''">
           <option value="">Select Teacher</option>
-          <option *ngFor="let t of teachers" [value]="t">{{ t }}</option>
+          <option *ngFor="let t of apiTeachers" [value]="getTeacherName(t)">{{ getTeacherName(t) }}</option>
         </select>
+        <div class="field-error" *ngIf="formErrors['teacher']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['teacher'] }}</div>
       </div>
 
       <div class="pg-form-group">
@@ -322,22 +333,15 @@
 
     </div>
 
-    <!-- Preview of auto-generated BBB link -->
-    <div class="tt-bbb-preview" *ngIf="form.batch && form.subject && form.day && form.session">
-      <div class="tt-bbb-preview__label">
-        <i class="fa-solid fa-link"></i> Auto-generated BigBlueButton Room
-      </div>
-      <div class="tt-bbb-preview__link">
-        {{ 'https://bbb.edulanz.com/b/' + generateMeetingId(form.batch, form.subject, form.day, form.session) }}
-      </div>
-    </div>
-
   </div>
   <div class="pg-modal__foot">
-    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
-    <button class="pg-btn pg-btn--primary" (click)="saveSlot()">
-      <i class="fa-solid fa-circle-play"></i>
-      {{ modalMode === 'create' ? 'Create & Generate Room' : 'Save Changes' }}
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()" [disabled]="isSaving">Cancel</button>
+    <button class="pg-btn pg-btn--primary" (click)="saveSlot()" [disabled]="isSaving">
+      <i class="fa-solid"
+         [class.fa-circle-notch]="isSaving"
+         [class.fa-spin]="isSaving"
+         [class.fa-circle-play]="!isSaving"></i>
+      {{ isSaving ? 'Saving…' : (modalMode === 'create' ? 'Create & Generate Room' : 'Save Changes') }}
     </button>
   </div>
 </div>
@@ -405,14 +409,17 @@
         </button>
       </div>
 
-      <!-- Join button -->
-      <a *ngIf="canJoin(selectedSlot.status)"
-         [href]="selectedSlot.meetingLink" target="_blank"
-         class="pg-btn pg-btn--primary tt-join-full"
-         [class.pg-btn--live]="selectedSlot.status === 'live'">
-        <i class="fa-solid fa-video"></i>
+      <!-- Join button → API signed URL -->
+      <button *ngIf="canJoin(selectedSlot.status)"
+        class="pg-btn pg-btn--primary tt-join-full"
+        [disabled]="joiningId === selectedSlot.id"
+        (click)="joinSlot(selectedSlot, selectedSlot.status === 'live')">
+        <i class="fa-solid"
+           [class.fa-circle-notch]="joiningId === selectedSlot.id"
+           [class.fa-spin]="joiningId === selectedSlot.id"
+           [class.fa-video]="joiningId !== selectedSlot.id"></i>
         {{ selectedSlot.status === 'live' ? 'Join Live Session on BBB' : 'Join Session on BBB' }}
-      </a>
+      </button>
 
     </div>
   </div>

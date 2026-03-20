@@ -52,7 +52,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
         { label: 'Batches',      icon: 'fa-solid fa-layer-group',    route: '/batches'       },
         { label: 'Live Classes', icon: 'fa-solid fa-video',            route: '/live-classes'  },
         { label: 'Library',      icon: 'fa-solid fa-book-bookmark',  route: '/library'       },
-        { label: 'Timetable',    icon: 'fa-solid fa-calendar-days',  route: '/timetable'     },
+        { label: 'Timetable',     icon: 'fa-solid fa-calendar-days',  route: '/timetable'      },
+        { label: 'Session Slots', icon: 'fa-solid fa-calendar-check', route: '/session-slots'  },
       ],
     },
     {
