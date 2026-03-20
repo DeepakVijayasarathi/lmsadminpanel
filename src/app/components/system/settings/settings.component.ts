@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { CommonService } from '../../../services/common.service';
 
 @Component({
   selector: 'app-settings',
@@ -15,15 +16,9 @@ export class SettingsComponent {
   allowRegistration = true;
   maxStudentsPerBatch = 50;
 
+  constructor(private commonService: CommonService) {}
+
   saveSettings(): void {
-    console.log('Settings saved:', {
-      platformName: this.platformName,
-      supportEmail: this.supportEmail,
-      timezone: this.timezone,
-      language: this.language,
-      maintenanceMode: this.maintenanceMode,
-      allowRegistration: this.allowRegistration,
-      maxStudentsPerBatch: this.maxStudentsPerBatch
-    });
+    this.commonService.success('Settings saved successfully.');
   }
 }

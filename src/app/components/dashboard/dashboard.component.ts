@@ -56,9 +56,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   statCards: StatCard[] = [
     {
-      title: 'Total Aspirants',
+      title: 'Total Students',
       value: '3,214',
-      subtitle: 'NEET + JEE enrolled',
+      subtitle: 'Active students enrolled',
       icon: 'fa-solid fa-user-graduate',
       trend: 14.2,
       trendLabel: 'vs last month',
@@ -76,7 +76,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     {
       title: 'Active Batches',
       value: '24',
-      subtitle: 'NEET & JEE batches',
+      subtitle: 'Across all grades',
       icon: 'fa-solid fa-layer-group',
       trend: 9.5,
       trendLabel: 'vs last month',
@@ -113,9 +113,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   upcomingClasses: UpcomingClass[] = [
     {
-      subject: 'Physics – Electrostatics (NEET)',
+      subject: 'Physics – Electrostatics',
       teacher: 'Dr. Vikram Sharma',
-      batch: 'NEET 2025 – Batch A',
+      batch: 'Grade 10 – Batch A',
       time: '07:00 AM',
       endTime: '08:30 AM',
       duration: '90 min',
@@ -123,9 +123,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       status: 'live',
     },
     {
-      subject: 'Mathematics – Calculus (JEE)',
+      subject: 'Mathematics – Calculus',
       teacher: 'Mr. Arjun Verma',
-      batch: 'JEE Main 2025 – Batch A',
+      batch: 'Grade 11 – Batch A',
       time: '09:00 AM',
       endTime: '10:30 AM',
       duration: '90 min',
@@ -133,9 +133,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       status: 'live',
     },
     {
-      subject: 'Chemistry – Organic Reactions (NEET)',
+      subject: 'Chemistry – Organic Reactions',
       teacher: 'Ms. Pooja Iyer',
-      batch: 'NEET 2025 – Batch B',
+      batch: 'Grade 10 – Batch B',
       time: '11:00 AM',
       endTime: '12:30 PM',
       duration: '90 min',
@@ -143,9 +143,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       status: 'upcoming',
     },
     {
-      subject: 'Biology – Genetics (NEET)',
+      subject: 'Biology – Genetics',
       teacher: 'Dr. Meena Krishnan',
-      batch: 'NEET 2026 – Batch A',
+      batch: 'Grade 9 – Batch A',
       time: '14:00 PM',
       endTime: '15:30 PM',
       duration: '90 min',
@@ -153,9 +153,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       status: 'scheduled',
     },
     {
-      subject: 'Physics – Fluid Mechanics (JEE Adv)',
-      teacher: 'Dr. Vikram Sharma',
-      batch: 'JEE Advanced 2025',
+      subject: 'Computer Science – Data Structures',
+      teacher: 'Dr. Kiran Patel',
+      batch: 'Grade 12 – Batch A',
       time: '18:00 PM',
       endTime: '19:30 PM',
       duration: '90 min',
@@ -167,19 +167,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   recentActivities: RecentActivity[] = [
     {
       type: 'user',
-      message: '12 new aspirants enrolled in NEET 2025 – Batch A',
+      message: '12 new students enrolled in Grade 10 – Batch A',
       time: '5 min ago',
       icon: 'fa-solid fa-user-plus',
     },
     {
       type: 'payment',
-      message: 'Course fee ₹18,000 received from Rohan Mehta (JEE Main)',
+      message: 'Course fee ₹18,000 received from Rohan Mehta (Grade 11)',
       time: '22 min ago',
       icon: 'fa-solid fa-circle-check',
     },
     {
       type: 'exam',
-      message: 'NEET Full Mock Test #4 results published – Avg 68%',
+      message: 'Mid-Term Exam – Term 2 results published – Avg 68%',
       time: '1 hr ago',
       icon: 'fa-solid fa-file-circle-check',
     },
@@ -191,7 +191,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     },
     {
       type: 'alert',
-      message: '5 students missed JEE Main Mock Test #6 session',
+      message: '5 students missed Unit Test 4 – Mathematics session',
       time: '3 hrs ago',
       icon: 'fa-solid fa-triangle-exclamation',
     },
@@ -203,7 +203,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     },
     {
       type: 'payment',
-      message: 'Refund request submitted by Priya Desai (NEET Batch B)',
+      message: 'Refund request submitted by Priya Desai (Grade 10 – Batch B)',
       time: 'Yesterday',
       icon: 'fa-solid fa-rotate-left',
     },
@@ -213,7 +213,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     { label: 'Mock Test Attempt Rate',    value: 82, max: 100, color: '#4f46e5' },
     { label: 'Avg. Session Attendance',   value: 88, max: 100, color: '#10b981' },
     { label: 'Syllabus Completion Rate',  value: 67, max: 100, color: '#f59e0b' },
-    { label: 'Aspirant Satisfaction',     value: 94, max: 100, color: '#06b6d4' },
+    { label: 'Student Satisfaction',      value: 94, max: 100, color: '#06b6d4' },
   ];
 
   enrollmentData = [
@@ -226,7 +226,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ];
 
   chartSeries: ApexAxisChartSeries = [
-    { name: 'Aspirants Enrolled', data: [310, 420, 390, 510, 620, 740] }
+    { name: 'Students Enrolled', data: [310, 420, 390, 510, 620, 740] }
   ];
 
   chartConfig: ApexChart = {
@@ -286,14 +286,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   chartTooltip: ApexTooltip = {
     theme: 'light',
-    y: { formatter: (val: number) => `${val} aspirants` }
+    y: { formatter: (val: number) => `${val} students` }
   };
 
   roleDistribution = [
-    { role: 'NEET Aspirants', count: 1842, percentage: 57, color: '#10b981' },
-    { role: 'JEE Aspirants',  count: 1186, percentage: 37, color: '#4f46e5' },
-    { role: 'Faculty',        count: 58,   percentage: 4,  color: '#f59e0b' },
-    { role: 'Parents',        count: 128,  percentage: 2,  color: '#06b6d4' },
+    { role: 'Secondary (Grade 8-10)', count: 1842, percentage: 57, color: '#10b981' },
+    { role: 'Senior (Grade 11-12)',   count: 1186, percentage: 37, color: '#4f46e5' },
+    { role: 'Faculty',                count: 58,   percentage: 4,  color: '#f59e0b' },
+    { role: 'Parents',                count: 128,  percentage: 2,  color: '#06b6d4' },
   ];
 
   systemAlerts = [

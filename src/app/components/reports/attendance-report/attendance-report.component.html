@@ -7,7 +7,7 @@
       </div>
       <div>
         <div class="pg-head__title">Attendance Report</div>
-        <div class="pg-head__sub">Student attendance overview</div>
+        <div class="pg-head__sub">Student attendance overview across all batches and grades</div>
       </div>
     </div>
     <div class="pg-head__right">
@@ -21,23 +21,31 @@
   <div class="pg-stats">
     <div class="pg-stat">
       <div class="pg-stat__icon chip-teal"><i class="fa-solid fa-percent"></i></div>
-      <div class="pg-stat__val">85%</div>
-      <div class="pg-stat__lbl">Avg Attendance</div>
+      <div>
+        <div class="pg-stat__val">{{ avgAttendance }}%</div>
+        <div class="pg-stat__lbl">Avg Attendance</div>
+      </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-circle-check"></i></div>
-      <div class="pg-stat__val">1,824</div>
-      <div class="pg-stat__lbl">Regular</div>
+      <div>
+        <div class="pg-stat__val">{{ regularCount }}</div>
+        <div class="pg-stat__lbl">Regular</div>
+      </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
-      <div class="pg-stat__val">742</div>
-      <div class="pg-stat__lbl">Irregular</div>
+      <div>
+        <div class="pg-stat__val">{{ irregularCount }}</div>
+        <div class="pg-stat__lbl">Irregular</div>
+      </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-user-slash"></i></div>
-      <div class="pg-stat__val">281</div>
-      <div class="pg-stat__lbl">Absent</div>
+      <div>
+        <div class="pg-stat__val">{{ absentCount }}</div>
+        <div class="pg-stat__lbl">Absent</div>
+      </div>
     </div>
   </div>
 
@@ -46,8 +54,11 @@
     <div class="pg-card__head">
       <span class="pg-card__title">Student Attendance</span>
       <div class="pg-toolbar">
-        <input class="pg-search" type="text" placeholder="Search students..." />
-        <select class="pg-filter">
+        <div class="pg-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search students, batch..." [(ngModel)]="searchQuery" />
+        </div>
+        <select class="pg-filter" [(ngModel)]="statusFilter">
           <option value="">All Status</option>
           <option value="regular">Regular</option>
           <option value="irregular">Irregular</option>
@@ -59,6 +70,7 @@
       <table class="pg-table">
         <thead>
           <tr>
+            <th>#</th>
             <th>Student</th>
             <th>Batch &amp; Class</th>
             <th>Present / Total Days</th>
@@ -68,21 +80,38 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let rec of records">
+          <tr *ngFor="let rec of filteredRecords; let i = index">
+            <td class="idx-cell">{{ i + 1 }}</td>
             <td>
-              <div class="pg-cell__primary">{{ rec.student }}</div>
+              <div class="pg-with-avatar">
+                <div class="pg-avatar av-teal">{{ rec.student.charAt(0) }}</div>
+                <div class="pg-cell__primary">{{ rec.student }}</div>
+              </div>
             </td>
             <td>
               <div class="pg-cell__primary">{{ rec.batch }}</div>
               <div class="pg-cell__sub">{{ rec.class }}</div>
             </td>
-            <td>{{ rec.presentDays }} / {{ rec.totalDays }}</td>
             <td>
-              <strong [style.color]="percentageColor(rec.percentage)">{{ rec.percentage }}%</strong>
+              <span class="pg-cell__primary">{{ rec.presentDays }} / {{ rec.totalDays }}</span>
             </td>
-            <td>{{ rec.lastAttended }}</td>
             <td>
-              <span class="pg-badge {{ statusBadge(rec.status) }}">{{ rec.status }}</span>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="flex:1;background:#f1f5f9;border-radius:4px;height:6px;min-width:80px;">
+                  <div [style.width.%]="rec.percentage" [style.background]="percentageColor(rec.percentage)" style="height:6px;border-radius:4px;transition:width 0.3s;"></div>
+                </div>
+                <strong [style.color]="percentageColor(rec.percentage)">{{ rec.percentage }}%</strong>
+              </div>
+            </td>
+            <td>{{ formatDate(rec.lastAttended) }}</td>
+            <td>
+              <span class="pg-badge {{ statusBadge(rec.status) }}">{{ rec.status | titlecase }}</span>
+            </td>
+          </tr>
+          <tr *ngIf="filteredRecords.length === 0">
+            <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">
+              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+              No records found
             </td>
           </tr>
         </tbody>

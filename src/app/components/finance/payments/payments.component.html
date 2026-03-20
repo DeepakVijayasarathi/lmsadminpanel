@@ -7,7 +7,7 @@
       </div>
       <div>
         <div class="pg-head__title">Payments</div>
-        <div class="pg-head__sub">Payment transactions</div>
+        <div class="pg-head__sub">Payment transactions overview</div>
       </div>
     </div>
     <div class="pg-head__right">
@@ -21,23 +21,31 @@
   <div class="pg-stats">
     <div class="pg-stat">
       <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-indian-rupee-sign"></i></div>
-      <div class="pg-stat__val">₹4,82,500</div>
-      <div class="pg-stat__lbl">Total Received</div>
+      <div>
+        <div class="pg-stat__val">{{ formatAmount(totalReceived) }}</div>
+        <div class="pg-stat__lbl">Total Received</div>
+      </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-calendar-days"></i></div>
-      <div class="pg-stat__val">₹68,400</div>
-      <div class="pg-stat__lbl">This Month</div>
+      <div>
+        <div class="pg-stat__val">{{ filteredPayments.length }}</div>
+        <div class="pg-stat__lbl">Transactions</div>
+      </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-amber"><i class="fa-solid fa-clock"></i></div>
-      <div class="pg-stat__val">₹38,200</div>
-      <div class="pg-stat__lbl">Pending</div>
+      <div>
+        <div class="pg-stat__val">{{ formatAmount(totalPending) }}</div>
+        <div class="pg-stat__lbl">Pending</div>
+      </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-circle-xmark"></i></div>
-      <div class="pg-stat__val">₹4,800</div>
-      <div class="pg-stat__lbl">Failed</div>
+      <div>
+        <div class="pg-stat__val">{{ formatAmount(totalFailed) }}</div>
+        <div class="pg-stat__lbl">Failed</div>
+      </div>
     </div>
   </div>
 
@@ -46,8 +54,11 @@
     <div class="pg-card__head">
       <span class="pg-card__title">All Transactions</span>
       <div class="pg-toolbar">
-        <input class="pg-search" type="text" placeholder="Search transactions..." />
-        <select class="pg-filter">
+        <div class="pg-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search student, transaction..." [(ngModel)]="searchQuery" />
+        </div>
+        <select class="pg-filter" [(ngModel)]="statusFilter">
           <option value="">All Status</option>
           <option value="success">Success</option>
           <option value="pending">Pending</option>
@@ -70,9 +81,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let payment of payments">
+          <tr *ngFor="let payment of filteredPayments">
             <td>
-              <div class="pg-cell__primary">{{ payment.student }}</div>
+              <div class="pg-with-avatar">
+                <div class="pg-avatar av-indigo">{{ payment.student.charAt(0) }}</div>
+                <div class="pg-cell__primary">{{ payment.student }}</div>
+              </div>
             </td>
             <td>
               <strong style="color:#4f46e5;">{{ formatAmount(payment.amount) }}</strong>
@@ -84,16 +98,75 @@
             </td>
             <td>{{ payment.date }}</td>
             <td>
-              <span class="pg-badge {{ statusBadge(payment.status) }}">{{ payment.status }}</span>
+              <span class="pg-badge {{ statusBadge(payment.status) }}">{{ payment.status | titlecase }}</span>
             </td>
             <td>
-              <button class="pg-action-btn" title="View"><i class="fa-solid fa-eye"></i></button>
-              <button class="pg-action-btn" title="Download Receipt"><i class="fa-solid fa-receipt"></i></button>
-              <button class="pg-action-btn pg-action-btn--danger" title="Refund"><i class="fa-solid fa-rotate-left"></i></button>
+              <div style="display:flex;gap:6px;">
+                <button class="pg-action-btn" title="View Details" (click)="openViewModal(payment)">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button class="pg-action-btn" title="Download Receipt">
+                  <i class="fa-solid fa-receipt"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredPayments.length === 0">
+            <td colspan="8" style="text-align:center;padding:32px;color:#94a3b8;">
+              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+              No transactions found
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+  </div>
+</div>
+
+<!-- Modal Overlay -->
+<div class="modal-overlay" *ngIf="showViewModal" (click)="closeModal()"></div>
+
+<!-- View Payment Modal -->
+<div class="modal modal--sm" *ngIf="showViewModal && selectedPayment">
+  <div class="modal__header">
+    <h3><i class="fa-solid fa-receipt"></i> Transaction Details</h3>
+    <button class="modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="modal__body">
+    <div class="view-showcase">
+      <div class="view-showcase__icon" style="background:#eef2ff;color:#4f46e5;">
+        <i class="fa-solid fa-indian-rupee-sign"></i>
+      </div>
+      <div>
+        <div class="view-showcase__title">{{ formatAmount(selectedPayment.amount) }}</div>
+        <div class="view-showcase__sub">{{ selectedPayment.purpose }}</div>
+      </div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Student</div>
+      <div class="view-detail-val">{{ selectedPayment.student }}</div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Transaction ID</div>
+      <div class="view-detail-val" style="font-family:monospace;font-weight:600;">{{ selectedPayment.transactionId }}</div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Payment Method</div>
+      <div class="view-detail-val">{{ selectedPayment.method }}</div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Date</div>
+      <div class="view-detail-val">{{ selectedPayment.date }}</div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Status</div>
+      <div class="view-detail-val">
+        <span class="pg-badge {{ statusBadge(selectedPayment.status) }}">{{ selectedPayment.status | titlecase }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+    <button class="pg-btn pg-btn--outline"><i class="fa-solid fa-download"></i> Receipt</button>
   </div>
 </div>

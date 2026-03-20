@@ -7,7 +7,7 @@
       </div>
       <div>
         <div class="pg-head__title">Performance Report</div>
-        <div class="pg-head__sub">Student academic performance</div>
+        <div class="pg-head__sub">Student academic performance across subjects</div>
       </div>
     </div>
     <div class="pg-head__right">
@@ -21,23 +21,31 @@
   <div class="pg-stats">
     <div class="pg-stat">
       <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-users"></i></div>
-      <div class="pg-stat__val">2,847</div>
-      <div class="pg-stat__lbl">Students Tracked</div>
+      <div>
+        <div class="pg-stat__val">{{ filteredRecords.length }}</div>
+        <div class="pg-stat__lbl">Students Tracked</div>
+      </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-chart-simple"></i></div>
-      <div class="pg-stat__val">72%</div>
-      <div class="pg-stat__lbl">Avg Score</div>
+      <div>
+        <div class="pg-stat__val">{{ avgScore }}%</div>
+        <div class="pg-stat__lbl">Avg Score</div>
+      </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-purple"><i class="fa-solid fa-star"></i></div>
-      <div class="pg-stat__val">284</div>
-      <div class="pg-stat__lbl">Top Performers</div>
+      <div>
+        <div class="pg-stat__val">{{ topPerformers }}</div>
+        <div class="pg-stat__lbl">Top Performers</div>
+      </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-hand-holding-heart"></i></div>
-      <div class="pg-stat__val">312</div>
-      <div class="pg-stat__lbl">Need Support</div>
+      <div>
+        <div class="pg-stat__val">{{ needSupport }}</div>
+        <div class="pg-stat__lbl">Need Support</div>
+      </div>
     </div>
   </div>
 
@@ -46,12 +54,13 @@
     <div class="pg-card__head">
       <span class="pg-card__title">Student Performance</span>
       <div class="pg-toolbar">
-        <input class="pg-search" type="text" placeholder="Search students..." />
-        <select class="pg-filter">
+        <div class="pg-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search students, batch..." [(ngModel)]="searchQuery" />
+        </div>
+        <select class="pg-filter" [(ngModel)]="subjectFilter">
           <option value="">All Subjects</option>
-          <option value="Mathematics">Mathematics</option>
-          <option value="Science">Science</option>
-          <option value="English">English</option>
+          <option *ngFor="let s of subjects" [value]="s">{{ s }}</option>
         </select>
       </div>
     </div>
@@ -59,34 +68,51 @@
       <table class="pg-table">
         <thead>
           <tr>
+            <th>#</th>
             <th>Student</th>
+            <th>Batch</th>
             <th>Subject</th>
             <th>Avg Score</th>
             <th>Quizzes Taken</th>
             <th>Rank</th>
             <th>Trend</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let rec of records">
+          <tr *ngFor="let rec of filteredRecords; let i = index">
+            <td class="idx-cell">{{ i + 1 }}</td>
             <td>
-              <div class="pg-cell__primary">{{ rec.student }}</div>
+              <div class="pg-with-avatar">
+                <div class="pg-avatar av-sky">{{ rec.student.charAt(0) }}</div>
+                <div class="pg-cell__primary">{{ rec.student }}</div>
+              </div>
             </td>
+            <td><div class="pg-cell__sub" style="font-size:12px;">{{ rec.batch }}</div></td>
             <td>{{ rec.subject }}</td>
             <td>
-              <strong [style.color]="scoreColor(rec.avgScore)">{{ rec.avgScore }}%</strong>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="flex:1;background:#f1f5f9;border-radius:4px;height:6px;min-width:80px;">
+                  <div [style.width.%]="rec.avgScore" [style.background]="scoreColor(rec.avgScore)" style="height:6px;border-radius:4px;transition:width 0.3s;"></div>
+                </div>
+                <strong [style.color]="scoreColor(rec.avgScore)">{{ rec.avgScore }}%</strong>
+              </div>
             </td>
             <td>{{ rec.quizzesTaken }}</td>
-            <td>#{{ rec.rank }}</td>
+            <td>
+              <span style="display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;">
+                <i class="fa-solid fa-trophy" style="font-size:10px;"></i> #{{ rec.rank }}
+              </span>
+            </td>
             <td>
               <i *ngIf="rec.trend === 'up'" class="fa-solid fa-arrow-trend-up" style="color:#10b981;font-size:16px;"></i>
               <i *ngIf="rec.trend === 'down'" class="fa-solid fa-arrow-trend-down" style="color:#ef4444;font-size:16px;"></i>
               <i *ngIf="rec.trend === 'stable'" class="fa-solid fa-minus" style="color:#9ca3af;font-size:16px;"></i>
             </td>
-            <td>
-              <button class="pg-action-btn" title="View Profile"><i class="fa-solid fa-eye"></i></button>
-              <button class="pg-action-btn" title="Download Report"><i class="fa-solid fa-download"></i></button>
+          </tr>
+          <tr *ngIf="filteredRecords.length === 0">
+            <td colspan="8" style="text-align:center;padding:32px;color:#94a3b8;">
+              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+              No records found
             </td>
           </tr>
         </tbody>

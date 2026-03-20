@@ -6,8 +6,8 @@
         <i class="fa-solid fa-file-circle-check"></i>
       </div>
       <div>
-        <div class="pg-head__title">Mock Test Results</div>
-        <div class="pg-head__sub">NEET &amp; JEE aspirant performance tracker</div>
+        <div class="pg-head__title">Exam Results</div>
+        <div class="pg-head__sub">Student performance tracker across all batches and grades</div>
       </div>
     </div>
     <div class="pg-head__right">
@@ -22,29 +22,29 @@
     <div class="pg-stat">
       <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-file-circle-check"></i></div>
       <div>
-        <div class="pg-stat__val">12,840</div>
+        <div class="pg-stat__val">{{ filteredResults.length }}</div>
         <div class="pg-stat__lbl">Total Submissions</div>
       </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-percent"></i></div>
       <div>
-        <div class="pg-stat__val">91%</div>
+        <div class="pg-stat__val">{{ filteredResults.length ? ((passCount / filteredResults.length) * 100 | number:'1.0-0') : 0 }}%</div>
         <div class="pg-stat__lbl">Pass Rate</div>
       </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-chart-simple"></i></div>
       <div>
-        <div class="pg-stat__val">74%</div>
+        <div class="pg-stat__val">{{ avgPercentage }}%</div>
         <div class="pg-stat__lbl">Avg Score</div>
       </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-purple"><i class="fa-solid fa-trophy"></i></div>
       <div>
-        <div class="pg-stat__val">720/720</div>
-        <div class="pg-stat__lbl">Top NEET Score</div>
+        <div class="pg-stat__val">300/300</div>
+        <div class="pg-stat__lbl">Top Score</div>
       </div>
     </div>
   </div>
@@ -54,8 +54,11 @@
     <div class="pg-card__head">
       <span class="pg-card__title">All Results</span>
       <div class="pg-toolbar">
-        <input class="pg-search" type="text" placeholder="Search aspirant or test..." />
-        <select class="pg-filter">
+        <div class="pg-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search student or exam..." [(ngModel)]="searchQuery" />
+        </div>
+        <select class="pg-filter" [(ngModel)]="gradeFilter">
           <option value="">All Grades</option>
           <option value="A+">A+</option>
           <option value="A">A</option>
@@ -69,8 +72,8 @@
       <table class="pg-table">
         <thead>
           <tr>
-            <th>Aspirant</th>
-            <th>Mock Test</th>
+            <th>Student</th>
+            <th>Exam</th>
             <th>Batch</th>
             <th>Score / Total</th>
             <th>Percentage</th>
@@ -78,10 +81,11 @@
             <th>Grade</th>
             <th>Status</th>
             <th>Date</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let result of results">
+          <tr *ngFor="let result of filteredResults">
             <td>
               <div class="pg-with-avatar">
                 <div class="pg-avatar av-indigo">{{ result.student.charAt(0) }}</div>
@@ -97,7 +101,12 @@
             </td>
             <td><strong>{{ result.score }}</strong> / {{ result.totalMarks }}</td>
             <td>
-              <strong>{{ result.percentage }}%</strong>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="flex:1;background:#f1f5f9;border-radius:4px;height:6px;min-width:60px;">
+                  <div [style.width.%]="result.percentage" [style.background]="scoreColor(result.percentage)" style="height:6px;border-radius:4px;"></div>
+                </div>
+                <strong [style.color]="scoreColor(result.percentage)">{{ result.percentage }}%</strong>
+              </div>
             </td>
             <td>
               <span style="display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;">
@@ -113,9 +122,78 @@
               </span>
             </td>
             <td>{{ result.submittedAt }}</td>
+            <td>
+              <button class="pg-action-btn" title="View Details" (click)="openViewModal(result)">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+              <button class="pg-action-btn" title="Download Report">
+                <i class="fa-solid fa-download"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="filteredResults.length === 0">
+            <td colspan="10" style="text-align:center;padding:32px;color:#94a3b8;">
+              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+              No results found
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
+  </div>
+</div>
+
+<!-- Modal Overlay -->
+<div class="modal-overlay" *ngIf="showViewModal" (click)="closeModal()"></div>
+
+<!-- View Result Modal -->
+<div class="modal modal--sm" *ngIf="showViewModal && selectedResult">
+  <div class="modal__header">
+    <h3><i class="fa-solid fa-eye"></i> Result Details</h3>
+    <button class="modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="modal__body">
+    <div class="view-showcase">
+      <div class="view-showcase__icon" style="background:#eef2ff;color:#4f46e5;">
+        <i class="fa-solid fa-file-circle-check"></i>
+      </div>
+      <div>
+        <div class="view-showcase__title">{{ selectedResult.student }}</div>
+        <div class="view-showcase__sub">{{ selectedResult.exam }}</div>
+      </div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Batch</div>
+      <div class="view-detail-val">{{ selectedResult.batch }}</div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Subject</div>
+      <div class="view-detail-val">{{ selectedResult.subject }}</div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Score</div>
+      <div class="view-detail-val"><strong>{{ selectedResult.score }}</strong> / {{ selectedResult.totalMarks }} ({{ selectedResult.percentage }}%)</div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Grade &amp; Rank</div>
+      <div class="view-detail-val">
+        <span class="pg-badge {{ gradeBadge(selectedResult.grade) }}">{{ selectedResult.grade }}</span>
+        &nbsp; Rank #{{ selectedResult.rank }}
+      </div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Status</div>
+      <div class="view-detail-val">
+        <span class="pg-badge {{ selectedResult.status === 'pass' ? 'pg-badge--green' : 'pg-badge--red' }}">{{ selectedResult.status | titlecase }}</span>
+      </div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Submitted At</div>
+      <div class="view-detail-val">{{ selectedResult.submittedAt }}</div>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+    <button class="pg-btn pg-btn--outline"><i class="fa-solid fa-download"></i> Download Report</button>
   </div>
 </div>
