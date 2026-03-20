@@ -164,42 +164,23 @@ export class RegistrationComponent implements OnInit {
     this.coursesLoading = false;
   }
 
-  // async selectCourse(course: Course) {
-  //   this.selectedCourse = course;
-  //   this.selectedBatch = null;
-  //   delete this.errors['course'];
-
-  //   try {
-  //     if (!this.batches.length) {
-  //       const data: any = await this.http.get(`${this.API}/batches`).toPromise();
-  //       this.batches = Array.isArray(data) ? data : data?.data || [];
-  //     }
-  //     const batch = this.batches.find(
-  //       (b) => b.courseId === course.id && b.isActive !== false
-  //     );
-  //     this.selectedBatch = batch || null;
-  //     console.log('Selected batch:', batch);
-  //   } catch {
-  //     console.warn('Batches fetch failed');
-  //   }
-  // }
   async selectCourse(course: Course) {
     this.selectedCourse = course;
     this.selectedBatch = null;
     delete this.errors['course'];
 
     try {
-      // Always fetch fresh batches for the selected course
-      const data: any = await this.http
-        .get(`${this.API}/batches?courseId=${course.id}`)
-        .toPromise();
-      const allBatches: Batch[] = Array.isArray(data) ? data : data?.data || [];
-
-      const batch = allBatches.find(
-        (b) => b.courseId === course.id && b.isActive !== false
+      console.log('Fetching batches for course:', course.id);
+        console.log('Fetching batches for course:', this.selectedCourse!.id);
+      if (!this.batches.length) {
+        const data: any = await this.http.get(`${this.API}/batches/get-batch-by-id/${this.selectedCourse!.id}`).toPromise();
+        this.batches = Array.isArray(data) ? data : data?.data || [];
+      }
+      const batch = this.batches.find(
+        (b) => b.courseId === this.selectedCourse!.id && b.isActive === true
       );
       this.selectedBatch = batch || null;
-      console.log('Selected batch:', this.selectedBatch);
+      console.log('Selected batch:', batch);
     } catch {
       console.warn('Batches fetch failed');
     }
@@ -409,29 +390,13 @@ export class RegistrationComponent implements OnInit {
       this.loaderMsg = 'Creating subscription...';
 
       // Step 2: Create subscription directly with courseId
-      // const sub: any = await this.http
-      //   .post(`${this.API}/subscription`, {
-      //     userId,
-      //     courseId: this.selectedCourse!.id,
-      //     ...(this.selectedBatch?.id ? { batchId: this.selectedBatch.id } : {}),
-      //     paymentType: this.paymentType,
-      //   })
-      //   .toPromise();
-      // const subscriptionId = sub?.id || sub?.data?.id;
-      const subscriptionPayload: any = {
-        userId,
-        courseId: this.selectedCourse!.id,
-        paymentType: this.paymentType,
-      };
-
-      if (this.selectedBatch?.id) {
-        subscriptionPayload['batchId'] = this.selectedBatch.id;
-      }
-
-      console.log('Subscription payload:', subscriptionPayload);
-
       const sub: any = await this.http
-        .post(`${this.API}/subscription`, subscriptionPayload)
+        .post(`${this.API}/subscription`, {
+          userId,
+          courseId: this.selectedCourse!.id,
+          batchId: this.selectedBatch?.id ?? null,
+          paymentType: this.paymentType,
+        })
         .toPromise();
       const subscriptionId = sub?.id || sub?.data?.id;
 

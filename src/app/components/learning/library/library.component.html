@@ -8,11 +8,11 @@
       </div>
       <div>
         <div class="pg-head__title">Digital Library</div>
-        <div class="pg-head__sub">Manage learning resources</div>
+        <div class="pg-head__sub">Manage learning resources for all batches and grades</div>
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary">
+      <button class="pg-btn pg-btn--primary" (click)="openUploadModal()">
         <i class="fa-solid fa-upload"></i> Upload Resource
       </button>
     </div>
@@ -21,39 +21,31 @@
   <!-- Stats -->
   <div class="pg-stats">
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-teal">
-        <i class="fa-solid fa-book-bookmark"></i>
-      </div>
+      <div class="pg-stat__icon chip-teal"><i class="fa-solid fa-book-bookmark"></i></div>
       <div>
-        <div class="pg-stat__val">1,284</div>
+        <div class="pg-stat__val">{{ resources.length }}</div>
         <div class="pg-stat__lbl">Total Resources</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-rose">
-        <i class="fa-solid fa-file-pdf"></i>
-      </div>
+      <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-file-pdf"></i></div>
       <div>
-        <div class="pg-stat__val">612</div>
+        <div class="pg-stat__val">{{ pdfCount }}</div>
         <div class="pg-stat__lbl">PDFs</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-sky">
-        <i class="fa-solid fa-video"></i>
-      </div>
+      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-video"></i></div>
       <div>
-        <div class="pg-stat__val">398</div>
+        <div class="pg-stat__val">{{ videoCount }}</div>
         <div class="pg-stat__lbl">Videos</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-amber">
-        <i class="fa-solid fa-note-sticky"></i>
-      </div>
+      <div class="pg-stat__icon chip-amber"><i class="fa-solid fa-download"></i></div>
       <div>
-        <div class="pg-stat__val">274</div>
-        <div class="pg-stat__lbl">Notes</div>
+        <div class="pg-stat__val">{{ totalDownloads | number }}</div>
+        <div class="pg-stat__lbl">Total Downloads</div>
       </div>
     </div>
   </div>
@@ -74,6 +66,12 @@
           <option value="Notes">Notes</option>
           <option value="Presentation">Presentation</option>
         </select>
+        <select class="pg-filter" [(ngModel)]="statusFilter">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="draft">Draft</option>
+          <option value="archived">Archived</option>
+        </select>
       </div>
     </div>
 
@@ -82,7 +80,7 @@
         <thead>
           <tr>
             <th>Resource Title</th>
-            <th>Subject &amp; Class</th>
+            <th>Subject &amp; Batch</th>
             <th>Uploaded By</th>
             <th>File Size</th>
             <th>Downloads</th>
@@ -106,7 +104,7 @@
             </td>
             <td>
               <div class="pg-cell__primary">{{ res.subject }}</div>
-              <div class="pg-cell__sub">{{ res.class }}</div>
+              <div class="pg-cell__sub">{{ res.batch }}</div>
             </td>
             <td>
               <div class="pg-with-avatar">
@@ -124,20 +122,20 @@
               </span>
             </td>
             <td>
-              <span [class]="getStatusBadge(res.status)">{{ res.status | titlecase }}</span>
+              <span class="pg-badge {{ getStatusBadge(res.status) }}">{{ res.status | titlecase }}</span>
             </td>
             <td>
               <div style="display:flex;gap:6px;">
-                <button class="pg-action-btn" title="Preview">
+                <button class="pg-action-btn" title="View" (click)="openViewModal(res)">
                   <i class="fa-solid fa-eye"></i>
                 </button>
                 <button class="pg-action-btn" title="Download">
                   <i class="fa-solid fa-download"></i>
                 </button>
-                <button class="pg-action-btn" title="Edit">
+                <button class="pg-action-btn" title="Edit" (click)="openEditModal(res)">
                   <i class="fa-solid fa-pen"></i>
                 </button>
-                <button class="pg-action-btn pg-action-btn--danger" title="Delete">
+                <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDeleteModal(res)">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
@@ -154,4 +152,145 @@
     </div>
   </div>
 
+</div>
+
+<!-- Modal Overlay -->
+<div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
+
+<!-- Upload / Edit Modal -->
+<div class="modal modal--lg" *ngIf="modalMode === 'create' || modalMode === 'edit'">
+  <div class="modal__header">
+    <h3>
+      <i class="fa-solid fa-{{ modalMode === 'create' ? 'upload' : 'pen-to-square' }}"></i>
+      {{ modalMode === 'create' ? 'Upload Resource' : 'Edit Resource' }}
+    </h3>
+    <button class="modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="modal__body">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group" [class.has-error]="formTitleError" style="grid-column:1/-1;">
+        <label>Title <span class="required">*</span></label>
+        <input type="text" class="form-control" placeholder="e.g. Physics Formula Sheet – Grade 10 & 11" [(ngModel)]="formTitle" (input)="formTitleError=''" />
+        <div class="field-error" *ngIf="formTitleError"><i class="fa-solid fa-circle-exclamation"></i> {{ formTitleError }}</div>
+      </div>
+      <div class="form-group" [class.has-error]="formSubjectError">
+        <label>Subject <span class="required">*</span></label>
+        <input type="text" class="form-control" placeholder="e.g. Physics" [(ngModel)]="formSubject" (input)="formSubjectError=''" />
+        <div class="field-error" *ngIf="formSubjectError"><i class="fa-solid fa-circle-exclamation"></i> {{ formSubjectError }}</div>
+      </div>
+      <div class="form-group">
+        <label>Resource Type</label>
+        <select class="form-control" [(ngModel)]="formType">
+          <option value="PDF">PDF</option>
+          <option value="Video">Video</option>
+          <option value="Notes">Notes</option>
+          <option value="Presentation">Presentation</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Batch / Class</label>
+        <input type="text" class="form-control" placeholder="e.g. Grade 10 – Batch A" [(ngModel)]="formBatch" />
+      </div>
+      <div class="form-group" [class.has-error]="formUploadedByError">
+        <label>Uploaded By <span class="required">*</span></label>
+        <input type="text" class="form-control" placeholder="e.g. Dr. Vikram Sharma" [(ngModel)]="formUploadedBy" (input)="formUploadedByError=''" />
+        <div class="field-error" *ngIf="formUploadedByError"><i class="fa-solid fa-circle-exclamation"></i> {{ formUploadedByError }}</div>
+      </div>
+      <div class="form-group">
+        <label>File Size</label>
+        <input type="text" class="form-control" placeholder="e.g. 3.2 MB" [(ngModel)]="formFileSize" />
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select class="form-control" [(ngModel)]="formStatus">
+          <option value="active">Active</option>
+          <option value="draft">Draft</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--primary" (click)="submitForm()">
+      <i class="fa-solid fa-{{ modalMode === 'create' ? 'upload' : 'floppy-disk' }}"></i>
+      {{ modalMode === 'create' ? 'Upload Resource' : 'Save Changes' }}
+    </button>
+  </div>
+</div>
+
+<!-- View Modal -->
+<div class="modal modal--md" *ngIf="modalMode === 'view' && selectedResource">
+  <div class="modal__header">
+    <h3><i class="fa-solid fa-eye"></i> Resource Details</h3>
+    <button class="modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="modal__body">
+    <div class="view-showcase">
+      <div class="view-showcase__icon" style="background:#f0fdfa;color:#0d9488;">
+        <i class="fa-solid" [class]="getTypeIcon(selectedResource.type)"></i>
+      </div>
+      <div>
+        <div class="view-showcase__title">{{ selectedResource.title }}</div>
+        <div class="view-showcase__sub">
+          <span [class]="getTypeChipClass(selectedResource.type)">
+            <i class="fa-solid" [class]="getTypeIcon(selectedResource.type)"></i>
+            {{ selectedResource.type }}
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Subject</div>
+      <div class="view-detail-val">{{ selectedResource.subject }}</div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Batch / Class</div>
+      <div class="view-detail-val">{{ selectedResource.batch }}</div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Uploaded By</div>
+      <div class="view-detail-val">{{ selectedResource.uploadedBy }}</div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">File Size</div>
+      <div class="view-detail-val">{{ selectedResource.fileSize }}</div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Downloads</div>
+      <div class="view-detail-val">{{ selectedResource.downloads | number }}</div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Upload Date</div>
+      <div class="view-detail-val">{{ formatDate(selectedResource.uploadDate) }}</div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Status</div>
+      <div class="view-detail-val"><span class="pg-badge {{ getStatusBadge(selectedResource.status) }}">{{ selectedResource.status | titlecase }}</span></div>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+    <button class="pg-btn pg-btn--outline"><i class="fa-solid fa-download"></i> Download</button>
+    <button class="pg-btn pg-btn--primary" (click)="openEditModal(selectedResource)">
+      <i class="fa-solid fa-pen-to-square"></i> Edit
+    </button>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal modal--sm" *ngIf="modalMode === 'delete' && selectedResource">
+  <div class="modal__header modal__header--danger">
+    <h3><i class="fa-solid fa-triangle-exclamation"></i> Delete Resource</h3>
+    <button class="modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="modal__body modal__body--center">
+    <div class="delete-icon"><i class="fa-solid fa-trash-can"></i></div>
+    <p class="delete-msg">Delete resource<br /><strong>"{{ selectedResource.title }}"</strong>?</p>
+    <p class="delete-sub">This action cannot be undone. All downloads will be removed.</p>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--danger" (click)="deleteResource()"><i class="fa-solid fa-trash"></i> Delete</button>
+  </div>
 </div>

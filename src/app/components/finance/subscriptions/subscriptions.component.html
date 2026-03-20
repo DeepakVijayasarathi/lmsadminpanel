@@ -11,8 +11,8 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary">
-        <i class="fa-solid fa-plus"></i> Add Plan
+      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
+        <i class="fa-solid fa-plus"></i> Add Subscription
       </button>
     </div>
   </div>
@@ -21,23 +21,31 @@
   <div class="pg-stats">
     <div class="pg-stat">
       <div class="pg-stat__icon chip-purple"><i class="fa-solid fa-id-card"></i></div>
-      <div class="pg-stat__val">1,204</div>
-      <div class="pg-stat__lbl">Active Subs</div>
+      <div>
+        <div class="pg-stat__val">{{ activeCount }}</div>
+        <div class="pg-stat__lbl">Active Subs</div>
+      </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-calendar-day"></i></div>
-      <div class="pg-stat__val">480</div>
-      <div class="pg-stat__lbl">Monthly</div>
+      <div>
+        <div class="pg-stat__val">{{ monthlyCount }}</div>
+        <div class="pg-stat__lbl">Monthly</div>
+      </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-calendar-check"></i></div>
-      <div class="pg-stat__val">520</div>
-      <div class="pg-stat__lbl">Annual</div>
+      <div>
+        <div class="pg-stat__val">{{ annualCount }}</div>
+        <div class="pg-stat__lbl">Annual</div>
+      </div>
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
-      <div class="pg-stat__val">38</div>
-      <div class="pg-stat__lbl">Expiring Soon</div>
+      <div>
+        <div class="pg-stat__val">{{ expiringCount }}</div>
+        <div class="pg-stat__lbl">Expiring Soon</div>
+      </div>
     </div>
   </div>
 
@@ -46,8 +54,11 @@
     <div class="pg-card__head">
       <span class="pg-card__title">All Subscriptions</span>
       <div class="pg-toolbar">
-        <input class="pg-search" type="text" placeholder="Search subscriptions..." />
-        <select class="pg-filter">
+        <div class="pg-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search student..." [(ngModel)]="searchQuery" />
+        </div>
+        <select class="pg-filter" [(ngModel)]="planFilter">
           <option value="">All Plans</option>
           <option value="Monthly">Monthly</option>
           <option value="Quarterly">Quarterly</option>
@@ -70,31 +81,152 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let sub of subscriptions">
+          <tr *ngFor="let sub of filteredSubscriptions">
             <td>
-              <div class="pg-cell__primary">{{ sub.student }}</div>
+              <div class="pg-with-avatar">
+                <div class="pg-avatar av-purple">{{ sub.student.charAt(0) }}</div>
+                <div class="pg-cell__primary">{{ sub.student }}</div>
+              </div>
             </td>
             <td>
               <span class="pg-badge {{ planBadge(sub.plan) }}">{{ sub.plan }}</span>
             </td>
-            <td>{{ formatAmount(sub.amount) }}</td>
+            <td><strong style="color:#4f46e5;">{{ formatAmount(sub.amount) }}</strong></td>
             <td>{{ sub.startDate }}</td>
             <td>{{ sub.endDate }}</td>
             <td>
-              <i *ngIf="sub.autoRenew" class="fa-solid fa-circle-check" style="color:#10b981;"></i>
-              <i *ngIf="!sub.autoRenew" class="fa-solid fa-circle-xmark" style="color:#d1d5db;"></i>
+              <i *ngIf="sub.autoRenew" class="fa-solid fa-circle-check" style="color:#10b981;font-size:16px;"></i>
+              <i *ngIf="!sub.autoRenew" class="fa-solid fa-circle-xmark" style="color:#d1d5db;font-size:16px;"></i>
             </td>
             <td>
-              <span class="pg-badge {{ statusBadge(sub.status) }}">{{ sub.status }}</span>
+              <span class="pg-badge {{ statusBadge(sub.status) }}">{{ sub.status | titlecase }}</span>
             </td>
             <td>
-              <button class="pg-action-btn" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-              <button class="pg-action-btn" title="Renew"><i class="fa-solid fa-rotate"></i></button>
-              <button class="pg-action-btn pg-action-btn--danger" title="Cancel"><i class="fa-solid fa-ban"></i></button>
+              <div style="display:flex;gap:6px;">
+                <button class="pg-action-btn" title="View" (click)="openViewModal(sub)"><i class="fa-solid fa-eye"></i></button>
+                <button class="pg-action-btn" title="Edit" (click)="openEditModal(sub)" [disabled]="sub.status !== 'active'"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Cancel" (click)="openCancelModal(sub)" [disabled]="sub.status !== 'active'"><i class="fa-solid fa-ban"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredSubscriptions.length === 0">
+            <td colspan="8" style="text-align:center;padding:32px;color:#94a3b8;">
+              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+              No subscriptions found
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+  </div>
+</div>
+
+<!-- Modal Overlay -->
+<div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
+
+<!-- Create / Edit Modal -->
+<div class="modal modal--sm" *ngIf="modalMode === 'create' || modalMode === 'edit'">
+  <div class="modal__header">
+    <h3>
+      <i class="fa-solid fa-{{ modalMode === 'create' ? 'plus-circle' : 'pen-to-square' }}"></i>
+      {{ modalMode === 'create' ? 'Add Subscription' : 'Edit Subscription' }}
+    </h3>
+    <button class="modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="modal__body">
+    <div class="form-group" [class.has-error]="formStudentError">
+      <label>Student Name <span class="required">*</span></label>
+      <input type="text" class="form-control" placeholder="e.g. Aarav Singh" [(ngModel)]="formStudent" (input)="formStudentError=''" />
+      <div class="field-error" *ngIf="formStudentError"><i class="fa-solid fa-circle-exclamation"></i> {{ formStudentError }}</div>
+    </div>
+    <div class="form-group">
+      <label>Plan</label>
+      <select class="form-control" [(ngModel)]="formPlan">
+        <option value="Monthly">Monthly — ₹1,499/month</option>
+        <option value="Quarterly">Quarterly — ₹3,999/quarter</option>
+        <option value="Annual">Annual — ₹14,999/year</option>
+      </select>
+    </div>
+    <div class="form-group" [class.has-error]="formStartDateError">
+      <label>Start Date <span class="required">*</span></label>
+      <input type="date" class="form-control" [(ngModel)]="formStartDate" (change)="formStartDateError=''" />
+      <div class="field-error" *ngIf="formStartDateError"><i class="fa-solid fa-circle-exclamation"></i> {{ formStartDateError }}</div>
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" [(ngModel)]="formAutoRenew" style="width:16px;height:16px;accent-color:#4f46e5;" />
+        Enable Auto-Renew
+      </label>
+    </div>
+    <div *ngIf="formStartDate" style="background:#f8fafc;border-radius:8px;padding:12px;font-size:13px;color:#64748b;margin-top:4px;">
+      <i class="fa-solid fa-circle-info" style="color:#4f46e5;"></i>
+      Amount: <strong style="color:#4f46e5;">{{ formatAmount(planAmount(formPlan)) }}</strong> &nbsp;·&nbsp;
+      End Date: <strong>{{ calcEndDate(formStartDate, formPlan) }}</strong>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--primary" (click)="submitForm()">
+      <i class="fa-solid fa-{{ modalMode === 'create' ? 'plus' : 'floppy-disk' }}"></i>
+      {{ modalMode === 'create' ? 'Add Subscription' : 'Save Changes' }}
+    </button>
+  </div>
+</div>
+
+<!-- View Modal -->
+<div class="modal modal--sm" *ngIf="modalMode === 'view' && selectedSub">
+  <div class="modal__header">
+    <h3><i class="fa-solid fa-eye"></i> Subscription Details</h3>
+    <button class="modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="modal__body">
+    <div class="view-showcase">
+      <div class="view-showcase__icon" style="background:#f5f3ff;color:#7c3aed;">
+        <i class="fa-solid fa-id-card"></i>
+      </div>
+      <div>
+        <div class="view-showcase__title">{{ selectedSub.student }}</div>
+        <div class="view-showcase__sub">{{ selectedSub.plan }} Plan</div>
+      </div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Amount</div>
+      <div class="view-detail-val"><strong style="color:#4f46e5;">{{ formatAmount(selectedSub.amount) }}</strong></div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Period</div>
+      <div class="view-detail-val">{{ selectedSub.startDate }} → {{ selectedSub.endDate }}</div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Auto Renew</div>
+      <div class="view-detail-val">{{ selectedSub.autoRenew ? 'Yes' : 'No' }}</div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Status</div>
+      <div class="view-detail-val"><span class="pg-badge {{ statusBadge(selectedSub.status) }}">{{ selectedSub.status | titlecase }}</span></div>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+    <button class="pg-btn pg-btn--primary" (click)="openEditModal(selectedSub)" *ngIf="selectedSub.status === 'active'">
+      <i class="fa-solid fa-pen-to-square"></i> Edit
+    </button>
+  </div>
+</div>
+
+<!-- Cancel Confirm Modal -->
+<div class="modal modal--sm" *ngIf="modalMode === 'cancel' && selectedSub">
+  <div class="modal__header modal__header--danger">
+    <h3><i class="fa-solid fa-triangle-exclamation"></i> Cancel Subscription</h3>
+    <button class="modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="modal__body modal__body--center">
+    <div class="delete-icon"><i class="fa-solid fa-ban"></i></div>
+    <p class="delete-msg">Cancel <strong>{{ selectedSub.plan }} Plan</strong> for<br /><strong>"{{ selectedSub.student }}"</strong>?</p>
+    <p class="delete-sub">This will immediately deactivate the subscription.</p>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Keep Active</button>
+    <button class="pg-btn pg-btn--danger" (click)="confirmCancel()"><i class="fa-solid fa-ban"></i> Cancel Subscription</button>
   </div>
 </div>

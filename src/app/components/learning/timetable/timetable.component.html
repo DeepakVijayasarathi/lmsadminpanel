@@ -8,7 +8,7 @@
       </div>
       <div>
         <div class="pg-head__title">Timetable Assignment</div>
-        <div class="pg-head__sub">Online session schedule for NEET &amp; JEE batches &mdash; powered by BigBlueButton</div>
+        <div class="pg-head__sub">Online session schedule for all batches and grades &mdash; powered by BigBlueButton</div>
       </div>
     </div>
     <div class="pg-head__right">
@@ -63,11 +63,11 @@
     <div class="pg-card__head">
       <div class="pg-card__title">Weekly Schedule</div>
       <div class="pg-toolbar">
-        <select class="pg-filter" [(ngModel)]="examFilter">
-          <option value="">All Exams</option>
-          <option value="NEET">NEET</option>
-          <option value="JEE Main">JEE Main</option>
-          <option value="JEE Advanced">JEE Advanced</option>
+        <select class="pg-filter" [(ngModel)]="categoryFilter">
+          <option value="">All Categories</option>
+          <option value="Foundation">Foundation</option>
+          <option value="Standard">Standard</option>
+          <option value="Advanced">Advanced</option>
         </select>
         <select class="pg-filter" [(ngModel)]="batchFilter">
           <option value="">All Batches</option>
@@ -111,9 +111,9 @@
                     {{ slot.teacher.split(' ').slice(-1)[0] }}
                   </div>
 
-                  <!-- BBB badge + exam tag -->
+                  <!-- BBB badge + category tag -->
                   <div class="tt-slot__meta">
-                    <span [class]="'tt-exam-tag ' + getExamChip(slot.examType)">{{ slot.examType }}</span>
+                    <span [class]="'tt-exam-tag ' + getCategoryChip(slot.category)">{{ slot.category }}</span>
                     <span class="tt-bbb-tag"><i class="fa-solid fa-circle-play"></i> BBB</span>
                   </div>
 
@@ -152,7 +152,7 @@
             <th>Day &amp; Session</th>
             <th>Subject &amp; Topic</th>
             <th>Teacher</th>
-            <th>Batch / Exam</th>
+            <th>Batch / Category</th>
             <th>Time</th>
             <th>BBB Meeting</th>
             <th>Status</th>
@@ -180,7 +180,7 @@
             </td>
             <td>
               <div class="pg-cell__primary">{{ slot.batch }}</div>
-              <span [class]="'tt-exam-tag-sm ' + getExamChip(slot.examType)">{{ slot.examType }}</span>
+              <span [class]="'tt-exam-tag-sm ' + getCategoryChip(slot.category)">{{ slot.category }}</span>
             </td>
             <td>
               <div class="pg-cell__primary">{{ slot.startTime }} – {{ slot.endTime }}</div>
@@ -250,9 +250,9 @@
     <div class="pg-form-grid">
 
       <div class="pg-form-group">
-        <label>Exam Type <span class="req">*</span></label>
-        <select [(ngModel)]="form.examType" (ngModelChange)="onExamTypeChange()">
-          <option *ngFor="let e of examTypes" [value]="e">{{ e }}</option>
+        <label>Category <span class="req">*</span></label>
+        <select [(ngModel)]="form.category" (ngModelChange)="onCategoryChange()">
+          <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
         </select>
       </div>
 
@@ -357,7 +357,7 @@
         <div [class]="'tt-view-badge ' + getSubjectColor(selectedSlot.subject)">
           <i class="fa-solid fa-book-open"></i> {{ selectedSlot.subject }}
         </div>
-        <span [class]="'tt-exam-tag ' + getExamChip(selectedSlot.examType)">{{ selectedSlot.examType }}</span>
+        <span [class]="'tt-exam-tag ' + getCategoryChip(selectedSlot.category)">{{ selectedSlot.category }}</span>
         <span [class]="getStatusClass(selectedSlot.status)">
           <i *ngIf="selectedSlot.status === 'live'" class="fa-solid fa-circle" style="font-size:8px;"></i>
           {{ selectedSlot.status | titlecase }}

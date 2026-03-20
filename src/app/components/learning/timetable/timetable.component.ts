@@ -10,7 +10,7 @@ export interface TimetableSlot {
   topic: string;
   teacher: string;
   batch: string;
-  examType: 'NEET' | 'JEE Main' | 'JEE Advanced';
+  category: 'Foundation' | 'Standard' | 'Advanced';
   startTime: string;
   endTime: string;
   meetingId: string;      // auto-generated BBB room ID
@@ -25,7 +25,7 @@ export interface TimetablePayload {
   topic: string;
   teacher: string;
   batch: string;
-  examType: 'NEET' | 'JEE Main' | 'JEE Advanced';
+  category: 'Foundation' | 'Standard' | 'Advanced';
   startTime: string;
   endTime: string;
   status: 'scheduled' | 'live' | 'completed' | 'cancelled';
@@ -43,7 +43,7 @@ export class TimetableComponent {
 
   // ── Filters ───────────────────────────────────────────────────────────────
   batchFilter = '';
-  examFilter = '';
+  categoryFilter = '';
   viewMode: 'grid' | 'list' = 'grid';
 
   // ── Reference data ────────────────────────────────────────────────────────
@@ -51,29 +51,33 @@ export class TimetableComponent {
   readonly sessions = [1, 2, 3, 4, 5, 6, 7];
 
   readonly batches = [
-    'NEET 2025 – Batch A',
-    'NEET 2025 – Batch B',
-    'NEET 2026 – Batch A',
-    'JEE Main 2025 – Batch A',
-    'JEE Main 2025 – Batch B',
-    'JEE Advanced 2025',
-    'JEE Main 2026 – Batch A',
+    'Grade 9 – Batch A',
+    'Grade 9 – Batch B',
+    'Grade 10 – Batch A',
+    'Grade 10 – Batch B',
+    'Grade 11 – Batch A',
+    'Grade 11 – Batch B',
+    'Grade 12 – Batch A',
   ];
 
-  readonly examTypes: Array<'NEET' | 'JEE Main' | 'JEE Advanced'> = ['NEET', 'JEE Main', 'JEE Advanced'];
+  readonly categories: Array<'Foundation' | 'Standard' | 'Advanced'> = ['Foundation', 'Standard', 'Advanced'];
 
-  readonly subjectsByExam: Record<string, string[]> = {
-    'NEET':         ['Physics', 'Chemistry', 'Biology – Botany', 'Biology – Zoology'],
-    'JEE Main':     ['Physics', 'Chemistry', 'Mathematics'],
-    'JEE Advanced': ['Physics', 'Chemistry', 'Mathematics'],
+  readonly subjectsByCategory: Record<string, string[]> = {
+    'Foundation': ['Mathematics', 'Science', 'English', 'History', 'Computer Sci.'],
+    'Standard':   ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'English'],
+    'Advanced':   ['Physics', 'Chemistry', 'Mathematics', 'Computer Sci.', 'Economics'],
   };
 
   readonly topicsBySubject: Record<string, string[]> = {
-    'Physics':            ['Mechanics', 'Thermodynamics', 'Optics', 'Electrostatics', 'Magnetism', 'Modern Physics', 'Waves & Sound', 'Fluid Mechanics'],
-    'Chemistry':          ['Organic Chemistry', 'Inorganic Chemistry', 'Physical Chemistry', 'Electrochemistry', 'Chemical Bonding', 'Coordination Compounds'],
-    'Biology – Botany':   ['Cell Biology', 'Plant Physiology', 'Genetics', 'Ecology', 'Biotechnology', 'Morphology of Plants'],
-    'Biology – Zoology':  ['Human Physiology', 'Animal Kingdom', 'Reproduction', 'Evolution', 'Biomolecules'],
-    'Mathematics':        ['Calculus', 'Algebra', 'Coordinate Geometry', 'Trigonometry', 'Vectors & 3D', 'Probability', 'Matrices & Determinants'],
+    'Physics':        ['Mechanics', 'Thermodynamics', 'Optics', 'Electrostatics', 'Magnetism', 'Modern Physics', 'Waves & Sound', 'Fluid Mechanics'],
+    'Chemistry':      ['Organic Chemistry', 'Inorganic Chemistry', 'Physical Chemistry', 'Electrochemistry', 'Chemical Bonding', 'Coordination Compounds'],
+    'Biology':        ['Cell Biology', 'Plant Physiology', 'Genetics', 'Ecology', 'Human Physiology', 'Animal Kingdom', 'Reproduction', 'Biomolecules'],
+    'Mathematics':    ['Calculus', 'Algebra', 'Coordinate Geometry', 'Trigonometry', 'Vectors & 3D', 'Probability', 'Matrices & Determinants'],
+    'Science':        ['Motion & Forces', 'Light & Sound', 'Electricity', 'Chemical Reactions', 'Living World'],
+    'English':        ['Essay Writing', 'Grammar', 'Reading Comprehension', 'Literature', 'Creative Writing'],
+    'History':        ['Ancient Civilisations', 'Medieval Period', 'Modern History', 'World Wars', 'Indian Independence'],
+    'Computer Sci.':  ['Data Structures', 'Algorithms', 'Databases', 'Networking', 'Programming Basics'],
+    'Economics':      ['Microeconomics', 'Macroeconomics', 'Supply & Demand', 'National Income', 'Money & Banking'],
   };
 
   readonly teachers = [
@@ -114,39 +118,39 @@ export class TimetableComponent {
 
   // ── Sample data ───────────────────────────────────────────────────────────
   slots: TimetableSlot[] = [
-    // NEET 2025 – Batch A
-    { id: 1,  day: 'Monday',    session: 1, subject: 'Physics',           topic: 'Mechanics',              teacher: 'Dr. Vikram Sharma',  batch: 'NEET 2025 – Batch A',     examType: 'NEET',         startTime: '07:00', endTime: '08:30', meetingId: 'neet-2025-batch-a-physics-monday-s1',           meetingLink: `${BBB_SERVER}/b/neet-2025-batch-a-physics-monday-s1`,           status: 'completed' },
-    { id: 2,  day: 'Monday',    session: 3, subject: 'Chemistry',         topic: 'Organic Chemistry',      teacher: 'Ms. Pooja Iyer',     batch: 'NEET 2025 – Batch A',     examType: 'NEET',         startTime: '11:00', endTime: '12:30', meetingId: 'neet-2025-batch-a-chemistry-monday-s3',         meetingLink: `${BBB_SERVER}/b/neet-2025-batch-a-chemistry-monday-s3`,         status: 'completed' },
-    { id: 3,  day: 'Monday',    session: 5, subject: 'Biology – Botany',  topic: 'Cell Biology',           teacher: 'Dr. Meena Krishnan', batch: 'NEET 2025 – Batch A',     examType: 'NEET',         startTime: '16:00', endTime: '17:30', meetingId: 'neet-2025-batch-a-biology-botany-monday-s5',    meetingLink: `${BBB_SERVER}/b/neet-2025-batch-a-biology-botany-monday-s5`,    status: 'live' },
-    { id: 4,  day: 'Tuesday',   session: 1, subject: 'Physics',           topic: 'Thermodynamics',         teacher: 'Dr. Vikram Sharma',  batch: 'NEET 2025 – Batch A',     examType: 'NEET',         startTime: '07:00', endTime: '08:30', meetingId: 'neet-2025-batch-a-physics-tuesday-s1',          meetingLink: `${BBB_SERVER}/b/neet-2025-batch-a-physics-tuesday-s1`,          status: 'scheduled' },
-    { id: 5,  day: 'Tuesday',   session: 3, subject: 'Biology – Zoology', topic: 'Human Physiology',       teacher: 'Ms. Divya Nair',     batch: 'NEET 2025 – Batch A',     examType: 'NEET',         startTime: '11:00', endTime: '12:30', meetingId: 'neet-2025-batch-a-biology-zoology-tuesday-s3',  meetingLink: `${BBB_SERVER}/b/neet-2025-batch-a-biology-zoology-tuesday-s3`,  status: 'scheduled' },
-    { id: 6,  day: 'Wednesday', session: 2, subject: 'Chemistry',         topic: 'Inorganic Chemistry',    teacher: 'Ms. Pooja Iyer',     batch: 'NEET 2025 – Batch A',     examType: 'NEET',         startTime: '09:00', endTime: '10:30', meetingId: 'neet-2025-batch-a-chemistry-wednesday-s2',      meetingLink: `${BBB_SERVER}/b/neet-2025-batch-a-chemistry-wednesday-s2`,      status: 'scheduled' },
-    { id: 7,  day: 'Wednesday', session: 5, subject: 'Physics',           topic: 'Optics',                 teacher: 'Mr. Rahul Gupta',    batch: 'NEET 2025 – Batch A',     examType: 'NEET',         startTime: '16:00', endTime: '17:30', meetingId: 'neet-2025-batch-a-physics-wednesday-s5',        meetingLink: `${BBB_SERVER}/b/neet-2025-batch-a-physics-wednesday-s5`,        status: 'scheduled' },
-    { id: 8,  day: 'Thursday',  session: 1, subject: 'Biology – Botany',  topic: 'Plant Physiology',       teacher: 'Dr. Meena Krishnan', batch: 'NEET 2025 – Batch A',     examType: 'NEET',         startTime: '07:00', endTime: '08:30', meetingId: 'neet-2025-batch-a-biology-botany-thursday-s1',  meetingLink: `${BBB_SERVER}/b/neet-2025-batch-a-biology-botany-thursday-s1`,  status: 'scheduled' },
-    { id: 9,  day: 'Thursday',  session: 4, subject: 'Chemistry',         topic: 'Physical Chemistry',     teacher: 'Dr. Sanjay Mishra',  batch: 'NEET 2025 – Batch A',     examType: 'NEET',         startTime: '14:00', endTime: '15:30', meetingId: 'neet-2025-batch-a-chemistry-thursday-s4',       meetingLink: `${BBB_SERVER}/b/neet-2025-batch-a-chemistry-thursday-s4`,       status: 'scheduled' },
-    { id: 10, day: 'Friday',    session: 2, subject: 'Physics',           topic: 'Electrostatics',         teacher: 'Dr. Vikram Sharma',  batch: 'NEET 2025 – Batch A',     examType: 'NEET',         startTime: '09:00', endTime: '10:30', meetingId: 'neet-2025-batch-a-physics-friday-s2',           meetingLink: `${BBB_SERVER}/b/neet-2025-batch-a-physics-friday-s2`,           status: 'scheduled' },
-    { id: 11, day: 'Friday',    session: 5, subject: 'Biology – Zoology', topic: 'Reproduction',           teacher: 'Ms. Divya Nair',     batch: 'NEET 2025 – Batch A',     examType: 'NEET',         startTime: '16:00', endTime: '17:30', meetingId: 'neet-2025-batch-a-biology-zoology-friday-s5',   meetingLink: `${BBB_SERVER}/b/neet-2025-batch-a-biology-zoology-friday-s5`,   status: 'scheduled' },
-    { id: 12, day: 'Saturday',  session: 1, subject: 'Chemistry',         topic: 'Electrochemistry',       teacher: 'Ms. Pooja Iyer',     batch: 'NEET 2025 – Batch A',     examType: 'NEET',         startTime: '07:00', endTime: '08:30', meetingId: 'neet-2025-batch-a-chemistry-saturday-s1',       meetingLink: `${BBB_SERVER}/b/neet-2025-batch-a-chemistry-saturday-s1`,       status: 'scheduled' },
-    { id: 13, day: 'Saturday',  session: 3, subject: 'Physics',           topic: 'Modern Physics',         teacher: 'Mr. Rahul Gupta',    batch: 'NEET 2025 – Batch A',     examType: 'NEET',         startTime: '11:00', endTime: '12:30', meetingId: 'neet-2025-batch-a-physics-saturday-s3',         meetingLink: `${BBB_SERVER}/b/neet-2025-batch-a-physics-saturday-s3`,         status: 'scheduled' },
+    // Grade 10 – Batch A (Foundation)
+    { id: 1,  day: 'Monday',    session: 1, subject: 'Physics',      topic: 'Mechanics',          teacher: 'Dr. Vikram Sharma',  batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '07:00', endTime: '08:30', meetingId: 'grade-10-batch-a-physics-monday-s1',      meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-physics-monday-s1`,      status: 'completed' },
+    { id: 2,  day: 'Monday',    session: 3, subject: 'Chemistry',    topic: 'Organic Chemistry',  teacher: 'Ms. Pooja Iyer',     batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '11:00', endTime: '12:30', meetingId: 'grade-10-batch-a-chemistry-monday-s3',    meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-chemistry-monday-s3`,    status: 'completed' },
+    { id: 3,  day: 'Monday',    session: 5, subject: 'Biology',      topic: 'Cell Biology',       teacher: 'Dr. Meena Krishnan', batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '16:00', endTime: '17:30', meetingId: 'grade-10-batch-a-biology-monday-s5',      meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-biology-monday-s5`,      status: 'live' },
+    { id: 4,  day: 'Tuesday',   session: 1, subject: 'Physics',      topic: 'Thermodynamics',     teacher: 'Dr. Vikram Sharma',  batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '07:00', endTime: '08:30', meetingId: 'grade-10-batch-a-physics-tuesday-s1',     meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-physics-tuesday-s1`,     status: 'scheduled' },
+    { id: 5,  day: 'Tuesday',   session: 3, subject: 'Biology',      topic: 'Human Physiology',   teacher: 'Ms. Divya Nair',     batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '11:00', endTime: '12:30', meetingId: 'grade-10-batch-a-biology-tuesday-s3',     meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-biology-tuesday-s3`,     status: 'scheduled' },
+    { id: 6,  day: 'Wednesday', session: 2, subject: 'Chemistry',    topic: 'Inorganic Chemistry',teacher: 'Ms. Pooja Iyer',     batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '09:00', endTime: '10:30', meetingId: 'grade-10-batch-a-chemistry-wednesday-s2', meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-chemistry-wednesday-s2`, status: 'scheduled' },
+    { id: 7,  day: 'Wednesday', session: 5, subject: 'Physics',      topic: 'Optics',             teacher: 'Mr. Rahul Gupta',    batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '16:00', endTime: '17:30', meetingId: 'grade-10-batch-a-physics-wednesday-s5',   meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-physics-wednesday-s5`,   status: 'scheduled' },
+    { id: 8,  day: 'Thursday',  session: 1, subject: 'Biology',      topic: 'Plant Physiology',   teacher: 'Dr. Meena Krishnan', batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '07:00', endTime: '08:30', meetingId: 'grade-10-batch-a-biology-thursday-s1',    meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-biology-thursday-s1`,    status: 'scheduled' },
+    { id: 9,  day: 'Thursday',  session: 4, subject: 'Chemistry',    topic: 'Physical Chemistry', teacher: 'Dr. Sanjay Mishra',  batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '14:00', endTime: '15:30', meetingId: 'grade-10-batch-a-chemistry-thursday-s4',  meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-chemistry-thursday-s4`,  status: 'scheduled' },
+    { id: 10, day: 'Friday',    session: 2, subject: 'Physics',      topic: 'Electrostatics',     teacher: 'Dr. Vikram Sharma',  batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '09:00', endTime: '10:30', meetingId: 'grade-10-batch-a-physics-friday-s2',      meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-physics-friday-s2`,      status: 'scheduled' },
+    { id: 11, day: 'Friday',    session: 5, subject: 'Biology',      topic: 'Reproduction',       teacher: 'Ms. Divya Nair',     batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '16:00', endTime: '17:30', meetingId: 'grade-10-batch-a-biology-friday-s5',      meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-biology-friday-s5`,      status: 'scheduled' },
+    { id: 12, day: 'Saturday',  session: 1, subject: 'Chemistry',    topic: 'Electrochemistry',   teacher: 'Ms. Pooja Iyer',     batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '07:00', endTime: '08:30', meetingId: 'grade-10-batch-a-chemistry-saturday-s1',  meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-chemistry-saturday-s1`,  status: 'scheduled' },
+    { id: 13, day: 'Saturday',  session: 3, subject: 'Physics',      topic: 'Modern Physics',     teacher: 'Mr. Rahul Gupta',    batch: 'Grade 10 – Batch A', category: 'Foundation', startTime: '11:00', endTime: '12:30', meetingId: 'grade-10-batch-a-physics-saturday-s3',    meetingLink: `${BBB_SERVER}/b/grade-10-batch-a-physics-saturday-s3`,    status: 'scheduled' },
 
-    // JEE Main 2025 – Batch A
-    { id: 14, day: 'Monday',    session: 2, subject: 'Mathematics',       topic: 'Calculus',               teacher: 'Mr. Arjun Verma',    batch: 'JEE Main 2025 – Batch A', examType: 'JEE Main',     startTime: '09:00', endTime: '10:30', meetingId: 'jee-main-2025-batch-a-mathematics-monday-s2',   meetingLink: `${BBB_SERVER}/b/jee-main-2025-batch-a-mathematics-monday-s2`,   status: 'completed' },
-    { id: 15, day: 'Monday',    session: 4, subject: 'Physics',           topic: 'Mechanics',              teacher: 'Mr. Rahul Gupta',    batch: 'JEE Main 2025 – Batch A', examType: 'JEE Main',     startTime: '14:00', endTime: '15:30', meetingId: 'jee-main-2025-batch-a-physics-monday-s4',       meetingLink: `${BBB_SERVER}/b/jee-main-2025-batch-a-physics-monday-s4`,       status: 'live' },
-    { id: 16, day: 'Tuesday',   session: 2, subject: 'Chemistry',         topic: 'Chemical Bonding',       teacher: 'Dr. Sanjay Mishra',  batch: 'JEE Main 2025 – Batch A', examType: 'JEE Main',     startTime: '09:00', endTime: '10:30', meetingId: 'jee-main-2025-batch-a-chemistry-tuesday-s2',    meetingLink: `${BBB_SERVER}/b/jee-main-2025-batch-a-chemistry-tuesday-s2`,    status: 'scheduled' },
-    { id: 17, day: 'Tuesday',   session: 4, subject: 'Mathematics',       topic: 'Coordinate Geometry',    teacher: 'Dr. Kiran Patel',    batch: 'JEE Main 2025 – Batch A', examType: 'JEE Main',     startTime: '14:00', endTime: '15:30', meetingId: 'jee-main-2025-batch-a-mathematics-tuesday-s4',  meetingLink: `${BBB_SERVER}/b/jee-main-2025-batch-a-mathematics-tuesday-s4`,  status: 'scheduled' },
-    { id: 18, day: 'Wednesday', session: 1, subject: 'Physics',           topic: 'Electrostatics',         teacher: 'Dr. Vikram Sharma',  batch: 'JEE Main 2025 – Batch A', examType: 'JEE Main',     startTime: '07:00', endTime: '08:30', meetingId: 'jee-main-2025-batch-a-physics-wednesday-s1',    meetingLink: `${BBB_SERVER}/b/jee-main-2025-batch-a-physics-wednesday-s1`,    status: 'scheduled' },
-    { id: 19, day: 'Thursday',  session: 3, subject: 'Mathematics',       topic: 'Vectors & 3D',           teacher: 'Mr. Arjun Verma',    batch: 'JEE Main 2025 – Batch A', examType: 'JEE Main',     startTime: '11:00', endTime: '12:30', meetingId: 'jee-main-2025-batch-a-mathematics-thursday-s3', meetingLink: `${BBB_SERVER}/b/jee-main-2025-batch-a-mathematics-thursday-s3`, status: 'scheduled' },
-    { id: 20, day: 'Friday',    session: 1, subject: 'Chemistry',         topic: 'Organic Chemistry',      teacher: 'Ms. Pooja Iyer',     batch: 'JEE Main 2025 – Batch A', examType: 'JEE Main',     startTime: '07:00', endTime: '08:30', meetingId: 'jee-main-2025-batch-a-chemistry-friday-s1',     meetingLink: `${BBB_SERVER}/b/jee-main-2025-batch-a-chemistry-friday-s1`,     status: 'scheduled' },
+    // Grade 11 – Batch A (Standard)
+    { id: 14, day: 'Monday',    session: 2, subject: 'Mathematics',  topic: 'Calculus',            teacher: 'Mr. Arjun Verma',    batch: 'Grade 11 – Batch A', category: 'Standard',   startTime: '09:00', endTime: '10:30', meetingId: 'grade-11-batch-a-mathematics-monday-s2',  meetingLink: `${BBB_SERVER}/b/grade-11-batch-a-mathematics-monday-s2`,  status: 'completed' },
+    { id: 15, day: 'Monday',    session: 4, subject: 'Physics',      topic: 'Mechanics',           teacher: 'Mr. Rahul Gupta',    batch: 'Grade 11 – Batch A', category: 'Standard',   startTime: '14:00', endTime: '15:30', meetingId: 'grade-11-batch-a-physics-monday-s4',      meetingLink: `${BBB_SERVER}/b/grade-11-batch-a-physics-monday-s4`,      status: 'live' },
+    { id: 16, day: 'Tuesday',   session: 2, subject: 'Chemistry',    topic: 'Chemical Bonding',    teacher: 'Dr. Sanjay Mishra',  batch: 'Grade 11 – Batch A', category: 'Standard',   startTime: '09:00', endTime: '10:30', meetingId: 'grade-11-batch-a-chemistry-tuesday-s2',   meetingLink: `${BBB_SERVER}/b/grade-11-batch-a-chemistry-tuesday-s2`,   status: 'scheduled' },
+    { id: 17, day: 'Tuesday',   session: 4, subject: 'Mathematics',  topic: 'Coordinate Geometry', teacher: 'Dr. Kiran Patel',    batch: 'Grade 11 – Batch A', category: 'Standard',   startTime: '14:00', endTime: '15:30', meetingId: 'grade-11-batch-a-mathematics-tuesday-s4', meetingLink: `${BBB_SERVER}/b/grade-11-batch-a-mathematics-tuesday-s4`, status: 'scheduled' },
+    { id: 18, day: 'Wednesday', session: 1, subject: 'Physics',      topic: 'Electrostatics',      teacher: 'Dr. Vikram Sharma',  batch: 'Grade 11 – Batch A', category: 'Standard',   startTime: '07:00', endTime: '08:30', meetingId: 'grade-11-batch-a-physics-wednesday-s1',   meetingLink: `${BBB_SERVER}/b/grade-11-batch-a-physics-wednesday-s1`,   status: 'scheduled' },
+    { id: 19, day: 'Thursday',  session: 3, subject: 'Mathematics',  topic: 'Vectors & 3D',        teacher: 'Mr. Arjun Verma',    batch: 'Grade 11 – Batch A', category: 'Standard',   startTime: '11:00', endTime: '12:30', meetingId: 'grade-11-batch-a-mathematics-thursday-s3',meetingLink: `${BBB_SERVER}/b/grade-11-batch-a-mathematics-thursday-s3`,status: 'scheduled' },
+    { id: 20, day: 'Friday',    session: 1, subject: 'Chemistry',    topic: 'Organic Chemistry',   teacher: 'Ms. Pooja Iyer',     batch: 'Grade 11 – Batch A', category: 'Standard',   startTime: '07:00', endTime: '08:30', meetingId: 'grade-11-batch-a-chemistry-friday-s1',    meetingLink: `${BBB_SERVER}/b/grade-11-batch-a-chemistry-friday-s1`,    status: 'scheduled' },
 
-    // JEE Advanced 2025
-    { id: 21, day: 'Monday',    session: 6, subject: 'Mathematics',       topic: 'Matrices & Determinants', teacher: 'Dr. Kiran Patel',   batch: 'JEE Advanced 2025',       examType: 'JEE Advanced', startTime: '18:00', endTime: '19:30', meetingId: 'jee-advanced-2025-mathematics-monday-s6',        meetingLink: `${BBB_SERVER}/b/jee-advanced-2025-mathematics-monday-s6`,        status: 'scheduled' },
-    { id: 22, day: 'Wednesday', session: 6, subject: 'Physics',           topic: 'Fluid Mechanics',         teacher: 'Dr. Vikram Sharma',  batch: 'JEE Advanced 2025',       examType: 'JEE Advanced', startTime: '18:00', endTime: '19:30', meetingId: 'jee-advanced-2025-physics-wednesday-s6',         meetingLink: `${BBB_SERVER}/b/jee-advanced-2025-physics-wednesday-s6`,         status: 'scheduled' },
-    { id: 23, day: 'Friday',    session: 6, subject: 'Chemistry',         topic: 'Coordination Compounds',  teacher: 'Dr. Sanjay Mishra',  batch: 'JEE Advanced 2025',       examType: 'JEE Advanced', startTime: '18:00', endTime: '19:30', meetingId: 'jee-advanced-2025-chemistry-friday-s6',          meetingLink: `${BBB_SERVER}/b/jee-advanced-2025-chemistry-friday-s6`,          status: 'scheduled' },
+    // Grade 12 – Batch A (Advanced)
+    { id: 21, day: 'Monday',    session: 6, subject: 'Mathematics',  topic: 'Matrices & Determinants', teacher: 'Dr. Kiran Patel',  batch: 'Grade 12 – Batch A', category: 'Advanced',   startTime: '18:00', endTime: '19:30', meetingId: 'grade-12-batch-a-mathematics-monday-s6',  meetingLink: `${BBB_SERVER}/b/grade-12-batch-a-mathematics-monday-s6`,  status: 'scheduled' },
+    { id: 22, day: 'Wednesday', session: 6, subject: 'Physics',      topic: 'Fluid Mechanics',         teacher: 'Dr. Vikram Sharma',batch: 'Grade 12 – Batch A', category: 'Advanced',   startTime: '18:00', endTime: '19:30', meetingId: 'grade-12-batch-a-physics-wednesday-s6',   meetingLink: `${BBB_SERVER}/b/grade-12-batch-a-physics-wednesday-s6`,   status: 'scheduled' },
+    { id: 23, day: 'Friday',    session: 6, subject: 'Chemistry',    topic: 'Coordination Compounds',  teacher: 'Dr. Sanjay Mishra',batch: 'Grade 12 – Batch A', category: 'Advanced',   startTime: '18:00', endTime: '19:30', meetingId: 'grade-12-batch-a-chemistry-friday-s6',    meetingLink: `${BBB_SERVER}/b/grade-12-batch-a-chemistry-friday-s6`,    status: 'scheduled' },
   ];
 
   // ── Derived form lists ────────────────────────────────────────────────────
   get availableSubjects(): string[] {
-    return this.subjectsByExam[this.form.examType] ?? [];
+    return this.subjectsByCategory[this.form.category] ?? [];
   }
 
   get availableTopics(): string[] {
@@ -162,9 +166,9 @@ export class TimetableComponent {
   // ── Filtered ──────────────────────────────────────────────────────────────
   get filteredSlots(): TimetableSlot[] {
     return this.slots.filter(s => {
-      const matchBatch = !this.batchFilter || s.batch === this.batchFilter;
-      const matchExam  = !this.examFilter  || s.examType === this.examFilter;
-      return matchBatch && matchExam;
+      const matchBatch    = !this.batchFilter    || s.batch === this.batchFilter;
+      const matchCategory = !this.categoryFilter || s.category === this.categoryFilter;
+      return matchBatch && matchCategory;
     });
   }
 
@@ -174,11 +178,15 @@ export class TimetableComponent {
 
   getSubjectColor(subject: string): string {
     const map: Record<string, string> = {
-      'Physics':            'slot-physics',
-      'Chemistry':          'slot-chemistry',
-      'Biology – Botany':   'slot-biology',
-      'Biology – Zoology':  'slot-zoology',
-      'Mathematics':        'slot-math',
+      'Physics':       'slot-physics',
+      'Chemistry':     'slot-chemistry',
+      'Biology':       'slot-biology',
+      'Mathematics':   'slot-math',
+      'Science':       'slot-biology',
+      'English':       'slot-default',
+      'History':       'slot-default',
+      'Computer Sci.': 'slot-zoology',
+      'Economics':     'slot-zoology',
     };
     return map[subject] || 'slot-default';
   }
@@ -193,13 +201,13 @@ export class TimetableComponent {
     return map[status] || 'pg-badge';
   }
 
-  getExamChip(examType: string): string {
+  getCategoryChip(category: string): string {
     const map: Record<string, string> = {
-      'NEET':         'chip-emerald',
-      'JEE Main':     'chip-sky',
-      'JEE Advanced': 'chip-rose',
+      'Foundation': 'chip-emerald',
+      'Standard':   'chip-sky',
+      'Advanced':   'chip-rose',
     };
-    return map[examType] || 'chip-indigo';
+    return map[category] || 'chip-indigo';
   }
 
   canJoin(status: string): boolean {
@@ -226,7 +234,7 @@ export class TimetableComponent {
   emptyForm(): TimetablePayload {
     return {
       day: '', session: 1, subject: '', topic: '', teacher: '',
-      batch: '', examType: 'NEET',
+      batch: '', category: 'Foundation',
       startTime: '07:00', endTime: '08:30',
       status: 'scheduled'
     };
@@ -243,9 +251,9 @@ export class TimetableComponent {
     if (this.batchFilter) {
       this.form.batch = this.batchFilter;
       const found = this.slots.find(s => s.batch === this.batchFilter);
-      if (found) this.form.examType = found.examType;
+      if (found) this.form.category = found.category;
     }
-    if (this.examFilter) this.form.examType = this.examFilter as any;
+    if (this.categoryFilter) this.form.category = this.categoryFilter as any;
     this.modalMode = 'create';
   }
 
@@ -254,7 +262,7 @@ export class TimetableComponent {
     this.form = {
       day: slot.day, session: slot.session, subject: slot.subject,
       topic: slot.topic, teacher: slot.teacher, batch: slot.batch,
-      examType: slot.examType, startTime: slot.startTime, endTime: slot.endTime,
+      category: slot.category, startTime: slot.startTime, endTime: slot.endTime,
       status: slot.status
     };
     this.modalMode = 'edit';
@@ -280,7 +288,7 @@ export class TimetableComponent {
     if (st) { this.form.startTime = st.start; this.form.endTime = st.end; }
   }
 
-  onExamTypeChange(): void {
+  onCategoryChange(): void {
     this.form.subject = '';
     this.form.topic   = '';
   }

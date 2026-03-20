@@ -31,7 +31,7 @@
           [disabled]="quizzesLoading"
         >
           <option value="" disabled>
-            {{ quizzesLoading ? "Loading quizzes…" : "— Choose a quiz —" }}
+            {{ quizzesLoading ? "Loading quizzes�" : "� Choose a quiz �" }}
           </option>
           <option *ngFor="let quiz of quizzes" [value]="quiz.id">
             {{ quiz.title }}
@@ -66,9 +66,9 @@
     <p>Select a quiz above to view its results and leaderboard.</p>
   </div>
 
-  <!-- ══════════════════════════════════════════
+  <!-- ------------------------------------------
        RESULTS VIEW
-  ══════════════════════════════════════════ -->
+  ------------------------------------------ -->
   <ng-container *ngIf="selectedQuizId && activeView === 'results'">
 
     <!-- Stats -->
@@ -115,7 +115,7 @@
     <div class="pg-card">
       <div class="pg-card__head">
         <span class="pg-card__title">
-          Results — {{ selectedQuizTitle }}
+          Results � {{ selectedQuizTitle }}
         </span>
         <div class="pg-toolbar">
           <input
@@ -137,7 +137,7 @@
 
       <!-- Loading -->
       <div class="pg-loading" *ngIf="resultsLoading">
-        <i class="fa-solid fa-spinner fa-spin"></i> Loading results…
+        <i class="fa-solid fa-spinner fa-spin"></i> Loading results�
       </div>
 
       <div class="pg-table-wrap" *ngIf="!resultsLoading">
@@ -165,20 +165,20 @@
                     {{ getInitial(result.studentName) }}
                   </div>
                   <span class="pg-cell__primary">
-                    {{ result.studentName ?? "—" }}
+                    {{ result.studentName ?? "�" }}
                   </span>
                 </div>
               </td>
 
               <!-- Score -->
               <td>
-                <strong>{{ result.score ?? "—" }}</strong>
-                <span class="no-val"> / {{ result.totalMarks ?? "—" }}</span>
+                <strong>{{ result.score ?? "�" }}</strong>
+                <span class="no-val"> / {{ result.totalMarks ?? "�" }}</span>
               </td>
 
               <!-- Percentage -->
               <td>
-                <strong>{{ result.percentage != null ? result.percentage + "%" : "—" }}</strong>
+                <strong>{{ result.percentage != null ? result.percentage + "%" : "�" }}</strong>
               </td>
 
               <!-- Grade -->
@@ -208,7 +208,7 @@
                   <i class="fa-solid fa-clock" style="color:var(--clr-sky)"></i>
                   {{ result.timeTakenMinutes }} min
                 </span>
-                <span class="no-val" *ngIf="result.timeTakenMinutes == null">—</span>
+                <span class="no-val" *ngIf="result.timeTakenMinutes == null">�</span>
               </td>
 
               <!-- Date -->
@@ -227,21 +227,21 @@
     </div>
   </ng-container>
 
-  <!-- ══════════════════════════════════════════
+  <!-- ------------------------------------------
        LEADERBOARD VIEW
-  ══════════════════════════════════════════ -->
+  ------------------------------------------ -->
   <ng-container *ngIf="selectedQuizId && activeView === 'leaderboard'">
     <div class="pg-card">
       <div class="pg-card__head">
         <span class="pg-card__title">
           <i class="fa-solid fa-trophy" style="color:#f59e0b"></i>
-          Leaderboard — {{ selectedQuizTitle }}
+          Leaderboard � {{ selectedQuizTitle }}
         </span>
       </div>
 
       <!-- Loading -->
       <div class="pg-loading" *ngIf="leaderboardLoading">
-        <i class="fa-solid fa-spinner fa-spin"></i> Loading leaderboard…
+        <i class="fa-solid fa-spinner fa-spin"></i> Loading leaderboard�
       </div>
 
       <div class="pg-table-wrap" *ngIf="!leaderboardLoading">
@@ -292,19 +292,19 @@
                     {{ getInitial(entry.studentName) }}
                   </div>
                   <span class="pg-cell__primary">
-                    {{ entry.studentName ?? "—" }}
+                    {{ entry.studentName ?? "�" }}
                   </span>
                 </div>
               </td>
 
               <!-- Score -->
               <td>
-                <strong>{{ entry.score ?? "—" }}</strong>
+                <strong>{{ entry.score ?? "�" }}</strong>
               </td>
 
               <!-- Percentage -->
               <td>
-                <strong>{{ entry.percentage != null ? entry.percentage + "%" : "—" }}</strong>
+                <strong>{{ entry.percentage != null ? entry.percentage + "%" : "�" }}</strong>
               </td>
 
               <!-- Time Taken -->
@@ -313,7 +313,7 @@
                   <i class="fa-solid fa-clock" style="color:var(--clr-sky)"></i>
                   {{ entry.timeTakenMinutes }} min
                 </span>
-                <span class="no-val" *ngIf="entry.timeTakenMinutes == null">—</span>
+                <span class="no-val" *ngIf="entry.timeTakenMinutes == null">�</span>
               </td>
             </tr>
 
