@@ -10,8 +10,15 @@ export interface Course {
   title: string;
   description: string;
   thumbnailUrl: string;
+  category?: string;
+  level?: string;
   isPublished?: boolean;
   durationHours?: number;
+  durationInMonths?: number;
+  totalAmount?: number;
+  isPartialAllowed?: boolean;
+  installmentCount?: number | null;
+  discountAmount?: number | null;
   createdAt?: string;
 }
 
@@ -19,14 +26,18 @@ export interface CoursePayload {
   title: string;
   description: string;
   thumbnailUrl: string;
+  category: string;
+  level: string;
+  durationHours: number;
+  durationInMonths: number;
+  totalAmount: number;
+  isPartialAllowed: boolean;
+  installmentCount: number | null;
+  discountAmount: number | null;
 }
 
-export interface CourseUpdatePayload {
-  title: string;
-  description: string;
-  thumbnailUrl: string;
+export interface CourseUpdatePayload extends CoursePayload {
   isPublished: boolean;
-  durationHours: number;
 }
 
 type ModalMode = 'create' | 'edit' | 'view' | 'delete' | 'publish' | null;
@@ -53,11 +64,31 @@ export class CoursesComponent implements OnInit {
   formTitle: string = '';
   formDescription: string = '';
   formThumbnailUrl: string = '';
+  formCategory: string = '';
+  formLevel: string = '';
   formIsPublished: boolean = false;
   formDurationHours: number = 1;
+  formDurationInMonths: number = 1;
+  formTotalAmount: number = 0;
+  formIsPartialAllowed: boolean = false;
+  formInstallmentCount: number | null = null;
+  formDiscountAmount: number | null = null;
 
   // Validation
   titleError: string = '';
+  totalAmountError: string = '';
+
+  readonly LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
+  readonly CATEGORIES = [
+    'Mathematics',
+    'Science',
+    'Technology',
+    'Engineering',
+    'Arts',
+    'Language',
+    'Social Studies',
+    'Other',
+  ];
 
   constructor(
     private commonService: CommonService,
@@ -90,21 +121,33 @@ export class CoursesComponent implements OnInit {
       title: this.formTitle.trim(),
       description: this.formDescription.trim(),
       thumbnailUrl: this.formThumbnailUrl.trim(),
+      category: this.formCategory.trim(),
+      level: this.formLevel.trim(),
+      durationHours: this.formDurationHours,
+      durationInMonths: this.formDurationInMonths,
+      totalAmount: this.formTotalAmount,
+      isPartialAllowed: this.formIsPartialAllowed,
+      installmentCount: this.formIsPartialAllowed
+        ? this.formInstallmentCount
+        : null,
+      discountAmount: this.formDiscountAmount,
     };
-    this.httpService.postData(BASE_URL, '/courses', payload).subscribe({
-      next: () => {
-        this.commonService.success(
-          `Course "${payload.title}" created successfully.`,
-        );
-        this.closeModal();
-        this.loadCourses();
-      },
-      error: (err: any) => {
-        this.commonService.error(
-          err?.error?.message || 'Failed to create course.',
-        );
-      },
-    });
+    this.httpService
+      .postData(BASE_URL, '/courses/course-pricing', payload)
+      .subscribe({
+        next: () => {
+          this.commonService.success(
+            `Course "${payload.title}" created successfully.`,
+          );
+          this.closeModal();
+          this.loadCourses();
+        },
+        error: (err: any) => {
+          this.commonService.error(
+            err?.error?.message || 'Failed to create course.',
+          );
+        },
+      });
   }
 
   updateCourse(): void {
@@ -113,8 +156,17 @@ export class CoursesComponent implements OnInit {
       title: this.formTitle.trim(),
       description: this.formDescription.trim(),
       thumbnailUrl: this.formThumbnailUrl.trim(),
+      category: this.formCategory.trim(),
+      level: this.formLevel.trim(),
       isPublished: this.formIsPublished,
       durationHours: this.formDurationHours,
+      durationInMonths: this.formDurationInMonths,
+      totalAmount: this.formTotalAmount,
+      isPartialAllowed: this.formIsPartialAllowed,
+      installmentCount: this.formIsPartialAllowed
+        ? this.formInstallmentCount
+        : null,
+      discountAmount: this.formDiscountAmount,
     };
     this.httpService
       .putData(BASE_URL, `/courses/${this.selectedCourse.id}`, payload)
@@ -193,12 +245,7 @@ export class CoursesComponent implements OnInit {
   openCreateModal(): void {
     this.modalMode = 'create';
     this.selectedCourse = null;
-    this.formTitle = '';
-    this.formDescription = '';
-    this.formThumbnailUrl = '';
-    this.formIsPublished = false;
-    this.formDurationHours = 1;
-    this.titleError = '';
+    this.resetForm();
   }
 
   openEditModal(course: Course): void {
@@ -207,9 +254,17 @@ export class CoursesComponent implements OnInit {
     this.formTitle = course.title;
     this.formDescription = course.description;
     this.formThumbnailUrl = course.thumbnailUrl;
+    this.formCategory = course.category ?? '';
+    this.formLevel = course.level ?? '';
     this.formIsPublished = course.isPublished ?? false;
     this.formDurationHours = course.durationHours ?? 1;
+    this.formDurationInMonths = course.durationInMonths ?? 1;
+    this.formTotalAmount = course.totalAmount ?? 0;
+    this.formIsPartialAllowed = course.isPartialAllowed ?? false;
+    this.formInstallmentCount = course.installmentCount ?? null;
+    this.formDiscountAmount = course.discountAmount ?? null;
     this.titleError = '';
+    this.totalAmountError = '';
   }
 
   openViewModal(course: Course): void {
@@ -231,6 +286,7 @@ export class CoursesComponent implements OnInit {
     this.modalMode = null;
     this.selectedCourse = null;
     this.titleError = '';
+    this.totalAmountError = '';
   }
 
   submitForm(): void {
@@ -241,20 +297,47 @@ export class CoursesComponent implements OnInit {
 
   validateForm(): boolean {
     this.titleError = '';
+    this.totalAmountError = '';
+    let valid = true;
+
     if (!this.formTitle.trim()) {
       this.titleError = 'Course title is required.';
-      return false;
+      valid = false;
+    } else {
+      const duplicate = this.courses.find(
+        (c) =>
+          c.title.toLowerCase() === this.formTitle.trim().toLowerCase() &&
+          c.id !== this.selectedCourse?.id,
+      );
+      if (duplicate) {
+        this.titleError = 'A course with this title already exists.';
+        valid = false;
+      }
     }
-    const duplicate = this.courses.find(
-      (c) =>
-        c.title.toLowerCase() === this.formTitle.trim().toLowerCase() &&
-        c.id !== this.selectedCourse?.id,
-    );
-    if (duplicate) {
-      this.titleError = 'A course with this title already exists.';
-      return false;
+
+    if (this.formTotalAmount == null || this.formTotalAmount < 0) {
+      this.totalAmountError = 'Total amount must be 0 or greater.';
+      valid = false;
     }
-    return true;
+
+    return valid;
+  }
+
+  resetForm(): void {
+    this.formTitle = '';
+    this.formDescription = '';
+    this.formThumbnailUrl = '';
+    this.formCategory = '';
+    this.formLevel = '';
+    this.formIsPublished = false;
+    this.formDurationHours = 1;
+    this.formDurationInMonths = 1;
+    this.formTotalAmount = 0;
+    this.formIsPartialAllowed = false;
+    this.formInstallmentCount = null;
+    this.formDiscountAmount = null;
+    this.titleError = '';
+    this.totalAmountError = '';
   }
 
   // ─── Filters & Helpers ───────────────────────────────────────
@@ -278,7 +361,8 @@ export class CoursesComponent implements OnInit {
       list = list.filter(
         (c) =>
           c.title.toLowerCase().includes(q) ||
-          c.description?.toLowerCase().includes(q),
+          c.description?.toLowerCase().includes(q) ||
+          c.category?.toLowerCase().includes(q),
       );
     }
     this.filteredCourses = list;
@@ -300,6 +384,15 @@ export class CoursesComponent implements OnInit {
 
   getThumbInitial(course: Course): string {
     return (course.title || '?').charAt(0).toUpperCase();
+  }
+
+  formatCurrency(amount?: number): string {
+    if (amount == null) return '—';
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(amount);
   }
 
   get totalPublished(): number {

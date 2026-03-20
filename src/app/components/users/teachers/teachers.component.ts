@@ -337,4 +337,19 @@ export class TeachersComponent implements OnInit {
   get totalInactive(): number {
     return this.teachers.filter((u) => !u.isActive).length;
   }
+
+  onlyNumbers(event: KeyboardEvent) {
+    const charCode = event.which ? event.which : event.keyCode;
+    if (charCode < 48 || charCode > 57) {
+      event.preventDefault();
+    }
+  }
+
+  onPaste(event: ClipboardEvent) {
+    const pastedData = event.clipboardData?.getData('text') || '';
+
+    if (!/^\d+$/.test(pastedData)) {
+      event.preventDefault();
+    }
+  }
 }

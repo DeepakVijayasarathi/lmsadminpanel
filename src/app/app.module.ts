@@ -43,6 +43,7 @@ import { ResultsComponent } from './components/assessment/results/results.compon
 import { ExamsComponent } from './components/assessment/exams/exams.component';
 import { MenuComponent } from './components/system/menu/menu.component';
 import { TimetableComponent } from './components/learning/timetable/timetable.component';
+import { RegistrationComponent } from './components/registration/registration.component';
 
 @NgModule({
   declarations: [
@@ -80,7 +81,8 @@ import { TimetableComponent } from './components/learning/timetable/timetable.co
 
     DeleteConfirmationModalComponent,
     CommonPaginationComponent,
-    ActionButtonsComponent
+    ActionButtonsComponent,
+    RegistrationComponent
   ],
   imports: [
     BrowserModule,

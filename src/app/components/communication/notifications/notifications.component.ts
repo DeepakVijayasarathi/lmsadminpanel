@@ -12,7 +12,7 @@ export interface NotificationItem {
   message: string;
   channel: string;
   type: string;
-  createdAt?: string;
+  sentAt?: string;
   isRead?: boolean;
   user?: { id: string; firstName: string; lastName: string; email?: string };
 }

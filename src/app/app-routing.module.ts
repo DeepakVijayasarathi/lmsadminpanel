@@ -30,12 +30,14 @@ import { MenuComponent } from './components/system/menu/menu.component';
 import { TimetableComponent } from './components/learning/timetable/timetable.component';
 import { TeacherDashboardComponent } from './components/teacher-dashboard/teacher-dashboard.component';
 import { StudentDashboardComponent } from './components/student-dashboard/student-dashboard.component';
+import { RegistrationComponent } from './components/registration/registration.component';
 
 const AG = [AuthGuard];
 
 const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegistrationComponent },
 
   // dashboard
   { path: 'dashboard', component: DashboardComponent, canActivate: AG },

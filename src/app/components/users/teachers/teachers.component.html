@@ -139,6 +139,7 @@
                   class="pg-action-btn pg-action-btn--warn"
                   title="Block"
                   (click)="openBlockModal(user)"
+                  *ngIf="user.isActive"
                 >
                   <i class="fas fa-ban"></i>
                 </button>
@@ -247,8 +248,11 @@
         <input
           type="text"
           class="form-control"
-          placeholder="+91 98001 11001"
+          placeholder="Phone number"
+          maxlength="10"
           [(ngModel)]="formPhone"
+          (keypress)="onlyNumbers($event)"
+          (paste)="onPaste($event)"
         />
       </div>
       <div class="form-group" [class.has-error]="passwordError">
