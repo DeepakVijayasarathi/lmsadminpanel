@@ -6,8 +6,8 @@
         <i class="fa-solid fa-file-circle-check"></i>
       </div>
       <div>
-        <div class="pg-head__title">Mock Test Results</div>
-        <div class="pg-head__sub">NEET &amp; JEE aspirant performance tracker</div>
+        <div class="pg-head__title">Quiz Results</div>
+        <div class="pg-head__sub">Student performance &amp; leaderboard</div>
       </div>
     </div>
     <div class="pg-head__right">
@@ -17,105 +17,315 @@
     </div>
   </div>
 
-  <!-- Stats -->
-  <div class="pg-stats">
-    <div class="pg-stat">
-      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-file-circle-check"></i></div>
-      <div>
-        <div class="pg-stat__val">12,840</div>
-        <div class="pg-stat__lbl">Total Submissions</div>
+  <!-- Quiz Selector -->
+  <div class="pg-card pg-card--selector">
+    <div class="quiz-selector-row">
+      <label class="quiz-selector-label">
+        <i class="fa-solid fa-file-pen"></i> Select Quiz
+      </label>
+      <div class="quiz-selector-wrap">
+        <select
+          class="pg-filter quiz-select"
+          [(ngModel)]="selectedQuizId"
+          (change)="onQuizChange()"
+          [disabled]="quizzesLoading"
+        >
+          <option value="" disabled>
+            {{ quizzesLoading ? "Loading quizzes…" : "— Choose a quiz —" }}
+          </option>
+          <option *ngFor="let quiz of quizzes" [value]="quiz.id">
+            {{ quiz.title }}
+          </option>
+        </select>
+        <i class="fa-solid fa-spinner fa-spin quiz-select-spin" *ngIf="quizzesLoading"></i>
       </div>
-    </div>
-    <div class="pg-stat">
-      <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-percent"></i></div>
-      <div>
-        <div class="pg-stat__val">91%</div>
-        <div class="pg-stat__lbl">Pass Rate</div>
-      </div>
-    </div>
-    <div class="pg-stat">
-      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-chart-simple"></i></div>
-      <div>
-        <div class="pg-stat__val">74%</div>
-        <div class="pg-stat__lbl">Avg Score</div>
-      </div>
-    </div>
-    <div class="pg-stat">
-      <div class="pg-stat__icon chip-purple"><i class="fa-solid fa-trophy"></i></div>
-      <div>
-        <div class="pg-stat__val">720/720</div>
-        <div class="pg-stat__lbl">Top NEET Score</div>
+
+      <!-- View Toggle -->
+      <div class="view-toggle" *ngIf="selectedQuizId">
+        <button
+          class="view-toggle-btn"
+          [class.active]="activeView === 'results'"
+          (click)="setView('results')"
+        >
+          <i class="fa-solid fa-table-list"></i> Results
+        </button>
+        <button
+          class="view-toggle-btn"
+          [class.active]="activeView === 'leaderboard'"
+          (click)="setView('leaderboard')"
+        >
+          <i class="fa-solid fa-trophy"></i> Leaderboard
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Table Card -->
-  <div class="pg-card">
-    <div class="pg-card__head">
-      <span class="pg-card__title">All Results</span>
-      <div class="pg-toolbar">
-        <input class="pg-search" type="text" placeholder="Search aspirant or test..." />
-        <select class="pg-filter">
-          <option value="">All Grades</option>
-          <option value="A+">A+</option>
-          <option value="A">A</option>
-          <option value="B">B</option>
-          <option value="C">C</option>
-          <option value="F">F</option>
-        </select>
+  <!-- Empty state when no quiz selected -->
+  <div class="pg-empty-state" *ngIf="!selectedQuizId && !quizzesLoading">
+    <i class="fa-solid fa-file-circle-check pg-empty__icon"></i>
+    <p>Select a quiz above to view its results and leaderboard.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       RESULTS VIEW
+  ══════════════════════════════════════════ -->
+  <ng-container *ngIf="selectedQuizId && activeView === 'results'">
+
+    <!-- Stats -->
+    <div class="pg-stats">
+      <div class="pg-stat">
+        <div class="pg-stat__icon chip-emerald">
+          <i class="fa-solid fa-file-circle-check"></i>
+        </div>
+        <div>
+          <div class="pg-stat__val">{{ totalSubmissions }}</div>
+          <div class="pg-stat__lbl">Submissions</div>
+        </div>
+      </div>
+      <div class="pg-stat">
+        <div class="pg-stat__icon chip-indigo">
+          <i class="fa-solid fa-percent"></i>
+        </div>
+        <div>
+          <div class="pg-stat__val">{{ passRate }}</div>
+          <div class="pg-stat__lbl">Pass Rate</div>
+        </div>
+      </div>
+      <div class="pg-stat">
+        <div class="pg-stat__icon chip-sky">
+          <i class="fa-solid fa-chart-simple"></i>
+        </div>
+        <div>
+          <div class="pg-stat__val">{{ avgScore }}</div>
+          <div class="pg-stat__lbl">Avg Score</div>
+        </div>
+      </div>
+      <div class="pg-stat">
+        <div class="pg-stat__icon chip-purple">
+          <i class="fa-solid fa-trophy"></i>
+        </div>
+        <div>
+          <div class="pg-stat__val">{{ topScore }}</div>
+          <div class="pg-stat__lbl">Top Score</div>
+        </div>
       </div>
     </div>
-    <div class="pg-table-wrap">
-      <table class="pg-table">
-        <thead>
-          <tr>
-            <th>Aspirant</th>
-            <th>Mock Test</th>
-            <th>Batch</th>
-            <th>Score / Total</th>
-            <th>Percentage</th>
-            <th>Rank</th>
-            <th>Grade</th>
-            <th>Status</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let result of results">
-            <td>
-              <div class="pg-with-avatar">
-                <div class="pg-avatar av-indigo">{{ result.student.charAt(0) }}</div>
-                <span class="pg-cell__primary">{{ result.student }}</span>
-              </div>
-            </td>
-            <td>
-              <div class="pg-cell__primary">{{ result.exam }}</div>
-              <div class="pg-cell__sub">{{ result.subject }}</div>
-            </td>
-            <td>
-              <div class="pg-cell__primary" style="font-size:12px;">{{ result.batch }}</div>
-            </td>
-            <td><strong>{{ result.score }}</strong> / {{ result.totalMarks }}</td>
-            <td>
-              <strong>{{ result.percentage }}%</strong>
-            </td>
-            <td>
-              <span style="display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;">
-                <i class="fa-solid fa-trophy" style="font-size:10px;"></i> #{{ result.rank }}
-              </span>
-            </td>
-            <td>
-              <span class="pg-badge {{ gradeBadge(result.grade) }}">{{ result.grade }}</span>
-            </td>
-            <td>
-              <span class="pg-badge {{ result.status === 'pass' ? 'pg-badge--green' : 'pg-badge--red' }}">
-                {{ result.status | titlecase }}
-              </span>
-            </td>
-            <td>{{ result.submittedAt }}</td>
-          </tr>
-        </tbody>
-      </table>
+
+    <!-- Results Table Card -->
+    <div class="pg-card">
+      <div class="pg-card__head">
+        <span class="pg-card__title">
+          Results — {{ selectedQuizTitle }}
+        </span>
+        <div class="pg-toolbar">
+          <input
+            class="pg-search"
+            type="text"
+            placeholder="Search student or quiz..."
+            [(ngModel)]="searchQuery"
+          />
+          <select class="pg-filter" [(ngModel)]="gradeFilter">
+            <option value="">All Grades</option>
+            <option value="A+">A+</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="F">F</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div class="pg-loading" *ngIf="resultsLoading">
+        <i class="fa-solid fa-spinner fa-spin"></i> Loading results…
+      </div>
+
+      <div class="pg-table-wrap" *ngIf="!resultsLoading">
+        <table class="pg-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Student</th>
+              <th>Score / Total</th>
+              <th>Percentage</th>
+              <th>Grade</th>
+              <th>Status</th>
+              <th>Time Taken</th>
+              <th>Submitted</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let result of filteredResults; let i = index">
+              <td class="idx-cell">{{ i + 1 }}</td>
+
+              <!-- Student -->
+              <td>
+                <div class="pg-with-avatar">
+                  <div class="pg-avatar av-indigo">
+                    {{ getInitial(result.studentName) }}
+                  </div>
+                  <span class="pg-cell__primary">
+                    {{ result.studentName ?? "—" }}
+                  </span>
+                </div>
+              </td>
+
+              <!-- Score -->
+              <td>
+                <strong>{{ result.score ?? "—" }}</strong>
+                <span class="no-val"> / {{ result.totalMarks ?? "—" }}</span>
+              </td>
+
+              <!-- Percentage -->
+              <td>
+                <strong>{{ result.percentage != null ? result.percentage + "%" : "—" }}</strong>
+              </td>
+
+              <!-- Grade -->
+              <td>
+                <span class="pg-badge {{ gradeBadge(getGrade(result.percentage)) }}">
+                  {{ getGrade(result.percentage) }}
+                </span>
+              </td>
+
+              <!-- Status -->
+              <td>
+                <span
+                  class="pg-badge"
+                  [ngClass]="result.isPassed ? 'pg-badge--green' : 'pg-badge--red'"
+                >
+                  <i
+                    class="fa-solid"
+                    [ngClass]="result.isPassed ? 'fa-circle-check' : 'fa-circle-xmark'"
+                  ></i>
+                  {{ result.isPassed ? "Pass" : "Fail" }}
+                </span>
+              </td>
+
+              <!-- Time Taken -->
+              <td>
+                <span *ngIf="result.timeTakenMinutes != null">
+                  <i class="fa-solid fa-clock" style="color:var(--clr-sky)"></i>
+                  {{ result.timeTakenMinutes }} min
+                </span>
+                <span class="no-val" *ngIf="result.timeTakenMinutes == null">—</span>
+              </td>
+
+              <!-- Date -->
+              <td class="pg-cell__sub">{{ formatDate(result.submittedAt) }}</td>
+            </tr>
+
+            <tr *ngIf="filteredResults.length === 0">
+              <td colspan="8" class="pg-empty">
+                <i class="fa-solid fa-file-circle-check pg-empty__icon"></i>
+                No results found.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
+  </ng-container>
+
+  <!-- ══════════════════════════════════════════
+       LEADERBOARD VIEW
+  ══════════════════════════════════════════ -->
+  <ng-container *ngIf="selectedQuizId && activeView === 'leaderboard'">
+    <div class="pg-card">
+      <div class="pg-card__head">
+        <span class="pg-card__title">
+          <i class="fa-solid fa-trophy" style="color:#f59e0b"></i>
+          Leaderboard — {{ selectedQuizTitle }}
+        </span>
+      </div>
+
+      <!-- Loading -->
+      <div class="pg-loading" *ngIf="leaderboardLoading">
+        <i class="fa-solid fa-spinner fa-spin"></i> Loading leaderboard…
+      </div>
+
+      <div class="pg-table-wrap" *ngIf="!leaderboardLoading">
+        <table class="pg-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Student</th>
+              <th>Score</th>
+              <th>Percentage</th>
+              <th>Time Taken</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let entry of leaderboard"
+              [class.leader-row--gold]="entry.rank === 1"
+              [class.leader-row--silver]="entry.rank === 2"
+              [class.leader-row--bronze]="entry.rank === 3"
+            >
+              <!-- Rank -->
+              <td>
+                <span class="rank-badge" [ngClass]="{
+                  'rank-badge--gold':   entry.rank === 1,
+                  'rank-badge--silver': entry.rank === 2,
+                  'rank-badge--bronze': entry.rank === 3
+                }">
+                  <i
+                    class="fa-solid fa-trophy"
+                    *ngIf="entry.rank && entry.rank <= 3"
+                  ></i>
+                  #{{ entry.rank }}
+                </span>
+              </td>
+
+              <!-- Student -->
+              <td>
+                <div class="pg-with-avatar">
+                  <div
+                    class="pg-avatar"
+                    [ngClass]="{
+                      'av-gold':   entry.rank === 1,
+                      'av-silver': entry.rank === 2,
+                      'av-bronze': entry.rank === 3,
+                      'av-indigo': entry.rank && entry.rank > 3
+                    }"
+                  >
+                    {{ getInitial(entry.studentName) }}
+                  </div>
+                  <span class="pg-cell__primary">
+                    {{ entry.studentName ?? "—" }}
+                  </span>
+                </div>
+              </td>
+
+              <!-- Score -->
+              <td>
+                <strong>{{ entry.score ?? "—" }}</strong>
+              </td>
+
+              <!-- Percentage -->
+              <td>
+                <strong>{{ entry.percentage != null ? entry.percentage + "%" : "—" }}</strong>
+              </td>
+
+              <!-- Time Taken -->
+              <td>
+                <span *ngIf="entry.timeTakenMinutes != null">
+                  <i class="fa-solid fa-clock" style="color:var(--clr-sky)"></i>
+                  {{ entry.timeTakenMinutes }} min
+                </span>
+                <span class="no-val" *ngIf="entry.timeTakenMinutes == null">—</span>
+              </td>
+            </tr>
+
+            <tr *ngIf="leaderboard.length === 0">
+              <td colspan="5" class="pg-empty">
+                <i class="fa-solid fa-trophy pg-empty__icon"></i>
+                No leaderboard data yet.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
 </div>

@@ -1,0 +1,274 @@
+/* ═══════════════════════════════════════════════════════════════
+   results.component.css
+   Matches the shared-page.css design system used across the admin.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── CSS Variables (mirrors shared-page.css tokens) ────────── */
+:host {
+  --clr-sky: #0ea5e9;
+  --clr-indigo: #6366f1;
+  --clr-purple: #a855f7;
+  --clr-emerald: #10b981;
+  --clr-amber: #f59e0b;
+  --clr-red: #ef4444;
+  --clr-slate: #64748b;
+
+  --gold:   #f59e0b;
+  --silver: #94a3b8;
+  --bronze: #b45309;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.10);
+}
+
+/* ─── Quiz Selector Card ─────────────────────────────────────── */
+.pg-card--selector {
+  padding: 14px 20px;
+  margin-bottom: 0;
+}
+
+.quiz-selector-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.quiz-selector-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--clr-slate);
+  white-space: nowrap;
+}
+
+.quiz-selector-label i {
+  color: var(--clr-purple);
+}
+
+.quiz-selector-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+  max-width: 380px;
+}
+
+.quiz-select {
+  width: 100%;
+  padding: 8px 36px 8px 12px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #1e293b;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.quiz-select:focus {
+  outline: none;
+  border-color: var(--clr-indigo);
+  box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+  background: #fff;
+}
+
+.quiz-select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.quiz-select-spin {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--clr-slate);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+/* ─── View Toggle ────────────────────────────────────────────── */
+.view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  border-radius: var(--radius-full);
+  padding: 4px;
+  margin-left: auto;
+}
+
+.view-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--clr-slate);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+}
+
+.view-toggle-btn:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.view-toggle-btn.active {
+  background: #fff;
+  color: var(--clr-indigo);
+  box-shadow: var(--shadow-sm);
+}
+
+.view-toggle-btn.active i {
+  color: var(--clr-indigo);
+}
+
+/* ─── Empty State ────────────────────────────────────────────── */
+.pg-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 24px;
+  text-align: center;
+  color: var(--clr-slate);
+}
+
+.pg-empty-state i {
+  font-size: 40px;
+  opacity: 0.3;
+}
+
+.pg-empty-state p {
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ─── Avatar colours ─────────────────────────────────────────── */
+.pg-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.av-indigo { background: #e0e7ff; color: #4338ca; }
+.av-gold   { background: #fef3c7; color: #92400e; }
+.av-silver { background: #f1f5f9; color: #475569; }
+.av-bronze { background: #fde8d0; color: #92400e; }
+
+/* ─── pg-with-avatar ─────────────────────────────────────────── */
+.pg-with-avatar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ─── Rank Badge ─────────────────────────────────────────────── */
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.rank-badge i {
+  font-size: 10px;
+}
+
+.rank-badge--gold {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.rank-badge--silver {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.rank-badge--bronze {
+  background: #fde8d0;
+  color: #9a3412;
+}
+
+/* ─── Leaderboard Row Highlights ─────────────────────────────── */
+.leader-row--gold {
+  background: linear-gradient(90deg, #fffbeb 0%, transparent 60%);
+}
+
+.leader-row--silver {
+  background: linear-gradient(90deg, #f8fafc 0%, transparent 60%);
+}
+
+.leader-row--bronze {
+  background: linear-gradient(90deg, #fff7ed 0%, transparent 60%);
+}
+
+/* ─── Extra badge colours referenced in HTML ─────────────────── */
+.pg-badge--sky    { background: #e0f2fe; color: #0369a1; }
+.pg-badge--gray   { background: #f1f5f9; color: #475569; }
+.pg-badge--blue   { background: #dbeafe; color: #1d4ed8; }
+
+/* ─── no-val helper ──────────────────────────────────────────── */
+.no-val {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+/* ─── idx-cell ───────────────────────────────────────────────── */
+.idx-cell {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  width: 36px;
+  text-align: center;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .quiz-selector-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .quiz-selector-wrap {
+    max-width: 100%;
+  }
+
+  .view-toggle {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .view-toggle-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}

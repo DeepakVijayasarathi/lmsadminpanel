@@ -1,15 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
 declare var Razorpay: any;
-
-interface Role {
-  id: string;
-  name: string;
-  description: string;
-  is_active: boolean;
-}
 
 interface Course {
   id: string;
@@ -19,12 +12,12 @@ interface Course {
   category?: string;
   level?: string;
   isPublished?: boolean;
+  isActive?: boolean;
   durationHours?: number;
   durationInMonths?: number;
-  totalAmount?: number;
+  price?: number;
   isPartialAllowed?: boolean;
   installmentCount?: number | null;
-  discountAmount?: number | null;
   createdAt?: string;
 }
 
@@ -50,8 +43,6 @@ export class RegistrationComponent implements OnInit {
   readonly API = environment.apiUrl;
 
   selectedRole: 'teacher' | 'student' | null = null;
-  roleId: string = '';
-  roles: Role[] = [];
   courses: Course[] = [];
   batches: Batch[] = [];
   selectedCourse: Course | null = null;
@@ -67,7 +58,7 @@ export class RegistrationComponent implements OnInit {
   showSuccess = false;
   coursesLoading = false;
 
-  // ── Form fields ──
+  // ── Shared account form fields ──
   form = {
     firstName: '',
     lastName: '',
@@ -77,36 +68,60 @@ export class RegistrationComponent implements OnInit {
     password: '',
   };
 
-  txnRef = '';
+  // ── Teacher-specific fields ──
+  teacherForm = {
+    fullName: '',
+    qualification: '',
+    major: '',
+    experience: 0,
+    address: '',
+    whatsAppNumber: '',
+    hasHighSpeedInternet: false,
+    readyForEarlyMorning: false,
+    workingType: '',
+    resumeUrl: '',
+    identityProofUrl: '',
+    degreeCertificateUrl: '',
+  };
+
+  // ── Student-specific fields ──
+  studentForm = {
+    dateOfBirth: null as string | null,
+    gender: '',
+    address: '',
+    currentGrade: '',
+    previousSchool: null as string | null,
+    parentName: '',
+    relationship: '',
+    parentEmail: '',
+    parentPhone: '',
+    favoriteSubjects: [] as string[],
+    hobbies: '',
+    learningGoals: '',
+  };
+
+  subjectInput = '';
   showPassword = false;
-
-  // ── Errors ──
   errors: Record<string, string> = {};
-
-  // ── Success data ──
   successData: any = null;
+
+  // ── Step labels ──
+  readonly teacherStepLabels = ['Account', 'Professional', 'Documents'];
+  readonly studentStepLabels = ['Account', 'Profile', 'Parent Info', 'Course', 'Payment'];
 
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {}
 
-  get totalSteps(): number {
-    return this.selectedRole === 'teacher' ? 1 : 3;
-  }
+  // ── Computed properties ──
 
-  get stepLabels(): string[] {
-    return ['Your Details', 'Choose Course', 'Payment'].slice(
-      0,
-      this.totalSteps,
-    );
+  get publishedCourses(): Course[] {
+    return this.courses.filter((c) => c.isPublished !== false && c.isActive !== false);
   }
 
   get netAmount(): number {
     if (!this.selectedCourse) return 0;
-    return (
-      (this.selectedCourse.totalAmount || 0) -
-      (this.selectedCourse.discountAmount || 0)
-    );
+    return this.selectedCourse.price || 0;
   }
 
   get installmentAmount(): number {
@@ -114,28 +129,15 @@ export class RegistrationComponent implements OnInit {
     return Math.ceil(this.netAmount / this.selectedCourse.installmentCount);
   }
 
-  get publishedCourses(): Course[] {
-    return this.courses.filter((c) => c.isPublished !== false);
+  get totalSteps(): number {
+    return this.selectedRole === 'teacher'
+      ? this.teacherStepLabels.length
+      : this.studentStepLabels.length;
   }
 
   // ── Role Selection ──
   async selectRole(role: 'teacher' | 'student') {
     this.selectedRole = role;
-    this.loading = true;
-    this.loaderMsg = 'Loading...';
-
-    try {
-      const roles: any = await this.http.get(`${this.API}/role`).toPromise();
-      this.roles = Array.isArray(roles) ? roles : roles?.data || [];
-      const match = this.roles.find((r: Role) =>
-        r.name?.toLowerCase().includes(role),
-      );
-      this.roleId = match?.id || '';
-    } catch (e: any) {
-      this.toast('Could not load roles: ' + (e.message || 'Unknown error'));
-    }
-
-    this.loading = false;
     this.currentStep = 1;
 
     if (role === 'student') {
@@ -147,7 +149,7 @@ export class RegistrationComponent implements OnInit {
     this.selectedRole = null;
     this.currentStep = 1;
     this.showSuccess = false;
-    this.resetErrors();
+    this.errors = {};
   }
 
   // ── Courses ──
@@ -162,25 +164,59 @@ export class RegistrationComponent implements OnInit {
     this.coursesLoading = false;
   }
 
+  // async selectCourse(course: Course) {
+  //   this.selectedCourse = course;
+  //   this.selectedBatch = null;
+  //   delete this.errors['course'];
+
+  //   try {
+  //     if (!this.batches.length) {
+  //       const data: any = await this.http.get(`${this.API}/batches`).toPromise();
+  //       this.batches = Array.isArray(data) ? data : data?.data || [];
+  //     }
+  //     const batch = this.batches.find(
+  //       (b) => b.courseId === course.id && b.isActive !== false
+  //     );
+  //     this.selectedBatch = batch || null;
+  //     console.log('Selected batch:', batch);
+  //   } catch {
+  //     console.warn('Batches fetch failed');
+  //   }
+  // }
   async selectCourse(course: Course) {
     this.selectedCourse = course;
     this.selectedBatch = null;
     delete this.errors['course'];
 
     try {
-      if (!this.batches.length) {
-        const data: any = await this.http
-          .get(`${this.API}/batches`)
-          .toPromise();
-        this.batches = Array.isArray(data) ? data : data?.data || [];
-      }
-      const batch = this.batches.find(
-        (b) => b.courseId === course.id && b.isActive !== false,
+      // Always fetch fresh batches for the selected course
+      const data: any = await this.http
+        .get(`${this.API}/batches?courseId=${course.id}`)
+        .toPromise();
+      const allBatches: Batch[] = Array.isArray(data) ? data : data?.data || [];
+
+      const batch = allBatches.find(
+        (b) => b.courseId === course.id && b.isActive !== false
       );
       this.selectedBatch = batch || null;
-    } catch (e) {
+      console.log('Selected batch:', this.selectedBatch);
+    } catch {
       console.warn('Batches fetch failed');
     }
+  }
+
+  // ── Subject tag helpers ──
+  addSubject() {
+    const val = this.subjectInput.trim();
+    if (val && !this.studentForm.favoriteSubjects.includes(val)) {
+      this.studentForm.favoriteSubjects.push(val);
+      delete this.errors['favoriteSubjects'];
+    }
+    this.subjectInput = '';
+  }
+
+  removeSubject(index: number) {
+    this.studentForm.favoriteSubjects.splice(index, 1);
   }
 
   // ── Payment type ──
@@ -188,7 +224,10 @@ export class RegistrationComponent implements OnInit {
     this.paymentType = type;
   }
 
-  // ── Validation ──
+  // ═══════════════════════════════════════════════════
+  //                   VALIDATION
+  // ═══════════════════════════════════════════════════
+
   validateStep1(): boolean {
     this.errors = {};
     const { firstName, lastName, username, phone, email, password } = this.form;
@@ -203,7 +242,58 @@ export class RegistrationComponent implements OnInit {
     return Object.keys(this.errors).length === 0;
   }
 
-  validateStep2(): boolean {
+  /** Teacher Step 2 */
+  validateTeacherStep2(): boolean {
+    this.errors = {};
+    const t = this.teacherForm;
+    if (!t.fullName.trim()) this.errors['fullName'] = 'Full name is required';
+    if (!t.qualification.trim()) this.errors['qualification'] = 'Qualification is required';
+    if (!t.major.trim()) this.errors['major'] = 'Major is required';
+    if (t.experience === null || t.experience === undefined || t.experience < 0)
+      this.errors['experience'] = 'Experience is required';
+    if (!t.whatsAppNumber.trim()) this.errors['whatsAppNumber'] = 'WhatsApp number is required';
+    if (!t.address.trim()) this.errors['address'] = 'Address is required';
+    if (!t.workingType) this.errors['workingType'] = 'Working type is required';
+    return Object.keys(this.errors).length === 0;
+  }
+
+  /** Teacher Step 3 */
+  validateTeacherStep3(): boolean {
+    this.errors = {};
+    const t = this.teacherForm;
+    if (!t.resumeUrl.trim()) this.errors['resumeUrl'] = 'Resume URL is required';
+    if (!t.identityProofUrl.trim()) this.errors['identityProofUrl'] = 'Identity proof URL is required';
+    if (!t.degreeCertificateUrl.trim()) this.errors['degreeCertificateUrl'] = 'Degree certificate URL is required';
+    return Object.keys(this.errors).length === 0;
+  }
+
+  /** Student Step 2 */
+  validateStudentStep2(): boolean {
+    this.errors = {};
+    const s = this.studentForm;
+    if (!s.gender) this.errors['gender'] = 'Gender is required';
+    if (!s.currentGrade.trim()) this.errors['currentGrade'] = 'Current grade is required';
+    if (!s.address.trim()) this.errors['address'] = 'Address is required';
+    if (!s.favoriteSubjects.length) this.errors['favoriteSubjects'] = 'Add at least one subject';
+    if (!s.hobbies.trim()) this.errors['hobbies'] = 'Hobbies are required';
+    if (!s.learningGoals.trim()) this.errors['learningGoals'] = 'Learning goals are required';
+    return Object.keys(this.errors).length === 0;
+  }
+
+  /** Student Step 3 */
+  validateStudentStep3(): boolean {
+    this.errors = {};
+    const s = this.studentForm;
+    if (!s.parentName.trim()) this.errors['parentName'] = 'Parent name is required';
+    if (!s.relationship) this.errors['relationship'] = 'Relationship is required';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.parentEmail))
+      this.errors['parentEmail'] = 'Valid parent email is required';
+    if (!s.parentPhone.trim()) this.errors['parentPhone'] = 'Parent phone is required';
+    return Object.keys(this.errors).length === 0;
+  }
+
+  /** Student Step 4 */
+  validateStudentStep4(): boolean {
     if (!this.selectedCourse) {
       this.errors['course'] = 'Please select a course';
       return false;
@@ -211,29 +301,41 @@ export class RegistrationComponent implements OnInit {
     return true;
   }
 
-  validateStep3(): boolean {
-    this.errors = {};
-    if (!this.txnRef.trim())
-      this.errors['txnRef'] = 'Transaction reference is required';
-    return Object.keys(this.errors).length === 0;
-  }
+  // ═══════════════════════════════════════════════════
+  //                   NAVIGATION
+  // ═══════════════════════════════════════════════════
 
-  resetErrors() {
-    this.errors = {};
-  }
-
-  // ── Navigation ──
   async nextStep() {
+    if (this.selectedRole === 'teacher') {
+      await this.teacherNext();
+    } else {
+      await this.studentNext();
+    }
+  }
+
+  private async teacherNext() {
     if (this.currentStep === 1) {
       if (!this.validateStep1()) return;
-      if (this.selectedRole === 'teacher') {
-        await this.submitTeacher();
-        return;
-      }
       this.currentStep = 2;
     } else if (this.currentStep === 2) {
-      if (!this.validateStep2()) return;
+      if (!this.validateTeacherStep2()) return;
       this.currentStep = 3;
+    }
+  }
+
+  private async studentNext() {
+    if (this.currentStep === 1) {
+      if (!this.validateStep1()) return;
+      this.currentStep = 2;
+    } else if (this.currentStep === 2) {
+      if (!this.validateStudentStep2()) return;
+      this.currentStep = 3;
+    } else if (this.currentStep === 3) {
+      if (!this.validateStudentStep3()) return;
+      this.currentStep = 4;
+    } else if (this.currentStep === 4) {
+      if (!this.validateStudentStep4()) return;
+      this.currentStep = 5;
     }
   }
 
@@ -241,13 +343,19 @@ export class RegistrationComponent implements OnInit {
     if (this.currentStep > 1) this.currentStep--;
   }
 
-  // ── Submit Teacher ──
+  // ═══════════════════════════════════════════════════
+  //               TEACHER SUBMIT
+  // ═══════════════════════════════════════════════════
+
   async submitTeacher() {
+    if (!this.validateTeacherStep3()) return;
+
     this.loading = true;
     this.loaderMsg = 'Creating your account...';
     try {
+      const payload = this.buildTeacherPayload();
       const user: any = await this.http
-        .post(`${this.API}/users`, this.buildUserPayload())
+        .post(`${this.API}/auth/teacher/register`, payload)
         .toPromise();
       this.loading = false;
       this.triggerSuccess('teacher', user);
@@ -257,54 +365,81 @@ export class RegistrationComponent implements OnInit {
     }
   }
 
-  // ── Submit Student via Razorpay ──
+  private buildTeacherPayload() {
+    const t = this.teacherForm;
+    return {
+      register: {
+        firstName: this.form.firstName.trim(),
+        lastName: this.form.lastName.trim(),
+        email: this.form.email.trim(),
+        password: this.form.password,
+        phone: this.form.phone.trim(),
+      },
+      fullName: t.fullName.trim(),
+      qualification: t.qualification.trim(),
+      major: t.major.trim(),
+      experience: Number(t.experience),
+      address: t.address.trim(),
+      whatsAppNumber: t.whatsAppNumber.trim(),
+      hasHighSpeedInternet: t.hasHighSpeedInternet,
+      readyForEarlyMorning: t.readyForEarlyMorning,
+      workingType: t.workingType,
+      resumeUrl: t.resumeUrl.trim(),
+      identityProofUrl: t.identityProofUrl.trim(),
+      degreeCertificateUrl: t.degreeCertificateUrl.trim(),
+    };
+  }
+
+  // ═══════════════════════════════════════════════════
+  //               STUDENT SUBMIT + RAZORPAY
+  // ═══════════════════════════════════════════════════
+
   async submitStudent() {
     this.loading = true;
     this.loaderMsg = 'Creating your account...';
 
     try {
-      // Step 1: Create user
+      // Step 1: Register student
+      const payload = this.buildStudentPayload();
       const user: any = await this.http
-        .post(`${this.API}/users`, this.buildUserPayload())
+        .post(`${this.API}/auth/student/register`, payload)
         .toPromise();
       const userId = user?.id || user?.data?.id;
 
-      this.loaderMsg = 'Setting up pricing plan...';
-
-      // Step 2: Create pricing plan
-      const c = this.selectedCourse!;
-      const plan: any = await this.http
-        .post(`${this.API}/pricingplan`, {
-          courseId: c.id,
-          batchId: this.selectedBatch?.id || '',
-          name: `${c.title} - ${this.paymentType === 1 ? 'Full Payment' : 'Installment'}`,
-          totalAmount: this.netAmount,
-          isPartialAllowed: this.paymentType === 2,
-          installmentCount:
-            this.paymentType === 2 ? c.installmentCount || null : null,
-          discountAmount: c.discountAmount || null,
-          durationInMonths: c.durationInMonths || null,
-        })
-        .toPromise();
-      const pricingPlanId = plan?.id || plan?.data?.id;
-
       this.loaderMsg = 'Creating subscription...';
 
-      // Step 3: Create subscription
+      // Step 2: Create subscription directly with courseId
+      // const sub: any = await this.http
+      //   .post(`${this.API}/subscription`, {
+      //     userId,
+      //     courseId: this.selectedCourse!.id,
+      //     ...(this.selectedBatch?.id ? { batchId: this.selectedBatch.id } : {}),
+      //     paymentType: this.paymentType,
+      //   })
+      //   .toPromise();
+      // const subscriptionId = sub?.id || sub?.data?.id;
+      const subscriptionPayload: any = {
+        userId,
+        courseId: this.selectedCourse!.id,
+        paymentType: this.paymentType,
+      };
+
+      if (this.selectedBatch?.id) {
+        subscriptionPayload['batchId'] = this.selectedBatch.id;
+      }
+
+      console.log('Subscription payload:', subscriptionPayload);
+
       const sub: any = await this.http
-        .post(`${this.API}/subscription`, {
-          userId,
-          pricingPlanId,
-          paymentType: this.paymentType,
-        })
+        .post(`${this.API}/subscription`, subscriptionPayload)
         .toPromise();
       const subscriptionId = sub?.id || sub?.data?.id;
 
       this.loading = false;
 
-      // Step 4: Open Razorpay
+      // Step 3: Open Razorpay
       const payAmount =
-        this.paymentType === 2 && c.installmentCount
+        this.paymentType === 2 && this.selectedCourse!.installmentCount
           ? this.installmentAmount
           : this.netAmount;
 
@@ -315,6 +450,31 @@ export class RegistrationComponent implements OnInit {
     }
   }
 
+  private buildStudentPayload() {
+    const s = this.studentForm;
+    return {
+      register: {
+        firstName: this.form.firstName.trim(),
+        lastName: this.form.lastName.trim(),
+        email: this.form.email.trim(),
+        password: this.form.password,
+        phone: this.form.phone.trim(),
+      },
+      dateOfBirth: s.dateOfBirth ? new Date(s.dateOfBirth).toISOString() : null,
+      gender: s.gender,
+      address: s.address.trim(),
+      currentGrade: s.currentGrade.trim(),
+      previousSchool: s.previousSchool?.trim() || null,
+      parentName: s.parentName.trim(),
+      relationship: s.relationship,
+      parentEmail: s.parentEmail.trim(),
+      parentPhone: s.parentPhone.trim(),
+      favoriteSubjects: s.favoriteSubjects,
+      hobbies: s.hobbies.trim(),
+      learningGoals: s.learningGoals.trim(),
+    };
+  }
+
   openRazorpay(
     amount: number,
     subscriptionId: string,
@@ -322,10 +482,10 @@ export class RegistrationComponent implements OnInit {
     user: any,
   ) {
     const options = {
-      key: 'rzp_test_YourKeyHere', // ← Replace with your Razorpay Key ID
-      amount: amount * 100, // Razorpay expects paise
+      key: 'rzp_test_YourKeyHere',
+      amount: amount * 100,
       currency: 'INR',
-      name: 'EduLanz',
+      name: 'B2P Teachers',
       description: this.selectedCourse?.title || 'Course Subscription',
       image: 'https://edulanz.com/logo.png',
       prefill: {
@@ -335,7 +495,6 @@ export class RegistrationComponent implements OnInit {
       },
       theme: { color: '#2563eb' },
       handler: async (response: any) => {
-        // Razorpay payment success
         await this.recordPayment(
           subscriptionId,
           amount,
@@ -382,24 +541,10 @@ export class RegistrationComponent implements OnInit {
   }
 
   // ── Helpers ──
-  buildUserPayload() {
-    return {
-      username: this.form.username.trim(),
-      firstName: this.form.firstName.trim(),
-      lastName: this.form.lastName.trim(),
-      email: this.form.email.trim(),
-      phone: this.form.phone.trim(),
-      password: this.form.password,
-      roleId: this.roleId,
-    };
-  }
 
   triggerSuccess(role: string, user: any, extra: any = {}) {
     this.showSuccess = true;
     this.successData = { role, user, extra, course: this.selectedCourse };
-    for (let i = 1; i <= this.totalSteps; i++) {
-      // stepper all done
-    }
     this.toast('Registration successful! 🎉', 'success');
   }
 
@@ -408,15 +553,20 @@ export class RegistrationComponent implements OnInit {
     this.currentStep = 1;
     this.showSuccess = false;
     this.successData = null;
-    this.form = {
-      firstName: '',
-      lastName: '',
-      username: '',
-      phone: '',
-      email: '',
-      password: '',
+    this.form = { firstName: '', lastName: '', username: '', phone: '', email: '', password: '' };
+    this.teacherForm = {
+      fullName: '', qualification: '', major: '', experience: 0,
+      address: '', whatsAppNumber: '', hasHighSpeedInternet: false,
+      readyForEarlyMorning: false, workingType: '', resumeUrl: '',
+      identityProofUrl: '', degreeCertificateUrl: '',
     };
-    this.txnRef = '';
+    this.studentForm = {
+      dateOfBirth: null, gender: '', address: '', currentGrade: '',
+      previousSchool: null, parentName: '', relationship: '',
+      parentEmail: '', parentPhone: '', favoriteSubjects: [],
+      hobbies: '', learningGoals: '',
+    };
+    this.subjectInput = '';
     this.selectedCourse = null;
     this.selectedBatch = null;
     this.paymentType = 1;
