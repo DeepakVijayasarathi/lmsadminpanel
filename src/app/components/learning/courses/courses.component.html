@@ -87,7 +87,9 @@
           <tr>
             <th>#</th>
             <th>Course</th>
+            <th>Category / Level</th>
             <th>Duration</th>
+            <th>Pricing</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -118,13 +120,70 @@
               </div>
             </td>
 
+            <!-- Category / Level -->
             <td>
-              <span class="duration-chip" *ngIf="course.durationHours">
-                <i class="fa-solid fa-clock"></i> {{ course.durationHours }} hrs
-              </span>
-              <span class="no-val" *ngIf="!course.durationHours">—</span>
+              <div class="meta-stack">
+                <span
+                  class="meta-chip meta-chip--indigo"
+                  *ngIf="course.category"
+                >
+                  <i class="fa-solid fa-tag"></i> {{ course.category }}
+                </span>
+                <span class="meta-chip meta-chip--slate" *ngIf="course.level">
+                  <i class="fa-solid fa-signal"></i> {{ course.level }}
+                </span>
+                <span class="no-val" *ngIf="!course.category && !course.level"
+                  >—</span
+                >
+              </div>
             </td>
 
+            <!-- Duration -->
+            <td>
+              <div class="meta-stack">
+                <span class="duration-chip" *ngIf="course.durationHours">
+                  <i class="fa-solid fa-clock"></i>
+                  {{ course.durationHours }} hrs
+                </span>
+                <span
+                  class="duration-chip duration-chip--months"
+                  *ngIf="course.durationInMonths"
+                >
+                  <i class="fa-solid fa-calendar-days"></i>
+                  {{ course.durationInMonths }} mo
+                </span>
+                <span
+                  class="no-val"
+                  *ngIf="!course.durationHours && !course.durationInMonths"
+                  >—</span
+                >
+              </div>
+            </td>
+
+            <!-- Pricing -->
+            <td>
+              <div class="price-cell">
+                <span class="price-amount">{{
+                  formatCurrency(course.totalAmount)
+                }}</span>
+                <span class="price-discount" *ngIf="course.discountAmount">
+                  -{{ formatCurrency(course.discountAmount) }}
+                </span>
+                <span
+                  class="meta-chip meta-chip--emerald"
+                  *ngIf="course.isPartialAllowed"
+                >
+                  <i class="fa-solid fa-layer-group"></i>
+                  {{
+                    course.installmentCount
+                      ? course.installmentCount + " EMI"
+                      : "EMI"
+                  }}
+                </span>
+              </div>
+            </td>
+
+            <!-- Status -->
             <td>
               <span [class]="getStatusBadge(course)">
                 <i
@@ -137,6 +196,7 @@
               </span>
             </td>
 
+            <!-- Actions -->
             <td>
               <div class="action-group">
                 <button
@@ -177,7 +237,7 @@
           </tr>
 
           <tr *ngIf="filteredCourses.length === 0">
-            <td colspan="5" class="pg-empty">
+            <td colspan="7" class="pg-empty">
               <i class="fa-solid fa-book-open pg-empty__icon"></i>
               No courses found.
             </td>
@@ -194,7 +254,10 @@
 <div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
 
 <!-- ─── Create / Edit Modal ─────────────────────────── -->
-<div class="modal" *ngIf="modalMode === 'create' || modalMode === 'edit'">
+<div
+  class="modal modal--lg"
+  *ngIf="modalMode === 'create' || modalMode === 'edit'"
+>
   <div class="modal__header">
     <h3>
       <i
@@ -210,6 +273,11 @@
   </div>
 
   <div class="modal__body">
+    <!-- Section: Basic Info -->
+    <div class="form-section-title">
+      <i class="fa-solid fa-circle-info"></i> Basic Information
+    </div>
+
     <!-- Thumbnail preview -->
     <div class="thumb-preview-row" *ngIf="formThumbnailUrl">
       <div class="thumb-preview">
@@ -260,33 +328,147 @@
     </div>
 
     <div class="form-grid">
-      <!-- Duration Hours (edit only) -->
-      <div class="form-group" *ngIf="modalMode === 'edit'">
+      <!-- Category -->
+      <div class="form-group">
+        <label>Category</label>
+        <select class="form-control" [(ngModel)]="formCategory">
+          <option value="">Select category...</option>
+          <option *ngFor="let cat of CATEGORIES" [value]="cat">
+            {{ cat }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Level -->
+      <div class="form-group">
+        <label>Level</label>
+        <select class="form-control" [(ngModel)]="formLevel">
+          <option value="">Select level...</option>
+          <option *ngFor="let lvl of LEVELS" [value]="lvl">{{ lvl }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Section: Duration -->
+    <div class="form-section-title">
+      <i class="fa-solid fa-clock"></i> Duration
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
         <label>Duration (hours)</label>
         <input
           type="number"
           class="form-control"
           min="1"
+          placeholder="e.g. 40"
           [(ngModel)]="formDurationHours"
         />
       </div>
-
-      <!-- Published toggle (edit only) -->
-      <div class="form-group" *ngIf="modalMode === 'edit'">
-        <label class="toggle-label">
-          <span>Published</span>
-          <div
-            class="toggle-switch"
-            [class.on]="formIsPublished"
-            (click)="formIsPublished = !formIsPublished"
-          >
-            <div class="toggle-thumb"></div>
-          </div>
-          <span class="toggle-val">{{
-            formIsPublished ? "Published" : "Unpublished"
-          }}</span>
-        </label>
+      <div class="form-group">
+        <label>Duration (months)</label>
+        <input
+          type="number"
+          class="form-control"
+          min="1"
+          placeholder="e.g. 3"
+          [(ngModel)]="formDurationInMonths"
+        />
       </div>
+    </div>
+
+    <!-- Section: Pricing -->
+    <div class="form-section-title">
+      <i class="fa-solid fa-indian-rupee-sign"></i> Pricing
+    </div>
+
+    <div class="form-grid">
+      <!-- Total Amount -->
+      <div class="form-group" [class.has-error]="totalAmountError">
+        <label>Total Amount <span class="required">*</span></label>
+        <div class="input-prefix-wrap">
+          <span class="input-prefix">₹</span>
+          <input
+            type="number"
+            class="form-control form-control--prefixed"
+            min="0"
+            placeholder="0"
+            [(ngModel)]="formTotalAmount"
+            (input)="totalAmountError = ''"
+          />
+        </div>
+        <div class="field-error" *ngIf="totalAmountError">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ totalAmountError }}
+        </div>
+      </div>
+
+      <!-- Discount Amount -->
+      <div class="form-group">
+        <label>Discount Amount <span class="hint">(optional)</span></label>
+        <div class="input-prefix-wrap">
+          <span class="input-prefix">₹</span>
+          <input
+            type="number"
+            class="form-control form-control--prefixed"
+            min="0"
+            placeholder="0"
+            [(ngModel)]="formDiscountAmount"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Partial Payment Toggle -->
+    <div class="form-group">
+      <label class="toggle-label">
+        <span>Allow Partial Payment (EMI)</span>
+        <div
+          class="toggle-switch"
+          [class.on]="formIsPartialAllowed"
+          (click)="
+            formIsPartialAllowed = !formIsPartialAllowed;
+            formInstallmentCount = null
+          "
+        >
+          <div class="toggle-thumb"></div>
+        </div>
+        <span class="toggle-val">{{
+          formIsPartialAllowed ? "Enabled" : "Disabled"
+        }}</span>
+      </label>
+    </div>
+
+    <!-- Installment Count (shown only when partial is allowed) -->
+    <div class="form-group" *ngIf="formIsPartialAllowed">
+      <label>Number of Installments <span class="hint">(optional)</span></label>
+      <input
+        type="number"
+        class="form-control"
+        min="2"
+        max="24"
+        placeholder="e.g. 3"
+        [(ngModel)]="formInstallmentCount"
+      />
+    </div>
+
+    <!-- Published toggle (edit only) -->
+    <div class="form-group" *ngIf="modalMode === 'edit'">
+      <div class="form-section-title">
+        <i class="fa-solid fa-globe"></i> Visibility
+      </div>
+      <label class="toggle-label">
+        <span>Published</span>
+        <div
+          class="toggle-switch"
+          [class.on]="formIsPublished"
+          (click)="formIsPublished = !formIsPublished"
+        >
+          <div class="toggle-thumb"></div>
+        </div>
+        <span class="toggle-val">{{
+          formIsPublished ? "Published" : "Unpublished"
+        }}</span>
+      </label>
     </div>
   </div>
 
@@ -325,6 +507,17 @@
       </div>
       <div>
         <div class="view-showcase__title">{{ selectedCourse.title }}</div>
+        <div class="view-showcase__meta">
+          <span
+            class="meta-chip meta-chip--indigo"
+            *ngIf="selectedCourse.category"
+          >
+            <i class="fa-solid fa-tag"></i> {{ selectedCourse.category }}
+          </span>
+          <span class="meta-chip meta-chip--slate" *ngIf="selectedCourse.level">
+            <i class="fa-solid fa-signal"></i> {{ selectedCourse.level }}
+          </span>
+        </div>
         <span [class]="getStatusBadge(selectedCourse)">
           <i
             class="fa-solid"
@@ -339,13 +532,51 @@
 
     <div class="view-detail-grid">
       <div class="view-detail-item">
-        <div class="view-detail-label">Duration</div>
+        <div class="view-detail-label">Duration (hrs)</div>
         <div class="view-detail-val">
           {{
             selectedCourse.durationHours
               ? selectedCourse.durationHours + " hrs"
               : "—"
           }}
+        </div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Duration (months)</div>
+        <div class="view-detail-val">
+          {{
+            selectedCourse.durationInMonths
+              ? selectedCourse.durationInMonths + " mo"
+              : "—"
+          }}
+        </div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Total Amount</div>
+        <div class="view-detail-val">
+          {{ formatCurrency(selectedCourse.totalAmount) }}
+        </div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Discount</div>
+        <div class="view-detail-val">
+          {{
+            selectedCourse.discountAmount
+              ? formatCurrency(selectedCourse.discountAmount)
+              : "—"
+          }}
+        </div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">EMI / Partial</div>
+        <div class="view-detail-val">
+          <span *ngIf="selectedCourse.isPartialAllowed">
+            Enabled
+            <span *ngIf="selectedCourse.installmentCount">
+              · {{ selectedCourse.installmentCount }} installments</span
+            >
+          </span>
+          <span *ngIf="!selectedCourse.isPartialAllowed">Not allowed</span>
         </div>
       </div>
       <div class="view-detail-item">

@@ -153,8 +153,8 @@
 
             <td class="date-cell">
               {{
-                notif.createdAt
-                  ? (notif.createdAt | date: "dd MMM, HH:mm")
+                notif.sentAt
+                  ? (notif.sentAt | date: "dd MMM, HH:mm")
                   : "—"
               }}
             </td>
@@ -359,8 +359,8 @@
         <div class="view-detail-label">Sent At</div>
         <div class="view-detail-val">
           {{
-            selectedNotif.createdAt
-              ? (selectedNotif.createdAt | date: "dd MMM yyyy, HH:mm")
+            selectedNotif.sentAt
+              ? (selectedNotif.sentAt | date: "dd MMM yyyy, HH:mm")
               : "—"
           }}
         </div>

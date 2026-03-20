@@ -574,3 +574,106 @@
 .pg-btn--warn:hover {
   background: #d97706;
 }
+
+/* ── Add these to courses.component.css ─────────────────────── */
+
+/* Wider modal for the create/edit form */
+.modal--lg {
+  width: min(720px, 95vw);
+}
+
+/* Form section dividers */
+.form-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-primary, #6366f1);
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  padding-bottom: 6px;
+  margin: 18px 0 12px;
+}
+.form-section-title:first-of-type {
+  margin-top: 0;
+}
+
+/* Prefixed input (₹ symbol) */
+.input-prefix-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input-prefix {
+  position: absolute;
+  left: 10px;
+  font-size: 0.9rem;
+  color: var(--color-muted, #6b7280);
+  pointer-events: none;
+  z-index: 1;
+}
+.form-control--prefixed {
+  padding-left: 28px !important;
+}
+
+/* Meta chips in table */
+.meta-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+.meta-chip--indigo {
+  background: #eef2ff;
+  color: #4338ca;
+}
+.meta-chip--slate {
+  background: #f1f5f9;
+  color: #475569;
+}
+.meta-chip--emerald {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* Duration chip variant for months */
+.duration-chip--months {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Price cell */
+.price-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.price-amount {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-text, #111827);
+}
+.price-discount {
+  font-size: 0.75rem;
+  color: #10b981;
+  font-weight: 600;
+}
+
+/* View modal meta row */
+.view-showcase__meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 6px 0 8px;
+}

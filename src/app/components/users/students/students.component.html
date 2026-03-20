@@ -142,6 +142,7 @@
                   class="pg-action-btn pg-action-btn--warn"
                   title="Block"
                   (click)="openBlockModal(user)"
+                  *ngIf="user.isActive"
                 >
                   <i class="fas fa-ban"></i>
                 </button>
