@@ -636,8 +636,8 @@
         <p class="success-sub">
           {{
             successData.role === "teacher"
-              ? "Your teacher account has been created. Start creating and managing courses."
-              : "Your payment was successful. You are now subscribed to " + successData.course?.title + "."
+              ? "Your teacher account has been created. Redirecting to login..."
+              : "You are now enrolled in " + successData.course?.title + ". Redirecting to login..."
           }}
         </p>
 
@@ -659,9 +659,15 @@
               <span class="sd-key">Course</span>
               <span class="sd-val">{{ successData.course?.title }}</span>
             </div>
-            <div class="sd-row">
+            <!-- <div class="sd-row">
               <span class="sd-key">Amount Paid</span>
               <span class="sd-val success-green">{{ formatCurrency(successData.extra?.amount) }}</span>
+            </div> -->
+            <div class="sd-row">
+              <span class="sd-key">Amount Paid</span>
+              <span class="sd-val success-green">
+                {{ (successData.extra?.amount || 0) === 0 ? 'Free' : formatCurrency(successData.extra?.amount) }}
+              </span>
             </div>
             <div class="sd-row" *ngIf="successData.extra?.subscriptionId">
               <span class="sd-key">Subscription ID</span>
@@ -674,8 +680,14 @@
           </ng-container>
         </div>
 
-        <button class="btn btn-primary" (click)="resetForm()" style="margin-top: 24px; width: 100%">
+        <!-- <button class="btn btn-primary" (click)="resetForm()" style="margin-top: 24px; width: 100%">
           Register Another Account →
+        </button> -->
+        <p style="text-align:center; color: var(--text-muted); font-size:13px; margin-top:16px;">
+          Redirecting to login in a few seconds...
+        </p>
+        <button class="btn btn-primary" (click)="goToLogin()" style="margin-top: 12px; width: 100%">
+          Go to Login →
         </button>
       </div>
 

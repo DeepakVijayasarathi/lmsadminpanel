@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { Router } from '@angular/router';
 
 declare var Razorpay: any;
 
@@ -109,7 +110,7 @@ export class RegistrationComponent implements OnInit {
   readonly teacherStepLabels = ['Account', 'Professional', 'Documents'];
   readonly studentStepLabels = ['Account', 'Profile', 'Parent Info', 'Course', 'Payment'];
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit(): void {}
 
@@ -352,6 +353,7 @@ export class RegistrationComponent implements OnInit {
       register: {
         firstName: this.form.firstName.trim(),
         lastName: this.form.lastName.trim(),
+        userName: this.form.username.trim(),
         email: this.form.email.trim(),
         password: this.form.password,
         phone: this.form.phone.trim(),
@@ -385,7 +387,7 @@ export class RegistrationComponent implements OnInit {
       const user: any = await this.http
         .post(`${this.API}/auth/student/register`, payload)
         .toPromise();
-      const userId = user?.id || user?.data?.id;
+      const userId = user?.data?.userId || user?.userId;
 
       this.loaderMsg = 'Creating subscription...';
 
@@ -402,13 +404,27 @@ export class RegistrationComponent implements OnInit {
 
       this.loading = false;
 
-      // Step 3: Open Razorpay
-      const payAmount =
-        this.paymentType === 2 && this.selectedCourse!.installmentCount
-          ? this.installmentAmount
-          : this.netAmount;
+      const isFree = (this.selectedCourse!.price || 0) === 0;
 
-      this.openRazorpay(payAmount, subscriptionId, userId, user);
+      if (isFree) {
+        // Free course — call /subscription/pay directly with amount 0
+        await this.recordPayment(subscriptionId, 0, 'FREE', user);
+      } else {
+        // Paid course — open Razorpay
+        const payAmount =
+          this.paymentType === 2 && this.selectedCourse!.installmentCount
+            ? this.installmentAmount
+            : this.netAmount;
+        this.openRazorpay(payAmount, subscriptionId, userId, user);
+      }
+
+      // Step 3: Open Razorpay
+      // const payAmount =
+      //   this.paymentType === 2 && this.selectedCourse!.installmentCount
+      //     ? this.installmentAmount
+      //     : this.netAmount;
+
+      // this.openRazorpay(payAmount, subscriptionId, userId, user);
     } catch (e: any) {
       this.loading = false;
       this.toast(e?.error?.message || e?.message || 'Something went wrong');
@@ -421,6 +437,7 @@ export class RegistrationComponent implements OnInit {
       register: {
         firstName: this.form.firstName.trim(),
         lastName: this.form.lastName.trim(),
+        userName: this.form.username.trim(),
         email: this.form.email.trim(),
         password: this.form.password,
         phone: this.form.phone.trim(),
@@ -446,15 +463,19 @@ export class RegistrationComponent implements OnInit {
     userId: string,
     user: any,
   ) {
+    if (typeof Razorpay === 'undefined') {
+      this.toast('Payment gateway not loaded. Please refresh and try again.');
+      return;
+    }
+
     const options = {
-      key: 'rzp_test_YourKeyHere',
-      amount: amount * 100,
+      key: environment.razorpayKey,
+      amount: Math.round(amount * 100), // paise, must be integer
       currency: 'INR',
       name: 'B2P Teachers',
       description: this.selectedCourse?.title || 'Course Subscription',
-      image: 'https://edulanz.com/logo.png',
       prefill: {
-        name: `${this.form.firstName} ${this.form.lastName}`,
+        name: `${this.form.firstName} ${this.form.lastName}`.trim(),
         email: this.form.email,
         contact: this.form.phone,
       },
@@ -481,12 +502,7 @@ export class RegistrationComponent implements OnInit {
     rzp.open();
   }
 
-  async recordPayment(
-    subscriptionId: string,
-    amount: number,
-    txnRef: string,
-    user: any,
-  ) {
+  async recordPayment(subscriptionId: string, amount: number, txnRef: string, user: any,) {
     this.loading = true;
     this.loaderMsg = 'Recording payment...';
     try {
@@ -507,10 +523,19 @@ export class RegistrationComponent implements OnInit {
 
   // ── Helpers ──
 
+  // triggerSuccess(role: string, user: any, extra: any = {}) {
+  //   this.showSuccess = true;
+  //   this.successData = { role, user, extra, course: this.selectedCourse };
+  //   this.toast('Registration successful! 🎉', 'success');
+  // }
   triggerSuccess(role: string, user: any, extra: any = {}) {
     this.showSuccess = true;
     this.successData = { role, user, extra, course: this.selectedCourse };
     this.toast('Registration successful! 🎉', 'success');
+
+    setTimeout(() => {
+      this.router.navigate(['/login']);
+    }, 2500); // 2.5s so user sees the success screen briefly
   }
 
   resetForm() {
@@ -560,5 +585,9 @@ export class RegistrationComponent implements OnInit {
     if (i < this.currentStep) return 'done';
     if (i === this.currentStep) return 'active';
     return 'pending';
+  }
+
+  goToLogin() {
+    this.router.navigate(['/login']);
   }
 }
