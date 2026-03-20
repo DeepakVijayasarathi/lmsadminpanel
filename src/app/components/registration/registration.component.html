@@ -148,9 +148,32 @@
               <input type="text" [(ngModel)]="form.lastName" placeholder="Doe" [class.invalid]="errors['lastName']" />
               <span class="err" *ngIf="errors['lastName']">{{ errors["lastName"] }}</span>
             </div>
-            <div class="field">
+            <!-- <div class="field">
               <label>Username <span class="req">*</span></label>
               <input type="text" [(ngModel)]="form.username" placeholder="johndoe123" [class.invalid]="errors['username']" />
+              <span class="err" *ngIf="errors['username']">{{ errors["username"] }}</span>
+            </div> -->
+            <div class="field">
+              <label>Username <span class="req">*</span></label>
+              <input
+                type="text"
+                [(ngModel)]="form.username"
+                placeholder="johndoe123"
+                [class.invalid]="errors['username']"
+                [class.input-available]="usernameStatus === 'available'"
+                [class.input-taken]="usernameStatus === 'taken'"
+                (input)="onUsernameInput()"
+              />
+              <!-- Status indicators -->
+              <span class="username-status checking" *ngIf="usernameStatus === 'checking'">
+                <span class="status-spinner"></span> Checking...
+              </span>
+              <span class="username-status available" *ngIf="usernameStatus === 'available'">
+                ✓ Username available
+              </span>
+              <span class="username-status taken" *ngIf="usernameStatus === 'taken'">
+                ✗ Username already taken
+              </span>
               <span class="err" *ngIf="errors['username']">{{ errors["username"] }}</span>
             </div>
             <div class="field">
@@ -329,9 +352,32 @@
               <input type="text" [(ngModel)]="form.lastName" placeholder="Doe" [class.invalid]="errors['lastName']" />
               <span class="err" *ngIf="errors['lastName']">{{ errors["lastName"] }}</span>
             </div>
-            <div class="field">
+            <!-- <div class="field">
               <label>Username <span class="req">*</span></label>
               <input type="text" [(ngModel)]="form.username" placeholder="johndoe123" [class.invalid]="errors['username']" />
+              <span class="err" *ngIf="errors['username']">{{ errors["username"] }}</span>
+            </div> -->
+            <div class="field">
+              <label>Username <span class="req">*</span></label>
+              <input
+                type="text"
+                [(ngModel)]="form.username"
+                placeholder="johndoe123"
+                [class.invalid]="errors['username']"
+                [class.input-available]="usernameStatus === 'available'"
+                [class.input-taken]="usernameStatus === 'taken'"
+                (input)="onUsernameInput()"
+              />
+              <!-- Status indicators -->
+              <span class="username-status checking" *ngIf="usernameStatus === 'checking'">
+                <span class="status-spinner"></span> Checking...
+              </span>
+              <span class="username-status available" *ngIf="usernameStatus === 'available'">
+                ✓ Username available
+              </span>
+              <span class="username-status taken" *ngIf="usernameStatus === 'taken'">
+                ✗ Username already taken
+              </span>
               <span class="err" *ngIf="errors['username']">{{ errors["username"] }}</span>
             </div>
             <div class="field">

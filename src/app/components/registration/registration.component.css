@@ -1101,3 +1101,37 @@
     width: 20px;
   }
 }
+
+/* Username availability status */
+.username-status {
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.username-status.checking { color: var(--text-muted); }
+.username-status.available { color: var(--success); }
+.username-status.taken     { color: var(--error); }
+
+.input-available {
+  border-color: var(--success) !important;
+  background: var(--success-light) !important;
+}
+
+.input-taken {
+  border-color: var(--error) !important;
+  background: var(--error-light) !important;
+}
+
+.status-spinner {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--border);
+  border-top-color: var(--text-muted);
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.75s linear infinite;
+}
