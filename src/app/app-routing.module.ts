@@ -74,7 +74,7 @@ const routes: Routes = [
   { path: 'announcements', component: AnnouncementsComponent, canActivate: AG },
 
   // Finance
-  { path: 'payments',      component: PaymentsComponent,      canActivate: AG },
+  // { path: 'payments',      component: PaymentsComponent,      canActivate: AG },
   { path: 'subscriptions', component: SubscriptionsComponent, canActivate: AG },
   { path: 'refunds',       component: RefundsComponent,       canActivate: AG },
 

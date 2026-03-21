@@ -1,3 +1,4 @@
+<!-- subscriptions.component.html -->
 <div class="pg">
   <!-- Page Header -->
   <div class="pg-head">
@@ -7,44 +8,56 @@
       </div>
       <div>
         <div class="pg-head__title">Subscriptions</div>
-        <div class="pg-head__sub">Manage student subscriptions</div>
+        <div class="pg-head__sub">View subscription &amp; payment details</div>
       </div>
-    </div>
-    <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
-        <i class="fa-solid fa-plus"></i> Add Subscription
-      </button>
     </div>
   </div>
 
   <!-- Stats -->
   <div class="pg-stats">
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-purple"><i class="fa-solid fa-id-card"></i></div>
+      <div class="pg-stat__icon chip-purple">
+        <i class="fa-solid fa-id-card"></i>
+      </div>
       <div>
-        <div class="pg-stat__val">{{ activeCount }}</div>
-        <div class="pg-stat__lbl">Active Subs</div>
+        <div class="pg-stat__val">{{ subscriptions.length }}</div>
+        <div class="pg-stat__lbl">Total</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-calendar-day"></i></div>
+      <div class="pg-stat__icon chip-emerald">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
       <div>
-        <div class="pg-stat__val">{{ monthlyCount }}</div>
-        <div class="pg-stat__lbl">Monthly</div>
+        <div class="pg-stat__val">{{ completedCount }}</div>
+        <div class="pg-stat__lbl">Completed</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-calendar-check"></i></div>
+      <div class="pg-stat__icon chip-amber">
+        <i class="fa-solid fa-clock"></i>
+      </div>
       <div>
-        <div class="pg-stat__val">{{ annualCount }}</div>
-        <div class="pg-stat__lbl">Annual</div>
+        <div class="pg-stat__val">{{ pendingCount }}</div>
+        <div class="pg-stat__lbl">Pending</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div class="pg-stat__icon chip-indigo">
+        <i class="fa-solid fa-indian-rupee-sign"></i>
+      </div>
       <div>
-        <div class="pg-stat__val">{{ expiringCount }}</div>
-        <div class="pg-stat__lbl">Expiring Soon</div>
+        <div class="pg-stat__val">{{ formatAmount(totalRevenue) }}</div>
+        <div class="pg-stat__lbl">Total Collected</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-rose">
+        <i class="fa-solid fa-hourglass-half"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ formatAmount(totalPending) }}</div>
+        <div class="pg-stat__lbl">Total Pending</div>
       </div>
     </div>
   </div>
@@ -54,65 +67,159 @@
     <div class="pg-card__head">
       <span class="pg-card__title">All Subscriptions</span>
       <div class="pg-toolbar">
-        <div class="pg-search">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" placeholder="Search student..." [(ngModel)]="searchQuery" />
-        </div>
-        <select class="pg-filter" [(ngModel)]="planFilter">
-          <option value="">All Plans</option>
-          <option value="Monthly">Monthly</option>
-          <option value="Quarterly">Quarterly</option>
-          <option value="Annual">Annual</option>
+        <input
+          class="pg-search"
+          type="text"
+          placeholder="Search by student, course..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
+        />
+        <select
+          class="pg-filter"
+          [(ngModel)]="statusFilter"
+          (change)="onStatusFilter()"
+        >
+          <option value="">All Status</option>
+          <option value="completed">Completed</option>
+          <option value="pending">Pending</option>
+          <option value="partial">Partial Payment</option>
+          <option value="overpaid">Overpaid</option>
         </select>
       </div>
     </div>
-    <div class="pg-table-wrap">
+
+    <div class="pg-loading" *ngIf="isLoading">
+      <i class="fa-solid fa-spinner fa-spin"></i> Loading subscriptions...
+    </div>
+
+    <div class="pg-table-wrap" *ngIf="!isLoading">
       <table class="pg-table">
         <thead>
           <tr>
+            <th>#</th>
             <th>Student</th>
-            <th>Plan</th>
-            <th>Amount</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Auto Renew</th>
+            <th>Course</th>
+            <th>Batch</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Pending</th>
+            <th>Progress</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let sub of filteredSubscriptions">
+          <tr *ngFor="let sub of filteredSubscriptions; let i = index">
+            <td class="idx-cell">{{ i + 1 }}</td>
+
             <td>
               <div class="pg-with-avatar">
-                <div class="pg-avatar av-purple">{{ sub.student.charAt(0) }}</div>
-                <div class="pg-cell__primary">{{ sub.student }}</div>
+                <div class="pg-avatar av-purple">
+                  {{ getUserInitial(sub.userId) }}
+                </div>
+                <div>
+                  <div class="pg-cell__primary">{{ sub.userName }}</div>
+                  <div class="pg-cell__sub">
+                    {{ sub.payments.length }} payment{{
+                      sub.payments.length !== 1 ? "s" : ""
+                    }}
+                  </div>
+                </div>
               </div>
             </td>
+
             <td>
-              <span class="pg-badge {{ planBadge(sub.plan) }}">{{ sub.plan }}</span>
+              <div class="pg-cell__primary course-name">
+                {{ sub.courseName }}
+              </div>
             </td>
-            <td><strong style="color:#4f46e5;">{{ formatAmount(sub.amount) }}</strong></td>
-            <td>{{ sub.startDate }}</td>
-            <td>{{ sub.endDate }}</td>
+
             <td>
-              <i *ngIf="sub.autoRenew" class="fa-solid fa-circle-check" style="color:#10b981;font-size:16px;"></i>
-              <i *ngIf="!sub.autoRenew" class="fa-solid fa-circle-xmark" style="color:#d1d5db;font-size:16px;"></i>
+              <span
+                class="pg-badge pg-badge--sky"
+                *ngIf="sub.batchName !== '—'"
+                >{{ sub.batchName }}</span
+              >
+              <span class="no-val" *ngIf="sub.batchName === '—'">—</span>
             </td>
-            <td>
-              <span class="pg-badge {{ statusBadge(sub.status) }}">{{ sub.status | titlecase }}</span>
+
+            <td class="amount-cell">{{ formatAmount(sub.totalAmount) }}</td>
+
+            <td class="amount-cell paid">
+              <i class="fa-solid fa-circle-check paid-icon"></i>
+              {{ formatAmount(sub.paidAmount) }}
             </td>
+
             <td>
-              <div style="display:flex;gap:6px;">
-                <button class="pg-action-btn" title="View" (click)="openViewModal(sub)"><i class="fa-solid fa-eye"></i></button>
-                <button class="pg-action-btn" title="Edit" (click)="openEditModal(sub)" [disabled]="sub.status !== 'active'"><i class="fa-solid fa-pen-to-square"></i></button>
-                <button class="pg-action-btn pg-action-btn--danger" title="Cancel" (click)="openCancelModal(sub)" [disabled]="sub.status !== 'active'"><i class="fa-solid fa-ban"></i></button>
+              <span
+                class="amount-cell"
+                [ngClass]="
+                  sub.pendingAmount < 0
+                    ? 'overpaid'
+                    : sub.pendingAmount === 0
+                      ? 'paid'
+                      : 'pending'
+                "
+              >
+                <span *ngIf="sub.pendingAmount < 0"
+                  >+{{ formatAmount(Math.abs(sub.pendingAmount)) }}</span
+                >
+                <span *ngIf="sub.pendingAmount >= 0">{{
+                  formatAmount(sub.pendingAmount)
+                }}</span>
+              </span>
+            </td>
+
+            <td class="progress-cell">
+              <div class="progress-bar-wrap">
+                <div class="progress-bar">
+                  <div
+                    class="progress-bar__fill"
+                    [style.width.%]="getPaymentProgress(sub)"
+                    [ngClass]="{
+                      'fill--complete': sub.isCompleted,
+                      'fill--partial': !sub.isCompleted && sub.isPartialAllowed,
+                      'fill--pending':
+                        !sub.isCompleted && !sub.isPartialAllowed,
+                    }"
+                  ></div>
+                </div>
+                <span class="progress-pct">{{ getPaymentProgress(sub) }}%</span>
+              </div>
+            </td>
+
+            <td>
+              <span class="pg-badge" [ngClass]="getStatusBadge(sub)">
+                <i
+                  class="fa-solid"
+                  [ngClass]="{
+                    'fa-circle-check': sub.isCompleted,
+                    'fa-circle-half-stroke':
+                      !sub.isCompleted && sub.isPartialAllowed,
+                    'fa-clock': !sub.isCompleted && !sub.isPartialAllowed,
+                  }"
+                ></i>
+                {{ getStatusLabel(sub) }}
+              </span>
+            </td>
+
+            <td>
+              <div class="action-group">
+                <button
+                  class="pg-action-btn"
+                  title="View Details"
+                  (click)="openViewModal(sub)"
+                >
+                  <i class="fa-solid fa-eye"></i>
+                </button>
               </div>
             </td>
           </tr>
+
           <tr *ngIf="filteredSubscriptions.length === 0">
-            <td colspan="8" style="text-align:center;padding:32px;color:#94a3b8;">
-              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
-              No subscriptions found
+            <td colspan="10" class="pg-empty">
+              <i class="fa-solid fa-id-card pg-empty__icon"></i>
+              No subscriptions found.
             </td>
           </tr>
         </tbody>
@@ -121,112 +228,212 @@
   </div>
 </div>
 
-<!-- Modal Overlay -->
+<!-- ═══════════════════════════════════════════════════
+     OVERLAY
+═══════════════════════════════════════════════════ -->
 <div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
 
-<!-- Create / Edit Modal -->
-<div class="modal modal--sm" *ngIf="modalMode === 'create' || modalMode === 'edit'">
+<!-- ─── View Detail Modal ─────────────────────────────── -->
+<div class="modal modal--detail" *ngIf="modalMode === 'view' && selectedSub">
   <div class="modal__header">
-    <h3>
-      <i class="fa-solid fa-{{ modalMode === 'create' ? 'plus-circle' : 'pen-to-square' }}"></i>
-      {{ modalMode === 'create' ? 'Add Subscription' : 'Edit Subscription' }}
-    </h3>
-    <button class="modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-  </div>
-  <div class="modal__body">
-    <div class="form-group" [class.has-error]="formStudentError">
-      <label>Student Name <span class="required">*</span></label>
-      <input type="text" class="form-control" placeholder="e.g. Aarav Singh" [(ngModel)]="formStudent" (input)="formStudentError=''" />
-      <div class="field-error" *ngIf="formStudentError"><i class="fa-solid fa-circle-exclamation"></i> {{ formStudentError }}</div>
-    </div>
-    <div class="form-group">
-      <label>Plan</label>
-      <select class="form-control" [(ngModel)]="formPlan">
-        <option value="Monthly">Monthly — ₹1,499/month</option>
-        <option value="Quarterly">Quarterly — ₹3,999/quarter</option>
-        <option value="Annual">Annual — ₹14,999/year</option>
-      </select>
-    </div>
-    <div class="form-group" [class.has-error]="formStartDateError">
-      <label>Start Date <span class="required">*</span></label>
-      <input type="date" class="form-control" [(ngModel)]="formStartDate" (change)="formStartDateError=''" />
-      <div class="field-error" *ngIf="formStartDateError"><i class="fa-solid fa-circle-exclamation"></i> {{ formStartDateError }}</div>
-    </div>
-    <div class="form-group">
-      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-        <input type="checkbox" [(ngModel)]="formAutoRenew" style="width:16px;height:16px;accent-color:#4f46e5;" />
-        Enable Auto-Renew
-      </label>
-    </div>
-    <div *ngIf="formStartDate" style="background:#f8fafc;border-radius:8px;padding:12px;font-size:13px;color:#64748b;margin-top:4px;">
-      <i class="fa-solid fa-circle-info" style="color:#4f46e5;"></i>
-      Amount: <strong style="color:#4f46e5;">{{ formatAmount(planAmount(formPlan)) }}</strong> &nbsp;·&nbsp;
-      End Date: <strong>{{ calcEndDate(formStartDate, formPlan) }}</strong>
-    </div>
-  </div>
-  <div class="modal__footer">
-    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
-    <button class="pg-btn pg-btn--primary" (click)="submitForm()">
-      <i class="fa-solid fa-{{ modalMode === 'create' ? 'plus' : 'floppy-disk' }}"></i>
-      {{ modalMode === 'create' ? 'Add Subscription' : 'Save Changes' }}
+    <h3><i class="fa-solid fa-id-card"></i> Subscription Details</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
     </button>
   </div>
-</div>
 
-<!-- View Modal -->
-<div class="modal modal--sm" *ngIf="modalMode === 'view' && selectedSub">
-  <div class="modal__header">
-    <h3><i class="fa-solid fa-eye"></i> Subscription Details</h3>
-    <button class="modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-  </div>
   <div class="modal__body">
-    <div class="view-showcase">
-      <div class="view-showcase__icon" style="background:#f5f3ff;color:#7c3aed;">
-        <i class="fa-solid fa-id-card"></i>
+    <!-- Student / Course Showcase -->
+    <div class="sub-showcase">
+      <div class="sub-showcase__left">
+        <div class="pg-avatar pg-avatar--lg av-purple">
+          {{ getUserInitial(selectedSub.userId) }}
+        </div>
+        <div>
+          <div class="sub-showcase__name">{{ selectedSub.userName }}</div>
+          <div class="sub-showcase__course">{{ selectedSub.courseName }}</div>
+          <span
+            class="pg-badge pg-badge--sky"
+            *ngIf="selectedSub.batchName !== '—'"
+          >
+            <i class="fa-solid fa-layer-group"></i> {{ selectedSub.batchName }}
+          </span>
+        </div>
       </div>
-      <div>
-        <div class="view-showcase__title">{{ selectedSub.student }}</div>
-        <div class="view-showcase__sub">{{ selectedSub.plan }} Plan</div>
+      <div class="sub-showcase__right">
+        <span
+          class="pg-badge pg-badge--lg"
+          [ngClass]="getStatusBadge(selectedSub)"
+        >
+          {{ getStatusLabel(selectedSub) }}
+        </span>
       </div>
     </div>
-    <div class="view-detail-block">
-      <div class="view-detail-label">Amount</div>
-      <div class="view-detail-val"><strong style="color:#4f46e5;">{{ formatAmount(selectedSub.amount) }}</strong></div>
+
+    <!-- Financial Summary Cards -->
+    <div class="finance-grid">
+      <div class="finance-card finance-card--total">
+        <div class="finance-card__label">Total Amount</div>
+        <div class="finance-card__val">
+          {{ formatAmount(selectedSub.totalAmount) }}
+        </div>
+      </div>
+      <div class="finance-card finance-card--paid">
+        <div class="finance-card__label">Paid</div>
+        <div class="finance-card__val">
+          {{ formatAmount(selectedSub.paidAmount) }}
+        </div>
+      </div>
+      <div
+        class="finance-card"
+        [ngClass]="
+          selectedSub.pendingAmount < 0
+            ? 'finance-card--overpaid'
+            : 'finance-card--pending'
+        "
+      >
+        <div class="finance-card__label">
+          {{ selectedSub.pendingAmount < 0 ? "Excess Paid" : "Pending" }}
+        </div>
+        <div class="finance-card__val">
+          {{ formatAmount(selectedSub.pendingAmount) }}
+        </div>
+      </div>
     </div>
-    <div class="view-detail-block">
-      <div class="view-detail-label">Period</div>
-      <div class="view-detail-val">{{ selectedSub.startDate }} → {{ selectedSub.endDate }}</div>
+
+    <!-- Progress Bar -->
+    <div class="detail-progress">
+      <div class="detail-progress__bar">
+        <div
+          class="detail-progress__fill"
+          [style.width.%]="getPaymentProgress(selectedSub)"
+          [ngClass]="{
+            'fill--complete': selectedSub.isCompleted,
+            'fill--partial':
+              !selectedSub.isCompleted && selectedSub.isPartialAllowed,
+            'fill--pending':
+              !selectedSub.isCompleted && !selectedSub.isPartialAllowed,
+          }"
+        ></div>
+      </div>
+      <span class="detail-progress__pct"
+        >{{ getPaymentProgress(selectedSub) }}% paid</span
+      >
     </div>
-    <div class="view-detail-block">
-      <div class="view-detail-label">Auto Renew</div>
-      <div class="view-detail-val">{{ selectedSub.autoRenew ? 'Yes' : 'No' }}</div>
+
+    <!-- Meta row -->
+    <div class="meta-row">
+      <div class="meta-item">
+        <div class="meta-label">Start Date</div>
+        <div class="meta-val">{{ formatDate(selectedSub.startDate) }}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">End Date</div>
+        <div class="meta-val">{{ formatDate(selectedSub.endDate) }}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Partial Allowed</div>
+        <div class="meta-val">
+          <i
+            class="fa-solid"
+            [ngClass]="
+              selectedSub.isPartialAllowed
+                ? 'fa-circle-check txt-green'
+                : 'fa-circle-xmark txt-gray'
+            "
+          ></i>
+          {{ selectedSub.isPartialAllowed ? "Yes" : "No" }}
+        </div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Created</div>
+        <div class="meta-val">{{ formatDate(selectedSub.createdAt) }}</div>
+      </div>
     </div>
-    <div class="view-detail-block">
-      <div class="view-detail-label">Status</div>
-      <div class="view-detail-val"><span class="pg-badge {{ statusBadge(selectedSub.status) }}">{{ selectedSub.status | titlecase }}</span></div>
+
+    <!-- Tabs -->
+    <div class="detail-tabs">
+      <button
+        class="detail-tab"
+        [class.detail-tab--active]="activeTab === 'payments'"
+        (click)="activeTab = 'payments'"
+      >
+        <i class="fa-solid fa-receipt"></i>
+        Payments
+        <span class="tab-count">{{ selectedSub.payments.length }}</span>
+      </button>
+      <button
+        class="detail-tab"
+        [class.detail-tab--active]="activeTab === 'installments'"
+        (click)="activeTab = 'installments'"
+      >
+        <i class="fa-solid fa-calendar-days"></i>
+        Installments
+        <span class="tab-count">{{ selectedSub.installments.length }}</span>
+      </button>
+    </div>
+
+    <!-- Payments Tab -->
+    <div *ngIf="activeTab === 'payments'">
+      <div *ngIf="selectedSub.payments.length === 0" class="tab-empty">
+        <i class="fa-solid fa-receipt"></i> No payments recorded.
+      </div>
+      <div class="payment-list" *ngIf="selectedSub.payments.length > 0">
+        <div class="payment-item" *ngFor="let p of selectedSub.payments">
+          <div class="payment-item__left">
+            <div class="payment-icon">
+              <i class="fa-solid fa-indian-rupee-sign"></i>
+            </div>
+            <div>
+              <div class="payment-amount">
+                {{ formatAmount(p.amount) }}
+                <span class="payment-currency">{{ p.currency }}</span>
+              </div>
+              <div class="payment-ref" *ngIf="p.transactionReference">
+                <i class="fa-solid fa-hashtag"></i> {{ p.transactionReference }}
+              </div>
+              <div class="payment-date">{{ formatDateTime(p.paidAt) }}</div>
+            </div>
+          </div>
+          <span class="pg-badge" [ngClass]="getPaymentStatusBadge(p.status)">{{
+            p.status
+          }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Installments Tab -->
+    <div *ngIf="activeTab === 'installments'">
+      <div *ngIf="selectedSub.installments.length === 0" class="tab-empty">
+        <i class="fa-solid fa-calendar-days"></i> No installment schedule.
+      </div>
+      <div class="installment-list" *ngIf="selectedSub.installments.length > 0">
+        <div
+          class="installment-item"
+          *ngFor="let inst of sortedInstallments(selectedSub)"
+          [class.installment-item--paid]="inst.isPaid"
+        >
+          <div class="inst-number">#{{ inst.installmentNumber }}</div>
+          <div class="inst-info">
+            <div class="inst-amount">{{ formatAmount(inst.amount) }}</div>
+            <div class="inst-due">Due: {{ formatDate(inst.dueDate) }}</div>
+          </div>
+          <span
+            class="pg-badge"
+            [ngClass]="inst.isPaid ? 'pg-badge--green' : 'pg-badge--yellow'"
+          >
+            <i
+              class="fa-solid"
+              [ngClass]="inst.isPaid ? 'fa-circle-check' : 'fa-clock'"
+            ></i>
+            {{ inst.isPaid ? "Paid" : "Unpaid" }}
+          </span>
+        </div>
+      </div>
     </div>
   </div>
+
   <div class="modal__footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
-    <button class="pg-btn pg-btn--primary" (click)="openEditModal(selectedSub)" *ngIf="selectedSub.status === 'active'">
-      <i class="fa-solid fa-pen-to-square"></i> Edit
-    </button>
-  </div>
-</div>
-
-<!-- Cancel Confirm Modal -->
-<div class="modal modal--sm" *ngIf="modalMode === 'cancel' && selectedSub">
-  <div class="modal__header modal__header--danger">
-    <h3><i class="fa-solid fa-triangle-exclamation"></i> Cancel Subscription</h3>
-    <button class="modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-  </div>
-  <div class="modal__body modal__body--center">
-    <div class="delete-icon"><i class="fa-solid fa-ban"></i></div>
-    <p class="delete-msg">Cancel <strong>{{ selectedSub.plan }} Plan</strong> for<br /><strong>"{{ selectedSub.student }}"</strong>?</p>
-    <p class="delete-sub">This will immediately deactivate the subscription.</p>
-  </div>
-  <div class="modal__footer">
-    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Keep Active</button>
-    <button class="pg-btn pg-btn--danger" (click)="confirmCancel()"><i class="fa-solid fa-ban"></i> Cancel Subscription</button>
   </div>
 </div>

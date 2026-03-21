@@ -1,154 +1,339 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonService } from '../../../services/common.service';
+import { HttpGeneralService } from '../../../services/http.service';
+import { environment } from '../../../../environments/environment';
 
-export interface Subscription {
-  id: number;
-  student: string;
-  plan: 'Monthly' | 'Quarterly' | 'Annual';
+const BASE_URL = environment.apiUrl;
+
+export interface Payment {
+  id: string;
+  subscriptionName: string | null;
   amount: number;
-  startDate: string;
-  endDate: string;
-  autoRenew: boolean;
-  status: 'active' | 'expired' | 'cancelled';
+  currency: string;
+  transactionReference: string;
+  providerResponseJson: string;
+  status: string;
+  paidAt: string;
+  createdAt: string;
+  updatedAt: string | null;
+  isActive: boolean;
 }
 
-type ModalMode = 'create' | 'edit' | 'view' | 'cancel' | null;
+export interface Installment {
+  id: string;
+  installmentNumber: number;
+  amount: number;
+  dueDate: string;
+  isPaid: boolean;
+  createdAt: string;
+  updatedAt: string | null;
+  isActive: boolean;
+}
+
+export interface SubscriptionDetail {
+  id: string;
+  userId: string;
+  courseId: string;
+  batchId: string | null;
+  totalAmount: number;
+  paidAmount: number;
+  pendingAmount: number;
+  isCompleted: boolean;
+  isPartialAllowed: boolean;
+  startDate: string;
+  endDate: string;
+  payments: Payment[];
+  installments: Installment[];
+  createdAt: string;
+  updatedAt: string | null;
+  isActive: boolean;
+  // Resolved names (from users/courses/batches)
+  userName?: string;
+  courseName?: string;
+  batchName?: string;
+}
+
+export interface UserRef {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+}
+
+export interface CourseRef {
+  id: string;
+  title: string;
+}
+
+export interface BatchRef {
+  id: string;
+  name?: string;
+  batchName?: string;
+}
+
+type ModalMode = 'view' | null;
 
 @Component({
   selector: 'app-subscriptions',
   standalone: false,
   templateUrl: './subscriptions.component.html',
-  styleUrls: ['../../../shared-page.css', './subscriptions.component.css']
+  styleUrls: ['../../../shared-page.css', './subscriptions.component.css'],
 })
-export class SubscriptionsComponent {
-  searchQuery = '';
-  planFilter = '';
+export class SubscriptionsComponent implements OnInit {
+  readonly Math = Math;
+
+  subscriptions: SubscriptionDetail[] = [];
+  filteredSubscriptions: SubscriptionDetail[] = [];
+
+  users: UserRef[] = [];
+  courses: CourseRef[] = [];
+  batches: BatchRef[] = [];
+
+  searchQuery: string = '';
+  statusFilter: string = '';
+  isLoading: boolean = false;
 
   // Modal
   modalMode: ModalMode = null;
-  selectedSub: Subscription | null = null;
+  selectedSub: SubscriptionDetail | null = null;
+  activeTab: 'payments' | 'installments' = 'payments';
 
-  // Form fields
-  formStudent = '';
-  formPlan: 'Monthly' | 'Quarterly' | 'Annual' = 'Monthly';
-  formStartDate = '';
-  formAutoRenew = false;
-  formStudentError = '';
-  formStartDateError = '';
+  constructor(
+    private commonService: CommonService,
+    private httpService: HttpGeneralService<any>,
+  ) {}
 
-  nextId = 7;
+  ngOnInit(): void {
+    this.loadReferenceData();
+  }
 
-  subscriptions: Subscription[] = [
-    { id: 1, student: 'Aarav Singh',   plan: 'Annual',    amount: 14999, startDate: '2026-01-01', endDate: '2026-12-31', autoRenew: true,  status: 'active' },
-    { id: 2, student: 'Priya Sharma',  plan: 'Monthly',   amount: 1499,  startDate: '2026-03-01', endDate: '2026-03-31', autoRenew: false, status: 'active' },
-    { id: 3, student: 'Rahul Verma',   plan: 'Quarterly', amount: 3999,  startDate: '2026-01-01', endDate: '2026-03-31', autoRenew: true,  status: 'active' },
-    { id: 4, student: 'Neha Patel',    plan: 'Monthly',   amount: 1499,  startDate: '2026-02-01', endDate: '2026-02-28', autoRenew: false, status: 'expired' },
-    { id: 5, student: 'Kiran Mehta',   plan: 'Annual',    amount: 14999, startDate: '2025-04-01', endDate: '2026-03-31', autoRenew: true,  status: 'active' },
-    { id: 6, student: 'Saurabh Joshi', plan: 'Quarterly', amount: 3999,  startDate: '2025-10-01', endDate: '2025-12-31', autoRenew: false, status: 'cancelled' },
-  ];
+  // ─── API ─────────────────────────────────────────────────────
 
-  constructor(private commonService: CommonService) {}
+  loadReferenceData(): void {
+    // Load users, courses, batches in parallel then load subscriptions
+    let usersLoaded = false;
+    let coursesLoaded = false;
+    let batchesLoaded = false;
 
-  get filteredSubscriptions(): Subscription[] {
-    const q = this.searchQuery.toLowerCase();
-    return this.subscriptions.filter(s => {
-      const matchSearch = !q || s.student.toLowerCase().includes(q);
-      const matchPlan = !this.planFilter || s.plan === this.planFilter;
-      return matchSearch && matchPlan;
+    const tryLoad = () => {
+      if (usersLoaded && coursesLoaded && batchesLoaded)
+        this.loadSubscriptions();
+    };
+
+    this.httpService.getData(BASE_URL, '/users').subscribe({
+      next: (res: any) => {
+        this.users = Array.isArray(res) ? res : (res?.data ?? []);
+        usersLoaded = true;
+        tryLoad();
+      },
+      error: () => {
+        usersLoaded = true;
+        tryLoad();
+      },
+    });
+
+    this.httpService.getData(BASE_URL, '/courses').subscribe({
+      next: (res: any) => {
+        this.courses = Array.isArray(res) ? res : (res?.data ?? []);
+        coursesLoaded = true;
+        tryLoad();
+      },
+      error: () => {
+        coursesLoaded = true;
+        tryLoad();
+      },
+    });
+
+    this.httpService.getData(BASE_URL, '/batches').subscribe({
+      next: (res: any) => {
+        this.batches = Array.isArray(res) ? res : (res?.data ?? []);
+        batchesLoaded = true;
+        tryLoad();
+      },
+      error: () => {
+        batchesLoaded = true;
+        tryLoad();
+      },
     });
   }
 
-  get activeCount(): number { return this.subscriptions.filter(s => s.status === 'active').length; }
-  get monthlyCount(): number { return this.subscriptions.filter(s => s.plan === 'Monthly').length; }
-  get annualCount(): number { return this.subscriptions.filter(s => s.plan === 'Annual').length; }
-  get expiringCount(): number {
-    const in30 = new Date(); in30.setDate(in30.getDate() + 30);
-    return this.subscriptions.filter(s => s.status === 'active' && new Date(s.endDate) <= in30).length;
+  loadSubscriptions(): void {
+    this.isLoading = true;
+    this.httpService.getData(BASE_URL, '/subscription/details').subscribe({
+      next: (res: any) => {
+        const raw: SubscriptionDetail[] = Array.isArray(res)
+          ? res
+          : (res?.data ?? []);
+        // Enrich with resolved names
+        this.subscriptions = raw.map((s) => ({
+          ...s,
+          userName: this.getUserName(s.userId),
+          courseName: this.getCourseName(s.courseId),
+          batchName: s.batchId ? this.getBatchName(s.batchId) : '—',
+        }));
+        this.applyFilters();
+        this.isLoading = false;
+      },
+      error: () => {
+        this.commonService.error('Failed to load subscriptions.');
+        this.isLoading = false;
+      },
+    });
   }
 
-  planAmount(plan: string): number {
-    return plan === 'Monthly' ? 1499 : plan === 'Quarterly' ? 3999 : 14999;
-  }
+  // ─── Modal ───────────────────────────────────────────────────
 
-  calcEndDate(start: string, plan: string): string {
-    const d = new Date(start);
-    if (plan === 'Monthly') d.setMonth(d.getMonth() + 1);
-    else if (plan === 'Quarterly') d.setMonth(d.getMonth() + 3);
-    else d.setFullYear(d.getFullYear() + 1);
-    d.setDate(d.getDate() - 1);
-    return d.toISOString().split('T')[0];
-  }
-
-  openCreateModal(): void {
-    this.modalMode = 'create';
-    this.selectedSub = null;
-    this.formStudent = ''; this.formPlan = 'Monthly'; this.formStartDate = ''; this.formAutoRenew = false;
-    this.formStudentError = ''; this.formStartDateError = '';
-  }
-
-  openEditModal(sub: Subscription): void {
-    this.modalMode = 'edit';
+  openViewModal(sub: SubscriptionDetail): void {
+    this.modalMode = 'view';
     this.selectedSub = sub;
-    this.formStudent = sub.student; this.formPlan = sub.plan; this.formStartDate = sub.startDate; this.formAutoRenew = sub.autoRenew;
-    this.formStudentError = ''; this.formStartDateError = '';
+    this.activeTab = 'payments';
   }
 
-  openViewModal(sub: Subscription): void { this.modalMode = 'view'; this.selectedSub = sub; }
-  openCancelModal(sub: Subscription): void { this.modalMode = 'cancel'; this.selectedSub = sub; }
-
-  closeModal(): void { this.modalMode = null; this.selectedSub = null; this.formStudentError = ''; this.formStartDateError = ''; }
-
-  validateForm(): boolean {
-    this.formStudentError = ''; this.formStartDateError = '';
-    let valid = true;
-    if (!this.formStudent.trim()) { this.formStudentError = 'Student name is required.'; valid = false; }
-    if (!this.formStartDate) { this.formStartDateError = 'Start date is required.'; valid = false; }
-    return valid;
+  closeModal(): void {
+    this.modalMode = null;
+    this.selectedSub = null;
   }
 
-  submitForm(): void {
-    if (!this.validateForm()) return;
-    const endDate = this.calcEndDate(this.formStartDate, this.formPlan);
-    const amount = this.planAmount(this.formPlan);
-    if (this.modalMode === 'create') {
-      this.subscriptions.push({
-        id: this.nextId++,
-        student: this.formStudent.trim(),
-        plan: this.formPlan,
-        amount,
-        startDate: this.formStartDate,
-        endDate,
-        autoRenew: this.formAutoRenew,
-        status: 'active'
-      });
-      this.commonService.success(`Subscription for "${this.formStudent.trim()}" created.`);
-    } else if (this.modalMode === 'edit' && this.selectedSub) {
-      const idx = this.subscriptions.findIndex(s => s.id === this.selectedSub!.id);
-      if (idx > -1) {
-        this.subscriptions[idx] = { ...this.subscriptions[idx], student: this.formStudent.trim(), plan: this.formPlan, amount, startDate: this.formStartDate, endDate, autoRenew: this.formAutoRenew };
-      }
-      this.commonService.success(`Subscription updated.`);
+  // ─── Filters ─────────────────────────────────────────────────
+
+  onSearch(): void {
+    this.applyFilters();
+  }
+  onStatusFilter(): void {
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    let list = [...this.subscriptions];
+
+    if (this.statusFilter === 'completed') {
+      list = list.filter((s) => s.isCompleted);
+    } else if (this.statusFilter === 'pending') {
+      list = list.filter((s) => !s.isCompleted);
+    } else if (this.statusFilter === 'partial') {
+      list = list.filter((s) => s.isPartialAllowed && !s.isCompleted);
+    } else if (this.statusFilter === 'overpaid') {
+      list = list.filter((s) => s.pendingAmount < 0);
     }
-    this.closeModal();
+
+    const q = this.searchQuery.toLowerCase().trim();
+    if (q) {
+      list = list.filter(
+        (s) =>
+          s.userName?.toLowerCase().includes(q) ||
+          s.courseName?.toLowerCase().includes(q) ||
+          s.batchName?.toLowerCase().includes(q) ||
+          s.id.toLowerCase().includes(q),
+      );
+    }
+    this.filteredSubscriptions = list;
   }
 
-  confirmCancel(): void {
-    if (!this.selectedSub) return;
-    const idx = this.subscriptions.findIndex(s => s.id === this.selectedSub!.id);
-    if (idx > -1) this.subscriptions[idx].status = 'cancelled';
-    this.commonService.warning(`Subscription for "${this.selectedSub.student}" cancelled.`);
-    this.closeModal();
+  // ─── Helpers ─────────────────────────────────────────────────
+
+  getUserName(userId: string): string {
+    const u = this.users.find((u) => u.id === userId);
+    return u
+      ? `${u.firstName} ${u.lastName}`.trim()
+      : userId.substring(0, 8) + '…';
   }
 
-  planBadge(plan: string): string {
-    const map: Record<string, string> = { Monthly: 'pg-badge--blue', Quarterly: 'pg-badge--purple', Annual: 'pg-badge--indigo' };
-    return map[plan] || 'pg-badge--gray';
+  getUserInitial(userId: string): string {
+    const u = this.users.find((u) => u.id === userId);
+    return u ? u.firstName.charAt(0).toUpperCase() : '?';
   }
 
-  statusBadge(status: string): string {
-    const map: Record<string, string> = { active: 'pg-badge--green', expired: 'pg-badge--yellow', cancelled: 'pg-badge--red' };
+  getCourseName(courseId: string): string {
+    return (
+      this.courses.find((c) => c.id === courseId)?.title ??
+      courseId.substring(0, 8) + '…'
+    );
+  }
+
+  getBatchName(batchId: string): string {
+    const b = this.batches.find((b) => b.id === batchId);
+    return b ? b.batchName || b.name || batchId.substring(0, 8) + '…' : '—';
+  }
+
+  formatAmount(amount: number): string {
+    return (
+      '₹' +
+      Math.abs(amount).toLocaleString('en-IN', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })
+    );
+  }
+
+  formatDate(dateStr: string): string {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+
+  formatDateTime(dateStr: string): string {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
+  getPaymentProgress(sub: SubscriptionDetail): number {
+    if (!sub.totalAmount || sub.totalAmount === 0) return 100;
+    const pct = (sub.paidAmount / sub.totalAmount) * 100;
+    return Math.min(Math.max(Math.round(pct), 0), 100);
+  }
+
+  getStatusLabel(sub: SubscriptionDetail): string {
+    if (sub.isCompleted) return 'Completed';
+    if (sub.pendingAmount < 0) return 'Overpaid';
+    if (sub.isPartialAllowed) return 'Partial';
+    return 'Pending';
+  }
+
+  getStatusBadge(sub: SubscriptionDetail): string {
+    if (sub.isCompleted) return 'pg-badge--green';
+    if (sub.pendingAmount < 0) return 'pg-badge--blue';
+    if (sub.isPartialAllowed) return 'pg-badge--amber';
+    return 'pg-badge--yellow';
+  }
+
+  getPaymentStatusBadge(status: string): string {
+    const map: Record<string, string> = {
+      Success: 'pg-badge--green',
+      Failed: 'pg-badge--red',
+      Pending: 'pg-badge--yellow',
+    };
     return map[status] || 'pg-badge--gray';
   }
 
-  formatAmount(amount: number): string { return '₹' + amount.toLocaleString('en-IN'); }
+  sortedInstallments(sub: SubscriptionDetail): Installment[] {
+    return [...sub.installments].sort(
+      (a, b) => a.installmentNumber - b.installmentNumber,
+    );
+  }
+
+  // Stats
+  get totalRevenue(): number {
+    return this.subscriptions.reduce((s, r) => s + r.paidAmount, 0);
+  }
+  get totalPending(): number {
+    return this.subscriptions.reduce(
+      (s, r) => s + Math.max(r.pendingAmount, 0),
+      0,
+    );
+  }
+  get completedCount(): number {
+    return this.subscriptions.filter((s) => s.isCompleted).length;
+  }
+  get pendingCount(): number {
+    return this.subscriptions.filter((s) => !s.isCompleted).length;
+  }
 }

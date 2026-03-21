@@ -80,7 +80,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     {
       groupLabel: 'Finance',
       items: [
-        { label: 'Payments',      icon: 'fa-solid fa-indian-rupee-sign', route: '/payments'      },
         { label: 'Subscriptions', icon: 'fa-solid fa-id-card',          route: '/subscriptions' },
         { label: 'Refunds',       icon: 'fa-solid fa-rotate-left',      route: '/refunds', badge: 12 },
       ],
