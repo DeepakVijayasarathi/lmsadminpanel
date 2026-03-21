@@ -82,7 +82,11 @@
         <thead>
           <tr>
             <th class="tt-session-col">Session</th>
-            <th *ngFor="let day of days" class="tt-day-col">{{ day }}</th>
+            <!--
+              days is now { label: string; value: DayOfWeek }[]
+              Use day.label for display, day.value when passing to functions
+            -->
+            <th *ngFor="let day of days" class="tt-day-col">{{ day.label }}</th>
           </tr>
         </thead>
         <tbody>
@@ -91,8 +95,11 @@
               <div class="tt-session-num">S{{ session }}</div>
               <div class="tt-session-time">{{ formatSessionTime(session) }}</div>
             </td>
+            <!--
+              Pass day.value (DayOfWeek integer) to getSlot() and openCreate()
+            -->
             <td *ngFor="let day of days" class="tt-cell">
-              <ng-container *ngIf="getSlot(day, session) as slot; else emptyCell">
+              <ng-container *ngIf="getSlot(day.value, session) as slot; else emptyCell">
                 <div [class]="'tt-slot ' + getSubjectColor(slot.subject)">
                   <div class="tt-slot__status-dot" [class]="'dot-' + slot.status"></div>
 
@@ -129,7 +136,8 @@
                 </div>
               </ng-container>
               <ng-template #emptyCell>
-                <div class="tt-cell-empty" (click)="openCreate(day, session)" title="Schedule session">
+                <!-- Pass day.value (integer) to openCreate -->
+                <div class="tt-cell-empty" (click)="openCreate(day.value, session)" title="Schedule session">
                   <i class="fa-solid fa-plus"></i>
                 </div>
               </ng-template>
@@ -157,7 +165,10 @@
         <tbody>
           <tr *ngFor="let slot of filteredSlots">
             <td>
-              <div class="pg-cell__primary">{{ slot.day }}</div>
+              <!--
+                slot.day is a DayOfWeek integer → use getDayLabel() to display
+              -->
+              <div class="pg-cell__primary">{{ getDayLabel(slot.day) }}</div>
               <div class="pg-cell__sub">Session {{ slot.session }}</div>
             </td>
             <td>
@@ -269,22 +280,37 @@
           <option value="">Select Batch</option>
           <option *ngFor="let b of apiBatches" [value]="getBatchName(b)">{{ getBatchName(b) }}</option>
         </select>
-        <div class="field-error" *ngIf="formErrors['batch']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['batch'] }}</div>
+        <div class="field-error" *ngIf="formErrors['batch']">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['batch'] }}
+        </div>
       </div>
 
+      <!--
+        Day dropdown:
+        - [value]="d.value"  → binds the DayOfWeek integer (e.g. 1) to form.day
+        - displayed text uses d.label  (e.g. "Monday")
+        - [ngValue] is used instead of [value] because form.day is a number,
+          not a string, and Angular needs strict type matching for select binding
+      -->
       <div class="pg-form-group" [class.has-error]="formErrors['day']">
         <label>Day <span class="req">*</span></label>
-        <select [(ngModel)]="form.day" (ngModelChange)="formErrors['day']=''">
-          <option value="">Select Day</option>
-          <option *ngFor="let d of days" [value]="d">{{ d }}</option>
+        <select [(ngModel)]="form.day" (ngModelChange)="formErrors['day']=''" [compareWith]="compareDayOfWeek">
+          <option *ngFor="let d of days" [ngValue]="d.value">{{ d.label }}</option>
         </select>
-        <div class="field-error" *ngIf="formErrors['day']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['day'] }}</div>
+        <div class="field-error" *ngIf="formErrors['day']">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['day'] }}
+        </div>
       </div>
 
       <div class="pg-form-group">
         <label>Session Slot <span class="req">*</span></label>
-        <select [(ngModel)]="form.session" (ngModelChange)="onSessionChange()">
-          <option *ngFor="let s of sessions" [value]="s">Session {{ s }} ({{ formatSessionTime(s) }})</option>
+        <!--
+          sessionNum  → number, drives grid/sessionTimes lookup
+          form.session → string ("1"…"7"), sent to C# DTO
+          onSessionChange() keeps both in sync
+        -->
+        <select [(ngModel)]="sessionNum" (ngModelChange)="onSessionChange()">
+          <option *ngFor="let s of sessions" [ngValue]="s">Session {{ s }} ({{ formatSessionTime(s) }})</option>
         </select>
       </div>
 
@@ -294,7 +320,9 @@
           <option value="">Select Subject</option>
           <option *ngFor="let s of apiSubjects" [value]="s.name">{{ s.name }}</option>
         </select>
-        <div class="field-error" *ngIf="formErrors['subject']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['subject'] }}</div>
+        <div class="field-error" *ngIf="formErrors['subject']">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['subject'] }}
+        </div>
       </div>
 
       <div class="pg-form-group">
@@ -311,7 +339,9 @@
           <option value="">Select Teacher</option>
           <option *ngFor="let t of apiTeachers" [value]="getTeacherName(t)">{{ getTeacherName(t) }}</option>
         </select>
-        <div class="field-error" *ngIf="formErrors['teacher']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['teacher'] }}</div>
+        <div class="field-error" *ngIf="formErrors['teacher']">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['teacher'] }}
+        </div>
       </div>
 
       <div class="pg-form-group">
@@ -379,7 +409,10 @@
         </div>
         <div class="tt-view-row">
           <span class="tt-view-label"><i class="fa-solid fa-calendar"></i> Day</span>
-          <span class="tt-view-val">{{ selectedSlot.day }}</span>
+          <!--
+            selectedSlot.day is a DayOfWeek integer → convert to label for display
+          -->
+          <span class="tt-view-val">{{ getDayLabel(selectedSlot.day) }}</span>
         </div>
         <div class="tt-view-row">
           <span class="tt-view-label"><i class="fa-solid fa-hashtag"></i> Session</span>
@@ -443,7 +476,10 @@
     <p style="margin:0 0 8px;font-weight:600;font-size:15px;color:#1e293b;">Remove this session?</p>
     <p style="margin:0;color:#64748b;font-size:14px;">
       <strong>{{ selectedSlot.subject }}</strong> – {{ selectedSlot.topic }}<br/>
-      {{ selectedSlot.day }}, Session {{ selectedSlot.session }} &nbsp;|&nbsp; {{ selectedSlot.batch }}
+      <!--
+        selectedSlot.day is DayOfWeek integer → getDayLabel() converts to "Monday" etc.
+      -->
+      {{ getDayLabel(selectedSlot.day) }}, Session {{ selectedSlot.session }} &nbsp;|&nbsp; {{ selectedSlot.batch }}
     </p>
     <p style="margin:8px 0 0;color:#94a3b8;font-size:12px;">BBB Room: {{ selectedSlot.meetingId }}</p>
   </div>

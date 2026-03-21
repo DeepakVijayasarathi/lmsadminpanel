@@ -6,10 +6,22 @@ import { environment } from '../../../../environments/environment';
 
 const BASE_URL = environment.apiUrl;
 
+// ── DayOfWeek enum (matches C# DayOfWeek) ────────────────────────────────────
+export enum DayOfWeek {
+  Sunday    = 0,
+  Monday    = 1,
+  Tuesday   = 2,
+  Wednesday = 3,
+  Thursday  = 4,
+  Friday    = 5,
+  Saturday  = 6
+}
+
+// ── Slot shape returned from / stored in the app ──────────────────────────────
 export interface TimetableSlot {
   id: string;
-  day: string;
-  session: number;
+  day: DayOfWeek;    // integer internally
+  session: number;   // number internally
   subject: string;
   topic: string;
   teacher: string;
@@ -22,9 +34,16 @@ export interface TimetableSlot {
   status: 'scheduled' | 'live' | 'completed' | 'cancelled';
 }
 
+/**
+ * Payload sent to the API (POST / PUT).
+ *
+ * C# DTO:
+ *   public DayOfWeek Day     { get; set; }  → sent as integer (0–6)
+ *   public string    Session { get; set; }  → sent as string ("1"–"7")
+ */
 export interface TimetablePayload {
-  day: string;
-  session: number;
+  day: DayOfWeek;   // integer  → C# DayOfWeek
+  session: string;  // string   → C# string Session
   subject: string;
   topic: string;
   teacher: string;
@@ -45,30 +64,41 @@ type ModalMode = 'create' | 'edit' | 'view' | 'delete' | null;
 })
 export class TimetableComponent implements OnInit {
 
+  // ── Expose enum to template ───────────────────────────────────────────────
+  readonly DayOfWeek = DayOfWeek;
+
   // ── Filters ───────────────────────────────────────────────────────────────
-  batchFilter = '';
+  batchFilter    = '';
   categoryFilter = '';
   viewMode: 'grid' | 'list' = 'grid';
 
   // ── Loading ───────────────────────────────────────────────────────────────
   isLoading = false;
-  isSaving = false;
+  isSaving  = false;
   joiningId = '';
 
   // ── Form validation ───────────────────────────────────────────────────────
   formErrors: Record<string, string> = {};
   readonly Object = Object;
 
-  // ── Dynamic reference data (from API) ─────────────────────────────────────
-  apiBatches: any[]   = [];
-  apiTeachers: any[]  = [];
-  apiSubjects: any[]  = [];
-  apiTopics: any[]    = [];
+  // ── Dynamic reference data ────────────────────────────────────────────────
+  apiBatches: any[]         = [];
+  apiTeachers: any[]        = [];
+  apiSubjects: any[]        = [];
+  apiTopics: any[]          = [];
   filteredTopicsList: any[] = [];
 
   // ── Static reference data ─────────────────────────────────────────────────
-  readonly days     = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  readonly sessions = [1, 2, 3, 4, 5, 6, 7];
+  readonly days: { label: string; value: DayOfWeek }[] = [
+    { label: 'Monday',    value: DayOfWeek.Monday    },
+    { label: 'Tuesday',   value: DayOfWeek.Tuesday   },
+    { label: 'Wednesday', value: DayOfWeek.Wednesday },
+    { label: 'Thursday',  value: DayOfWeek.Thursday  },
+    { label: 'Friday',    value: DayOfWeek.Friday    },
+    { label: 'Saturday',  value: DayOfWeek.Saturday  },
+  ];
+
+  readonly sessions  = [1, 2, 3, 4, 5, 6, 7];
   readonly categories: Array<'Foundation' | 'Standard' | 'Advanced'> = ['Foundation', 'Standard', 'Advanced'];
   readonly statuses:   Array<'scheduled' | 'live' | 'completed' | 'cancelled'> = ['scheduled', 'live', 'completed', 'cancelled'];
 
@@ -85,6 +115,11 @@ export class TimetableComponent implements OnInit {
   // ── Slots ─────────────────────────────────────────────────────────────────
   slots: TimetableSlot[] = [];
 
+  // ── Session number (number) kept separately for grid / sessionTimes ───────
+  // The form.session is always a string ("1"…"7") to match the C# DTO.
+  // sessionNum is the numeric version used internally.
+  sessionNum = 1;
+
   // ── Display helpers ───────────────────────────────────────────────────────
   getBatchName(b: any): string {
     return b?.name ?? b?.batchName ?? '';
@@ -93,6 +128,14 @@ export class TimetableComponent implements OnInit {
   getTeacherName(t: any): string {
     return `${t?.firstName ?? ''} ${t?.lastName ?? ''}`.trim();
   }
+
+  getDayLabel(day: DayOfWeek): string {
+    return this.days.find(d => d.value === day)?.label ?? String(day);
+  }
+
+  // Arrow-function field required for [compareWith] binding
+  compareDayOfWeek = (a: DayOfWeek, b: DayOfWeek): boolean =>
+    Number(a) === Number(b);
 
   // ── Stats ─────────────────────────────────────────────────────────────────
   get totalSlots(): number     { return this.slots.length; }
@@ -109,7 +152,7 @@ export class TimetableComponent implements OnInit {
     });
   }
 
-  getSlot(day: string, session: number): TimetableSlot | undefined {
+  getSlot(day: DayOfWeek, session: number): TimetableSlot | undefined {
     return this.filteredSlots.find(s => s.day === day && s.session === session);
   }
 
@@ -161,59 +204,70 @@ export class TimetableComponent implements OnInit {
     });
   }
 
-  // ── Join (BBB signed URL) ─────────────────────────────────────────────────
+  // ── Join ──────────────────────────────────────────────────────────────────
   joinSlot(slot: TimetableSlot, isModerator = false): void {
     this.joiningId = slot.id;
     this.timetableService.getJoinUrl(slot.id, 'Admin', isModerator).subscribe({
-      next: ({ joinUrl }) => {
-        window.open(joinUrl, '_blank');
-        this.joiningId = '';
-      },
-      error: () => {
-        if (slot.meetingLink) window.open(slot.meetingLink, '_blank');
-        this.joiningId = '';
-      }
+      next: ({ joinUrl }) => { window.open(joinUrl, '_blank'); this.joiningId = ''; },
+      error: () => { if (slot.meetingLink) window.open(slot.meetingLink, '_blank'); this.joiningId = ''; }
     });
   }
 
   // ── Modal ─────────────────────────────────────────────────────────────────
   modalMode: ModalMode = null;
   selectedSlot: TimetableSlot | null = null;
-
   form: TimetablePayload = this.emptyForm();
 
   emptyForm(): TimetablePayload {
     return {
-      day: '', session: 1, subject: '', topic: '', teacher: '',
-      batch: '', category: 'Foundation',
-      startTime: '07:00', endTime: '08:30',
-      status: 'scheduled'
+      day:       DayOfWeek.Monday,
+      session:   '1',           // ← string to match C# DTO
+      subject:   '',
+      topic:     '',
+      teacher:   '',
+      batch:     '',
+      category:  'Foundation',
+      startTime: '07:00',
+      endTime:   '08:30',
+      status:    'scheduled'
     };
   }
 
-  openCreate(day?: string, session?: number): void {
-    this.form = this.emptyForm();
+  openCreate(day?: DayOfWeek, session?: number): void {
+    this.form       = this.emptyForm();
+    this.sessionNum = 1;
     this.filteredTopicsList = [];
-    if (day)     this.form.day = day;
-    if (session) {
-      this.form.session = session;
+    this.formErrors = {};
+
+    if (day !== undefined) this.form.day = day;
+    if (session !== undefined) {
+      this.sessionNum   = session;
+      this.form.session = String(session);
       const st = this.sessionTimes[session];
       if (st) { this.form.startTime = st.start; this.form.endTime = st.end; }
     }
     if (this.batchFilter)    this.form.batch    = this.batchFilter;
     if (this.categoryFilter) this.form.category = this.categoryFilter as any;
+
     this.modalMode = 'create';
   }
 
   openEdit(slot: TimetableSlot): void {
     this.selectedSlot = slot;
+    this.sessionNum   = slot.session;
+    this.formErrors   = {};
     this.form = {
-      day: slot.day, session: slot.session, subject: slot.subject,
-      topic: slot.topic, teacher: slot.teacher, batch: slot.batch,
-      category: slot.category, startTime: slot.startTime, endTime: slot.endTime,
-      status: slot.status
+      day:       slot.day,
+      session:   String(slot.session),  // number → string for DTO
+      subject:   slot.subject,
+      topic:     slot.topic,
+      teacher:   slot.teacher,
+      batch:     slot.batch,
+      category:  slot.category,
+      startTime: slot.startTime,
+      endTime:   slot.endTime,
+      status:    slot.status
     };
-    // Pre-populate filtered topics for the slot's subject
     const subj = this.apiSubjects.find(s => s.name === slot.subject);
     this.filteredTopicsList = subj
       ? this.apiTopics.filter(t => t.subjectId === subj.id)
@@ -224,10 +278,16 @@ export class TimetableComponent implements OnInit {
   openView(slot: TimetableSlot): void   { this.selectedSlot = slot; this.modalMode = 'view'; }
   openDelete(slot: TimetableSlot): void { this.selectedSlot = slot; this.modalMode = 'delete'; }
 
-  closeModal(): void { this.modalMode = null; this.selectedSlot = null; this.formErrors = {}; }
+  closeModal(): void {
+    this.modalMode    = null;
+    this.selectedSlot = null;
+    this.formErrors   = {};
+  }
 
+  /** Session <select> binds to sessionNum; keep form.session (string) in sync */
   onSessionChange(): void {
-    const st = this.sessionTimes[this.form.session];
+    this.form.session = String(this.sessionNum);
+    const st = this.sessionTimes[this.sessionNum];
     if (st) { this.form.startTime = st.start; this.form.endTime = st.end; }
   }
 
@@ -245,66 +305,90 @@ export class TimetableComponent implements OnInit {
       : this.apiTopics;
   }
 
-  // ── Save (API) ────────────────────────────────────────────────────────────
+  // ── Save ──────────────────────────────────────────────────────────────────
   saveSlot(): void {
     this.formErrors = {};
-    if (!this.form.day)     this.formErrors['day']     = 'Day is required.';
+    if (this.form.day === undefined || this.form.day === null)
+                            this.formErrors['day']     = 'Day is required.';
     if (!this.form.batch)   this.formErrors['batch']   = 'Batch is required.';
     if (!this.form.subject) this.formErrors['subject'] = 'Subject is required.';
     if (!this.form.teacher) this.formErrors['teacher'] = 'Teacher is required.';
     if (Object.keys(this.formErrors).length > 0) return;
 
+    // Conflict check uses sessionNum (number) to compare against stored slots
     const conflict = this.slots.find(s =>
-      s.day === this.form.day &&
-      s.session === this.form.session &&
-      s.batch === this.form.batch &&
+      s.day     === this.form.day &&
+      s.session === this.sessionNum &&
+      s.batch   === this.form.batch &&
       (this.modalMode === 'create' || s.id !== this.selectedSlot?.id)
     );
     if (conflict) {
-      this.formErrors['conflict'] = `${this.form.batch} already has Session ${this.form.session} on ${this.form.day}.`;
+      this.formErrors['conflict'] =
+        `${this.form.batch} already has Session ${this.sessionNum} on ${this.getDayLabel(this.form.day)}.`;
       return;
     }
 
     this.isSaving = true;
 
+    /**
+     * Cast to `any` because the service's TimetablePayload still declares
+     * day: string and session: number (old types). Our local TimetablePayload
+     * is correct. Update timetable.service.ts to remove this cast:
+     *   day: number  (or DayOfWeek)
+     *   session: string
+     */
     if (this.modalMode === 'create') {
-      this.timetableService.createSlot(this.form).subscribe({
-        next: (result) => {
+      this.timetableService.createSlot(this.form as any).subscribe({
+        next: (result: any) => {
           this.slots.push({
-            id: result.id, day: result.day, session: result.session,
-            subject: result.subject, topic: result.topic, teacher: result.teacher,
-            batch: result.batch, category: result.category as any,
-            startTime: result.startTime, endTime: result.endTime,
-            status: result.status as any, meetingId: result.meetingId,
+            id:          result.id,
+            day:         Number(result.day) as DayOfWeek,
+            session:     Number(result.session),
+            subject:     result.subject,
+            topic:       result.topic,
+            teacher:     result.teacher,
+            batch:       result.batch,
+            category:    result.category,
+            startTime:   result.startTime,
+            endTime:     result.endTime,
+            status:      result.status,
+            meetingId:   result.meetingId,
             meetingLink: result.meetingLink,
           });
           this.isSaving = false;
           this.closeModal();
         },
-        error: (err) => {
+        error: (err: any) => {
           this.isSaving = false;
           alert('Failed to create session: ' + (err.error?.message ?? 'Unknown error'));
         }
       });
 
     } else if (this.modalMode === 'edit' && this.selectedSlot) {
-      this.timetableService.updateSlot(this.selectedSlot.id, this.form).subscribe({
-        next: (result) => {
+      this.timetableService.updateSlot(this.selectedSlot.id, this.form as any).subscribe({
+        next: (result: any) => {
           const idx = this.slots.findIndex(s => s.id === this.selectedSlot!.id);
           if (idx > -1) {
             this.slots[idx] = {
               ...this.slots[idx],
-              day: result.day, session: result.session, subject: result.subject,
-              topic: result.topic, teacher: result.teacher, batch: result.batch,
-              category: result.category as any, startTime: result.startTime,
-              endTime: result.endTime, status: result.status as any,
-              meetingId: result.meetingId, meetingLink: result.meetingLink,
+              day:         Number(result.day) as DayOfWeek,
+              session:     Number(result.session),
+              subject:     result.subject,
+              topic:       result.topic,
+              teacher:     result.teacher,
+              batch:       result.batch,
+              category:    result.category,
+              startTime:   result.startTime,
+              endTime:     result.endTime,
+              status:      result.status,
+              meetingId:   result.meetingId,
+              meetingLink: result.meetingLink,
             };
           }
           this.isSaving = false;
           this.closeModal();
         },
-        error: (err) => {
+        error: (err: any) => {
           this.isSaving = false;
           alert('Failed to update session: ' + (err.error?.message ?? 'Unknown error'));
         }
@@ -326,17 +410,35 @@ export class TimetableComponent implements OnInit {
 
   // ── API loaders ───────────────────────────────────────────────────────────
   ngOnInit(): void {
+    this.loadSlots();
     this.loadBatches();
     this.loadTeachers();
     this.loadSubjects();
     this.loadTopics();
   }
 
+  private loadSlots(): void {
+    this.isLoading = true;
+    this.httpService.getData(BASE_URL, '/timetable').subscribe({
+      next: (res: any) => {
+        const raw: any[] = Array.isArray(res) ? res : (res?.data ?? []);
+        this.slots = raw.map(r => ({
+          ...r,
+          day:     Number(r.day) as DayOfWeek,
+          session: Number(r.session),
+        }));
+        this.isLoading = false;
+      },
+      error: () => {
+        this.commonService.error('Failed to load timetable.');
+        this.isLoading = false;
+      }
+    });
+  }
+
   private loadBatches(): void {
     this.httpService.getData(BASE_URL, '/batches').subscribe({
-      next: (res: any) => {
-        this.apiBatches = Array.isArray(res) ? res : (res?.data ?? []);
-      },
+      next: (res: any) => { this.apiBatches = Array.isArray(res) ? res : (res?.data ?? []); },
       error: () => this.commonService.error('Failed to load batches.')
     });
   }
@@ -345,7 +447,7 @@ export class TimetableComponent implements OnInit {
     this.httpService.getData(BASE_URL, '/role').subscribe({
       next: (rolesRes: any) => {
         const roles: any[] = Array.isArray(rolesRes) ? rolesRes : (rolesRes?.data ?? []);
-        const teacherRole = roles.find((r: any) => r.name === 'Teacher');
+        const teacherRole  = roles.find((r: any) => r.name === 'Teacher');
         this.httpService.getData(BASE_URL, '/users').subscribe({
           next: (res: any) => {
             const users: any[] = Array.isArray(res) ? res : (res?.data ?? []);
@@ -370,18 +472,14 @@ export class TimetableComponent implements OnInit {
 
   private loadSubjects(): void {
     this.httpService.getData(BASE_URL, '/subject').subscribe({
-      next: (res: any) => {
-        this.apiSubjects = Array.isArray(res) ? res : (res?.data ?? []);
-      },
+      next: (res: any) => { this.apiSubjects = Array.isArray(res) ? res : (res?.data ?? []); },
       error: () => this.commonService.error('Failed to load subjects.')
     });
   }
 
   private loadTopics(): void {
     this.httpService.getData(BASE_URL, '/topic').subscribe({
-      next: (res: any) => {
-        this.apiTopics = Array.isArray(res) ? res : (res?.data ?? []);
-      },
+      next: (res: any) => { this.apiTopics = Array.isArray(res) ? res : (res?.data ?? []); },
       error: () => {}
     });
   }
