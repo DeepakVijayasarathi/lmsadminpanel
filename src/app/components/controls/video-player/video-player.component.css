@@ -1,0 +1,18 @@
+.vp-wrap {
+  width: 100%;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  line-height: 0;
+}
+
+/* Force dark skin */
+.vp-wrap .video-js {
+  width: 100%;
+  background: #000;
+}
+
+/* Playback rate menu readable on dark bg */
+.vp-wrap .vjs-menu-item {
+  font-size: 13px;
+}

@@ -45,6 +45,7 @@ import { MenuComponent } from './components/system/menu/menu.component';
 import { TimetableComponent } from './components/learning/timetable/timetable.component';
 import { SessionSlotsComponent } from './components/learning/session-slots/session-slots.component';
 import { RegistrationComponent } from './components/registration/registration.component';
+import { VideoPlayerComponent } from './components/controls/video-player/video-player.component';
 
 @NgModule({
   declarations: [
@@ -84,7 +85,8 @@ import { RegistrationComponent } from './components/registration/registration.co
     DeleteConfirmationModalComponent,
     CommonPaginationComponent,
     ActionButtonsComponent,
-    RegistrationComponent
+    RegistrationComponent,
+    VideoPlayerComponent
   ],
   imports: [
     BrowserModule,

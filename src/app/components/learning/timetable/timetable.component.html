@@ -82,11 +82,7 @@
         <thead>
           <tr>
             <th class="tt-session-col">Session</th>
-            <!--
-              days is now { label: string; value: DayOfWeek }[]
-              Use day.label for display, day.value when passing to functions
-            -->
-            <th *ngFor="let day of days" class="tt-day-col">{{ day.label }}</th>
+            <th *ngFor="let day of days" class="tt-day-col">{{ day }}</th>
           </tr>
         </thead>
         <tbody>
@@ -98,9 +94,6 @@
                 {{ formatSessionTime(session) }}
               </div>
             </td>
-            <!--
-              Pass day.value (DayOfWeek integer) to getSlot() and openCreate()
-            -->
             <td *ngFor="let day of days" class="tt-cell">
               <ng-container *ngIf="getSlot(day, session) as slot; else emptyCell">
                 <div [class]="'tt-slot tt-slot--' + slot.status">
@@ -173,13 +166,22 @@
                         </button>
                       </ng-container>
 
-                      <!-- completed → Play or Get Recording -->
+                      <!-- completed → Play / Download or Get Recording -->
                       <ng-container *ngIf="slot.status === 'completed'">
-                        <a *ngIf="slot.recordingUrl" [href]="slot.recordingUrl" target="_blank"
-                           class="tt-rec-btn tt-rec-btn--ready" (click)="$event.stopPropagation()" title="Play recording">
-                          <i class="fa-solid fa-circle-play"></i> Play
-                        </a>
-                        <button *ngIf="!slot.recordingUrl"
+                        <ng-container *ngIf="slot.mp4Url || slot.playbackUrl">
+                          <a *ngIf="slot.mp4Url" [href]="slot.mp4Url" target="_blank"
+                             class="tt-rec-btn tt-rec-btn--ready" (click)="$event.stopPropagation()" title="Play MP4">
+                            <i class="fa-solid fa-circle-play"></i> MP4
+                          </a>
+                          <a *ngIf="slot.playbackUrl && !slot.mp4Url" [href]="slot.playbackUrl" target="_blank"
+                             class="tt-rec-btn tt-rec-btn--ready" (click)="$event.stopPropagation()" title="BBB Playback">
+                            <i class="fa-solid fa-circle-play"></i> Play
+                          </a>
+                        </ng-container>
+                        <span *ngIf="recordingPolling[slot.id]" class="tt-rec-btn" style="cursor:default;" title="Processing recording…">
+                          <i class="fa-solid fa-circle-notch fa-spin"></i> Processing…
+                        </span>
+                        <button *ngIf="!slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id]"
                           class="tt-rec-btn"
                           [disabled]="recordingId === slot.id"
                           (click)="triggerRecording(slot); $event.stopPropagation()" title="Fetch recording from BBB">
@@ -203,8 +205,7 @@
                 </div>
               </ng-container>
               <ng-template #emptyCell>
-                <!-- Pass day.value (integer) to openCreate -->
-                <div class="tt-cell-empty" (click)="openCreate(day.value, session)" title="Schedule session">
+                <div class="tt-cell-empty" (click)="openCreate(day, session)" title="Schedule session">
                   <i class="fa-solid fa-plus"></i>
                 </div>
               </ng-template>
@@ -233,10 +234,7 @@
         <tbody>
           <tr *ngFor="let slot of filteredSlots">
             <td>
-              <!--
-                slot.day is a DayOfWeek integer → use getDayLabel() to display
-              -->
-              <div class="pg-cell__primary">{{ getDayLabel(slot.day) }}</div>
+              <div class="pg-cell__primary">{{ slot.day }}</div>
               <div class="pg-cell__sub">Session {{ slot.session }}</div>
             </td>
             <td>
@@ -271,13 +269,20 @@
               </div>
             </td>
             <td>
-              <!-- Play existing recording -->
-              <a *ngIf="slot.recordingUrl" [href]="slot.recordingUrl" target="_blank"
-                 class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 12px;text-decoration:none;">
-                <i class="fa-solid fa-circle-play"></i> Play
-              </a>
-              <!-- Fetch recording from BBB -->
-              <button *ngIf="!slot.recordingUrl && slot.status === 'completed'"
+              <ng-container *ngIf="slot.mp4Url || slot.playbackUrl">
+                <a *ngIf="slot.mp4Url" [href]="slot.mp4Url" target="_blank"
+                   class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 12px;text-decoration:none;margin-right:4px;">
+                  <i class="fa-solid fa-circle-play"></i> MP4
+                </a>
+                <a *ngIf="slot.playbackUrl" [href]="slot.playbackUrl" target="_blank"
+                   class="pg-btn pg-btn--ghost" style="font-size:12px;padding:5px 12px;text-decoration:none;">
+                  <i class="fa-solid fa-display"></i> BBB
+                </a>
+              </ng-container>
+              <span *ngIf="recordingPolling[slot.id]" style="font-size:12px;color:#6366f1;">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Processing…
+              </span>
+              <button *ngIf="!slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id] && slot.status === 'completed'"
                 class="pg-btn pg-btn--ghost" style="font-size:12px;padding:5px 12px;"
                 [disabled]="recordingId === slot.id"
                 (click)="triggerRecording(slot)">
@@ -287,7 +292,7 @@
                    [class.fa-record-vinyl]="recordingId !== slot.id"></i>
                 {{ recordingId === slot.id ? 'Fetching…' : 'Get Recording' }}
               </button>
-              <span *ngIf="slot.status !== 'completed' && !slot.recordingUrl" style="color:#cbd5e1;font-size:12px;">—</span>
+              <span *ngIf="slot.status !== 'completed' && !slot.mp4Url && !slot.playbackUrl" style="color:#cbd5e1;font-size:12px;">—</span>
             </td>
             <td>
               <span [class]="getStatusClass(slot.status)">
@@ -381,26 +386,16 @@
           <option value="">Select Batch</option>
           <option *ngFor="let b of apiBatches" [value]="getBatchName(b)">{{ getBatchName(b) }}</option>
         </select>
-        <div class="field-error" *ngIf="formErrors['batch']">
-          <i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['batch'] }}
-        </div>
+        <div class="field-error" *ngIf="formErrors['batch']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['batch'] }}</div>
       </div>
 
-      <!--
-        Day dropdown:
-        - [value]="d.value"  → binds the DayOfWeek integer (e.g. 1) to form.day
-        - displayed text uses d.label  (e.g. "Monday")
-        - [ngValue] is used instead of [value] because form.day is a number,
-          not a string, and Angular needs strict type matching for select binding
-      -->
       <div class="pg-form-group" [class.has-error]="formErrors['day']">
         <label>Day <span class="req">*</span></label>
-        <select [(ngModel)]="form.day" (ngModelChange)="formErrors['day']=''" [compareWith]="compareDayOfWeek">
-          <option *ngFor="let d of days" [ngValue]="d.value">{{ d.label }}</option>
+        <select [(ngModel)]="form.day" (ngModelChange)="formErrors['day']=''">
+          <option value="">Select Day</option>
+          <option *ngFor="let d of days" [value]="d">{{ d }}</option>
         </select>
-        <div class="field-error" *ngIf="formErrors['day']">
-          <i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['day'] }}
-        </div>
+        <div class="field-error" *ngIf="formErrors['day']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['day'] }}</div>
       </div>
 
       <div class="pg-form-group">
@@ -416,9 +411,7 @@
           <option value="">Select Subject</option>
           <option *ngFor="let s of apiSubjects" [value]="s.name">{{ s.name }}</option>
         </select>
-        <div class="field-error" *ngIf="formErrors['subject']">
-          <i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['subject'] }}
-        </div>
+        <div class="field-error" *ngIf="formErrors['subject']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['subject'] }}</div>
       </div>
 
       <div class="pg-form-group">
@@ -435,9 +428,7 @@
           <option value="">Select Teacher</option>
           <option *ngFor="let t of apiTeachers" [value]="getTeacherName(t)">{{ getTeacherName(t) }}</option>
         </select>
-        <div class="field-error" *ngIf="formErrors['teacher']">
-          <i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['teacher'] }}
-        </div>
+        <div class="field-error" *ngIf="formErrors['teacher']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['teacher'] }}</div>
       </div>
 
       <div class="pg-form-group">
@@ -504,10 +495,7 @@
         </div>
         <div class="tt-view-row">
           <span class="tt-view-label"><i class="fa-solid fa-calendar"></i> Day</span>
-          <!--
-            selectedSlot.day is a DayOfWeek integer → convert to label for display
-          -->
-          <span class="tt-view-val">{{ getDayLabel(selectedSlot.day) }}</span>
+          <span class="tt-view-val">{{ selectedSlot.day }}</span>
         </div>
         <div class="tt-view-row">
           <span class="tt-view-label"><i class="fa-solid fa-hashtag"></i> Session</span>
@@ -552,8 +540,14 @@
       <!-- ── Recording section (completed) ─────────────────────────────── -->
       <ng-container *ngIf="selectedSlot.status === 'completed'">
 
-        <!-- Fetch button when no recording yet -->
-        <button *ngIf="!selectedSlot.recordingUrl"
+        <!-- Polling: BBB still processing -->
+        <div *ngIf="recordingPolling[selectedSlot.id]" class="tt-rec-error" style="background:#f0f9ff;border-color:#bae6fd;color:#0369a1;">
+          <i class="fa-solid fa-circle-notch fa-spin"></i>
+          BBB is processing the recording. Checking every 30 seconds…
+        </div>
+
+        <!-- Fetch button when no recording yet and not polling -->
+        <button *ngIf="!selectedSlot.mp4Url && !selectedSlot.playbackUrl && !recordingPolling[selectedSlot.id]"
           class="pg-btn pg-btn--ghost tt-join-full"
           [disabled]="recordingId === selectedSlot.id"
           (click)="triggerRecording(selectedSlot)">
@@ -570,31 +564,104 @@
           {{ recordingError[selectedSlot.id] }}
         </div>
 
-        <!-- Player when recording URL exists -->
-        <div *ngIf="selectedSlot.recordingUrl" class="tt-rec-player">
+        <!-- Player when recording is ready -->
+        <div *ngIf="selectedSlot.mp4Url || selectedSlot.playbackUrl" class="tt-rec-player">
           <div class="tt-rec-player__head">
             <i class="fa-solid fa-circle-play"></i> Session Recording
-            <a [href]="selectedSlot.recordingUrl" target="_blank" class="tt-rec-player__ext">
-              <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in new tab
-            </a>
+            <div style="display:flex;gap:8px;margin-left:auto;">
+              <a *ngIf="selectedSlot.mp4Url" [href]="selectedSlot.mp4Url" download
+                 class="tt-rec-player__ext" title="Download MP4">
+                <i class="fa-solid fa-download"></i> Download MP4
+              </a>
+              <a *ngIf="selectedSlot.playbackUrl" [href]="selectedSlot.playbackUrl" target="_blank"
+                 class="tt-rec-player__ext" title="Open BBB Playback">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> BBB Playback
+              </a>
+            </div>
           </div>
 
-          <!-- MP4 → native video player -->
-          <video *ngIf="isVideo(selectedSlot.recordingUrl)"
-            controls width="100%" class="tt-rec-player__video">
-            <source [src]="selectedSlot.recordingUrl" type="video/mp4">
-            Your browser does not support video playback.
-          </video>
-
-          <!-- BBB presentation → iframe -->
-          <iframe *ngIf="!isVideo(selectedSlot.recordingUrl)"
-            [src]="getSafeUrl(selectedSlot.recordingUrl)"
+          <!-- BBB presentation playback → full session (camera + screen share + slides) -->
+          <iframe *ngIf="selectedSlot.playbackUrl"
+            [src]="getSafeUrl(selectedSlot.playbackUrl)"
             class="tt-rec-player__iframe"
             allowfullscreen
             frameborder="0">
           </iframe>
+
+          <!-- MP4/WebM fallback → camera only (shown only if no playbackUrl) -->
+          <app-video-player *ngIf="!selectedSlot.playbackUrl && selectedSlot.mp4Url"
+            [videoUrl]="selectedSlot.mp4Url">
+          </app-video-player>
         </div>
 
+      </ng-container>
+
+      <!-- ── Attendance Analytics (completed) ──────────────────────────── -->
+      <ng-container *ngIf="selectedSlot.status === 'completed'">
+        <div class="tt-analytics">
+          <div class="tt-analytics__head">
+            <i class="fa-solid fa-chart-bar"></i> Attendance Analytics
+          </div>
+
+          <!-- Loading -->
+          <div *ngIf="analyticsLoading" style="text-align:center;padding:20px;color:#94a3b8;">
+            <i class="fa-solid fa-circle-notch fa-spin"></i> Loading analytics…
+          </div>
+
+          <!-- Empty -->
+          <div *ngIf="!analyticsLoading && analytics.length === 0"
+               style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">
+            No attendance data available.
+          </div>
+
+          <!-- Table -->
+          <div *ngIf="!analyticsLoading && analytics.length > 0" class="tt-analytics__wrap">
+            <table class="tt-analytics__table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Role</th>
+                  <th title="Online time">Online</th>
+                  <th title="Talk time">Talk</th>
+                  <th title="Webcam time">Cam</th>
+                  <th title="Chat messages">Msg</th>
+                  <th title="Raise hand">✋</th>
+                  <th title="Activity score">Score</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let a of analytics">
+                  <td>
+                    <div class="pg-with-avatar">
+                      <div [class]="'pg-avatar ' + (a.isModerator ? 'av-indigo' : 'av-sky')">
+                        {{ a.userName.charAt(0) }}
+                      </div>
+                      <span class="pg-cell__primary">{{ a.userName }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span [class]="a.isModerator ? 'pg-badge pg-badge--blue' : 'pg-badge pg-badge--gray'">
+                      {{ a.isModerator ? 'Teacher' : 'Student' }}
+                    </span>
+                  </td>
+                  <td>{{ secsToMin(a.onlineTimeSeconds) }}</td>
+                  <td>{{ secsToMin(a.talkTimeSeconds) }}</td>
+                  <td>{{ secsToMin(a.webcamTimeSeconds) }}</td>
+                  <td>{{ a.messageCount }}</td>
+                  <td>{{ a.raiseHandCount }}</td>
+                  <td><span [class]="scoreClass(a.activityScore)">{{ a.activityScore }}</span></td>
+                  <td>
+                    <span [class]="a.status === 'Online' ? 'pg-badge pg-badge--green' : 'pg-badge pg-badge--gray'">
+                      <i *ngIf="a.status === 'Online'" class="fa-solid fa-circle" style="font-size:6px;"></i>
+                      {{ a.status }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </ng-container>
 
     </div>
@@ -619,10 +686,7 @@
     <p style="margin:0 0 8px;font-weight:600;font-size:15px;color:#1e293b;">Remove this session?</p>
     <p style="margin:0;color:#64748b;font-size:14px;">
       <strong>{{ selectedSlot.subject }}</strong> – {{ selectedSlot.topic }}<br/>
-      <!--
-        selectedSlot.day is DayOfWeek integer → getDayLabel() converts to "Monday" etc.
-      -->
-      {{ getDayLabel(selectedSlot.day) }}, Session {{ selectedSlot.session }} &nbsp;|&nbsp; {{ selectedSlot.batch }}
+      {{ selectedSlot.day }}, Session {{ selectedSlot.session }} &nbsp;|&nbsp; {{ selectedSlot.batch }}
     </p>
     <p style="margin:8px 0 0;color:#94a3b8;font-size:12px;">BBB Room: {{ selectedSlot.meetingId }}</p>
   </div>

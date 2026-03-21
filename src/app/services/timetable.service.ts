@@ -20,6 +20,8 @@ export interface TimetableSlotDto {
   meetingId:    string;
   meetingLink:  string;
   recordingUrl: string;
+  playbackUrl:  string;
+  mp4Url:       string;
 }
 
 export interface TimetablePayload {
@@ -27,7 +29,7 @@ export interface TimetablePayload {
   teacherId: string | null;
   courseId:  string | null;
   sessionId: string | null;
-  day:       string;
+  day:       string | null;
   session:   number;
   subject:   string;
   topic:     string;
@@ -35,6 +37,29 @@ export interface TimetablePayload {
   batch:     string;
   category:  string;
   status:    string;
+}
+
+export interface RecordingResult {
+  isReady:      boolean;
+  playbackUrl:  string | null;
+  mp4Url:       string | null;
+  deskshareUrl: string | null;
+}
+
+export interface SessionAnalytic {
+  userName:          string;
+  bbbUserId:         string;
+  isModerator:       boolean;
+  onlineTimeSeconds: number;
+  talkTimeSeconds:   number;
+  webcamTimeSeconds: number;
+  messageCount:      number;
+  raiseHandCount:    number;
+  emojiCount:        number;
+  activityScore:     number;
+  joinTime:          string;
+  leaveTime:         string;
+  status:            string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -67,7 +92,15 @@ export class TimetableService {
     return this.http.post(`${BASE}/${id}/end`, {});
   }
 
-  triggerRecording(id: string): Observable<{ recordingUrl: string }> {
-    return this.http.post<{ recordingUrl: string }>(`${BASE}/${id}/recording`, {});
+  checkRecordingReady(id: string): Observable<{ isReady: boolean }> {
+    return this.http.get<{ isReady: boolean }>(`${BASE}/${id}/recording-ready`);
+  }
+
+  triggerRecording(id: string): Observable<RecordingResult> {
+    return this.http.post<RecordingResult>(`${BASE}/${id}/recording`, {});
+  }
+
+  getAnalytics(id: string): Observable<SessionAnalytic[]> {
+    return this.http.get<SessionAnalytic[]>(`${BASE}/${id}/analytics`);
   }
 }

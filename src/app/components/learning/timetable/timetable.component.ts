@@ -1,24 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { TimetableService } from '../../../services/timetable.service';
+import { TimetableService, SessionAnalytic } from '../../../services/timetable.service';
 import { CommonService } from '../../../services/common.service';
 import { HttpGeneralService } from '../../../services/http.service';
 import { environment } from '../../../../environments/environment';
 
 const BASE_URL = environment.apiUrl;
 
-// ── DayOfWeek enum (matches C# DayOfWeek) ────────────────────────────────────
-export enum DayOfWeek {
-  Sunday    = 0,
-  Monday    = 1,
-  Tuesday   = 2,
-  Wednesday = 3,
-  Thursday  = 4,
-  Friday    = 5,
-  Saturday  = 6
-}
-
-// ── Slot shape returned from / stored in the app ──────────────────────────────
 export interface TimetableSlot {
   id:           string;
   day:          string;
@@ -33,16 +21,11 @@ export interface TimetableSlot {
   meetingId:    string;
   meetingLink:  string;
   recordingUrl: string;
+  playbackUrl:  string;
+  mp4Url:       string;
   status:       'scheduled' | 'live' | 'completed' | 'cancelled';
 }
 
-/**
- * Payload sent to the API (POST / PUT).
- *
- * C# DTO:
- *   public DayOfWeek Day     { get; set; }  → sent as integer (0–6)
- *   public string    Session { get; set; }  → sent as string ("1"–"7")
- */
 export interface TimetablePayload {
   batchId:   string | null;
   teacherId: string | null;
@@ -66,13 +49,10 @@ type ModalMode = 'create' | 'edit' | 'view' | 'delete' | null;
   templateUrl: './timetable.component.html',
   styleUrls: ['../../../shared-page.css', './timetable.component.css']
 })
-export class TimetableComponent implements OnInit {
-
-  // ── Expose enum to template ───────────────────────────────────────────────
-  readonly DayOfWeek = DayOfWeek;
+export class TimetableComponent implements OnInit, OnDestroy {
 
   // ── Filters ───────────────────────────────────────────────────────────────
-  batchFilter    = '';
+  batchFilter = '';
   categoryFilter = '';
   viewMode: 'grid' | 'list' = 'grid';
 
@@ -82,8 +62,25 @@ export class TimetableComponent implements OnInit {
   joiningId    = '';
   startingId   = '';   // slot ID being started  → live
   endingId     = '';   // slot ID being ended    → completed
-  recordingId    = '';   // slot ID currently being fetched for recording
-  recordingError: Record<string, string> = {};
+  recordingId      = '';
+  recordingPolling: Record<string, boolean> = {};
+  recordingError:   Record<string, string>  = {};
+  private pollingIntervals: Record<string, ReturnType<typeof setInterval>> = {};
+
+  // ── Analytics ─────────────────────────────────────────────────────────────
+  analytics:        SessionAnalytic[] = [];
+  analyticsLoading  = false;
+
+  secsToMin(s: number): string {
+    const m = Math.floor(s / 60);
+    return m > 0 ? `${m}m` : `${s}s`;
+  }
+
+  scoreClass(score: number): string {
+    if (score >= 75) return 'pg-badge pg-badge--green';
+    if (score >= 40) return 'pg-badge pg-badge--blue';
+    return 'pg-badge pg-badge--gray';
+  }
 
   // ── Form validation ───────────────────────────────────────────────────────
   formErrors: Record<string, string> = {};
@@ -135,11 +132,6 @@ export class TimetableComponent implements OnInit {
   // ── Slots ─────────────────────────────────────────────────────────────────
   slots: TimetableSlot[] = [];
 
-  // ── Session number (number) kept separately for grid / sessionTimes ───────
-  // The form.session is always a string ("1"…"7") to match the C# DTO.
-  // sessionNum is the numeric version used internally.
-  sessionNum = 1;
-
   // ── Display helpers ───────────────────────────────────────────────────────
   getBatchName(b: any): string {
     return b?.name ?? b?.batchName ?? '';
@@ -148,14 +140,6 @@ export class TimetableComponent implements OnInit {
   getTeacherName(t: any): string {
     return `${t?.firstName ?? ''} ${t?.lastName ?? ''}`.trim();
   }
-
-  getDayLabel(day: DayOfWeek): string {
-    return this.days.find(d => d.value === day)?.label ?? String(day);
-  }
-
-  // Arrow-function field required for [compareWith] binding
-  compareDayOfWeek = (a: DayOfWeek, b: DayOfWeek): boolean =>
-    Number(a) === Number(b);
 
   // ── Stats ─────────────────────────────────────────────────────────────────
   get totalSlots(): number     { return this.slots.length; }
@@ -172,7 +156,7 @@ export class TimetableComponent implements OnInit {
     });
   }
 
-  getSlot(day: DayOfWeek, session: number): TimetableSlot | undefined {
+  getSlot(day: string, session: number): TimetableSlot | undefined {
     return this.filteredSlots.find(s => s.day === day && s.session === session);
   }
 
@@ -224,12 +208,18 @@ export class TimetableComponent implements OnInit {
     });
   }
 
-  // ── Join ──────────────────────────────────────────────────────────────────
+  // ── Join (BBB signed URL) ─────────────────────────────────────────────────
   joinSlot(slot: TimetableSlot, isModerator = false): void {
     this.joiningId = slot.id;
     this.timetableService.getJoinUrl(slot.id, 'Admin', isModerator).subscribe({
-      next: ({ joinUrl }) => { window.open(joinUrl, '_blank'); this.joiningId = ''; },
-      error: () => { if (slot.meetingLink) window.open(slot.meetingLink, '_blank'); this.joiningId = ''; }
+      next: ({ joinUrl }) => {
+        window.open(joinUrl, '_blank');
+        this.joiningId = '';
+      },
+      error: () => {
+        if (slot.meetingLink) window.open(slot.meetingLink, '_blank');
+        this.joiningId = '';
+      }
     });
   }
 
@@ -245,30 +235,67 @@ export class TimetableComponent implements OnInit {
   endSession(slot: TimetableSlot): void {
     this.endingId = slot.id;
     this.timetableService.end(slot.id).subscribe({
-      next: () => { this.endingId = ''; this.loadSlots(); },
+      next: () => {
+        this.endingId = '';
+        this.loadSlots();
+        // Auto-start recording poll after session ends
+        this.triggerRecording(slot);
+      },
       error: () => { this.endingId = ''; }
     });
   }
 
   // ── Recording ─────────────────────────────────────────────────────────────
+  // Flow: poll GET /recording-ready every 30s → when ready → POST /recording → show player
   triggerRecording(slot: TimetableSlot): void {
-    this.recordingId = slot.id;
-    this.timetableService.triggerRecording(slot.id).subscribe({
+    if (this.pollingIntervals[slot.id]) return; // already polling
+    this.recordingId    = slot.id;
+    this.recordingError[slot.id] = '';
+    this.recordingPolling[slot.id] = true;
+    // Check once immediately, then every 30s
+    this.checkReadyAndFetch(slot);
+    this.pollingIntervals[slot.id] = setInterval(() => this.checkReadyAndFetch(slot), 30000);
+  }
+
+  private checkReadyAndFetch(slot: TimetableSlot): void {
+    this.timetableService.checkRecordingReady(slot.id).subscribe({
       next: (res) => {
-        this.recordingId = '';
-        const url = res?.recordingUrl ?? '';
-        if (url) {
-          // Update in-memory slot so the link shows instantly
-          const found = this.slots.find(s => s.id === slot.id);
-          if (found) found.recordingUrl = url;
-          window.open(url, '_blank');
+        if (res.isReady) {
+          this.stopPolling(slot.id);
+          this.timetableService.triggerRecording(slot.id).subscribe({
+            next: (rec) => {
+              this.recordingId = '';
+              this.applyRecordingUrls(slot.id, rec.playbackUrl, rec.mp4Url);
+            },
+            error: (err) => {
+              this.recordingId = '';
+              this.recordingError[slot.id] = err?.error?.message ?? 'Failed to fetch recording.';
+            }
+          });
         }
+        // isReady: false → keep polling
       },
-      error: (err) => {
+      error: () => {
+        this.stopPolling(slot.id);
         this.recordingId = '';
-        this.recordingError[slot.id] = err?.error?.message ?? 'Recording not ready yet. Try again in a few minutes.';
+        this.recordingError[slot.id] = 'Failed to check recording status.';
       }
     });
+  }
+
+  private stopPolling(id: string): void {
+    clearInterval(this.pollingIntervals[id]);
+    delete this.pollingIntervals[id];
+    delete this.recordingPolling[id];
+  }
+
+  private applyRecordingUrls(id: string, playbackUrl: string | null, mp4Url: string | null): void {
+    const found = this.slots.find(s => s.id === id);
+    if (found) {
+      found.playbackUrl = playbackUrl ?? '';
+      found.mp4Url      = mp4Url      ?? '';
+      found.recordingUrl = playbackUrl ?? mp4Url ?? '';
+    }
   }
 
   // ── Recording helpers ─────────────────────────────────────────────────────
@@ -283,6 +310,7 @@ export class TimetableComponent implements OnInit {
   // ── Modal ─────────────────────────────────────────────────────────────────
   modalMode: ModalMode = null;
   selectedSlot: TimetableSlot | null = null;
+
   form: TimetablePayload = this.emptyForm();
 
   emptyForm(): TimetablePayload {
@@ -294,9 +322,8 @@ export class TimetableComponent implements OnInit {
     };
   }
 
-  openCreate(day?: DayOfWeek, session?: number): void {
-    this.form       = this.emptyForm();
-    this.sessionNum = 1;
+  openCreate(day?: string, session?: number): void {
+    this.form = this.emptyForm();
     this.filteredTopicsList = [];
     if (day) this.form.day = day;
     if (session) this.form.session = session;
@@ -305,7 +332,6 @@ export class TimetableComponent implements OnInit {
     if (sl) this.form.sessionId = sl.id;
     if (this.batchFilter)    this.form.batch    = this.batchFilter;
     if (this.categoryFilter) this.form.category = this.categoryFilter as any;
-
     this.modalMode = 'create';
   }
 
@@ -333,6 +359,7 @@ export class TimetableComponent implements OnInit {
       topic: slot.topic, teacher: slot.teacher, batch: slot.batch,
       category: slot.category, status: slot.status
     };
+    // Pre-populate filtered topics for the slot's subject
     const subj = this.apiSubjects.find(s => s.name === slot.subject);
     this.filteredTopicsList = subj
       ? this.apiTopics.filter(t => t.subjectId === subj.id)
@@ -340,16 +367,22 @@ export class TimetableComponent implements OnInit {
     this.modalMode = 'edit';
   }
 
-  openView(slot: TimetableSlot): void   { this.selectedSlot = slot; this.modalMode = 'view'; }
+  openView(slot: TimetableSlot): void {
+    this.selectedSlot = slot;
+    this.analytics = [];
+    this.modalMode = 'view';
+    if (slot.status === 'completed') {
+      this.analyticsLoading = true;
+      this.timetableService.getAnalytics(slot.id).subscribe({
+        next: (res) => { this.analytics = res ?? []; this.analyticsLoading = false; },
+        error: ()    => { this.analyticsLoading = false; }
+      });
+    }
+  }
   openDelete(slot: TimetableSlot): void { this.selectedSlot = slot; this.modalMode = 'delete'; }
 
-  closeModal(): void {
-    this.modalMode    = null;
-    this.selectedSlot = null;
-    this.formErrors   = {};
-  }
+  closeModal(): void { this.modalMode = null; this.selectedSlot = null; this.formErrors = {}; }
 
-  /** Session <select> binds to sessionNum; keep form.session (string) in sync */
   onSessionChange(): void {
     const sl = this.getSessionSlot(this.form.session);
     if (sl) { this.form.sessionId = sl.id; }
@@ -415,38 +448,28 @@ export class TimetableComponent implements OnInit {
       : this.apiTopics;
   }
 
-  // ── Save ──────────────────────────────────────────────────────────────────
+  // ── Save (API) ────────────────────────────────────────────────────────────
   saveSlot(): void {
     this.formErrors = {};
-    if (this.form.day === undefined || this.form.day === null)
-                            this.formErrors['day']     = 'Day is required.';
+    if (!this.form.day)     this.formErrors['day']     = 'Day is required.';
     if (!this.form.batch)   this.formErrors['batch']   = 'Batch is required.';
     if (!this.form.subject) this.formErrors['subject'] = 'Subject is required.';
     if (!this.form.teacher) this.formErrors['teacher'] = 'Teacher is required.';
     if (Object.keys(this.formErrors).length > 0) return;
 
-    // Conflict check uses sessionNum (number) to compare against stored slots
     const conflict = this.slots.find(s =>
-      s.day     === this.form.day &&
-      s.session === this.sessionNum &&
-      s.batch   === this.form.batch &&
+      s.day === this.form.day &&
+      s.session === this.form.session &&
+      s.batch === this.form.batch &&
       (this.modalMode === 'create' || s.id !== this.selectedSlot?.id)
     );
     if (conflict) {
-      this.formErrors['conflict'] =
-        `${this.form.batch} already has Session ${this.sessionNum} on ${this.getDayLabel(this.form.day)}.`;
+      this.formErrors['conflict'] = `${this.form.batch} already has Session ${this.form.session} on ${this.form.day}.`;
       return;
     }
 
     this.isSaving = true;
 
-    /**
-     * Cast to `any` because the service's TimetablePayload still declares
-     * day: string and session: number (old types). Our local TimetablePayload
-     * is correct. Update timetable.service.ts to remove this cast:
-     *   day: number  (or DayOfWeek)
-     *   session: string
-     */
     if (this.modalMode === 'create') {
       this.timetableService.createSlot(this.form).subscribe({
         next: () => {
@@ -490,6 +513,11 @@ export class TimetableComponent implements OnInit {
     return sl?.name ?? `Session ${slotNumber}`;
   }
 
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
+  ngOnDestroy(): void {
+    Object.keys(this.pollingIntervals).forEach(id => clearInterval(this.pollingIntervals[id]));
+  }
+
   // ── API loaders ───────────────────────────────────────────────────────────
   ngOnInit(): void {
     this.loadSlots();
@@ -501,28 +529,11 @@ export class TimetableComponent implements OnInit {
     this.loadCourses();
   }
 
-  private loadSlots(): void {
-    this.isLoading = true;
-    this.httpService.getData(BASE_URL, '/timetable').subscribe({
-      next: (res: any) => {
-        const raw: any[] = Array.isArray(res) ? res : (res?.data ?? []);
-        this.slots = raw.map(r => ({
-          ...r,
-          day:     Number(r.day) as DayOfWeek,
-          session: Number(r.session),
-        }));
-        this.isLoading = false;
-      },
-      error: () => {
-        this.commonService.error('Failed to load timetable.');
-        this.isLoading = false;
-      }
-    });
-  }
-
   private loadBatches(): void {
     this.httpService.getData(BASE_URL, '/batches').subscribe({
-      next: (res: any) => { this.apiBatches = Array.isArray(res) ? res : (res?.data ?? []); },
+      next: (res: any) => {
+        this.apiBatches = Array.isArray(res) ? res : (res?.data ?? []);
+      },
       error: () => this.commonService.error('Failed to load batches.')
     });
   }
@@ -531,7 +542,7 @@ export class TimetableComponent implements OnInit {
     this.httpService.getData(BASE_URL, '/role').subscribe({
       next: (rolesRes: any) => {
         const roles: any[] = Array.isArray(rolesRes) ? rolesRes : (rolesRes?.data ?? []);
-        const teacherRole  = roles.find((r: any) => r.name === 'Teacher');
+        const teacherRole = roles.find((r: any) => r.name === 'Teacher');
         this.httpService.getData(BASE_URL, '/users').subscribe({
           next: (res: any) => {
             const users: any[] = Array.isArray(res) ? res : (res?.data ?? []);
@@ -556,14 +567,18 @@ export class TimetableComponent implements OnInit {
 
   private loadSubjects(): void {
     this.httpService.getData(BASE_URL, '/subject').subscribe({
-      next: (res: any) => { this.apiSubjects = Array.isArray(res) ? res : (res?.data ?? []); },
+      next: (res: any) => {
+        this.apiSubjects = Array.isArray(res) ? res : (res?.data ?? []);
+      },
       error: () => this.commonService.error('Failed to load subjects.')
     });
   }
 
   private loadTopics(): void {
     this.httpService.getData(BASE_URL, '/topic').subscribe({
-      next: (res: any) => { this.apiTopics = Array.isArray(res) ? res : (res?.data ?? []); },
+      next: (res: any) => {
+        this.apiTopics = Array.isArray(res) ? res : (res?.data ?? []);
+      },
       error: () => {}
     });
   }
@@ -598,7 +613,9 @@ export class TimetableComponent implements OnInit {
             status:      (tt.status ?? r.status ?? 'scheduled').toLowerCase(),
             meetingId:    tt.meetingId    ?? r.id,
             meetingLink:  tt.meetingLink  ?? r.meetingUrl ?? '',
-            recordingUrl: tt.recordingUrl ?? r.recordingUrl ?? '',
+            recordingUrl: tt.recordingUrl ?? tt.playbackUrl ?? r.recordingUrl ?? '',
+            playbackUrl:  tt.playbackUrl  ?? r.playbackUrl ?? '',
+            mp4Url:       tt.mp4Url       ?? r.mp4Url      ?? '',
             courseId:     r.courseId      ?? null,
             sessionId:    r.sessionId     ?? null,
           };

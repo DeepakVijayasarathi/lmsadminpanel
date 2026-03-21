@@ -1,8 +1,6 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
-import { HttpGeneralService } from '../../services/http.service';
-import { environment } from '../../../environments/environment';
 
 interface NavItem {
   label: string;
@@ -28,7 +26,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   isMobile = false;
   currentRoute = '';
   expandedGroups: Set<string> = new Set(['Users', 'Curriculum']);
-  menus = [];
 
   navGroups: NavGroup[] = [
     {
@@ -106,40 +103,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     },
   ];
 
-  // In your component, add this icon mapping
-  private iconMap: Record<string, string> = {
-    'dashboard':   'fa-solid fa-gauge-high',
-    'book':        'fa-solid fa-book-open',
-    'courses':     'fa-solid fa-book-open',
-    'students':    'fa-solid fa-user-graduate',
-    'teachers':    'fa-solid fa-chalkboard-user',
-    'parents':     'fa-solid fa-people-roof',
-    'boards':      'fa-solid fa-building-columns',
-    'classes':     'fa-solid fa-school',
-    'subjects':    'fa-solid fa-atom',
-    'topics':      'fa-solid fa-list-check',
-    'batches':     'fa-solid fa-layer-group',
-    'live-classes':'fa-solid fa-video',
-    'library':     'fa-solid fa-book-bookmark',
-    'timetable':   'fa-solid fa-calendar-days',
-    'exams':       'fa-solid fa-file-pen',
-    'results':     'fa-solid fa-file-circle-check',
-    'notifications':'fa-solid fa-bell',
-    'announcements':'fa-solid fa-bullhorn',
-    'payments':    'fa-solid fa-indian-rupee-sign',
-    'subscriptions':'fa-solid fa-id-card',
-    'refunds':     'fa-solid fa-rotate-left',
-    'attendance':  'fa-solid fa-user-check',
-    'performance': 'fa-solid fa-chart-line',
-    'revenue':     'fa-solid fa-chart-bar',
-    'roles':       'fa-solid fa-user-shield',
-    'settings':    'fa-solid fa-gear',
-    'menu':        'fa-solid fa-bars',
-    // fallback
-    'default':     'fa-solid fa-circle-dot',
-  };
-
-  constructor(private router: Router, private authService: AuthService, private httpService: HttpGeneralService<any>) {
+  constructor(private router: Router, private authService: AuthService) {
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         this.currentRoute = event.urlAfterRedirects;
@@ -155,69 +119,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       if (g.items.some(i => i.route === this.currentRoute)) {
         this.expandedGroups.add(g.groupLabel);
       }
-    });
-    // this.loadMenus();
-  }
-
-  private resolveIcon(iconKey: string, name: string): string {
-    const key = (iconKey || name || '').toLowerCase().replace(/\s+/g, '-');
-    return this.iconMap[key] ?? this.iconMap['default'];
-  }
-
-  loadMenus(): void {
-    this.httpService.getData(environment.apiUrl, '/menu/get-user-access-menu').subscribe({
-      next: (res: any) => {
-        const flat: any[] = Array.isArray(res) ? res : (res?.data ?? []);
-
-        // Separate parents (no parentId) and children
-        const parents  = flat.filter(m => !m.parentId).sort((a, b) => a.sequence - b.sequence);
-        const children = flat.filter(m =>  m.parentId);
-
-        if (parents.length === 0) {
-          // ── Flat list: no grouping possible, put everything in one group ──
-          this.navGroups = [{
-            groupLabel: 'Menu',
-            items: flat
-              .filter(m => m.isVisible && m.isActive)
-              .sort((a, b) => a.sequence - b.sequence)
-              .map(m => ({
-                label: m.name,
-                icon:  this.resolveIcon(m.icon, m.name),
-                route: m.url,
-              })),
-          }];
-          return;
-        }
-
-        // ── Hierarchical list: parents become groups, children become items ──
-        this.navGroups = parents
-          .filter(p => p.isVisible && p.isActive)
-          .map(parent => {
-            const groupChildren = children
-              .filter(c => c.parentId === parent.id && c.isVisible && c.isActive)
-              .sort((a, b) => a.sequence - b.sequence)
-              .map(c => ({
-                label: c.name,
-                icon:  this.resolveIcon(c.icon, c.name),
-                route: c.url,
-              }));
-
-            // If a parent has no children, treat it as a standalone nav item group
-            return {
-              groupLabel: parent.name,
-              items: groupChildren.length
-                ? groupChildren
-                : [{
-                    label: parent.name,
-                    icon:  this.resolveIcon(parent.icon, parent.name),
-                    route: parent.url,
-                  }],
-            };
-          })
-          // Optionally drop empty groups
-          .filter(g => g.items.length > 0);
-      },
-      error: () => {},
     });
   }
 

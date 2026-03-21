@@ -19,11 +19,13 @@
     "@angular/platform-browser": "^19.0.0",
     "@angular/platform-browser-dynamic": "^19.0.0",
     "@angular/router": "^19.0.0",
+    "@types/video.js": "^7.3.58",
     "apexcharts": "^3.53.0",
     "ng-apexcharts": "^1.12.0",
     "ngx-toastr": "^19.1.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
+    "video.js": "^8.23.7",
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
