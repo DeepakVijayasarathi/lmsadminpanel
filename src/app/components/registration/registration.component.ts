@@ -60,8 +60,6 @@ export class RegistrationComponent implements OnInit {
   showSuccess = false;
   coursesLoading = false;
 
-  usernameStatus: 'idle' | 'checking' | 'available' | 'taken' = 'idle';
-  private usernameTimeout: any = null;
 
   // ── Shared account form fields ──
   form = {
@@ -259,8 +257,6 @@ export class RegistrationComponent implements OnInit {
     if (!firstName.trim()) this.errors['firstName'] = 'First name is required';
     if (!lastName.trim()) this.errors['lastName'] = 'Last name is required';
     if (!username.trim()) this.errors['username'] = 'Username is required';
-    else if (this.usernameStatus === 'taken') this.errors['username'] = 'Username is already taken';
-    else if (this.usernameStatus === 'checking') this.errors['username'] = 'Please wait while we check username availability';
     if (!phone.trim()) this.errors['phone'] = 'Phone is required';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       this.errors['email'] = 'Valid email is required';
@@ -637,28 +633,4 @@ export class RegistrationComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
-  onUsernameInput() {
-    const username = this.form.username.trim();
-
-    // Clear previous timer
-    clearTimeout(this.usernameTimeout);
-
-    if (!username || username.length < 3) {
-      this.usernameStatus = 'idle';
-      return;
-    }
-
-    this.usernameStatus = 'checking';
-
-    this.usernameTimeout = setTimeout(async () => {
-      try {
-        const res: any = await this.http
-          .get(`${this.API}/auth/check-username/${username}`)
-          .toPromise();
-        this.usernameStatus = res?.exists ? 'taken' : 'available';
-      } catch {
-        this.usernameStatus = 'idle';
-      }
-    }, 600); // 600ms debounce
-  }
 }

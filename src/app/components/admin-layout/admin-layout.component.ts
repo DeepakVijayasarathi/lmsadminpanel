@@ -48,12 +48,19 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     {
       groupLabel: 'Learning',
       items: [
-        { label: 'Courses',      icon: 'fa-solid fa-book-open',      route: '/courses'       },
-        { label: 'Batches',      icon: 'fa-solid fa-layer-group',    route: '/batches'       },
-        { label: 'Live Classes', icon: 'fa-solid fa-video',            route: '/live-classes'  },
-        { label: 'Library',      icon: 'fa-solid fa-book-bookmark',  route: '/library'       },
-        { label: 'Timetable',     icon: 'fa-solid fa-calendar-days',  route: '/timetable'      },
-        { label: 'Session Slots', icon: 'fa-solid fa-calendar-check', route: '/session-slots'  },
+        { label: 'Courses',       icon: 'fa-solid fa-book-open',      route: '/courses'           },
+        { label: 'Batches',       icon: 'fa-solid fa-layer-group',    route: '/batches'           },
+        { label: 'Library',       icon: 'fa-solid fa-book-bookmark',  route: '/library'           },
+        { label: 'Timetable',     icon: 'fa-solid fa-calendar-days',  route: '/timetable'         },
+        { label: 'Session Slots', icon: 'fa-solid fa-calendar-check', route: '/session-slots'     },
+        { label: 'My Meetings',   icon: 'fa-solid fa-circle-play',    route: '/my-meetings'       },
+      ],
+    },
+    {
+      groupLabel: 'Dashboards',
+      items: [
+        { label: 'Teacher Dashboard', icon: 'fa-solid fa-chalkboard-user', route: '/teacher-dashboard' },
+        { label: 'Student Dashboard', icon: 'fa-solid fa-user-graduate',   route: '/student-dashboard' },
       ],
     },
     {

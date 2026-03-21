@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { TimetableService } from '../../../services/timetable.service';
 import { CommonService } from '../../../services/common.service';
 import { HttpGeneralService } from '../../../services/http.service';
@@ -7,22 +8,27 @@ import { environment } from '../../../../environments/environment';
 const BASE_URL = environment.apiUrl;
 
 export interface TimetableSlot {
-  id: string;
-  day: string;
-  session: number;
-  subject: string;
-  topic: string;
-  teacher: string;
-  batch: string;
-  category: 'Foundation' | 'Standard' | 'Advanced';
-  startTime: string;
-  endTime: string;
-  meetingId: string;
-  meetingLink: string;
-  status: 'scheduled' | 'live' | 'completed' | 'cancelled';
+  id:           string;
+  day:          string;
+  session:      number;
+  subject:      string;
+  topic:        string;
+  teacher:      string;
+  batch:        string;
+  category:     'Foundation' | 'Standard' | 'Advanced';
+  startTime:    string;
+  endTime:      string;
+  meetingId:    string;
+  meetingLink:  string;
+  recordingUrl: string;
+  status:       'scheduled' | 'live' | 'completed' | 'cancelled';
 }
 
 export interface TimetablePayload {
+  batchId:   string | null;
+  teacherId: string | null;
+  courseId:  string | null;
+  sessionId: string | null;
   day: string;
   session: number;
   subject: string;
@@ -30,8 +36,6 @@ export interface TimetablePayload {
   teacher: string;
   batch: string;
   category: 'Foundation' | 'Standard' | 'Advanced';
-  startTime: string;
-  endTime: string;
   status: 'scheduled' | 'live' | 'completed' | 'cancelled';
 }
 
@@ -53,34 +57,58 @@ export class TimetableComponent implements OnInit {
   // ── Loading ───────────────────────────────────────────────────────────────
   isLoading = false;
   isSaving = false;
-  joiningId = '';
+  joiningId    = '';
+  startingId   = '';   // slot ID being started  → live
+  endingId     = '';   // slot ID being ended    → completed
+  recordingId    = '';   // slot ID currently being fetched for recording
+  recordingError: Record<string, string> = {};
 
   // ── Form validation ───────────────────────────────────────────────────────
   formErrors: Record<string, string> = {};
   readonly Object = Object;
 
+  getFormErrorMessages(): string[] {
+    return Object.values(this.formErrors).filter(v => !!v);
+  }
+
   // ── Dynamic reference data (from API) ─────────────────────────────────────
-  apiBatches: any[]   = [];
-  apiTeachers: any[]  = [];
-  apiSubjects: any[]  = [];
-  apiTopics: any[]    = [];
+  apiBatches: any[]      = [];
+  apiTeachers: any[]     = [];
+  apiSubjects: any[]     = [];
+  apiTopics: any[]       = [];
+  apiCourses: any[]      = [];
+  apiSessionSlots: any[] = [];
   filteredTopicsList: any[] = [];
 
   // ── Static reference data ─────────────────────────────────────────────────
-  readonly days     = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  readonly sessions = [1, 2, 3, 4, 5, 6, 7];
+  readonly days       = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   readonly categories: Array<'Foundation' | 'Standard' | 'Advanced'> = ['Foundation', 'Standard', 'Advanced'];
   readonly statuses:   Array<'scheduled' | 'live' | 'completed' | 'cancelled'> = ['scheduled', 'live', 'completed', 'cancelled'];
 
-  readonly sessionTimes: Record<number, { start: string; end: string }> = {
-    1: { start: '07:00', end: '08:30' },
-    2: { start: '09:00', end: '10:30' },
-    3: { start: '11:00', end: '12:30' },
-    4: { start: '14:00', end: '15:30' },
-    5: { start: '16:00', end: '17:30' },
-    6: { start: '18:00', end: '19:30' },
-    7: { start: '20:00', end: '21:30' },
-  };
+  // ── Session slots (dynamic from API) ────────────────────────────────────
+  get sessions(): number[] {
+    return this.apiSessionSlots
+      .filter(s => s.isActive !== false)
+      .map(s => s.slotNumber)
+      .sort((a, b) => a - b);
+  }
+
+  getSessionSlot(slotNumber: number): any {
+    return this.apiSessionSlots.find(s => s.slotNumber === slotNumber);
+  }
+
+  trimTime(t: string): string {
+    // "18:42:00" → "18:42"
+    return t ? t.substring(0, 5) : '';
+  }
+
+  toAmPm(t: string): string {
+    if (!t) return '';
+    const [h, m] = t.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const hour = h % 12 || 12;
+    return `${hour}:${String(m).padStart(2, '0')} ${period}`;
+  }
 
   // ── Slots ─────────────────────────────────────────────────────────────────
   slots: TimetableSlot[] = [];
@@ -176,6 +204,53 @@ export class TimetableComponent implements OnInit {
     });
   }
 
+  // ── Start / End session ───────────────────────────────────────────────────
+  startSession(slot: TimetableSlot): void {
+    this.startingId = slot.id;
+    this.timetableService.start(slot.id).subscribe({
+      next: () => { this.startingId = ''; this.loadSlots(); },
+      error: () => { this.startingId = ''; }
+    });
+  }
+
+  endSession(slot: TimetableSlot): void {
+    this.endingId = slot.id;
+    this.timetableService.end(slot.id).subscribe({
+      next: () => { this.endingId = ''; this.loadSlots(); },
+      error: () => { this.endingId = ''; }
+    });
+  }
+
+  // ── Recording ─────────────────────────────────────────────────────────────
+  triggerRecording(slot: TimetableSlot): void {
+    this.recordingId = slot.id;
+    this.timetableService.triggerRecording(slot.id).subscribe({
+      next: (res) => {
+        this.recordingId = '';
+        const url = res?.recordingUrl ?? '';
+        if (url) {
+          // Update in-memory slot so the link shows instantly
+          const found = this.slots.find(s => s.id === slot.id);
+          if (found) found.recordingUrl = url;
+          window.open(url, '_blank');
+        }
+      },
+      error: (err) => {
+        this.recordingId = '';
+        this.recordingError[slot.id] = err?.error?.message ?? 'Recording not ready yet. Try again in a few minutes.';
+      }
+    });
+  }
+
+  // ── Recording helpers ─────────────────────────────────────────────────────
+  isVideo(url: string): boolean {
+    return !!(url?.includes('.mp4') || url?.includes('video'));
+  }
+
+  getSafeUrl(url: string): SafeResourceUrl {
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  }
+
   // ── Modal ─────────────────────────────────────────────────────────────────
   modalMode: ModalMode = null;
   selectedSlot: TimetableSlot | null = null;
@@ -184,9 +259,9 @@ export class TimetableComponent implements OnInit {
 
   emptyForm(): TimetablePayload {
     return {
+      batchId: null, teacherId: null, courseId: null, sessionId: null,
       day: '', session: 1, subject: '', topic: '', teacher: '',
       batch: '', category: 'Foundation',
-      startTime: '07:00', endTime: '08:30',
       status: 'scheduled'
     };
   }
@@ -194,12 +269,11 @@ export class TimetableComponent implements OnInit {
   openCreate(day?: string, session?: number): void {
     this.form = this.emptyForm();
     this.filteredTopicsList = [];
-    if (day)     this.form.day = day;
-    if (session) {
-      this.form.session = session;
-      const st = this.sessionTimes[session];
-      if (st) { this.form.startTime = st.start; this.form.endTime = st.end; }
-    }
+    if (day) this.form.day = day;
+    if (session) this.form.session = session;
+    // Always resolve sessionId from the current session number
+    const sl = this.getSessionSlot(this.form.session);
+    if (sl) this.form.sessionId = sl.id;
     if (this.batchFilter)    this.form.batch    = this.batchFilter;
     if (this.categoryFilter) this.form.category = this.categoryFilter as any;
     this.modalMode = 'create';
@@ -207,11 +281,27 @@ export class TimetableComponent implements OnInit {
 
   openEdit(slot: TimetableSlot): void {
     this.selectedSlot = slot;
+    const b = this.apiBatches.find(x => this.getBatchName(x) === slot.batch);
+    const t = this.apiTeachers.find(x => this.getTeacherName(x) === slot.teacher);
+    // Resolve courseId from batch object (same as onBatchChange)
+    const courseId =
+      b?.courseId ?? b?.course?.id ?? b?.courseDto?.id ??
+      (slot as any).courseId ?? null;
+    // Resolve sessionId from apiSessionSlots by slot number
+    const sessionSlot = this.getSessionSlot(slot.session);
+    const sessionId = sessionSlot?.id ?? (slot as any).sessionId ?? null;
+    // Resolve teacherId from batch or teacher list
+    const teacherId =
+      b?.teacherId ?? b?.teacher?.id ?? b?.teacherDto?.id ?? b?.assignedTeacherId ??
+      t?.id ?? null;
     this.form = {
+      batchId:   b?.id   ?? null,
+      teacherId,
+      courseId,
+      sessionId,
       day: slot.day, session: slot.session, subject: slot.subject,
       topic: slot.topic, teacher: slot.teacher, batch: slot.batch,
-      category: slot.category, startTime: slot.startTime, endTime: slot.endTime,
-      status: slot.status
+      category: slot.category, status: slot.status
     };
     // Pre-populate filtered topics for the slot's subject
     const subj = this.apiSubjects.find(s => s.name === slot.subject);
@@ -227,8 +317,54 @@ export class TimetableComponent implements OnInit {
   closeModal(): void { this.modalMode = null; this.selectedSlot = null; this.formErrors = {}; }
 
   onSessionChange(): void {
-    const st = this.sessionTimes[this.form.session];
-    if (st) { this.form.startTime = st.start; this.form.endTime = st.end; }
+    const sl = this.getSessionSlot(this.form.session);
+    if (sl) { this.form.sessionId = sl.id; }
+  }
+
+  onBatchChange(): void {
+    const b = this.apiBatches.find(x => this.getBatchName(x) === this.form.batch);
+    if (!b) return;
+
+    // ── batchId ────────────────────────────────────────────────
+    this.form.batchId = b.id ?? null;
+
+    // ── courseId — try multiple field names ────────────────────
+    this.form.courseId =
+      b.courseId ??
+      b.course?.id ??
+      b.courseDto?.id ??
+      null;
+
+    // ── teacherId + teacher name ───────────────────────────────
+    const teacherId: string | null =
+      b.teacherId ??
+      b.teacher?.id ??
+      b.teacherDto?.id ??
+      b.assignedTeacherId ??
+      null;
+
+    if (teacherId) {
+      this.form.teacherId = teacherId;
+
+      // 1. Try to resolve name from inline dto on the batch object
+      const inlineDto = b.teacherDto ?? b.teacher ?? b.assignedTeacher;
+      if (inlineDto && (inlineDto.firstName || inlineDto.lastName)) {
+        this.form.teacher = this.getTeacherName(inlineDto);
+      } else {
+        // 2. Fall back to apiTeachers list
+        const t = this.apiTeachers.find(x => x.id === teacherId);
+        if (t) this.form.teacher = this.getTeacherName(t);
+      }
+    }
+  }
+
+  onTeacherChange(): void {
+    const t = this.apiTeachers.find(x => this.getTeacherName(x) === this.form.teacher);
+    this.form.teacherId = t?.id ?? null;
+  }
+
+  getCourseName(c: any): string {
+    return c?.title ?? c?.name ?? c?.courseName ?? '';
   }
 
   onCategoryChange(): void {
@@ -269,44 +405,25 @@ export class TimetableComponent implements OnInit {
 
     if (this.modalMode === 'create') {
       this.timetableService.createSlot(this.form).subscribe({
-        next: (result) => {
-          this.slots.push({
-            id: result.id, day: result.day, session: result.session,
-            subject: result.subject, topic: result.topic, teacher: result.teacher,
-            batch: result.batch, category: result.category as any,
-            startTime: result.startTime, endTime: result.endTime,
-            status: result.status as any, meetingId: result.meetingId,
-            meetingLink: result.meetingLink,
-          });
+        next: () => {
           this.isSaving = false;
           this.closeModal();
+          this.loadSlots();
         },
-        error: (err) => {
+        error: () => {
           this.isSaving = false;
-          alert('Failed to create session: ' + (err.error?.message ?? 'Unknown error'));
         }
       });
 
     } else if (this.modalMode === 'edit' && this.selectedSlot) {
       this.timetableService.updateSlot(this.selectedSlot.id, this.form).subscribe({
-        next: (result) => {
-          const idx = this.slots.findIndex(s => s.id === this.selectedSlot!.id);
-          if (idx > -1) {
-            this.slots[idx] = {
-              ...this.slots[idx],
-              day: result.day, session: result.session, subject: result.subject,
-              topic: result.topic, teacher: result.teacher, batch: result.batch,
-              category: result.category as any, startTime: result.startTime,
-              endTime: result.endTime, status: result.status as any,
-              meetingId: result.meetingId, meetingLink: result.meetingLink,
-            };
-          }
+        next: () => {
           this.isSaving = false;
           this.closeModal();
+          this.loadSlots();
         },
-        error: (err) => {
+        error: () => {
           this.isSaving = false;
-          alert('Failed to update session: ' + (err.error?.message ?? 'Unknown error'));
         }
       });
     }
@@ -320,16 +437,24 @@ export class TimetableComponent implements OnInit {
   }
 
   formatSessionTime(session: number): string {
-    const st = this.sessionTimes[session];
-    return st ? `${st.start} – ${st.end}` : '';
+    const sl = this.getSessionSlot(session);
+    return sl ? `${this.toAmPm(sl.startTime)} – ${this.toAmPm(sl.endTime)}` : '';
+  }
+
+  getSessionLabel(slotNumber: number): string {
+    const sl = this.getSessionSlot(slotNumber);
+    return sl?.name ?? `Session ${slotNumber}`;
   }
 
   // ── API loaders ───────────────────────────────────────────────────────────
   ngOnInit(): void {
+    this.loadSlots();
+    this.loadSessionSlots();
     this.loadBatches();
     this.loadTeachers();
     this.loadSubjects();
     this.loadTopics();
+    this.loadCourses();
   }
 
   private loadBatches(): void {
@@ -386,9 +511,69 @@ export class TimetableComponent implements OnInit {
     });
   }
 
+  private loadCourses(): void {
+    this.httpService.getData(BASE_URL, '/courses').subscribe({
+      next: (res: any) => {
+        this.apiCourses = Array.isArray(res) ? res : (res?.data ?? []);
+      },
+      error: () => {}
+    });
+  }
+
+  private loadSlots(): void {
+    this.isLoading = true;
+    this.timetableService.getAll().subscribe({
+      next: (res: any) => {
+        const list = Array.isArray(res) ? res : (res?.data ?? []);
+        this.slots = list.map((r: any) => {
+          const tt = r.timetable ?? r;
+          return {
+            id:          r.id,
+            day:         tt.day,
+            session:     Number(tt.session),
+            subject:     tt.subject,
+            topic:       tt.topic,
+            teacher:     tt.teacher,
+            batch:       tt.batch,
+            category:    tt.category,
+            startTime:   tt.startTime   ?? '',
+            endTime:     tt.endTime     ?? '',
+            status:      (tt.status ?? r.status ?? 'scheduled').toLowerCase(),
+            meetingId:    tt.meetingId    ?? r.id,
+            meetingLink:  tt.meetingLink  ?? r.meetingUrl ?? '',
+            recordingUrl: tt.recordingUrl ?? r.recordingUrl ?? '',
+            courseId:     r.courseId      ?? null,
+            sessionId:    r.sessionId     ?? null,
+          };
+        });
+        this.isLoading = false;
+      },
+      error: () => {
+        this.isLoading = false;
+        this.commonService.error('Failed to load timetable.');
+      }
+    });
+  }
+
+  private loadSessionSlots(): void {
+    this.httpService.getData(BASE_URL, '/sessionslot').subscribe({
+      next: (res: any) => {
+        this.apiSessionSlots = Array.isArray(res) ? res : (res?.data ?? []);
+        // Set default session from first slot
+        if (this.apiSessionSlots.length > 0) {
+          const first = this.apiSessionSlots.find(s => s.slotNumber === 1) ?? this.apiSessionSlots[0];
+          this.form.session   = first.slotNumber;
+          this.form.sessionId = first.id;
+        }
+      },
+      error: () => {}
+    });
+  }
+
   constructor(
     private timetableService: TimetableService,
     private commonService: CommonService,
-    private httpService: HttpGeneralService<any>
+    private httpService: HttpGeneralService<any>,
+    private sanitizer: DomSanitizer
   ) {}
 }

@@ -15,45 +15,66 @@
   [class.success]="toastType === 'success'"
   [class.error]="toastType === 'error'"
 >
-  <span class="toast-icon">{{ toastType === "success" ? "✓" : "⚠" }}</span>
+  <span class="toast-icon">
+    <i [class]="toastType === 'success' ? 'fa-solid fa-circle-check' : 'fa-solid fa-triangle-exclamation'"></i>
+  </span>
   {{ toastMsg }}
 </div>
 
 <div class="reg-page">
   <!-- Left Panel -->
   <div class="left-panel">
+
+    <!-- Brand -->
     <div class="brand">
-      <div class="brand-mark">🎓</div>
+      <div class="brand-logo">
+        <img src="logo.png" alt="B2P Teachers Logo" />
+      </div>
       <div>
         <div class="brand-name">B2P Teachers</div>
         <div class="brand-tagline">Learn. Grow. Succeed.</div>
       </div>
     </div>
-    <div class="panel-illustration">
-      <div class="ill-circle ill-c1"></div>
-      <div class="ill-circle ill-c2"></div>
-      <div class="ill-circle ill-c3"></div>
-      <div class="panel-icon">
-        {{
-          selectedRole === "teacher"
-            ? "👨‍🏫"
-            : selectedRole === "student"
-              ? "👨‍🎓"
-              : "🏫"
-        }}
+
+    <!-- Center illustration -->
+    <div class="lp-illustration">
+      <div class="lp-ill-ring lp-ill-ring--outer"></div>
+      <div class="lp-ill-ring lp-ill-ring--inner"></div>
+      <div class="lp-ill-icon">
+        <i *ngIf="!selectedRole"         class="fa-solid fa-graduation-cap"></i>
+        <i *ngIf="selectedRole==='teacher'" class="fa-solid fa-chalkboard-user"></i>
+        <i *ngIf="selectedRole==='student'" class="fa-solid fa-user-graduate"></i>
       </div>
     </div>
-    <div class="panel-copy">
-      <h2 *ngIf="!selectedRole">Start your journey<br />with B2P Teachers</h2>
-      <h2 *ngIf="selectedRole === 'teacher'">Welcome,<br />Educator!</h2>
-      <h2 *ngIf="selectedRole === 'student'">
-        Your learning<br />starts here!
-      </h2>
-      <p>
-        Join thousands of learners and educators on our platform. Build skills
-        that matter.
-      </p>
+
+    <!-- Hero text -->
+    <div class="lp-hero">
+      <h2 *ngIf="!selectedRole">Create your<br /><span>account</span></h2>
+      <h2 *ngIf="selectedRole === 'teacher'">Welcome,<br /><span>Educator!</span></h2>
+      <h2 *ngIf="selectedRole === 'student'">Your learning<br /><span>starts here!</span></h2>
     </div>
+
+    <!-- Feature list -->
+    <div class="lp-feat-list">
+      <div class="lp-feat-item">
+        <div class="lp-feat-icon"><i class="fa-solid fa-video"></i></div>
+        <span>Live Video Classes</span>
+      </div>
+      <div class="lp-feat-item">
+        <div class="lp-feat-icon"><i class="fa-solid fa-book-open"></i></div>
+        <span>Digital Library</span>
+      </div>
+      <div class="lp-feat-item">
+        <div class="lp-feat-icon"><i class="fa-solid fa-chart-line"></i></div>
+        <span>Progress Analytics</span>
+      </div>
+      <div class="lp-feat-item">
+        <div class="lp-feat-icon"><i class="fa-solid fa-certificate"></i></div>
+        <span>Certifications</span>
+      </div>
+    </div>
+
+    <!-- Stats -->
     <div class="panel-stats">
       <div class="stat">
         <span class="stat-num">12k+</span>
@@ -68,6 +89,7 @@
         <span class="stat-label">Teachers</span>
       </div>
     </div>
+
   </div>
 
   <!-- Right Panel -->
@@ -81,17 +103,21 @@
           <p>Who are you registering as?</p>
         </div>
         <div class="role-grid">
-          <button class="role-card" (click)="selectRole('teacher')">
-            <span class="role-emoji">👨‍🏫</span>
+          <button class="role-card role-card--teacher" (click)="selectRole('teacher')">
+            <div class="role-icon-wrap">
+              <i class="fa-solid fa-chalkboard-user"></i>
+            </div>
             <div class="role-title">Teacher</div>
-            <div class="role-desc">Share knowledge & manage courses</div>
-            <div class="role-arrow">→</div>
+            <div class="role-desc">Share knowledge &amp; manage courses</div>
+            <div class="role-arrow"><i class="fa-solid fa-arrow-right"></i></div>
           </button>
-          <button class="role-card" (click)="selectRole('student')">
-            <span class="role-emoji">👨‍🎓</span>
+          <button class="role-card role-card--student" (click)="selectRole('student')">
+            <div class="role-icon-wrap">
+              <i class="fa-solid fa-user-graduate"></i>
+            </div>
             <div class="role-title">Student</div>
-            <div class="role-desc">Enroll in courses & learn skills</div>
-            <div class="role-arrow">→</div>
+            <div class="role-desc">Enroll in courses &amp; learn skills</div>
+            <div class="role-arrow"><i class="fa-solid fa-arrow-right"></i></div>
           </button>
         </div>
         <p class="login-hint">
@@ -106,7 +132,7 @@
         <!-- Stepper -->
         <div class="stepper">
           <button class="back-role" (click)="backToRole()">
-            <span>←</span> Change Role
+            <i class="fa-solid fa-arrow-left"></i> Back
           </button>
           <div class="steps-track">
             <ng-container *ngFor="let label of teacherStepLabels; let i = index">
@@ -117,7 +143,7 @@
               >
                 <div class="step-dot">
                   <span *ngIf="stepState(i + 1) !== 'done'">{{ i + 1 }}</span>
-                  <span *ngIf="stepState(i + 1) === 'done'">✓</span>
+                  <i *ngIf="stepState(i + 1) === 'done'" class="fa-solid fa-check"></i>
                 </div>
                 <span class="step-txt">{{ label }}</span>
               </div>
@@ -160,20 +186,7 @@
                 [(ngModel)]="form.username"
                 placeholder="johndoe123"
                 [class.invalid]="errors['username']"
-                [class.input-available]="usernameStatus === 'available'"
-                [class.input-taken]="usernameStatus === 'taken'"
-                (input)="onUsernameInput()"
               />
-              <!-- Status indicators -->
-              <span class="username-status checking" *ngIf="usernameStatus === 'checking'">
-                <span class="status-spinner"></span> Checking...
-              </span>
-              <span class="username-status available" *ngIf="usernameStatus === 'available'">
-                ✓ Username available
-              </span>
-              <span class="username-status taken" *ngIf="usernameStatus === 'taken'">
-                ✗ Username already taken
-              </span>
               <span class="err" *ngIf="errors['username']">{{ errors["username"] }}</span>
             </div>
             <div class="field">
@@ -191,7 +204,7 @@
               <div class="input-icon-wrap">
                 <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="form.password" placeholder="Min. 8 characters" [class.invalid]="errors['password']" />
                 <button type="button" class="eye-toggle" (click)="showPassword = !showPassword">
-                  {{ showPassword ? "🙈" : "👁" }}
+                  <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
                 </button>
               </div>
               <span class="err" *ngIf="errors['password']">{{ errors["password"] }}</span>
@@ -310,7 +323,7 @@
         <!-- Stepper -->
         <div class="stepper">
           <button class="back-role" (click)="backToRole()">
-            <span>←</span> Change Role
+            <i class="fa-solid fa-arrow-left"></i> Change Role
           </button>
           <div class="steps-track">
             <ng-container *ngFor="let label of studentStepLabels; let i = index">
@@ -321,7 +334,7 @@
               >
                 <div class="step-dot">
                   <span *ngIf="stepState(i + 1) !== 'done'">{{ i + 1 }}</span>
-                  <span *ngIf="stepState(i + 1) === 'done'">✓</span>
+                  <i *ngIf="stepState(i + 1) === 'done'" class="fa-solid fa-check"></i>
                 </div>
                 <span class="step-txt">{{ label }}</span>
               </div>
@@ -364,20 +377,7 @@
                 [(ngModel)]="form.username"
                 placeholder="johndoe123"
                 [class.invalid]="errors['username']"
-                [class.input-available]="usernameStatus === 'available'"
-                [class.input-taken]="usernameStatus === 'taken'"
-                (input)="onUsernameInput()"
               />
-              <!-- Status indicators -->
-              <span class="username-status checking" *ngIf="usernameStatus === 'checking'">
-                <span class="status-spinner"></span> Checking...
-              </span>
-              <span class="username-status available" *ngIf="usernameStatus === 'available'">
-                ✓ Username available
-              </span>
-              <span class="username-status taken" *ngIf="usernameStatus === 'taken'">
-                ✗ Username already taken
-              </span>
               <span class="err" *ngIf="errors['username']">{{ errors["username"] }}</span>
             </div>
             <div class="field">
@@ -395,7 +395,7 @@
               <div class="input-icon-wrap">
                 <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="form.password" placeholder="Min. 8 characters" [class.invalid]="errors['password']" />
                 <button type="button" class="eye-toggle" (click)="showPassword = !showPassword">
-                  {{ showPassword ? "🙈" : "👁" }}
+                  <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
                 </button>
               </div>
               <span class="err" *ngIf="errors['password']">{{ errors["password"] }}</span>

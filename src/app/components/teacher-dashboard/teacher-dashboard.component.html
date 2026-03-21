@@ -50,9 +50,13 @@
             <h3 class="td-card__title">Today's Timetable</h3>
             <p class="td-card__sub">{{ currentDate | date:'EEEE, MMMM d' }} &nbsp;·&nbsp; {{ currentTime }}</p>
           </div>
-          <button class="td-link">Full schedule <i class="fa-solid fa-arrow-right"></i></button>
+          <button class="td-link" (click)="goToTimetable()">Full schedule <i class="fa-solid fa-arrow-right"></i></button>
         </div>
         <div class="td-timetable">
+          <div *ngIf="timetable.length === 0" style="text-align:center;padding:28px;color:#94a3b8;">
+            <i class="fa-solid fa-calendar-xmark" style="font-size:28px;display:block;margin-bottom:8px;"></i>
+            No sessions scheduled for today
+          </div>
           <div *ngFor="let cls of timetable" class="td-tt-row td-tt-row--{{ cls.status }}">
             <div class="td-tt-time">
               <span>{{ cls.time }}</span>
@@ -78,10 +82,10 @@
               </div>
             </div>
             <div class="td-tt-action">
-              <button *ngIf="cls.status === 'live'" class="td-btn-join">
+              <button *ngIf="cls.status === 'live'" class="td-btn-join" (click)="joinMeeting(cls.meetingLink)">
                 <i class="fa-solid fa-video"></i> Join
               </button>
-              <button *ngIf="cls.status === 'upcoming'" class="td-btn-start">
+              <button *ngIf="cls.status === 'upcoming'" class="td-btn-start" (click)="joinMeeting(cls.meetingLink)">
                 <i class="fa-solid fa-play"></i> Start
               </button>
             </div>

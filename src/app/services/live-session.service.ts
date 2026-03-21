@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-const BASE = environment.apiUrl + '/live-sessions';
+const BASE = environment.apiUrl + '/livesession';
 
 export interface LiveSessionDto {
   id: string;

@@ -61,8 +61,9 @@ const routes: Routes = [
   { path: 'batches',       component: BatchesComponent,     canActivate: AG },
   { path: 'live-classes',  component: LiveClassesComponent, canActivate: AG },
   { path: 'library',       component: LibraryComponent,     canActivate: AG },
-  { path: 'timetable',     component: TimetableComponent,   canActivate: AG },
+  { path: 'timetable',     component: TimetableComponent,    canActivate: AG },
   { path: 'session-slots', component: SessionSlotsComponent, canActivate: AG },
+  { path: 'my-meetings',   component: LiveClassesComponent,  canActivate: AG },
 
   // Assessment
   { path: 'exams',    component: ExamsComponent,   canActivate: AG },

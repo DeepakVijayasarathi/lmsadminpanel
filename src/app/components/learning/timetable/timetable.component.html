@@ -88,39 +88,106 @@
         <tbody>
           <tr *ngFor="let session of sessions">
             <td class="tt-session-label">
-              <div class="tt-session-num">S{{ session }}</div>
-              <div class="tt-session-time">{{ formatSessionTime(session) }}</div>
+              <div class="tt-session-num">{{ getSessionLabel(session) }}</div>
+              <div class="tt-session-time" *ngIf="formatSessionTime(session)">
+                <i class="fa-regular fa-clock"></i>
+                {{ formatSessionTime(session) }}
+              </div>
             </td>
             <td *ngFor="let day of days" class="tt-cell">
               <ng-container *ngIf="getSlot(day, session) as slot; else emptyCell">
-                <div [class]="'tt-slot ' + getSubjectColor(slot.subject)">
-                  <div class="tt-slot__status-dot" [class]="'dot-' + slot.status"></div>
+                <div [class]="'tt-slot tt-slot--' + slot.status">
 
-                  <div class="tt-slot__subject">{{ slot.subject }}</div>
-                  <div class="tt-slot__topic">{{ slot.topic }}</div>
+                  <!-- Top row: subject + status pill -->
+                  <div class="tt-slot__top">
+                    <span class="tt-slot__subject">{{ slot.subject }}</span>
+                    <span class="tt-slot__status-pill">
+                      <i *ngIf="slot.status==='live'" class="fa-solid fa-circle" style="font-size:6px;margin-right:2px;"></i>
+                      {{ slot.status | titlecase }}
+                    </span>
+                  </div>
+
+                  <!-- Topic -->
+                  <div class="tt-slot__topic" *ngIf="slot.topic">{{ slot.topic }}</div>
+
+                  <!-- Teacher -->
                   <div class="tt-slot__teacher">
                     <i class="fa-solid fa-chalkboard-user"></i>
-                    {{ slot.teacher.split(' ').slice(-1)[0] }}
+                    {{ slot.teacher }}
                   </div>
 
-                  <div class="tt-slot__meta">
+                  <!-- Footer: category + action buttons -->
+                  <div class="tt-slot__foot">
                     <span [class]="'tt-exam-tag ' + getCategoryChip(slot.category)">{{ slot.category }}</span>
-                    <span class="tt-bbb-tag"><i class="fa-solid fa-circle-play"></i> BBB</span>
+
+                    <div style="display:flex;gap:3px;align-items:center;">
+
+                      <!-- scheduled → Start + Join -->
+                      <ng-container *ngIf="slot.status === 'scheduled'">
+                        <button class="tt-join-btn"
+                          [disabled]="startingId === slot.id"
+                          (click)="startSession(slot); $event.stopPropagation()" title="Start session">
+                          <i class="fa-solid"
+                             [class.fa-circle-notch]="startingId === slot.id"
+                             [class.fa-spin]="startingId === slot.id"
+                             [class.fa-play]="startingId !== slot.id"></i>
+                          {{ startingId === slot.id ? '…' : 'Start' }}
+                        </button>
+                        <button class="tt-join-btn"
+                          [disabled]="joiningId === slot.id"
+                          (click)="joinSlot(slot, false); $event.stopPropagation()" title="Join as attendee">
+                          <i class="fa-solid"
+                             [class.fa-circle-notch]="joiningId === slot.id"
+                             [class.fa-spin]="joiningId === slot.id"
+                             [class.fa-video]="joiningId !== slot.id"></i>
+                          Join
+                        </button>
+                      </ng-container>
+
+                      <!-- live → End + Join Live -->
+                      <ng-container *ngIf="slot.status === 'live'">
+                        <button class="tt-join-btn"
+                          [disabled]="endingId === slot.id"
+                          (click)="endSession(slot); $event.stopPropagation()" title="End session">
+                          <i class="fa-solid"
+                             [class.fa-circle-notch]="endingId === slot.id"
+                             [class.fa-spin]="endingId === slot.id"
+                             [class.fa-stop]="endingId !== slot.id"></i>
+                          {{ endingId === slot.id ? '…' : 'End' }}
+                        </button>
+                        <button class="tt-join-btn tt-join-btn--live"
+                          [disabled]="joiningId === slot.id"
+                          (click)="joinSlot(slot, true); $event.stopPropagation()" title="Join live as moderator">
+                          <i class="fa-solid"
+                             [class.fa-circle-notch]="joiningId === slot.id"
+                             [class.fa-spin]="joiningId === slot.id"
+                             [class.fa-video]="joiningId !== slot.id"></i>
+                          Live
+                        </button>
+                      </ng-container>
+
+                      <!-- completed → Play or Get Recording -->
+                      <ng-container *ngIf="slot.status === 'completed'">
+                        <a *ngIf="slot.recordingUrl" [href]="slot.recordingUrl" target="_blank"
+                           class="tt-rec-btn tt-rec-btn--ready" (click)="$event.stopPropagation()" title="Play recording">
+                          <i class="fa-solid fa-circle-play"></i> Play
+                        </a>
+                        <button *ngIf="!slot.recordingUrl"
+                          class="tt-rec-btn"
+                          [disabled]="recordingId === slot.id"
+                          (click)="triggerRecording(slot); $event.stopPropagation()" title="Fetch recording from BBB">
+                          <i class="fa-solid"
+                             [class.fa-circle-notch]="recordingId === slot.id"
+                             [class.fa-spin]="recordingId === slot.id"
+                             [class.fa-record-vinyl]="recordingId !== slot.id"></i>
+                          {{ recordingId === slot.id ? '…' : 'Record' }}
+                        </button>
+                      </ng-container>
+
+                    </div>
                   </div>
 
-                  <!-- Join button → calls API for signed URL -->
-                  <button *ngIf="canJoin(slot.status)"
-                    class="tt-join-btn"
-                    [class.tt-join-btn--live]="slot.status === 'live'"
-                    [disabled]="joiningId === slot.id"
-                    (click)="joinSlot(slot, slot.status === 'live')">
-                    <i class="fa-solid"
-                       [class.fa-circle-notch]="joiningId === slot.id"
-                       [class.fa-spin]="joiningId === slot.id"
-                       [class.fa-video]="joiningId !== slot.id"></i>
-                    {{ slot.status === 'live' ? 'Join Live' : 'Join' }}
-                  </button>
-
+                  <!-- Hover actions -->
                   <div class="tt-slot__actions">
                     <button class="tt-action" title="View"   (click)="openView(slot)">  <i class="fa-solid fa-eye"></i>   </button>
                     <button class="tt-action" title="Edit"   (click)="openEdit(slot)">  <i class="fa-solid fa-pen"></i>   </button>
@@ -150,6 +217,7 @@
             <th>Batch / Category</th>
             <th>Time</th>
             <th>BBB Meeting</th>
+            <th>Recording</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -192,24 +260,61 @@
               </div>
             </td>
             <td>
+              <!-- Play existing recording -->
+              <a *ngIf="slot.recordingUrl" [href]="slot.recordingUrl" target="_blank"
+                 class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 12px;text-decoration:none;">
+                <i class="fa-solid fa-circle-play"></i> Play
+              </a>
+              <!-- Fetch recording from BBB -->
+              <button *ngIf="!slot.recordingUrl && slot.status === 'completed'"
+                class="pg-btn pg-btn--ghost" style="font-size:12px;padding:5px 12px;"
+                [disabled]="recordingId === slot.id"
+                (click)="triggerRecording(slot)">
+                <i class="fa-solid"
+                   [class.fa-circle-notch]="recordingId === slot.id"
+                   [class.fa-spin]="recordingId === slot.id"
+                   [class.fa-record-vinyl]="recordingId !== slot.id"></i>
+                {{ recordingId === slot.id ? 'Fetching…' : 'Get Recording' }}
+              </button>
+              <span *ngIf="slot.status !== 'completed' && !slot.recordingUrl" style="color:#cbd5e1;font-size:12px;">—</span>
+            </td>
+            <td>
               <span [class]="getStatusClass(slot.status)">
                 <i *ngIf="slot.status === 'live'" class="fa-solid fa-circle" style="font-size:8px;"></i>
                 {{ slot.status | titlecase }}
               </span>
             </td>
             <td>
-              <div style="display:flex;gap:6px;align-items:center;">
-                <!-- Join → API signed URL -->
-                <button *ngIf="canJoin(slot.status)"
-                  class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 10px;"
-                  [disabled]="joiningId === slot.id"
-                  (click)="joinSlot(slot, slot.status === 'live')">
-                  <i class="fa-solid"
-                     [class.fa-circle-notch]="joiningId === slot.id"
-                     [class.fa-spin]="joiningId === slot.id"
-                     [class.fa-video]="joiningId !== slot.id"></i>
-                  Join
-                </button>
+              <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+
+                <!-- scheduled: Start + Join -->
+                <ng-container *ngIf="slot.status === 'scheduled'">
+                  <button class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 10px;background:#10b981;"
+                    [disabled]="startingId === slot.id" (click)="startSession(slot)">
+                    <i class="fa-solid" [class.fa-circle-notch]="startingId===slot.id" [class.fa-spin]="startingId===slot.id" [class.fa-play]="startingId!==slot.id"></i>
+                    {{ startingId === slot.id ? '…' : 'Start' }}
+                  </button>
+                  <button class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 10px;"
+                    [disabled]="joiningId === slot.id" (click)="joinSlot(slot, false)">
+                    <i class="fa-solid" [class.fa-circle-notch]="joiningId===slot.id" [class.fa-spin]="joiningId===slot.id" [class.fa-video]="joiningId!==slot.id"></i>
+                    Join
+                  </button>
+                </ng-container>
+
+                <!-- live: End + Join Live -->
+                <ng-container *ngIf="slot.status === 'live'">
+                  <button class="pg-btn pg-btn--danger" style="font-size:12px;padding:5px 10px;"
+                    [disabled]="endingId === slot.id" (click)="endSession(slot)">
+                    <i class="fa-solid" [class.fa-circle-notch]="endingId===slot.id" [class.fa-spin]="endingId===slot.id" [class.fa-stop]="endingId!==slot.id"></i>
+                    {{ endingId === slot.id ? '…' : 'End' }}
+                  </button>
+                  <button class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 10px;background:#ef4444;"
+                    [disabled]="joiningId === slot.id" (click)="joinSlot(slot, true)">
+                    <i class="fa-solid" [class.fa-circle-notch]="joiningId===slot.id" [class.fa-spin]="joiningId===slot.id" [class.fa-video]="joiningId!==slot.id"></i>
+                    Live
+                  </button>
+                </ng-container>
+
                 <button class="pg-action-btn" title="View"   (click)="openView(slot)">  <i class="fa-solid fa-eye"></i>  </button>
                 <button class="pg-action-btn" title="Edit"   (click)="openEdit(slot)">  <i class="fa-solid fa-pen"></i>  </button>
                 <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDelete(slot)"><i class="fa-solid fa-trash"></i></button>
@@ -241,18 +346,14 @@
   </div>
   <div class="pg-modal__body">
 
-    <!-- BBB notice -->
-    <div class="tt-bbb-notice">
-      <i class="fa-solid fa-circle-play"></i>
-      <span>A <strong>BigBlueButton</strong> meeting room will be automatically created via the API.</span>
-    </div>
-
     <!-- Validation errors -->
-    <div *ngIf="Object.keys(formErrors).length > 0" style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;margin-bottom:12px;">
-      <div *ngFor="let key of Object.keys(formErrors)" style="font-size:13px;color:#dc2626;display:flex;align-items:center;gap:6px;">
-        <i class="fa-solid fa-circle-exclamation"></i> {{ formErrors[key] }}
+    <ng-container *ngIf="getFormErrorMessages().length > 0">
+      <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;margin-bottom:12px;">
+        <div *ngFor="let msg of getFormErrorMessages()" style="font-size:13px;color:#dc2626;display:flex;align-items:center;gap:6px;">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ msg }}
+        </div>
       </div>
-    </div>
+    </ng-container>
 
     <div class="pg-form-grid">
 
@@ -265,7 +366,7 @@
 
       <div class="pg-form-group" [class.has-error]="formErrors['batch']">
         <label>Batch <span class="req">*</span></label>
-        <select [(ngModel)]="form.batch" (ngModelChange)="formErrors['batch']=''">
+        <select [(ngModel)]="form.batch" (ngModelChange)="onBatchChange(); formErrors['batch']=''">
           <option value="">Select Batch</option>
           <option *ngFor="let b of apiBatches" [value]="getBatchName(b)">{{ getBatchName(b) }}</option>
         </select>
@@ -284,7 +385,7 @@
       <div class="pg-form-group">
         <label>Session Slot <span class="req">*</span></label>
         <select [(ngModel)]="form.session" (ngModelChange)="onSessionChange()">
-          <option *ngFor="let s of sessions" [value]="s">Session {{ s }} ({{ formatSessionTime(s) }})</option>
+          <option *ngFor="let s of sessions" [value]="s">{{ getSessionLabel(s) }} ({{ formatSessionTime(s) }})</option>
         </select>
       </div>
 
@@ -307,11 +408,19 @@
 
       <div class="pg-form-group" [class.has-error]="formErrors['teacher']">
         <label>Teacher <span class="req">*</span></label>
-        <select [(ngModel)]="form.teacher" (ngModelChange)="formErrors['teacher']=''">
+        <select [(ngModel)]="form.teacher" (ngModelChange)="onTeacherChange(); formErrors['teacher']=''">
           <option value="">Select Teacher</option>
           <option *ngFor="let t of apiTeachers" [value]="getTeacherName(t)">{{ getTeacherName(t) }}</option>
         </select>
         <div class="field-error" *ngIf="formErrors['teacher']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['teacher'] }}</div>
+      </div>
+
+      <div class="pg-form-group">
+        <label>Course <span style="font-size:11px;color:#94a3b8;font-weight:400;">(optional)</span></label>
+        <select [(ngModel)]="form.courseId">
+          <option [value]="null">— No course —</option>
+          <option *ngFor="let c of apiCourses" [value]="c.id">{{ getCourseName(c) }}</option>
+        </select>
       </div>
 
       <div class="pg-form-group">
@@ -321,15 +430,6 @@
         </select>
       </div>
 
-      <div class="pg-form-group">
-        <label>Start Time</label>
-        <input type="time" [(ngModel)]="form.startTime" />
-      </div>
-
-      <div class="pg-form-group">
-        <label>End Time</label>
-        <input type="time" [(ngModel)]="form.endTime" />
-      </div>
 
     </div>
 
@@ -420,6 +520,54 @@
            [class.fa-video]="joiningId !== selectedSlot.id"></i>
         {{ selectedSlot.status === 'live' ? 'Join Live Session on BBB' : 'Join Session on BBB' }}
       </button>
+
+      <!-- ── Recording section (completed) ─────────────────────────────── -->
+      <ng-container *ngIf="selectedSlot.status === 'completed'">
+
+        <!-- Fetch button when no recording yet -->
+        <button *ngIf="!selectedSlot.recordingUrl"
+          class="pg-btn pg-btn--ghost tt-join-full"
+          [disabled]="recordingId === selectedSlot.id"
+          (click)="triggerRecording(selectedSlot)">
+          <i class="fa-solid"
+             [class.fa-circle-notch]="recordingId === selectedSlot.id"
+             [class.fa-spin]="recordingId === selectedSlot.id"
+             [class.fa-record-vinyl]="recordingId !== selectedSlot.id"></i>
+          {{ recordingId === selectedSlot.id ? 'Fetching recording…' : 'Get Recording from BBB' }}
+        </button>
+
+        <!-- Error message -->
+        <div *ngIf="recordingError[selectedSlot.id]" class="tt-rec-error">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          {{ recordingError[selectedSlot.id] }}
+        </div>
+
+        <!-- Player when recording URL exists -->
+        <div *ngIf="selectedSlot.recordingUrl" class="tt-rec-player">
+          <div class="tt-rec-player__head">
+            <i class="fa-solid fa-circle-play"></i> Session Recording
+            <a [href]="selectedSlot.recordingUrl" target="_blank" class="tt-rec-player__ext">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in new tab
+            </a>
+          </div>
+
+          <!-- MP4 → native video player -->
+          <video *ngIf="isVideo(selectedSlot.recordingUrl)"
+            controls width="100%" class="tt-rec-player__video">
+            <source [src]="selectedSlot.recordingUrl" type="video/mp4">
+            Your browser does not support video playback.
+          </video>
+
+          <!-- BBB presentation → iframe -->
+          <iframe *ngIf="!isVideo(selectedSlot.recordingUrl)"
+            [src]="getSafeUrl(selectedSlot.recordingUrl)"
+            class="tt-rec-player__iframe"
+            allowfullscreen
+            frameborder="0">
+          </iframe>
+        </div>
+
+      </ng-container>
 
     </div>
   </div>

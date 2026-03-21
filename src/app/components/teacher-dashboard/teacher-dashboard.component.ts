@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { TimetableService } from '../../services/timetable.service';
 
 @Component({
   selector: 'app-teacher-dashboard',
@@ -12,6 +13,8 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   currentTime = '';
   private timeInterval: any;
 
+  constructor(private router: Router, private timetableService: TimetableService) {}
+
   teacher = {
     name: 'Dr. Priya Sharma',
     subject: 'Mathematics',
@@ -22,16 +25,11 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   stats = [
     { label: 'My Students', value: '186', icon: 'fa-solid fa-user-graduate', color: '#4f46e5', bg: '#eef2ff', trend: '+12' },
     { label: 'Active Batches', value: '6', icon: 'fa-solid fa-layer-group', color: '#0d9488', bg: '#ccfbf1', trend: '+1' },
-    { label: "Today's Classes", value: '4', icon: 'fa-solid fa-video', color: '#d97706', bg: '#fef3c7', trend: '' },
+    { label: "Today's Classes", value: '0', icon: 'fa-solid fa-video', color: '#d97706', bg: '#fef3c7', trend: '' },
     { label: 'Pending Reviews', value: '23', icon: 'fa-solid fa-clipboard-check', color: '#dc2626', bg: '#fee2e2', trend: '-5' },
   ];
 
-  timetable = [
-    { time: '09:00 AM', batch: 'Batch A — Class 12', topic: 'Calculus: Definite Integrals', students: 42, status: 'done', duration: '60 min' },
-    { time: '11:00 AM', batch: 'Batch B — Class 11', topic: 'Trigonometry: Inverse Functions', students: 38, status: 'live', duration: '45 min' },
-    { time: '02:00 PM', batch: 'Batch C — Class 10', topic: 'Algebra: Quadratic Equations', students: 46, status: 'upcoming', duration: '60 min' },
-    { time: '04:30 PM', batch: 'Batch D — Class 12', topic: 'Probability & Statistics', students: 40, status: 'upcoming', duration: '45 min' },
-  ];
+  timetable: { time: string; batch: string; topic: string; status: string; duration: string; meetingLink: string; students: number }[] = [];
 
   batches = [
     { name: 'Batch A — Class 12', students: 42, attendance: 88, pending: 3, color: '#4f46e5' },
@@ -76,6 +74,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.updateTime();
     this.timeInterval = setInterval(() => this.updateTime(), 1000);
+    this.loadTimetable();
   }
 
   ngOnDestroy(): void {
@@ -86,5 +85,59 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     const now = new Date();
     this.currentTime = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
     this.currentDate = now;
+  }
+
+  private loadTimetable(): void {
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+    this.timetableService.getAll().subscribe({
+      next: (raw: any[]) => {
+        const todaySlots = raw.filter(r => {
+          const tt = r.timetable ?? r;
+          return (tt.day ?? '').toLowerCase() === today.toLowerCase();
+        });
+        this.timetable = todaySlots.map(r => {
+          const tt = r.timetable ?? r;
+          const rawStatus = (tt.status ?? r.status ?? 'scheduled').toLowerCase();
+          const status = rawStatus === 'completed' ? 'done'
+                       : rawStatus === 'scheduled'  ? 'upcoming'
+                       : rawStatus;
+          return {
+            time: this.toAmPm(tt.startTime ?? ''),
+            batch: tt.batch ?? '',
+            topic: `${tt.subject ?? ''}${tt.topic ? ': ' + tt.topic : ''}`,
+            status,
+            duration: (tt.startTime && tt.endTime) ? this.calcDuration(tt.startTime, tt.endTime) : '',
+            meetingLink: tt.meetingLink ?? r.meetingUrl ?? '',
+            students: 0,
+          };
+        });
+        // Update "Today's Classes" stat
+        this.stats[2].value = String(this.timetable.length);
+      },
+      error: () => {}
+    });
+  }
+
+  private toAmPm(t: string): string {
+    if (!t) return '';
+    const [h, m] = t.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const hour = h % 12 || 12;
+    return `${hour}:${String(m).padStart(2, '0')} ${period}`;
+  }
+
+  private calcDuration(start: string, end: string): string {
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    const mins = (eh * 60 + em) - (sh * 60 + sm);
+    return mins > 0 ? `${mins} min` : '';
+  }
+
+  goToTimetable(): void {
+    this.router.navigate(['/timetable']);
+  }
+
+  joinMeeting(link: string): void {
+    if (link) window.open(link, '_blank');
   }
 }
