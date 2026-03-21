@@ -1,8 +1,9 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
-const BASE = 'http://localhost:5195/api/livesession';
+const BASE = environment.apiUrl + '/live-sessions';
 
 export interface LiveSessionDto {
   id: string;
