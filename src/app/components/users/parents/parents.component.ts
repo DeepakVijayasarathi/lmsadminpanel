@@ -1,23 +1,32 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonService } from '../../../services/common.service';
-import {
-  UserService,
-  User,
-  UserPayload,
-  UserUpdatePayload,
-  Role,
-} from '../users.service';
+import { HttpGeneralService } from '../../../services/http.service';
+import { environment } from '../../../../environments/environment';
 
-const PARENT_ROLE_NAME = 'Parent';
+const BASE_URL = environment.apiUrl;
 
-type ModalMode =
-  | 'create'
-  | 'edit'
-  | 'view'
-  | 'delete'
-  | 'block'
-  | 'device-reset'
-  | null;
+// ─── Interfaces ───────────────────────────────────────────────────────────────
+
+export interface ParentStudent {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  isActive: boolean;
+}
+
+export interface Parent {
+  id: string;
+  name: string;
+  relationship: string;
+  email: string;
+  phone: string;
+  isActive: boolean;
+  createdAt?: string;
+  students: ParentStudent[]; // API returns "students", not "children"
+}
+
+type ModalMode = 'view' | 'delete' | 'block' | 'device-reset' | null;
 
 @Component({
   selector: 'app-parents',
@@ -25,69 +34,39 @@ type ModalMode =
   templateUrl: './parents.component.html',
   styleUrls: [
     '../../../shared-page.css',
-    './parents.component.css'
+    './parents.component.css',
   ],
 })
 export class ParentsComponent implements OnInit {
-  allUsers: User[] = [];
-  parents: User[] = [];
-  filteredParents: User[] = [];
-  roles: Role[] = [];
+  parents: Parent[] = [];
+  filteredParents: Parent[] = [];
 
   searchTerm: string = '';
   filterStatus: string = '';
   isLoading: boolean = false;
 
   modalMode: ModalMode = null;
-  selectedUser: User | null = null;
+  selectedParent: Parent | null = null;
 
-  formFirstName: string = '';
-  formLastName: string = '';
-  formUsername: string = '';
-  formEmail: string = '';
-  formPhone: string = '';
-  formPassword: string = '';
-  formIsActive: boolean = true;
   formBlockReason: string = '';
-  showPassword: boolean = false;
-
-  firstNameError: string = '';
-  lastNameError: string = '';
-  usernameError: string = '';
-  emailError: string = '';
-  passwordError: string = '';
   blockReasonError: string = '';
 
   constructor(
     private commonService: CommonService,
-    private userService: UserService,
+    private httpService: HttpGeneralService<any>,
   ) {}
 
   ngOnInit(): void {
-    this.loadRolesAndUsers();
+    this.loadParents();
   }
 
-  loadRolesAndUsers(): void {
+  // ─── Load ────────────────────────────────────────────────────
+
+  loadParents(): void {
     this.isLoading = true;
-    this.userService.getRoles().subscribe({
+    this.httpService.getData(BASE_URL, '/batches/parents').subscribe({
       next: (res: any) => {
-        this.roles = Array.isArray(res) ? res : (res?.data ?? []);
-        this.loadUsers();
-      },
-      error: () => {
-        this.loadUsers();
-      },
-    });
-  }
-
-  loadUsers(): void {
-    this.userService.getUsers().subscribe({
-      next: (res: any) => {
-        this.allUsers = Array.isArray(res) ? res : (res?.data ?? []);
-        const parentRole = this.roles.find((r) => r.name === PARENT_ROLE_NAME);
-        this.parents = this.allUsers.filter((u) =>
-          u.roleDto?.id === parentRole?.id
-        );
+        this.parents = Array.isArray(res) ? res : (res?.data ?? []);
         this.applyFilters();
         this.isLoading = false;
       },
@@ -98,87 +77,41 @@ export class ParentsComponent implements OnInit {
     });
   }
 
-  createUser(): void {
-    const role = this.roles.find((r) => r.name === PARENT_ROLE_NAME);
-    const payload: UserPayload = {
-      username: this.formUsername.trim(),
-      firstName: this.formFirstName.trim(),
-      lastName: this.formLastName.trim(),
-      email: this.formEmail.trim(),
-      password: this.formPassword,
-      phone: this.formPhone.trim(),
-      roleId: role?.id ?? '',
-    };
-    this.userService.createUser(payload).subscribe({
-      next: () => {
-        this.commonService.success('Parent created successfully.');
-        this.closeModal();
-        this.loadUsers();
-      },
-      error: (err: any) => {
-        this.commonService.error(
-          err?.error?.message || 'Failed to create parent.',
-        );
-      },
-    });
+  // ─── Actions ─────────────────────────────────────────────────
+
+  deleteParent(): void {
+    if (!this.selectedParent) return;
+    this.httpService
+      .deleteData(BASE_URL, `/batches/parents/${this.selectedParent.id}`)
+      .subscribe({
+        next: () => {
+          this.commonService.success(`"${this.selectedParent!.name}" deleted.`);
+          this.closeModal();
+          this.loadParents();
+        },
+        error: (err: any) => {
+          this.commonService.error(
+            err?.error?.message || 'Failed to delete parent.',
+          );
+        },
+      });
   }
 
-  updateUser(): void {
-    if (!this.selectedUser) return;
-    const role = this.roles.find((r) => r.name === PARENT_ROLE_NAME);
-    const payload: UserUpdatePayload = {
-      username: this.formUsername.trim(),
-      firstName: this.formFirstName.trim(),
-      lastName: this.formLastName.trim(),
-      email: this.formEmail.trim(),
-      password: this.formPassword,
-      phone: this.formPhone.trim(),
-      roleId: role?.id ?? this.selectedUser.roleDto?.id,
-      isActive: this.formIsActive,
-    };
-    this.userService.updateUser(this.selectedUser.id, payload).subscribe({
-      next: () => {
-        this.commonService.success('Parent updated successfully.');
-        this.closeModal();
-        this.loadUsers();
-      },
-      error: (err: any) => {
-        this.commonService.error(
-          err?.error?.message || 'Failed to update parent.',
-        );
-      },
-    });
-  }
-
-  deleteUser(): void {
-    if (!this.selectedUser) return;
-    this.userService.deleteUser(this.selectedUser.id).subscribe({
-      next: () => {
-        this.commonService.success('Parent deleted.');
-        this.closeModal();
-        this.loadUsers();
-      },
-      error: (err: any) => {
-        this.commonService.error(
-          err?.error?.message || 'Failed to delete parent.',
-        );
-      },
-    });
-  }
-
-  blockUser(): void {
-    if (!this.selectedUser) return;
+  blockParent(): void {
+    if (!this.selectedParent) return;
     if (!this.formBlockReason.trim()) {
       this.blockReasonError = 'Block reason is required.';
       return;
     }
-    this.userService
-      .blockUser(this.selectedUser.id, { reason: this.formBlockReason.trim() })
+    this.httpService
+      .putData(BASE_URL, `/batches/parents/${this.selectedParent.id}/block`, {
+        reason: this.formBlockReason.trim(),
+      })
       .subscribe({
         next: () => {
-          this.commonService.success('Parent blocked.');
+          this.commonService.success(`"${this.selectedParent!.name}" blocked.`);
           this.closeModal();
-          this.loadUsers();
+          this.loadParents();
         },
         error: (err: any) => {
           this.commonService.error(
@@ -189,168 +122,118 @@ export class ParentsComponent implements OnInit {
   }
 
   deviceReset(): void {
-    if (!this.selectedUser) return;
-    this.userService.deviceReset(this.selectedUser.id).subscribe({
-      next: () => {
-        this.commonService.success('Device reset successful.');
-        this.closeModal();
-      },
-      error: (err: any) => {
-        this.commonService.error(
-          err?.error?.message || 'Failed to reset device.',
-        );
-      },
-    });
+    if (!this.selectedParent) return;
+    this.httpService
+      .putData(
+        BASE_URL,
+        `/batches/parents/${this.selectedParent.id}/device-reset`,
+        {},
+      )
+      .subscribe({
+        next: () => {
+          this.commonService.success('Device reset successful.');
+          this.closeModal();
+        },
+        error: (err: any) => {
+          this.commonService.error(
+            err?.error?.message || 'Failed to reset device.',
+          );
+        },
+      });
   }
 
-  openCreateModal(): void {
-    this.modalMode = 'create';
-    this.selectedUser = null;
-    this.resetForm();
-  }
-  openEditModal(user: User): void {
-    this.modalMode = 'edit';
-    this.selectedUser = user;
-    this.formFirstName = user.firstName;
-    this.formLastName = user.lastName;
-    this.formUsername = user.username;
-    this.formEmail = user.email;
-    this.formPhone = user.phone;
-    this.formPassword = '';
-    this.formIsActive = user.isActive;
-    this.clearErrors();
-  }
-  openViewModal(user: User): void {
+  // ─── Modals ──────────────────────────────────────────────────
+
+  openViewModal(parent: Parent): void {
+    this.selectedParent = { ...parent }; // clone to ensure change detection
     this.modalMode = 'view';
-    this.selectedUser = user;
   }
-  openDeleteModal(user: User): void {
+
+  openDeleteModal(parent: Parent): void {
+    this.selectedParent = { ...parent };
     this.modalMode = 'delete';
-    this.selectedUser = user;
   }
-  openBlockModal(user: User): void {
+
+  openBlockModal(parent: Parent): void {
+    this.selectedParent = { ...parent };
+    this.formBlockReason = '';
+    this.blockReasonError = '';
     this.modalMode = 'block';
-    this.selectedUser = user;
+  }
+
+  openDeviceResetModal(parent: Parent): void {
+    this.selectedParent = { ...parent };
+    this.modalMode = 'device-reset';
+  }
+
+  closeModal(): void {
+    this.modalMode = null;
+    this.selectedParent = null;
     this.formBlockReason = '';
     this.blockReasonError = '';
   }
-  openDeviceResetModal(user: User): void {
-    this.modalMode = 'device-reset';
-    this.selectedUser = user;
-  }
-  closeModal(): void {
-    this.modalMode = null;
-    this.selectedUser = null;
-    this.clearErrors();
-  }
 
-  submitForm(): void {
-    if (!this.validateForm()) return;
-    if (this.modalMode === 'create') this.createUser();
-    else if (this.modalMode === 'edit') this.updateUser();
-  }
-
-  validateForm(): boolean {
-    this.clearErrors();
-    let valid = true;
-    if (!this.formFirstName.trim()) {
-      this.firstNameError = 'First name is required.';
-      valid = false;
-    }
-    if (!this.formLastName.trim()) {
-      this.lastNameError = 'Last name is required.';
-      valid = false;
-    }
-    if (!this.formUsername.trim()) {
-      this.usernameError = 'Username is required.';
-      valid = false;
-    }
-    if (!this.formEmail.trim()) {
-      this.emailError = 'Email is required.';
-      valid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.formEmail)) {
-      this.emailError = 'Enter a valid email.';
-      valid = false;
-    }
-    if (this.modalMode === 'create' && !this.formPassword) {
-      this.passwordError = 'Password is required.';
-      valid = false;
-    }
-    return valid;
-  }
-
-  resetForm(): void {
-    this.formFirstName = '';
-    this.formLastName = '';
-    this.formUsername = '';
-    this.formEmail = '';
-    this.formPhone = '';
-    this.formPassword = '';
-    this.formIsActive = true;
-    this.showPassword = false;
-    this.clearErrors();
-  }
-
-  clearErrors(): void {
-    this.firstNameError = '';
-    this.lastNameError = '';
-    this.usernameError = '';
-    this.emailError = '';
-    this.passwordError = '';
-    this.blockReasonError = '';
-  }
-
-  getInitials(user: User): string {
-    return this.userService.getInitials(user.firstName, user.lastName);
-  }
-  getFullName(user: User): string {
-    return this.userService.getFullName(user);
-  }
+  // ─── Filters ─────────────────────────────────────────────────
 
   onSearch(): void {
     this.applyFilters();
   }
+
   onFilterChange(): void {
     this.applyFilters();
   }
 
   applyFilters(): void {
     let list = [...this.parents];
-    if (this.filterStatus)
-      list = list.filter((u) =>
-        this.filterStatus === 'active' ? u.isActive : !u.isActive,
+    if (this.filterStatus) {
+      list = list.filter((p) =>
+        this.filterStatus === 'active' ? p.isActive : !p.isActive,
       );
+    }
     const q = this.searchTerm.toLowerCase().trim();
-    if (q)
+    if (q) {
       list = list.filter(
-        (u) =>
-          this.getFullName(u).toLowerCase().includes(q) ||
-          u.email?.toLowerCase().includes(q) ||
-          u.phone?.includes(q) ||
-          u.username?.toLowerCase().includes(q),
+        (p) =>
+          p.name?.toLowerCase().includes(q) ||
+          p.email?.toLowerCase().includes(q) ||
+          p.phone?.includes(q) ||
+          p.relationship?.toLowerCase().includes(q) ||
+          p.students?.some(
+            (s) =>
+              s.firstName?.toLowerCase().includes(q) ||
+              s.lastName?.toLowerCase().includes(q) ||
+              s.email?.toLowerCase().includes(q),
+          ),
       );
+    }
     this.filteredParents = list;
   }
 
+  // ─── Helpers ─────────────────────────────────────────────────
+
+  getInitials(name: string): string {
+    if (!name) return '?';
+    const parts = name.trim().split(' ');
+    return parts.length >= 2
+      ? (parts[0][0] + parts[1][0]).toUpperCase()
+      : parts[0][0].toUpperCase();
+  }
+
+  getStudentInitials(student: ParentStudent): string {
+    return (
+      (student.firstName?.[0] ?? '') + (student.lastName?.[0] ?? '')
+    ).toUpperCase() || '?';
+  }
+
+  getStudentFullName(student: ParentStudent): string {
+    return `${student.firstName ?? ''} ${student.lastName ?? ''}`.trim();
+  }
+
   get totalActive(): number {
-    return this.parents.filter((u) => u.isActive).length;
+    return this.parents.filter((p) => p.isActive).length;
   }
+
   get totalInactive(): number {
-    return this.parents.filter((u) => !u.isActive).length;
-  }
-
-  onlyNumbers(event: KeyboardEvent) {
-    const charCode = event.which ? event.which : event.keyCode;
-    if (charCode < 48 || charCode > 57) {
-      event.preventDefault();
-    }
-  }
-
-  onPaste(event: ClipboardEvent) {
-    const pastedData = event.clipboardData?.getData('text') || '';
-
-    if (!/^\d+$/.test(pastedData)) {
-      event.preventDefault();
-    }
+    return this.parents.filter((p) => !p.isActive).length;
   }
 }

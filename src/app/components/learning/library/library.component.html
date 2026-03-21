@@ -1,19 +1,20 @@
+<!-- library.component.html -->
 <div class="pg">
 
   <!-- Page Header -->
   <div class="pg-head">
     <div class="pg-head__left">
       <div class="pg-head__icon chip-teal">
-        <i class="fa-solid fa-book-bookmark"></i>
+        <i class="fas fa-book-bookmark"></i>
       </div>
       <div>
         <div class="pg-head__title">Digital Library</div>
-        <div class="pg-head__sub">Manage learning resources for all batches and grades</div>
+        <div class="pg-head__sub">Manage books and learning resources</div>
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary" (click)="openUploadModal()">
-        <i class="fa-solid fa-upload"></i> Upload Resource
+      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
+        <i class="fas fa-upload"></i> Upload Book
       </button>
     </div>
   </div>
@@ -21,31 +22,30 @@
   <!-- Stats -->
   <div class="pg-stats">
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-teal"><i class="fa-solid fa-book-bookmark"></i></div>
+      <div class="pg-stat__icon chip-teal">
+        <i class="fas fa-book-bookmark"></i>
+      </div>
       <div>
-        <div class="pg-stat__val">{{ resources.length }}</div>
-        <div class="pg-stat__lbl">Total Resources</div>
+        <div class="pg-stat__val">{{ books.length }}</div>
+        <div class="pg-stat__lbl">Total Books</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-file-pdf"></i></div>
+      <div class="pg-stat__icon chip-emerald">
+        <i class="fas fa-download"></i>
+      </div>
       <div>
-        <div class="pg-stat__val">{{ pdfCount }}</div>
-        <div class="pg-stat__lbl">PDFs</div>
+        <div class="pg-stat__val">{{ downloadableCount }}</div>
+        <div class="pg-stat__lbl">Downloadable</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-video"></i></div>
-      <div>
-        <div class="pg-stat__val">{{ videoCount }}</div>
-        <div class="pg-stat__lbl">Videos</div>
+      <div class="pg-stat__icon chip-amber">
+        <i class="fas fa-droplet"></i>
       </div>
-    </div>
-    <div class="pg-stat">
-      <div class="pg-stat__icon chip-amber"><i class="fa-solid fa-download"></i></div>
       <div>
-        <div class="pg-stat__val">{{ totalDownloads | number }}</div>
-        <div class="pg-stat__lbl">Total Downloads</div>
+        <div class="pg-stat__val">{{ watermarkedCount }}</div>
+        <div class="pg-stat__lbl">Watermarked</div>
       </div>
     </div>
   </div>
@@ -53,244 +53,421 @@
   <!-- Table Card -->
   <div class="pg-card">
     <div class="pg-card__head">
-      <div class="pg-card__title">All Resources</div>
+      <span class="pg-card__title">All Books</span>
       <div class="pg-toolbar">
-        <div class="pg-search">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" placeholder="Search resources..." [(ngModel)]="searchQuery" />
-        </div>
-        <select class="pg-filter" [(ngModel)]="typeFilter">
-          <option value="">All Types</option>
-          <option value="PDF">PDF</option>
-          <option value="Video">Video</option>
-          <option value="Notes">Notes</option>
-          <option value="Presentation">Presentation</option>
-        </select>
-        <select class="pg-filter" [(ngModel)]="statusFilter">
-          <option value="">All Status</option>
-          <option value="active">Active</option>
-          <option value="draft">Draft</option>
-          <option value="archived">Archived</option>
+        <input
+          class="pg-search"
+          type="text"
+          placeholder="Search by title, author..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
+        />
+        <select class="pg-filter" [(ngModel)]="downloadableFilter" (change)="onFilterChange()">
+          <option value="">All Books</option>
+          <option value="yes">Downloadable</option>
+          <option value="no">Non-downloadable</option>
         </select>
       </div>
     </div>
 
-    <div class="pg-table-wrap">
+    <!-- Loading -->
+    <div class="pg-loading" *ngIf="isLoading">
+      <i class="fas fa-spinner fa-spin"></i> Loading books...
+    </div>
+
+    <div class="pg-table-wrap" *ngIf="!isLoading">
       <table class="pg-table">
         <thead>
           <tr>
-            <th>Resource Title</th>
-            <th>Subject &amp; Batch</th>
-            <th>Uploaded By</th>
-            <th>File Size</th>
-            <th>Downloads</th>
-            <th>Status</th>
+            <th>Book</th>
+            <th>Author</th>
+            <th>Description</th>
+            <th>Downloadable</th>
+            <th>Watermark</th>
+            <th>Uploaded</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let res of filteredResources">
+          <tr *ngFor="let book of filteredBooks">
+
+            <!-- Book title + cover -->
             <td>
-              <div style="display:flex;align-items:center;gap:10px;">
-                <span [class]="getTypeChipClass(res.type)">
-                  <i class="fa-solid" [class]="getTypeIcon(res.type)"></i>
-                  {{ res.type }}
-                </span>
-                <div>
-                  <div class="pg-cell__primary">{{ res.title }}</div>
-                  <div class="pg-cell__sub">{{ formatDate(res.uploadDate) }}</div>
+              <div class="book-title-cell">
+                <div class="book-cover" *ngIf="book.coverImageUrl">
+                  <img [src]="book.coverImageUrl" [alt]="book.title" />
                 </div>
+                <div class="book-cover book-cover--initial" *ngIf="!book.coverImageUrl">
+                  {{ getInitials(book.title) }}
+                </div>
+                <div class="pg-cell__primary">{{ book.title }}</div>
               </div>
             </td>
-            <td>
-              <div class="pg-cell__primary">{{ res.subject }}</div>
-              <div class="pg-cell__sub">{{ res.batch }}</div>
-            </td>
+
+            <!-- Author -->
             <td>
               <div class="pg-with-avatar">
-                <div class="pg-avatar av-teal">{{ res.uploadedBy.charAt(0) }}</div>
-                <span class="pg-cell__primary">{{ res.uploadedBy }}</span>
+                <div class="pg-avatar av-teal">{{ book.author?.charAt(0) || '?' }}</div>
+                <span class="pg-cell__primary">{{ book.author }}</span>
               </div>
             </td>
+
+            <!-- Description -->
             <td>
-              <span class="pg-cell__primary">{{ res.fileSize }}</span>
-            </td>
-            <td>
-              <span style="display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;color:#475569;border-radius:20px;padding:3px 10px;font-size:13px;font-weight:600;">
-                <i class="fa-solid fa-download" style="font-size:11px;"></i>
-                {{ res.downloads }}
+              <span class="pg-cell__sub desc-clamp">
+                {{ book.description || '—' }}
               </span>
             </td>
+
+            <!-- Downloadable -->
             <td>
-              <span class="pg-badge {{ getStatusBadge(res.status) }}">{{ res.status | titlecase }}</span>
+              <span
+                class="pg-badge"
+                [ngClass]="book.isDownloadable ? 'pg-badge--green' : 'pg-badge--red'"
+              >
+                <i
+                  class="fas"
+                  [ngClass]="book.isDownloadable ? 'fa-circle-check' : 'fa-circle-xmark'"
+                ></i>
+                {{ book.isDownloadable ? 'Yes' : 'No' }}
+              </span>
             </td>
+
+            <!-- Watermark -->
             <td>
-              <div style="display:flex;gap:6px;">
-                <button class="pg-action-btn" title="View" (click)="openViewModal(res)">
-                  <i class="fa-solid fa-eye"></i>
+              <span
+                class="pg-badge"
+                [ngClass]="book.isWatermarkRequired ? 'pg-badge--amber' : 'pg-badge--gray'"
+              >
+                <i
+                  class="fas"
+                  [ngClass]="book.isWatermarkRequired ? 'fa-droplet' : 'fa-minus'"
+                ></i>
+                {{ book.isWatermarkRequired ? 'Required' : 'None' }}
+              </span>
+            </td>
+
+            <!-- Upload date -->
+            <td>
+              <span class="pg-cell__sub">{{ formatDate(book.createdAt) }}</span>
+            </td>
+
+            <!-- Actions -->
+            <td>
+              <div class="action-group">
+                <button class="pg-action-btn" title="View" (click)="openViewModal(book)">
+                  <i class="fas fa-eye"></i>
                 </button>
-                <button class="pg-action-btn" title="Download">
-                  <i class="fa-solid fa-download"></i>
+                <button
+                  class="pg-action-btn pg-action-btn--teal"
+                  title="Open File"
+                  *ngIf="book.fileUrl"
+                  (click)="openFile(book.fileUrl)"
+                >
+                  <i class="fas fa-file-arrow-down"></i>
                 </button>
-                <button class="pg-action-btn" title="Edit" (click)="openEditModal(res)">
-                  <i class="fa-solid fa-pen"></i>
-                </button>
-                <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDeleteModal(res)">
-                  <i class="fa-solid fa-trash"></i>
+                <button
+                  class="pg-action-btn pg-action-btn--danger"
+                  title="Delete"
+                  (click)="openDeleteModal(book)"
+                >
+                  <i class="fas fa-trash"></i>
                 </button>
               </div>
             </td>
           </tr>
-          <tr *ngIf="filteredResources.length === 0">
-            <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">
-              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
-              No resources found
+
+          <tr *ngIf="filteredBooks.length === 0">
+            <td colspan="7" class="pg-empty">
+              <i class="fas fa-book-open pg-empty__icon"></i>
+              No books found.
             </td>
           </tr>
         </tbody>
       </table>
     </div>
   </div>
-
 </div>
 
-<!-- Modal Overlay -->
+<!-- ═══ OVERLAY ═══════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
 
-<!-- Upload / Edit Modal -->
-<div class="modal modal--lg" *ngIf="modalMode === 'create' || modalMode === 'edit'">
+<!-- ─── Upload Modal ───────────────────────────────────────────────────────── -->
+<div class="modal modal--lg" *ngIf="modalMode === 'create'">
   <div class="modal__header">
-    <h3>
-      <i class="fa-solid fa-{{ modalMode === 'create' ? 'upload' : 'pen-to-square' }}"></i>
-      {{ modalMode === 'create' ? 'Upload Resource' : 'Edit Resource' }}
-    </h3>
-    <button class="modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-  </div>
-  <div class="modal__body">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-      <div class="form-group" [class.has-error]="formTitleError" style="grid-column:1/-1;">
-        <label>Title <span class="required">*</span></label>
-        <input type="text" class="form-control" placeholder="e.g. Physics Formula Sheet – Grade 10 & 11" [(ngModel)]="formTitle" (input)="formTitleError=''" />
-        <div class="field-error" *ngIf="formTitleError"><i class="fa-solid fa-circle-exclamation"></i> {{ formTitleError }}</div>
-      </div>
-      <div class="form-group" [class.has-error]="formSubjectError">
-        <label>Subject <span class="required">*</span></label>
-        <input type="text" class="form-control" placeholder="e.g. Physics" [(ngModel)]="formSubject" (input)="formSubjectError=''" />
-        <div class="field-error" *ngIf="formSubjectError"><i class="fa-solid fa-circle-exclamation"></i> {{ formSubjectError }}</div>
-      </div>
-      <div class="form-group">
-        <label>Resource Type</label>
-        <select class="form-control" [(ngModel)]="formType">
-          <option value="PDF">PDF</option>
-          <option value="Video">Video</option>
-          <option value="Notes">Notes</option>
-          <option value="Presentation">Presentation</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Batch / Class</label>
-        <input type="text" class="form-control" placeholder="e.g. Grade 10 – Batch A" [(ngModel)]="formBatch" />
-      </div>
-      <div class="form-group" [class.has-error]="formUploadedByError">
-        <label>Uploaded By <span class="required">*</span></label>
-        <input type="text" class="form-control" placeholder="e.g. Dr. Vikram Sharma" [(ngModel)]="formUploadedBy" (input)="formUploadedByError=''" />
-        <div class="field-error" *ngIf="formUploadedByError"><i class="fa-solid fa-circle-exclamation"></i> {{ formUploadedByError }}</div>
-      </div>
-      <div class="form-group">
-        <label>File Size</label>
-        <input type="text" class="form-control" placeholder="e.g. 3.2 MB" [(ngModel)]="formFileSize" />
-      </div>
-      <div class="form-group">
-        <label>Status</label>
-        <select class="form-control" [(ngModel)]="formStatus">
-          <option value="active">Active</option>
-          <option value="draft">Draft</option>
-          <option value="archived">Archived</option>
-        </select>
-      </div>
-    </div>
-  </div>
-  <div class="modal__footer">
-    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
-    <button class="pg-btn pg-btn--primary" (click)="submitForm()">
-      <i class="fa-solid fa-{{ modalMode === 'create' ? 'upload' : 'floppy-disk' }}"></i>
-      {{ modalMode === 'create' ? 'Upload Resource' : 'Save Changes' }}
+    <h3><i class="fas fa-upload"></i> Upload Book</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fas fa-xmark"></i>
     </button>
   </div>
-</div>
 
-<!-- View Modal -->
-<div class="modal modal--md" *ngIf="modalMode === 'view' && selectedResource">
-  <div class="modal__header">
-    <h3><i class="fa-solid fa-eye"></i> Resource Details</h3>
-    <button class="modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-  </div>
   <div class="modal__body">
-    <div class="view-showcase">
-      <div class="view-showcase__icon" style="background:#f0fdfa;color:#0d9488;">
-        <i class="fa-solid" [class]="getTypeIcon(selectedResource.type)"></i>
+
+    <!-- Cover image preview -->
+    <div class="cover-preview-row" *ngIf="formCoverImagePreview">
+      <div class="cover-preview">
+        <img [src]="formCoverImagePreview" alt="Cover preview" />
+        <button class="cover-remove" (click)="removeCoverImage()" title="Remove">
+          <i class="fas fa-xmark"></i>
+        </button>
       </div>
-      <div>
-        <div class="view-showcase__title">{{ selectedResource.title }}</div>
-        <div class="view-showcase__sub">
-          <span [class]="getTypeChipClass(selectedResource.type)">
-            <i class="fa-solid" [class]="getTypeIcon(selectedResource.type)"></i>
-            {{ selectedResource.type }}
+      <span class="cover-preview-label">Cover Preview</span>
+    </div>
+
+    <div class="form-section-title">
+      <i class="fas fa-circle-info"></i> Book Details
+    </div>
+
+    <div class="form-grid">
+      <!-- Title -->
+      <div class="form-group form-group--full" [class.has-error]="titleError">
+        <label>Title <span class="required">*</span></label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="e.g. Introduction to Physics"
+          [(ngModel)]="formTitle"
+          (input)="titleError = ''"
+        />
+        <div class="field-error" *ngIf="titleError">
+          <i class="fas fa-circle-exclamation"></i> {{ titleError }}
+        </div>
+      </div>
+
+      <!-- Author -->
+      <div class="form-group" [class.has-error]="authorError">
+        <label>Author <span class="required">*</span></label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="e.g. Dr. Vikram Sharma"
+          [(ngModel)]="formAuthor"
+          (input)="authorError = ''"
+        />
+        <div class="field-error" *ngIf="authorError">
+          <i class="fas fa-circle-exclamation"></i> {{ authorError }}
+        </div>
+      </div>
+
+      <!-- Cover Image -->
+      <div class="form-group">
+        <label>Cover Image <span class="hint">(optional)</span></label>
+        <div class="file-upload-box" (click)="coverInput.click()">
+          <input
+            #coverInput
+            type="file"
+            accept="image/*"
+            style="display:none"
+            (change)="onCoverImageSelected($event)"
+          />
+          <i class="fas fa-image file-upload-icon"></i>
+          <span *ngIf="!formCoverImageFile">Click to select image</span>
+          <span *ngIf="formCoverImageFile" class="file-selected-name">
+            {{ formCoverImageFile.name }}
           </span>
         </div>
       </div>
     </div>
-    <div class="view-detail-block">
-      <div class="view-detail-label">Subject</div>
-      <div class="view-detail-val">{{ selectedResource.subject }}</div>
+
+    <!-- Description -->
+    <div class="form-group" [class.has-error]="descriptionError">
+      <label>Description <span class="required">*</span></label>
+      <textarea
+        class="form-control"
+        rows="3"
+        placeholder="Brief description of the book..."
+        [(ngModel)]="formDescription"
+        (input)="descriptionError = ''"
+      ></textarea>
+      <div class="field-error" *ngIf="descriptionError">
+        <i class="fas fa-circle-exclamation"></i> {{ descriptionError }}
+      </div>
     </div>
-    <div class="view-detail-block">
-      <div class="view-detail-label">Batch / Class</div>
-      <div class="view-detail-val">{{ selectedResource.batch }}</div>
+
+    <div class="form-section-title">
+      <i class="fas fa-file-arrow-up"></i> File Upload
     </div>
-    <div class="view-detail-block">
-      <div class="view-detail-label">Uploaded By</div>
-      <div class="view-detail-val">{{ selectedResource.uploadedBy }}</div>
+
+    <!-- File upload -->
+    <div class="form-group" [class.has-error]="fileError">
+      <label>Book File <span class="required">*</span></label>
+      <div
+        class="file-upload-box file-upload-box--large"
+        [class.file-upload-box--selected]="!!formFile"
+        (click)="bookFileInput.click()"
+      >
+        <input
+          #bookFileInput
+          type="file"
+          accept=".pdf,.epub,.doc,.docx,.ppt,.pptx,.mp4,.mkv"
+          style="display:none"
+          (change)="onFileSelected($event)"
+        />
+        <i
+          class="fas file-upload-icon"
+          [ngClass]="formFile ? 'fa-file-circle-check' : 'fa-file-arrow-up'"
+          [class.file-upload-icon--selected]="!!formFile"
+        ></i>
+        <div *ngIf="!formFile">
+          <div class="file-upload-hint">Click to select file</div>
+          <div class="file-upload-types">PDF, EPUB, DOC, PPT, MP4, MKV</div>
+        </div>
+        <div *ngIf="formFile" class="file-selected-name">
+          {{ getFileLabel(formFile) }}
+          <span class="file-change-hint">Click to change</span>
+        </div>
+      </div>
+      <div class="field-error" *ngIf="fileError">
+        <i class="fas fa-circle-exclamation"></i> {{ fileError }}
+      </div>
     </div>
-    <div class="view-detail-block">
-      <div class="view-detail-label">File Size</div>
-      <div class="view-detail-val">{{ selectedResource.fileSize }}</div>
+
+    <div class="form-section-title">
+      <i class="fas fa-sliders"></i> Settings
     </div>
-    <div class="view-detail-block">
-      <div class="view-detail-label">Downloads</div>
-      <div class="view-detail-val">{{ selectedResource.downloads | number }}</div>
+
+    <!-- Toggles -->
+    <div class="form-group">
+      <label class="toggle-label">
+        <span>Allow Download</span>
+        <div
+          class="toggle-switch"
+          [class.on]="formIsDownloadable"
+          (click)="formIsDownloadable = !formIsDownloadable"
+        >
+          <div class="toggle-thumb"></div>
+        </div>
+        <span class="toggle-val">{{ formIsDownloadable ? 'Enabled' : 'Disabled' }}</span>
+      </label>
     </div>
-    <div class="view-detail-block">
-      <div class="view-detail-label">Upload Date</div>
-      <div class="view-detail-val">{{ formatDate(selectedResource.uploadDate) }}</div>
+
+    <div class="form-group">
+      <label class="toggle-label">
+        <span>Watermark Required</span>
+        <div
+          class="toggle-switch"
+          [class.on]="formIsWatermarkRequired"
+          (click)="formIsWatermarkRequired = !formIsWatermarkRequired"
+        >
+          <div class="toggle-thumb"></div>
+        </div>
+        <span class="toggle-val">{{ formIsWatermarkRequired ? 'Yes' : 'No' }}</span>
+      </label>
     </div>
-    <div class="view-detail-block">
-      <div class="view-detail-label">Status</div>
-      <div class="view-detail-val"><span class="pg-badge {{ getStatusBadge(selectedResource.status) }}">{{ selectedResource.status | titlecase }}</span></div>
-    </div>
+
   </div>
+
   <div class="modal__footer">
-    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
-    <button class="pg-btn pg-btn--outline"><i class="fa-solid fa-download"></i> Download</button>
-    <button class="pg-btn pg-btn--primary" (click)="openEditModal(selectedResource)">
-      <i class="fa-solid fa-pen-to-square"></i> Edit
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()" [disabled]="isSubmitting">
+      Cancel
+    </button>
+    <button class="pg-btn pg-btn--primary" (click)="createBook()" [disabled]="isSubmitting">
+      <i class="fas" [ngClass]="isSubmitting ? 'fa-spinner fa-spin' : 'fa-upload'"></i>
+      {{ isSubmitting ? 'Uploading...' : 'Upload Book' }}
     </button>
   </div>
 </div>
 
-<!-- Delete Modal -->
-<div class="modal modal--sm" *ngIf="modalMode === 'delete' && selectedResource">
+<!-- ─── View Modal ──────────────────────────────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'view' && selectedBook">
+  <div class="modal__header">
+    <h3><i class="fas fa-eye"></i> Book Details</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fas fa-xmark"></i>
+    </button>
+  </div>
+  <div class="modal__body">
+
+    <!-- Showcase -->
+    <div class="view-showcase view-showcase--teal">
+      <div class="book-cover book-cover--lg" *ngIf="selectedBook.coverImageUrl">
+        <img [src]="selectedBook.coverImageUrl" [alt]="selectedBook.title" />
+      </div>
+      <div class="book-cover book-cover--lg book-cover--initial" *ngIf="!selectedBook.coverImageUrl">
+        {{ getInitials(selectedBook.title) }}
+      </div>
+      <div>
+        <div class="view-showcase__title">{{ selectedBook.title }}</div>
+        <div class="view-showcase__meta">
+          <span class="meta-chip meta-chip--teal">
+            <i class="fas fa-user-pen"></i> {{ selectedBook.author }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="view-detail-grid">
+      <div class="view-detail-item">
+        <div class="view-detail-label">Downloadable</div>
+        <div class="view-detail-val">
+          <span
+            class="pg-badge"
+            [ngClass]="selectedBook.isDownloadable ? 'pg-badge--green' : 'pg-badge--red'"
+          >
+            {{ selectedBook.isDownloadable ? 'Yes' : 'No' }}
+          </span>
+        </div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Watermark</div>
+        <div class="view-detail-val">
+          <span
+            class="pg-badge"
+            [ngClass]="selectedBook.isWatermarkRequired ? 'pg-badge--amber' : 'pg-badge--gray'"
+          >
+            {{ selectedBook.isWatermarkRequired ? 'Required' : 'None' }}
+          </span>
+        </div>
+      </div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Uploaded On</div>
+        <div class="view-detail-val">{{ formatDate(selectedBook.createdAt) }}</div>
+      </div>
+    </div>
+
+    <div class="view-detail-block" *ngIf="selectedBook.description">
+      <div class="view-detail-label">Description</div>
+      <div class="view-detail-val-desc">{{ selectedBook.description }}</div>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+    <button
+      class="pg-btn pg-btn--teal"
+      *ngIf="selectedBook.fileUrl"
+      (click)="openFile(selectedBook.fileUrl)"
+    >
+      <i class="fas fa-file-arrow-down"></i> Open File
+    </button>
+    <button
+      class="pg-btn pg-btn--danger-outline"
+      (click)="openDeleteModal(selectedBook)"
+    >
+      <i class="fas fa-trash"></i> Delete
+    </button>
+  </div>
+</div>
+
+<!-- ─── Delete Modal ────────────────────────────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'delete' && selectedBook">
   <div class="modal__header modal__header--danger">
-    <h3><i class="fa-solid fa-triangle-exclamation"></i> Delete Resource</h3>
-    <button class="modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    <h3><i class="fas fa-triangle-exclamation"></i> Delete Book</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fas fa-xmark"></i>
+    </button>
   </div>
   <div class="modal__body modal__body--center">
-    <div class="delete-icon"><i class="fa-solid fa-trash-can"></i></div>
-    <p class="delete-msg">Delete resource<br /><strong>"{{ selectedResource.title }}"</strong>?</p>
-    <p class="delete-sub">This action cannot be undone. All downloads will be removed.</p>
+    <div class="delete-icon"><i class="fas fa-trash-can"></i></div>
+    <p class="delete-msg">
+      Are you sure you want to delete<br />
+      <strong>"{{ selectedBook.title }}"</strong>?
+    </p>
+    <p class="delete-sub">This action cannot be undone.</p>
   </div>
   <div class="modal__footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
-    <button class="pg-btn pg-btn--danger" (click)="deleteResource()"><i class="fa-solid fa-trash"></i> Delete</button>
+    <button class="pg-btn pg-btn--danger" (click)="deleteBook()">
+      <i class="fas fa-trash"></i> Delete
+    </button>
   </div>
 </div>

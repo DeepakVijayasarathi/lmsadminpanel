@@ -7,31 +7,30 @@ const BASE_URL = environment.apiUrl;
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
-/**
- * Course model — mirrors the API response shape.
- * The API uses `price` (not totalAmount / discountAmount).
- */
+export interface Subject {
+  id: string;
+  name: string;
+}
+
 export interface Course {
   id: string;
   title: string;
   description: string;
   thumbnailUrl: string;
+  subjectId?: string;
   category?: string;
   level?: string;
   isPublished?: boolean;
   durationHours?: number;
   durationInMonths?: number;
-  price?: number;               // ← API field name
+  price?: number;
   isPartialAllowed?: boolean;
   installmentCount?: number | null;
   createdAt?: string;
 }
 
-/**
- * Payload for POST /courses  and  PUT /courses/{id}
- * Matches the curl bodies exactly.
- */
 export interface CoursePayload {
+  subjectId: string;
   title: string;
   description: string;
   thumbnailUrl: string;
@@ -39,7 +38,7 @@ export interface CoursePayload {
   level: string;
   durationHours: number;
   durationInMonths: number;
-  price: number;                // ← API field name
+  price: number;
   isPartialAllowed: boolean;
   installmentCount: number | null;
 }
@@ -57,6 +56,7 @@ type ModalMode = 'create' | 'edit' | 'view' | 'delete' | 'publish' | null;
 export class CoursesComponent implements OnInit {
   courses: Course[] = [];
   filteredCourses: Course[] = [];
+  subjects: Subject[] = [];
 
   searchQuery: string = '';
   statusFilter: string = '';
@@ -67,6 +67,7 @@ export class CoursesComponent implements OnInit {
   selectedCourse: Course | null = null;
 
   // ── Form fields ────────────────────────────────────────────────
+  formSubjectId: string = '';
   formTitle: string = '';
   formDescription: string = '';
   formThumbnailUrl: string = '';
@@ -75,13 +76,14 @@ export class CoursesComponent implements OnInit {
   formIsPublished: boolean = false;
   formDurationHours: number = 1;
   formDurationInMonths: number = 1;
-  formPrice: number = 0;        // ← replaces formTotalAmount
+  formPrice: number = 0;
   formIsPartialAllowed: boolean = false;
   formInstallmentCount: number | null = null;
 
   // ── Validation ─────────────────────────────────────────────────
   titleError: string = '';
-  priceError: string = '';      // ← replaces totalAmountError
+  priceError: string = '';
+  subjectError: string = '';
 
   // ── Constants ──────────────────────────────────────────────────
   readonly LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
@@ -102,12 +104,25 @@ export class CoursesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loadSubjects();
     this.loadCourses();
   }
 
   // ════════════════════════════════════════════════════════════════
   //  API CALLS
   // ════════════════════════════════════════════════════════════════
+
+  /** GET /subject */
+  loadSubjects(): void {
+    this.httpService.getData(BASE_URL, '/subject').subscribe({
+      next: (res: any) => {
+        this.subjects = Array.isArray(res) ? res : (res?.data ?? []);
+      },
+      error: () => {
+        this.commonService.error('Failed to load subjects.');
+      },
+    });
+  }
 
   /** GET /courses */
   loadCourses(): void {
@@ -129,9 +144,6 @@ export class CoursesComponent implements OnInit {
   getCourseById(id: string): void {
     this.httpService.getData(BASE_URL, `/courses/${id}`).subscribe({
       next: (res: any) => {
-        // Useful when you need a fresh detail view.
-        // Currently openViewModal uses the list data directly;
-        // swap to this call if you need server-fresh data.
         this.selectedCourse = res?.data ?? res;
       },
       error: (err: any) => {
@@ -252,6 +264,7 @@ export class CoursesComponent implements OnInit {
 
   openEditModal(course: Course): void {
     this.selectedCourse = course;
+    this.formSubjectId = course.subjectId ?? '';
     this.formTitle = course.title;
     this.formDescription = course.description ?? '';
     this.formThumbnailUrl = course.thumbnailUrl ?? '';
@@ -265,6 +278,7 @@ export class CoursesComponent implements OnInit {
     this.formInstallmentCount = course.installmentCount ?? null;
     this.titleError = '';
     this.priceError = '';
+    this.subjectError = '';
     this.modalMode = 'edit';
   }
 
@@ -288,6 +302,7 @@ export class CoursesComponent implements OnInit {
     this.selectedCourse = null;
     this.titleError = '';
     this.priceError = '';
+    this.subjectError = '';
   }
 
   submitForm(): void {
@@ -300,12 +315,9 @@ export class CoursesComponent implements OnInit {
   //  FORM UTILITIES
   // ════════════════════════════════════════════════════════════════
 
-  /**
-   * Builds the POST / PUT payload.
-   * Both endpoints share the same body shape per the API spec.
-   */
   private buildPayload(): CoursePayload {
     return {
+      subjectId: this.formSubjectId,
       title: this.formTitle.trim(),
       description: this.formDescription.trim(),
       thumbnailUrl: this.formThumbnailUrl.trim(),
@@ -324,7 +336,13 @@ export class CoursesComponent implements OnInit {
   validateForm(): boolean {
     this.titleError = '';
     this.priceError = '';
+    this.subjectError = '';
     let valid = true;
+
+    if (!this.formSubjectId) {
+      this.subjectError = 'Please select a subject.';
+      valid = false;
+    }
 
     if (!this.formTitle.trim()) {
       this.titleError = 'Course title is required.';
@@ -350,6 +368,7 @@ export class CoursesComponent implements OnInit {
   }
 
   resetForm(): void {
+    this.formSubjectId = '';
     this.formTitle = '';
     this.formDescription = '';
     this.formThumbnailUrl = '';
@@ -363,6 +382,7 @@ export class CoursesComponent implements OnInit {
     this.formInstallmentCount = null;
     this.titleError = '';
     this.priceError = '';
+    this.subjectError = '';
   }
 
   // ════════════════════════════════════════════════════════════════
@@ -397,6 +417,11 @@ export class CoursesComponent implements OnInit {
     }
 
     this.filteredCourses = list;
+  }
+
+  getSubjectName(subjectId?: string): string {
+    if (!subjectId) return '—';
+    return this.subjects.find((s) => s.id === subjectId)?.name ?? '—';
   }
 
   getStatusBadge(course: Course): string {

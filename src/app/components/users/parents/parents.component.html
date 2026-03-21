@@ -14,9 +14,6 @@
       <button class="pg-btn pg-btn--outline">
         <i class="fas fa-download"></i> Export
       </button>
-      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
-        <i class="fas fa-plus"></i> Add Parent
-      </button>
     </div>
   </div>
 
@@ -57,7 +54,7 @@
         <input
           class="pg-search"
           type="text"
-          placeholder="Search parents..."
+          placeholder="Search parents or students..."
           [(ngModel)]="searchTerm"
           (input)="onSearch()"
         />
@@ -82,86 +79,111 @@
         <thead>
           <tr>
             <th>Parent</th>
-            <th>Username</th>
+            <th>Relationship</th>
             <th>Phone</th>
+            <th>Students</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let user of filteredParents">
+          <tr *ngFor="let parent of filteredParents">
+            <!-- Parent -->
             <td>
               <div class="pg-with-avatar">
-                <div class="pg-avatar av-purple">{{ getInitials(user) }}</div>
+                <div class="pg-avatar av-purple">{{ getInitials(parent.name) }}</div>
                 <div>
-                  <span class="pg-cell__primary">{{ getFullName(user) }}</span>
-                  <span class="pg-cell__sub">{{ user.email }}</span>
+                  <span class="pg-cell__primary">{{ parent.name }}</span>
+                  <span class="pg-cell__sub">{{ parent.email }}</span>
                 </div>
               </div>
             </td>
+
+            <!-- Relationship -->
             <td>
-              <span class="pg-cell__primary">{{ user.username || "—" }}</span>
+              <span class="meta-chip meta-chip--purple" *ngIf="parent.relationship">
+                <i class="fas fa-heart"></i> {{ parent.relationship }}
+              </span>
+              <span class="no-val" *ngIf="!parent.relationship">—</span>
             </td>
+
+            <!-- Phone -->
             <td>
-              <span class="pg-cell__primary">{{ user.phone || "—" }}</span>
+              <span class="pg-cell__primary">{{ parent.phone || "—" }}</span>
             </td>
+
+            <!-- Students -->
+            <td>
+              <div class="students-cell" *ngIf="parent.students?.length">
+                <div
+                  class="student-pill"
+                  *ngFor="let student of parent.students"
+                  [title]="student.email"
+                >
+                  <span
+                    class="student-avatar"
+                    [class.student-avatar--inactive]="!student.isActive"
+                  >
+                    {{ getStudentInitials(student) }}
+                  </span>
+                  <span class="student-name">{{ getStudentFullName(student) }}</span>
+                </div>
+              </div>
+              <span class="no-val" *ngIf="!parent.students?.length">—</span>
+            </td>
+
+            <!-- Status -->
             <td>
               <span
                 class="pg-badge"
-                [ngClass]="user.isActive ? 'pg-badge--green' : 'pg-badge--red'"
+                [ngClass]="parent.isActive ? 'pg-badge--green' : 'pg-badge--red'"
               >
                 <i
                   class="fas"
-                  [ngClass]="
-                    user.isActive ? 'fa-circle-check' : 'fa-circle-xmark'
-                  "
+                  [ngClass]="parent.isActive ? 'fa-circle-check' : 'fa-circle-xmark'"
                 ></i>
-                {{ user.isActive ? "Active" : "Inactive" }}
+                {{ parent.isActive ? "Active" : "Inactive" }}
               </span>
             </td>
+
+            <!-- Actions -->
             <td>
               <div class="action-group">
                 <button
                   class="pg-action-btn"
                   title="View"
-                  (click)="openViewModal(user)"
+                  (click)="openViewModal(parent)"
                 >
                   <i class="fas fa-eye"></i>
                 </button>
                 <button
-                  class="pg-action-btn"
-                  title="Edit"
-                  (click)="openEditModal(user)"
-                >
-                  <i class="fas fa-pen-to-square"></i>
-                </button>
-                <button
                   class="pg-action-btn pg-action-btn--warn"
                   title="Block"
-                  (click)="openBlockModal(user)"
-                  *ngIf="user.isActive"
+                  (click)="openBlockModal(parent)"
+                  *ngIf="parent.isActive"
                 >
                   <i class="fas fa-ban"></i>
                 </button>
                 <button
                   class="pg-action-btn pg-action-btn--sky"
                   title="Device Reset"
-                  (click)="openDeviceResetModal(user)"
+                  (click)="openDeviceResetModal(parent)"
                 >
                   <i class="fas fa-mobile-screen-button"></i>
                 </button>
                 <button
                   class="pg-action-btn pg-action-btn--danger"
                   title="Delete"
-                  (click)="openDeleteModal(user)"
+                  (click)="openDeleteModal(parent)"
                 >
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
             </td>
           </tr>
+
           <tr *ngIf="filteredParents.length === 0">
-            <td colspan="5" class="pg-empty">
+            <td colspan="6" class="pg-empty">
               <i class="fas fa-people-roof pg-empty__icon"></i>No parents found.
             </td>
           </tr>
@@ -171,207 +193,104 @@
   </div>
 </div>
 
+<!-- ═══ OVERLAY ═══════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
 
-<!-- Create / Edit -->
-<div class="modal" *ngIf="modalMode === 'create' || modalMode === 'edit'">
-  <div class="modal__header">
-    <h3>
-      <i
-        class="fas fa-{{
-          modalMode === 'create' ? 'plus-circle' : 'pen-to-square'
-        }}"
-      ></i
-      >{{ modalMode === "create" ? "Add New Parent" : "Edit Parent" }}
-    </h3>
-    <button class="modal__close" (click)="closeModal()">
-      <i class="fas fa-xmark"></i>
-    </button>
-  </div>
-  <div class="modal__body">
-    <div class="form-grid">
-      <div class="form-group" [class.has-error]="firstNameError">
-        <label>First Name <span class="required">*</span></label>
-        <input
-          type="text"
-          class="form-control"
-          placeholder="First name"
-          [(ngModel)]="formFirstName"
-          (input)="firstNameError = ''"
-        />
-        <div class="field-error" *ngIf="firstNameError">
-          <i class="fas fa-circle-exclamation"></i> {{ firstNameError }}
-        </div>
-      </div>
-      <div class="form-group" [class.has-error]="lastNameError">
-        <label>Last Name <span class="required">*</span></label>
-        <input
-          type="text"
-          class="form-control"
-          placeholder="Last name"
-          [(ngModel)]="formLastName"
-          (input)="lastNameError = ''"
-        />
-        <div class="field-error" *ngIf="lastNameError">
-          <i class="fas fa-circle-exclamation"></i> {{ lastNameError }}
-        </div>
-      </div>
-      <div class="form-group" [class.has-error]="usernameError">
-        <label>Username <span class="required">*</span></label>
-        <input
-          type="text"
-          class="form-control"
-          placeholder="e.g. suresh.sharma"
-          [(ngModel)]="formUsername"
-          (input)="usernameError = ''"
-        />
-        <div class="field-error" *ngIf="usernameError">
-          <i class="fas fa-circle-exclamation"></i> {{ usernameError }}
-        </div>
-      </div>
-      <div class="form-group" [class.has-error]="emailError">
-        <label>Email <span class="required">*</span></label>
-        <input
-          type="email"
-          class="form-control"
-          placeholder="email@example.com"
-          [(ngModel)]="formEmail"
-          (input)="emailError = ''"
-        />
-        <div class="field-error" *ngIf="emailError">
-          <i class="fas fa-circle-exclamation"></i> {{ emailError }}
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Phone</label>
-        <input
-          type="text"
-          class="form-control"
-          placeholder="Phone number"
-          maxlength="10"
-          [(ngModel)]="formPhone"
-          (keypress)="onlyNumbers($event)"
-          (paste)="onPaste($event)"
-        />
-      </div>
-      <div class="form-group" [class.has-error]="passwordError">
-        <label
-          >Password
-          <span class="required" *ngIf="modalMode === 'create'">*</span
-          ><span class="hint" *ngIf="modalMode === 'edit'">
-            (leave blank to keep current)</span
-          ></label
-        >
-        <div class="password-wrap">
-          <input
-            [type]="showPassword ? 'text' : 'password'"
-            class="form-control"
-            placeholder="Password"
-            [(ngModel)]="formPassword"
-            (input)="passwordError = ''"
-          />
-          <button
-            type="button"
-            class="toggle-pw"
-            (click)="showPassword = !showPassword"
-          >
-            <i
-              class="fas"
-              [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'"
-            ></i>
-          </button>
-        </div>
-        <div class="field-error" *ngIf="passwordError">
-          <i class="fas fa-circle-exclamation"></i> {{ passwordError }}
-        </div>
-      </div>
-      <div class="form-group form-group--full" *ngIf="modalMode === 'edit'">
-        <label class="toggle-label">
-          <span>Active Status</span>
-          <div
-            class="toggle-switch"
-            [class.on]="formIsActive"
-            (click)="formIsActive = !formIsActive"
-          >
-            <div class="toggle-thumb"></div>
-          </div>
-          <span class="toggle-val">{{
-            formIsActive ? "Active" : "Inactive"
-          }}</span>
-        </label>
-      </div>
-    </div>
-  </div>
-  <div class="modal__footer">
-    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
-    <button class="pg-btn pg-btn--primary" (click)="submitForm()">
-      <i
-        class="fas fa-{{ modalMode === 'create' ? 'plus' : 'floppy-disk' }}"
-      ></i>
-      {{ modalMode === "create" ? "Create Parent" : "Save Changes" }}
-    </button>
-  </div>
-</div>
-
-<!-- View -->
-<div class="modal modal--sm" *ngIf="modalMode === 'view' && selectedUser">
+<!-- ─── View Modal ─────────────────────────────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'view' && selectedParent">
   <div class="modal__header">
     <h3><i class="fas fa-eye"></i> Parent Details</h3>
     <button class="modal__close" (click)="closeModal()">
       <i class="fas fa-xmark"></i>
     </button>
   </div>
+
   <div class="modal__body">
+    <!-- Showcase -->
     <div class="view-showcase view-showcase--purple">
       <div class="pg-avatar pg-avatar--lg av-purple">
-        {{ getInitials(selectedUser) }}
+        {{ getInitials(selectedParent.name) }}
       </div>
       <div>
-        <div class="view-showcase__title">{{ getFullName(selectedUser) }}</div>
+        <div class="view-showcase__title">{{ selectedParent.name }}</div>
+        <div class="view-showcase__meta">
+          <span class="meta-chip meta-chip--purple" *ngIf="selectedParent.relationship">
+            <i class="fas fa-heart"></i> {{ selectedParent.relationship }}
+          </span>
+        </div>
         <span
           class="pg-badge"
-          [ngClass]="
-            selectedUser.isActive ? 'pg-badge--green' : 'pg-badge--red'
-          "
+          [ngClass]="selectedParent.isActive ? 'pg-badge--green' : 'pg-badge--red'"
         >
           <i
             class="fas"
-            [ngClass]="
-              selectedUser.isActive ? 'fa-circle-check' : 'fa-circle-xmark'
-            "
+            [ngClass]="selectedParent.isActive ? 'fa-circle-check' : 'fa-circle-xmark'"
           ></i>
-          {{ selectedUser.isActive ? "Active" : "Inactive" }}
+          {{ selectedParent.isActive ? "Active" : "Inactive" }}
         </span>
       </div>
     </div>
+
+    <!-- Contact -->
     <div class="view-detail-grid">
       <div class="view-detail-item">
-        <div class="view-detail-label">Username</div>
-        <div class="view-detail-val">{{ selectedUser.username || "—" }}</div>
-      </div>
-      <div class="view-detail-item">
         <div class="view-detail-label">Email</div>
-        <div class="view-detail-val">{{ selectedUser.email || "—" }}</div>
+        <div class="view-detail-val">{{ selectedParent.email || "—" }}</div>
       </div>
       <div class="view-detail-item">
         <div class="view-detail-label">Phone</div>
-        <div class="view-detail-val">{{ selectedUser.phone || "—" }}</div>
+        <div class="view-detail-val">{{ selectedParent.phone || "—" }}</div>
+      </div>
+    </div>
+
+    <!-- Students -->
+    <div class="view-students-section">
+      <div class="view-section-title">
+        <i class="fas fa-user-graduate"></i> Students
+        <span class="view-section-count">{{ selectedParent.students?.length || 0 }}</span>
+      </div>
+
+      <div
+        class="view-student-card"
+        *ngFor="let student of selectedParent.students"
+      >
+        <div class="view-student-left">
+          <div
+            class="student-avatar student-avatar--md"
+            [class.student-avatar--inactive]="!student.isActive"
+          >
+            {{ getStudentInitials(student) }}
+          </div>
+          <div>
+            <div class="view-student-name">{{ getStudentFullName(student) }}</div>
+            <div class="view-student-email">{{ student.email }}</div>
+          </div>
+        </div>
+        <span
+          class="pg-badge"
+          [ngClass]="student.isActive ? 'pg-badge--green' : 'pg-badge--red'"
+        >
+          <i
+            class="fas"
+            [ngClass]="student.isActive ? 'fa-circle-check' : 'fa-circle-xmark'"
+          ></i>
+          {{ student.isActive ? "Active" : "Inactive" }}
+        </span>
+      </div>
+
+      <div class="view-no-students" *ngIf="!selectedParent.students?.length">
+        <i class="fas fa-user-graduate"></i> No students linked.
       </div>
     </div>
   </div>
+
   <div class="modal__footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
-    <button
-      class="pg-btn pg-btn--primary"
-      (click)="openEditModal(selectedUser)"
-    >
-      <i class="fas fa-pen-to-square"></i> Edit
-    </button>
   </div>
 </div>
 
-<!-- Block -->
-<div class="modal modal--sm" *ngIf="modalMode === 'block' && selectedUser">
+<!-- ─── Block Modal ─────────────────────────────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'block' && selectedParent">
   <div class="modal__header modal__header--warn">
     <h3><i class="fas fa-ban"></i> Block Parent</h3>
     <button class="modal__close" (click)="closeModal()">
@@ -380,10 +299,10 @@
   </div>
   <div class="modal__body">
     <div class="block-user-info">
-      <div class="pg-avatar av-purple">{{ getInitials(selectedUser) }}</div>
+      <div class="pg-avatar av-purple">{{ getInitials(selectedParent.name) }}</div>
       <div>
-        <div class="block-name">{{ getFullName(selectedUser) }}</div>
-        <div class="block-email">{{ selectedUser.email }}</div>
+        <div class="block-name">{{ selectedParent.name }}</div>
+        <div class="block-email">{{ selectedParent.email }}</div>
       </div>
     </div>
     <div class="form-group" [class.has-error]="blockReasonError">
@@ -402,17 +321,14 @@
   </div>
   <div class="modal__footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
-    <button class="pg-btn pg-btn--warn" (click)="blockUser()">
+    <button class="pg-btn pg-btn--warn" (click)="blockParent()">
       <i class="fas fa-ban"></i> Block Parent
     </button>
   </div>
 </div>
 
-<!-- Device Reset -->
-<div
-  class="modal modal--sm"
-  *ngIf="modalMode === 'device-reset' && selectedUser"
->
+<!-- ─── Device Reset Modal ──────────────────────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'device-reset' && selectedParent">
   <div class="modal__header modal__header--sky">
     <h3><i class="fas fa-mobile-screen-button"></i> Device Reset</h3>
     <button class="modal__close" (click)="closeModal()">
@@ -424,8 +340,7 @@
       <i class="fas fa-mobile-screen-button"></i>
     </div>
     <p class="delete-msg">
-      Reset device for <strong>{{ getFullName(selectedUser) }}</strong
-      >?
+      Reset device for <strong>{{ selectedParent.name }}</strong>?
     </p>
     <p class="delete-sub">This will log them out of all devices.</p>
   </div>
@@ -437,8 +352,8 @@
   </div>
 </div>
 
-<!-- Delete -->
-<div class="modal modal--sm" *ngIf="modalMode === 'delete' && selectedUser">
+<!-- ─── Delete Modal ────────────────────────────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'delete' && selectedParent">
   <div class="modal__header modal__header--danger">
     <h3><i class="fas fa-triangle-exclamation"></i> Delete Parent</h3>
     <button class="modal__close" (click)="closeModal()">
@@ -448,16 +363,14 @@
   <div class="modal__body modal__body--center">
     <div class="delete-icon"><i class="fas fa-trash-can"></i></div>
     <p class="delete-msg">
-      Are you sure you want to delete<br /><strong>{{
-        getFullName(selectedUser)
-      }}</strong
-      >?
+      Are you sure you want to delete<br />
+      <strong>{{ selectedParent.name }}</strong>?
     </p>
     <p class="delete-sub">This action cannot be undone.</p>
   </div>
   <div class="modal__footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
-    <button class="pg-btn pg-btn--danger" (click)="deleteUser()">
+    <button class="pg-btn pg-btn--danger" (click)="deleteParent()">
       <i class="fas fa-trash"></i> Delete
     </button>
   </div>

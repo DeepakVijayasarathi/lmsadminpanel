@@ -1,163 +1,312 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonService } from '../../../services/common.service';
+import { HttpGeneralService } from '../../../services/http.service';
+import { environment } from '../../../../environments/environment';
 
-export interface LibraryResource {
-  id: number;
+const BASE_URL = environment.apiUrl;
+
+// ─── Interfaces ───────────────────────────────────────────────────────────────
+
+export interface Book {
+  id: string;
   title: string;
-  subject: string;
-  type: 'PDF' | 'Video' | 'Notes' | 'Presentation';
-  batch: string;
-  uploadedBy: string;
-  fileSize: string;
-  downloads: number;
-  status: 'active' | 'draft' | 'archived';
-  uploadDate: string;
+  author: string;
+  description: string;
+  coverImageUrl?: string;
+  fileUrl?: string;
+  isDownloadable: boolean;
+  isWatermarkRequired: boolean;
+  createdAt?: string;
 }
 
-type ModalMode = 'create' | 'edit' | 'view' | 'delete' | null;
+type ModalMode = 'create' | 'view' | 'delete' | null;
 
 @Component({
   selector: 'app-library',
   standalone: false,
   templateUrl: './library.component.html',
-  styleUrls: ['../../../shared-page.css', './library.component.css']
+  styleUrls: ['../../../shared-page.css', './library.component.css'],
 })
-export class LibraryComponent {
+export class LibraryComponent implements OnInit {
+  books: Book[] = [];
+  filteredBooks: Book[] = [];
+
   searchQuery = '';
-  typeFilter = '';
-  statusFilter = '';
+  downloadableFilter = '';
+  isLoading = false;
+  isSubmitting = false;
 
   modalMode: ModalMode = null;
-  selectedResource: LibraryResource | null = null;
+  selectedBook: Book | null = null;
 
-  // Form fields
+  // ── Form fields ──────────────────────────────────────────────
   formTitle = '';
-  formSubject = '';
-  formType: 'PDF' | 'Video' | 'Notes' | 'Presentation' = 'PDF';
-  formBatch = '';
-  formUploadedBy = '';
-  formFileSize = '';
-  formStatus: 'active' | 'draft' | 'archived' = 'active';
+  formAuthor = '';
+  formDescription = '';
+  formIsDownloadable = true;
+  formIsWatermarkRequired = false;
+  formCoverImageFile: File | null = null;
+  formFile: File | null = null;
+  formCoverImagePreview = '';
 
-  // Validation
-  formTitleError = '';
-  formSubjectError = '';
-  formUploadedByError = '';
+  // ── Validation ───────────────────────────────────────────────
+  titleError = '';
+  authorError = '';
+  descriptionError = '';
+  fileError = '';
 
-  nextId = 11;
+  constructor(
+    private commonService: CommonService,
+    private httpService: HttpGeneralService<any>,
+  ) {}
 
-  resources: LibraryResource[] = [
-    { id: 1,  title: 'Mathematics Formula Sheet – Grade 10 & 11',      subject: 'Mathematics',    type: 'PDF',          batch: 'Grade 10 & 11',       uploadedBy: 'Dr. Vikram Sharma',  fileSize: '3.2 MB',  downloads: 1248, status: 'active',   uploadDate: '2026-01-10' },
-    { id: 2,  title: 'Physics – Mechanics Complete Video Lectures',     subject: 'Physics',        type: 'Video',        batch: 'Grade 11 – Batch A',  uploadedBy: 'Mr. Rahul Gupta',    fileSize: '820 MB',  downloads: 876,  status: 'active',   uploadDate: '2026-01-18' },
-    { id: 3,  title: 'Chemistry – Organic Reactions Notes',             subject: 'Chemistry',      type: 'Notes',        batch: 'Grade 10 – Batch A',  uploadedBy: 'Ms. Pooja Iyer',     fileSize: '4.6 MB',  downloads: 964,  status: 'active',   uploadDate: '2026-01-25' },
-    { id: 4,  title: 'Biology – Human Body Systems Slides',             subject: 'Biology',        type: 'Presentation', batch: 'Grade 10 – Batch B',  uploadedBy: 'Dr. Meena Krishnan', fileSize: '12.4 MB', downloads: 742,  status: 'active',   uploadDate: '2026-02-05' },
-    { id: 5,  title: 'Mathematics – Calculus & Integration Guide',      subject: 'Mathematics',    type: 'PDF',          batch: 'Grade 12 – Batch A',  uploadedBy: 'Dr. Kiran Patel',    fileSize: '5.8 MB',  downloads: 682,  status: 'active',   uploadDate: '2026-02-12' },
-    { id: 6,  title: 'Chemistry – Inorganic Chemistry Video Series',    subject: 'Chemistry',      type: 'Video',        batch: 'Grade 11 – Batch A',  uploadedBy: 'Dr. Sanjay Mishra',  fileSize: '560 MB',  downloads: 598,  status: 'active',   uploadDate: '2026-02-20' },
-    { id: 7,  title: 'English – Essay Writing & Grammar Notes',         subject: 'English',        type: 'Notes',        batch: 'Grade 9 – Batch A',   uploadedBy: 'Ms. Divya Nair',     fileSize: '2.1 MB',  downloads: 524,  status: 'active',   uploadDate: '2026-03-01' },
-    { id: 8,  title: 'History – World Wars – Analysis Slides',          subject: 'History',        type: 'Presentation', batch: 'Grade 10 – All',      uploadedBy: 'Dr. Vikram Sharma',  fileSize: '18.2 MB', downloads: 488,  status: 'active',   uploadDate: '2026-03-06' },
-    { id: 9,  title: 'Computer Science – Data Structures Problem Set',  subject: 'Computer Sci.',  type: 'PDF',          batch: 'Grade 12 – Batch A',  uploadedBy: 'Mr. Arjun Verma',    fileSize: '6.4 MB',  downloads: 412,  status: 'draft',    uploadDate: '2026-03-10' },
-    { id: 10, title: 'Physics – Electricity & Magnetism Concept Video', subject: 'Physics',        type: 'Video',        batch: 'Grade 11 & 12',       uploadedBy: 'Dr. Vikram Sharma',  fileSize: '380 MB',  downloads: 356,  status: 'active',   uploadDate: '2026-03-12' },
-  ];
+  ngOnInit(): void {
+    this.loadBooks();
+  }
 
-  constructor(private commonService: CommonService) {}
+  // ════════════════════════════════════════════════════════════════
+  //  API CALLS
+  // ════════════════════════════════════════════════════════════════
 
-  get filteredResources(): LibraryResource[] {
-    const q = this.searchQuery.toLowerCase();
-    return this.resources.filter(r => {
-      const matchSearch = !q || r.title.toLowerCase().includes(q) || r.subject.toLowerCase().includes(q) || r.uploadedBy.toLowerCase().includes(q) || r.batch.toLowerCase().includes(q);
-      const matchType = !this.typeFilter || r.type === this.typeFilter;
-      const matchStatus = !this.statusFilter || r.status === this.statusFilter;
-      return matchSearch && matchType && matchStatus;
+  /** GET /api/books */
+  loadBooks(): void {
+    this.isLoading = true;
+    this.httpService.getData(BASE_URL, '/books').subscribe({
+      next: (res: any) => {
+        this.books = Array.isArray(res) ? res : (res?.data ?? []);
+        this.applyFilters();
+        this.isLoading = false;
+      },
+      error: () => {
+        this.commonService.error('Failed to load books.');
+        this.isLoading = false;
+      },
     });
   }
 
-  get pdfCount(): number { return this.resources.filter(r => r.type === 'PDF').length; }
-  get videoCount(): number { return this.resources.filter(r => r.type === 'Video').length; }
-  get notesCount(): number { return this.resources.filter(r => r.type === 'Notes').length; }
-  get totalDownloads(): number { return this.resources.reduce((s, r) => s + r.downloads, 0); }
+  /** POST /api/books  (multipart/form-data) */
+  createBook(): void {
+    if (!this.validateForm()) return;
+    this.isSubmitting = true;
 
-  openUploadModal(): void {
+    const formData = new FormData();
+    formData.append('Title', this.formTitle.trim());
+    formData.append('Author', this.formAuthor.trim());
+    formData.append('Description', this.formDescription.trim());
+    formData.append('IsDownloadable', String(this.formIsDownloadable));
+    formData.append('IsWatermarkRequired', String(this.formIsWatermarkRequired));
+    if (this.formCoverImageFile) {
+      formData.append('CoverImage', this.formCoverImageFile, this.formCoverImageFile.name);
+    }
+    if (this.formFile) {
+      formData.append('File', this.formFile, this.formFile.name);
+    }
+
+    this.httpService.postData(BASE_URL, '/books', formData).subscribe({
+      next: () => {
+        this.commonService.success(`"${this.formTitle.trim()}" uploaded successfully.`);
+        this.closeModal();
+        this.loadBooks();
+        this.isSubmitting = false;
+      },
+      error: (err: any) => {
+        this.commonService.error(err?.error?.message || 'Failed to upload book.');
+        this.isSubmitting = false;
+      },
+    });
+  }
+
+  /** DELETE /api/books/{id} */
+  deleteBook(): void {
+    if (!this.selectedBook) return;
+    this.httpService.deleteData(BASE_URL, `/books/${this.selectedBook.id}`).subscribe({
+      next: () => {
+        this.commonService.success(`"${this.selectedBook!.title}" deleted.`);
+        this.closeModal();
+        this.loadBooks();
+      },
+      error: (err: any) => {
+        this.commonService.error(err?.error?.message || 'Failed to delete book.');
+      },
+    });
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  MODAL HELPERS
+  // ════════════════════════════════════════════════════════════════
+
+  openCreateModal(): void {
+    this.resetForm();
+    this.selectedBook = null;
     this.modalMode = 'create';
-    this.selectedResource = null;
-    this.formTitle = ''; this.formSubject = ''; this.formType = 'PDF'; this.formBatch = '';
-    this.formUploadedBy = ''; this.formFileSize = ''; this.formStatus = 'active';
-    this.clearErrors();
   }
 
-  openEditModal(res: LibraryResource): void {
-    this.modalMode = 'edit';
-    this.selectedResource = res;
-    this.formTitle = res.title; this.formSubject = res.subject; this.formType = res.type;
-    this.formBatch = res.batch; this.formUploadedBy = res.uploadedBy; this.formFileSize = res.fileSize; this.formStatus = res.status;
-    this.clearErrors();
+  openViewModal(book: Book): void {
+    this.selectedBook = { ...book };
+    this.modalMode = 'view';
   }
 
-  openViewModal(res: LibraryResource): void { this.modalMode = 'view'; this.selectedResource = res; }
-  openDeleteModal(res: LibraryResource): void { this.modalMode = 'delete'; this.selectedResource = res; }
-  closeModal(): void { this.modalMode = null; this.selectedResource = null; this.clearErrors(); }
+  openDeleteModal(book: Book): void {
+    this.selectedBook = { ...book };
+    this.modalMode = 'delete';
+  }
 
-  clearErrors(): void { this.formTitleError = ''; this.formSubjectError = ''; this.formUploadedByError = ''; }
+  closeModal(): void {
+    this.modalMode = null;
+    this.selectedBook = null;
+    this.clearErrors();
+    this.formCoverImagePreview = '';
+    this.formCoverImageFile = null;
+    this.formFile = null;
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  FILE HANDLERS
+  // ════════════════════════════════════════════════════════════════
+
+  onCoverImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    const file = input.files[0];
+    this.formCoverImageFile = file;
+
+    // Preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.formCoverImagePreview = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    this.formFile = input.files[0];
+    this.fileError = '';
+  }
+
+  removeCoverImage(): void {
+    this.formCoverImageFile = null;
+    this.formCoverImagePreview = '';
+  }
+
+  removeFile(): void {
+    this.formFile = null;
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  VALIDATION & FORM
+  // ════════════════════════════════════════════════════════════════
 
   validateForm(): boolean {
     this.clearErrors();
     let valid = true;
-    if (!this.formTitle.trim()) { this.formTitleError = 'Title is required.'; valid = false; }
-    if (!this.formSubject.trim()) { this.formSubjectError = 'Subject is required.'; valid = false; }
-    if (!this.formUploadedBy.trim()) { this.formUploadedByError = 'Uploaded by is required.'; valid = false; }
+
+    if (!this.formTitle.trim()) {
+      this.titleError = 'Title is required.';
+      valid = false;
+    }
+    if (!this.formAuthor.trim()) {
+      this.authorError = 'Author is required.';
+      valid = false;
+    }
+    if (!this.formDescription.trim()) {
+      this.descriptionError = 'Description is required.';
+      valid = false;
+    }
+    if (!this.formFile) {
+      this.fileError = 'Please select a file to upload.';
+      valid = false;
+    }
     return valid;
   }
 
-  submitForm(): void {
-    if (!this.validateForm()) return;
-    const today = new Date().toISOString().split('T')[0];
-    if (this.modalMode === 'create') {
-      this.resources.unshift({
-        id: this.nextId++,
-        title: this.formTitle.trim(),
-        subject: this.formSubject.trim(),
-        type: this.formType,
-        batch: this.formBatch.trim() || 'All Batches',
-        uploadedBy: this.formUploadedBy.trim(),
-        fileSize: this.formFileSize.trim() || '—',
-        downloads: 0,
-        status: this.formStatus,
-        uploadDate: today
-      });
-      this.commonService.success(`Resource "${this.formTitle.trim()}" uploaded.`);
-    } else if (this.modalMode === 'edit' && this.selectedResource) {
-      const idx = this.resources.findIndex(r => r.id === this.selectedResource!.id);
-      if (idx > -1) {
-        this.resources[idx] = { ...this.resources[idx], title: this.formTitle.trim(), subject: this.formSubject.trim(), type: this.formType, batch: this.formBatch.trim(), uploadedBy: this.formUploadedBy.trim(), fileSize: this.formFileSize.trim(), status: this.formStatus };
-      }
-      this.commonService.success('Resource updated.');
+  clearErrors(): void {
+    this.titleError = '';
+    this.authorError = '';
+    this.descriptionError = '';
+    this.fileError = '';
+  }
+
+  resetForm(): void {
+    this.formTitle = '';
+    this.formAuthor = '';
+    this.formDescription = '';
+    this.formIsDownloadable = true;
+    this.formIsWatermarkRequired = false;
+    this.formCoverImageFile = null;
+    this.formFile = null;
+    this.formCoverImagePreview = '';
+    this.clearErrors();
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  FILTERS & HELPERS
+  // ════════════════════════════════════════════════════════════════
+
+  onSearch(): void {
+    this.applyFilters();
+  }
+
+  onFilterChange(): void {
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    let list = [...this.books];
+
+    if (this.downloadableFilter === 'yes') {
+      list = list.filter((b) => b.isDownloadable);
+    } else if (this.downloadableFilter === 'no') {
+      list = list.filter((b) => !b.isDownloadable);
     }
-    this.closeModal();
+
+    const q = this.searchQuery.toLowerCase().trim();
+    if (q) {
+      list = list.filter(
+        (b) =>
+          b.title?.toLowerCase().includes(q) ||
+          b.author?.toLowerCase().includes(q) ||
+          b.description?.toLowerCase().includes(q),
+      );
+    }
+
+    this.filteredBooks = list;
   }
 
-  deleteResource(): void {
-    if (!this.selectedResource) return;
-    this.resources = this.resources.filter(r => r.id !== this.selectedResource!.id);
-    this.commonService.success(`Resource "${this.selectedResource.title}" deleted.`);
-    this.closeModal();
+  getInitials(title: string): string {
+    if (!title) return '?';
+    const words = title.trim().split(' ');
+    return words.length >= 2
+      ? (words[0][0] + words[1][0]).toUpperCase()
+      : words[0].substring(0, 2).toUpperCase();
   }
 
-  getTypeChipClass(type: string): string {
-    const map: Record<string, string> = { PDF: 'res-type res-type--pdf', Video: 'res-type res-type--video', Notes: 'res-type res-type--notes', Presentation: 'res-type res-type--ppt' };
-    return map[type] || 'res-type';
+  formatDate(dateStr?: string): string {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
   }
 
-  getTypeIcon(type: string): string {
-    const map: Record<string, string> = { PDF: 'fa-file-pdf', Video: 'fa-video', Notes: 'fa-note-sticky', Presentation: 'fa-file-powerpoint' };
-    return map[type] || 'fa-file';
+  getFileLabel(file: File | null): string {
+    if (!file) return '';
+    const kb = file.size / 1024;
+    const size = kb > 1024 ? `${(kb / 1024).toFixed(1)} MB` : `${kb.toFixed(0)} KB`;
+    return `${file.name} (${size})`;
   }
 
-  getStatusBadge(status: string): string {
-    const map: Record<string, string> = { active: 'pg-badge--green', draft: 'pg-badge--yellow', archived: 'pg-badge--gray' };
-    return map[status] || 'pg-badge--gray';
+  openFile(url?: string): void {
+    if (url) window.open(url, '_blank');
   }
 
-  formatDate(dateStr: string): string {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  get downloadableCount(): number {
+    return this.books.filter((b) => b.isDownloadable).length;
+  }
+
+  get watermarkedCount(): number {
+    return this.books.filter((b) => b.isWatermarkRequired).length;
   }
 }

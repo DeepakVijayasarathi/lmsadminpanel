@@ -5,10 +5,7 @@ import {
   User,
   UserPayload,
   UserUpdatePayload,
-  Role,
 } from '../users.service';
-
-const TEACHER_ROLE_NAME = 'Teacher';
 
 type ModalMode =
   | 'create'
@@ -23,13 +20,11 @@ type ModalMode =
   selector: 'app-teachers',
   standalone: false,
   templateUrl: './teachers.component.html',
-  styleUrls: [ '../../../shared-page.css', './teachers.component.css'],
+  styleUrls: ['../../../shared-page.css', './teachers.component.css'],
 })
 export class TeachersComponent implements OnInit {
-  allUsers: User[] = [];
   teachers: User[] = [];
   filteredTeachers: User[] = [];
-  roles: Role[] = [];
 
   searchTerm: string = '';
   filterStatus: string = '';
@@ -61,32 +56,16 @@ export class TeachersComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadRolesAndUsers();
+    this.loadTeachers();
   }
 
-  loadRolesAndUsers(): void {
+  // ─── Load ────────────────────────────────────────────────────
+
+  loadTeachers(): void {
     this.isLoading = true;
-    this.userService.getRoles().subscribe({
+    this.userService.getTeachers().subscribe({
       next: (res: any) => {
-        this.roles = Array.isArray(res) ? res : (res?.data ?? []);
-        this.loadUsers();
-      },
-      error: () => {
-        this.loadUsers();
-      },
-    });
-  }
-
-  loadUsers(): void {
-    this.userService.getUsers().subscribe({
-      next: (res: any) => {
-        this.allUsers = Array.isArray(res) ? res : (res?.data ?? []);
-        const teacherRole = this.roles.find(
-          (r) => r.name === TEACHER_ROLE_NAME,
-        );
-        this.teachers = this.allUsers.filter((u) =>
-          u.roleDto?.id === teacherRole?.id
-        );
+        this.teachers = Array.isArray(res) ? res : (res?.data ?? []);
         this.applyFilters();
         this.isLoading = false;
       },
@@ -97,8 +76,9 @@ export class TeachersComponent implements OnInit {
     });
   }
 
+  // ─── CRUD ────────────────────────────────────────────────────
+
   createUser(): void {
-    const role = this.roles.find((r) => r.name === TEACHER_ROLE_NAME);
     const payload: UserPayload = {
       username: this.formUsername.trim(),
       firstName: this.formFirstName.trim(),
@@ -106,13 +86,12 @@ export class TeachersComponent implements OnInit {
       email: this.formEmail.trim(),
       password: this.formPassword,
       phone: this.formPhone.trim(),
-      roleId: role?.id ?? '',
     };
     this.userService.createUser(payload).subscribe({
       next: () => {
         this.commonService.success('Teacher created successfully.');
         this.closeModal();
-        this.loadUsers();
+        this.loadTeachers();
       },
       error: (err: any) => {
         this.commonService.error(
@@ -124,7 +103,6 @@ export class TeachersComponent implements OnInit {
 
   updateUser(): void {
     if (!this.selectedUser) return;
-    const role = this.roles.find((r) => r.name === TEACHER_ROLE_NAME);
     const payload: UserUpdatePayload = {
       username: this.formUsername.trim(),
       firstName: this.formFirstName.trim(),
@@ -132,14 +110,14 @@ export class TeachersComponent implements OnInit {
       email: this.formEmail.trim(),
       password: this.formPassword,
       phone: this.formPhone.trim(),
-      roleId: role?.id ?? this.selectedUser.roleDto?.id,
+      roleId: this.selectedUser.roleDto?.id,
       isActive: this.formIsActive,
     };
     this.userService.updateUser(this.selectedUser.id, payload).subscribe({
       next: () => {
         this.commonService.success('Teacher updated successfully.');
         this.closeModal();
-        this.loadUsers();
+        this.loadTeachers();
       },
       error: (err: any) => {
         this.commonService.error(
@@ -155,7 +133,7 @@ export class TeachersComponent implements OnInit {
       next: () => {
         this.commonService.success('Teacher deleted.');
         this.closeModal();
-        this.loadUsers();
+        this.loadTeachers();
       },
       error: (err: any) => {
         this.commonService.error(
@@ -177,7 +155,7 @@ export class TeachersComponent implements OnInit {
         next: () => {
           this.commonService.success('Teacher blocked.');
           this.closeModal();
-          this.loadUsers();
+          this.loadTeachers();
         },
         error: (err: any) => {
           this.commonService.error(
@@ -202,11 +180,14 @@ export class TeachersComponent implements OnInit {
     });
   }
 
+  // ─── Modals ──────────────────────────────────────────────────
+
   openCreateModal(): void {
     this.modalMode = 'create';
     this.selectedUser = null;
     this.resetForm();
   }
+
   openEditModal(user: User): void {
     this.modalMode = 'edit';
     this.selectedUser = user;
@@ -219,24 +200,29 @@ export class TeachersComponent implements OnInit {
     this.formIsActive = user.isActive;
     this.clearErrors();
   }
+
   openViewModal(user: User): void {
     this.modalMode = 'view';
     this.selectedUser = user;
   }
+
   openDeleteModal(user: User): void {
     this.modalMode = 'delete';
     this.selectedUser = user;
   }
+
   openBlockModal(user: User): void {
     this.modalMode = 'block';
     this.selectedUser = user;
     this.formBlockReason = '';
     this.blockReasonError = '';
   }
+
   openDeviceResetModal(user: User): void {
     this.modalMode = 'device-reset';
     this.selectedUser = user;
   }
+
   closeModal(): void {
     this.modalMode = null;
     this.selectedUser = null;
@@ -302,6 +288,7 @@ export class TeachersComponent implements OnInit {
   getInitials(user: User): string {
     return this.userService.getInitials(user.firstName, user.lastName);
   }
+
   getFullName(user: User): string {
     return this.userService.getFullName(user);
   }
@@ -309,18 +296,20 @@ export class TeachersComponent implements OnInit {
   onSearch(): void {
     this.applyFilters();
   }
+
   onFilterChange(): void {
     this.applyFilters();
   }
 
   applyFilters(): void {
     let list = [...this.teachers];
-    if (this.filterStatus)
+    if (this.filterStatus) {
       list = list.filter((u) =>
         this.filterStatus === 'active' ? u.isActive : !u.isActive,
       );
+    }
     const q = this.searchTerm.toLowerCase().trim();
-    if (q)
+    if (q) {
       list = list.filter(
         (u) =>
           this.getFullName(u).toLowerCase().includes(q) ||
@@ -328,26 +317,27 @@ export class TeachersComponent implements OnInit {
           u.username?.toLowerCase().includes(q) ||
           u.phone?.includes(q),
       );
+    }
     this.filteredTeachers = list;
   }
 
   get totalActive(): number {
     return this.teachers.filter((u) => u.isActive).length;
   }
+
   get totalInactive(): number {
     return this.teachers.filter((u) => !u.isActive).length;
   }
 
-  onlyNumbers(event: KeyboardEvent) {
+  onlyNumbers(event: KeyboardEvent): void {
     const charCode = event.which ? event.which : event.keyCode;
     if (charCode < 48 || charCode > 57) {
       event.preventDefault();
     }
   }
 
-  onPaste(event: ClipboardEvent) {
+  onPaste(event: ClipboardEvent): void {
     const pastedData = event.clipboardData?.getData('text') || '';
-
     if (!/^\d+$/.test(pastedData)) {
       event.preventDefault();
     }

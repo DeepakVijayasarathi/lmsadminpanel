@@ -16,45 +16,35 @@
   <!-- Stats -->
   <div class="pg-stats">
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-purple">
-        <i class="fa-solid fa-id-card"></i>
-      </div>
+      <div class="pg-stat__icon chip-purple"><i class="fa-solid fa-id-card"></i></div>
       <div>
         <div class="pg-stat__val">{{ subscriptions.length }}</div>
         <div class="pg-stat__lbl">Total</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-emerald">
-        <i class="fa-solid fa-circle-check"></i>
-      </div>
+      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-circle-check"></i></div>
       <div>
         <div class="pg-stat__val">{{ completedCount }}</div>
         <div class="pg-stat__lbl">Completed</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-amber">
-        <i class="fa-solid fa-clock"></i>
-      </div>
+      <div class="pg-stat__icon chip-amber"><i class="fa-solid fa-clock"></i></div>
       <div>
         <div class="pg-stat__val">{{ pendingCount }}</div>
         <div class="pg-stat__lbl">Pending</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-indigo">
-        <i class="fa-solid fa-indian-rupee-sign"></i>
-      </div>
+      <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-indian-rupee-sign"></i></div>
       <div>
         <div class="pg-stat__val">{{ formatAmount(totalRevenue) }}</div>
         <div class="pg-stat__lbl">Total Collected</div>
       </div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-rose">
-        <i class="fa-solid fa-hourglass-half"></i>
-      </div>
+      <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-hourglass-half"></i></div>
       <div>
         <div class="pg-stat__val">{{ formatAmount(totalPending) }}</div>
         <div class="pg-stat__lbl">Total Pending</div>
@@ -74,11 +64,7 @@
           [(ngModel)]="searchQuery"
           (input)="onSearch()"
         />
-        <select
-          class="pg-filter"
-          [(ngModel)]="statusFilter"
-          (change)="onStatusFilter()"
-        >
+        <select class="pg-filter" [(ngModel)]="statusFilter" (change)="onStatusFilter()">
           <option value="">All Status</option>
           <option value="completed">Completed</option>
           <option value="pending">Pending</option>
@@ -114,32 +100,22 @@
 
             <td>
               <div class="pg-with-avatar">
-                <div class="pg-avatar av-purple">
-                  {{ getUserInitial(sub.userId) }}
-                </div>
+                <div class="pg-avatar av-purple">{{ getUserInitial(sub.userId) }}</div>
                 <div>
                   <div class="pg-cell__primary">{{ sub.userName }}</div>
                   <div class="pg-cell__sub">
-                    {{ sub.payments.length }} payment{{
-                      sub.payments.length !== 1 ? "s" : ""
-                    }}
+                    {{ sub.payments.length }} payment{{ sub.payments.length !== 1 ? 's' : '' }}
                   </div>
                 </div>
               </div>
             </td>
 
             <td>
-              <div class="pg-cell__primary course-name">
-                {{ sub.courseName }}
-              </div>
+              <div class="pg-cell__primary course-name">{{ sub.courseName }}</div>
             </td>
 
             <td>
-              <span
-                class="pg-badge pg-badge--sky"
-                *ngIf="sub.batchName !== '—'"
-                >{{ sub.batchName }}</span
-              >
+              <span class="pg-badge pg-badge--sky" *ngIf="sub.batchName !== '—'">{{ sub.batchName }}</span>
               <span class="no-val" *ngIf="sub.batchName === '—'">—</span>
             </td>
 
@@ -153,20 +129,10 @@
             <td>
               <span
                 class="amount-cell"
-                [ngClass]="
-                  sub.pendingAmount < 0
-                    ? 'overpaid'
-                    : sub.pendingAmount === 0
-                      ? 'paid'
-                      : 'pending'
-                "
+                [ngClass]="sub.pendingAmount < 0 ? 'overpaid' : sub.pendingAmount === 0 ? 'paid' : 'pending'"
               >
-                <span *ngIf="sub.pendingAmount < 0"
-                  >+{{ formatAmount(Math.abs(sub.pendingAmount)) }}</span
-                >
-                <span *ngIf="sub.pendingAmount >= 0">{{
-                  formatAmount(sub.pendingAmount)
-                }}</span>
+                <span *ngIf="sub.pendingAmount < 0">+{{ formatAmount(Math.abs(sub.pendingAmount)) }}</span>
+                <span *ngIf="sub.pendingAmount >= 0">{{ formatAmount(sub.pendingAmount) }}</span>
               </span>
             </td>
 
@@ -179,8 +145,7 @@
                     [ngClass]="{
                       'fill--complete': sub.isCompleted,
                       'fill--partial': !sub.isCompleted && sub.isPartialAllowed,
-                      'fill--pending':
-                        !sub.isCompleted && !sub.isPartialAllowed,
+                      'fill--pending': !sub.isCompleted && !sub.isPartialAllowed
                     }"
                   ></div>
                 </div>
@@ -194,9 +159,8 @@
                   class="fa-solid"
                   [ngClass]="{
                     'fa-circle-check': sub.isCompleted,
-                    'fa-circle-half-stroke':
-                      !sub.isCompleted && sub.isPartialAllowed,
-                    'fa-clock': !sub.isCompleted && !sub.isPartialAllowed,
+                    'fa-circle-half-stroke': !sub.isCompleted && sub.isPartialAllowed,
+                    'fa-clock': !sub.isCompleted && !sub.isPartialAllowed
                   }"
                 ></i>
                 {{ getStatusLabel(sub) }}
@@ -205,11 +169,7 @@
 
             <td>
               <div class="action-group">
-                <button
-                  class="pg-action-btn"
-                  title="View Details"
-                  (click)="openViewModal(sub)"
-                >
+                <button class="pg-action-btn" title="View Details" (click)="openViewModal(sub)">
                   <i class="fa-solid fa-eye"></i>
                 </button>
               </div>
@@ -228,12 +188,10 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════
-     OVERLAY
-═══════════════════════════════════════════════════ -->
+<!-- ═══ OVERLAY ═══════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
 
-<!-- ─── View Detail Modal ─────────────────────────────── -->
+<!-- ─── View Detail Modal ─────────────────────────────────────────────────── -->
 <div class="modal modal--detail" *ngIf="modalMode === 'view' && selectedSub">
   <div class="modal__header">
     <h3><i class="fa-solid fa-id-card"></i> Subscription Details</h3>
@@ -246,25 +204,17 @@
     <!-- Student / Course Showcase -->
     <div class="sub-showcase">
       <div class="sub-showcase__left">
-        <div class="pg-avatar pg-avatar--lg av-purple">
-          {{ getUserInitial(selectedSub.userId) }}
-        </div>
+        <div class="pg-avatar pg-avatar--lg av-purple">{{ getUserInitial(selectedSub.userId) }}</div>
         <div>
           <div class="sub-showcase__name">{{ selectedSub.userName }}</div>
           <div class="sub-showcase__course">{{ selectedSub.courseName }}</div>
-          <span
-            class="pg-badge pg-badge--sky"
-            *ngIf="selectedSub.batchName !== '—'"
-          >
+          <span class="pg-badge pg-badge--sky" *ngIf="selectedSub.batchName !== '—'">
             <i class="fa-solid fa-layer-group"></i> {{ selectedSub.batchName }}
           </span>
         </div>
       </div>
       <div class="sub-showcase__right">
-        <span
-          class="pg-badge pg-badge--lg"
-          [ngClass]="getStatusBadge(selectedSub)"
-        >
+        <span class="pg-badge pg-badge--lg" [ngClass]="getStatusBadge(selectedSub)">
           {{ getStatusLabel(selectedSub) }}
         </span>
       </div>
@@ -274,30 +224,15 @@
     <div class="finance-grid">
       <div class="finance-card finance-card--total">
         <div class="finance-card__label">Total Amount</div>
-        <div class="finance-card__val">
-          {{ formatAmount(selectedSub.totalAmount) }}
-        </div>
+        <div class="finance-card__val">{{ formatAmount(selectedSub.totalAmount) }}</div>
       </div>
       <div class="finance-card finance-card--paid">
         <div class="finance-card__label">Paid</div>
-        <div class="finance-card__val">
-          {{ formatAmount(selectedSub.paidAmount) }}
-        </div>
+        <div class="finance-card__val">{{ formatAmount(selectedSub.paidAmount) }}</div>
       </div>
-      <div
-        class="finance-card"
-        [ngClass]="
-          selectedSub.pendingAmount < 0
-            ? 'finance-card--overpaid'
-            : 'finance-card--pending'
-        "
-      >
-        <div class="finance-card__label">
-          {{ selectedSub.pendingAmount < 0 ? "Excess Paid" : "Pending" }}
-        </div>
-        <div class="finance-card__val">
-          {{ formatAmount(selectedSub.pendingAmount) }}
-        </div>
+      <div class="finance-card" [ngClass]="selectedSub.pendingAmount < 0 ? 'finance-card--overpaid' : 'finance-card--pending'">
+        <div class="finance-card__label">{{ selectedSub.pendingAmount < 0 ? 'Excess Paid' : 'Pending' }}</div>
+        <div class="finance-card__val">{{ formatAmount(selectedSub.pendingAmount) }}</div>
       </div>
     </div>
 
@@ -309,16 +244,12 @@
           [style.width.%]="getPaymentProgress(selectedSub)"
           [ngClass]="{
             'fill--complete': selectedSub.isCompleted,
-            'fill--partial':
-              !selectedSub.isCompleted && selectedSub.isPartialAllowed,
-            'fill--pending':
-              !selectedSub.isCompleted && !selectedSub.isPartialAllowed,
+            'fill--partial': !selectedSub.isCompleted && selectedSub.isPartialAllowed,
+            'fill--pending': !selectedSub.isCompleted && !selectedSub.isPartialAllowed
           }"
         ></div>
       </div>
-      <span class="detail-progress__pct"
-        >{{ getPaymentProgress(selectedSub) }}% paid</span
-      >
+      <span class="detail-progress__pct">{{ getPaymentProgress(selectedSub) }}% paid</span>
     </div>
 
     <!-- Meta row -->
@@ -334,15 +265,8 @@
       <div class="meta-item">
         <div class="meta-label">Partial Allowed</div>
         <div class="meta-val">
-          <i
-            class="fa-solid"
-            [ngClass]="
-              selectedSub.isPartialAllowed
-                ? 'fa-circle-check txt-green'
-                : 'fa-circle-xmark txt-gray'
-            "
-          ></i>
-          {{ selectedSub.isPartialAllowed ? "Yes" : "No" }}
+          <i class="fa-solid" [ngClass]="selectedSub.isPartialAllowed ? 'fa-circle-check txt-green' : 'fa-circle-xmark txt-gray'"></i>
+          {{ selectedSub.isPartialAllowed ? 'Yes' : 'No' }}
         </div>
       </div>
       <div class="meta-item">
@@ -373,11 +297,12 @@
       </button>
     </div>
 
-    <!-- Payments Tab -->
+    <!-- ── Payments Tab ───────────────────────────────────────── -->
     <div *ngIf="activeTab === 'payments'">
       <div *ngIf="selectedSub.payments.length === 0" class="tab-empty">
         <i class="fa-solid fa-receipt"></i> No payments recorded.
       </div>
+
       <div class="payment-list" *ngIf="selectedSub.payments.length > 0">
         <div class="payment-item" *ngFor="let p of selectedSub.payments">
           <div class="payment-item__left">
@@ -395,14 +320,28 @@
               <div class="payment-date">{{ formatDateTime(p.paidAt) }}</div>
             </div>
           </div>
-          <span class="pg-badge" [ngClass]="getPaymentStatusBadge(p.status)">{{
-            p.status
-          }}</span>
+
+          <!-- Status + Refund button -->
+          <div class="payment-item__right">
+            <span class="pg-badge" [ngClass]="getPaymentStatusBadge(p.status)">
+              {{ p.status }}
+            </span>
+            <!-- Refund button — only for successful payments -->
+            <button
+              class="refund-btn"
+              title="Request Refund"
+              *ngIf="canRefund(p)"
+              (click)="openRefundModal(p)"
+            >
+              <i class="fa-solid fa-rotate-left"></i>
+              Refund
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Installments Tab -->
+    <!-- ── Installments Tab ───────────────────────────────────── -->
     <div *ngIf="activeTab === 'installments'">
       <div *ngIf="selectedSub.installments.length === 0" class="tab-empty">
         <i class="fa-solid fa-calendar-days"></i> No installment schedule.
@@ -418,15 +357,9 @@
             <div class="inst-amount">{{ formatAmount(inst.amount) }}</div>
             <div class="inst-due">Due: {{ formatDate(inst.dueDate) }}</div>
           </div>
-          <span
-            class="pg-badge"
-            [ngClass]="inst.isPaid ? 'pg-badge--green' : 'pg-badge--yellow'"
-          >
-            <i
-              class="fa-solid"
-              [ngClass]="inst.isPaid ? 'fa-circle-check' : 'fa-clock'"
-            ></i>
-            {{ inst.isPaid ? "Paid" : "Unpaid" }}
+          <span class="pg-badge" [ngClass]="inst.isPaid ? 'pg-badge--green' : 'pg-badge--yellow'">
+            <i class="fa-solid" [ngClass]="inst.isPaid ? 'fa-circle-check' : 'fa-clock'"></i>
+            {{ inst.isPaid ? 'Paid' : 'Unpaid' }}
           </span>
         </div>
       </div>
@@ -435,5 +368,73 @@
 
   <div class="modal__footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+  </div>
+</div>
+
+<!-- ─── Refund Request Modal ──────────────────────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'refund' && selectedPayment && selectedSub">
+  <div class="modal__header modal__header--rose">
+    <h3><i class="fa-solid fa-rotate-left"></i> Request Refund</h3>
+    <button class="modal__close" (click)="closeRefundModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="modal__body">
+    <!-- Payment summary -->
+    <div class="refund-payment-summary">
+      <div class="refund-payment-summary__icon">
+        <i class="fa-solid fa-indian-rupee-sign"></i>
+      </div>
+      <div>
+        <div class="refund-payment-summary__amount">
+          {{ formatAmount(selectedPayment.amount) }}
+          <span class="refund-payment-summary__currency">{{ selectedPayment.currency }}</span>
+        </div>
+        <div class="refund-payment-summary__meta">
+          <span *ngIf="selectedPayment.transactionReference">
+            <i class="fa-solid fa-hashtag"></i> {{ selectedPayment.transactionReference }}
+            &nbsp;·&nbsp;
+          </span>
+          {{ formatDateTime(selectedPayment.paidAt) }}
+        </div>
+        <div class="refund-payment-summary__student">
+          <i class="fa-solid fa-user"></i> {{ selectedSub.userName }}
+          &nbsp;·&nbsp;
+          <i class="fa-solid fa-book-open"></i> {{ selectedSub.courseName }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Reason -->
+    <div class="form-group" [class.has-error]="refundReasonError">
+      <label>Reason for Refund <span class="required">*</span></label>
+      <textarea
+        class="form-control"
+        rows="4"
+        placeholder="Describe the reason for this refund request..."
+        [(ngModel)]="refundReason"
+        (input)="refundReasonError = ''"
+      ></textarea>
+      <div class="field-error" *ngIf="refundReasonError">
+        <i class="fa-solid fa-circle-exclamation"></i> {{ refundReasonError }}
+      </div>
+    </div>
+
+    <!-- Info note -->
+    <div class="refund-info-note">
+      <i class="fa-solid fa-circle-info"></i>
+      The refund request will be submitted for review. Approval is handled separately from the Refunds module.
+    </div>
+  </div>
+
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeRefundModal()" [disabled]="isSubmitting">
+      Cancel
+    </button>
+    <button class="pg-btn pg-btn--rose" (click)="submitRefund()" [disabled]="isSubmitting">
+      <i class="fa-solid" [ngClass]="isSubmitting ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
+      {{ isSubmitting ? 'Submitting...' : 'Submit Refund' }}
+    </button>
   </div>
 </div>

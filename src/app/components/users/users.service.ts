@@ -32,7 +32,7 @@ export interface UserPayload {
   email: string;
   password: string;
   phone: string;
-  roleId: string;
+  roleId?: string;
 }
 
 export interface UserUpdatePayload extends UserPayload {
@@ -82,5 +82,17 @@ export class UserService {
 
   getFullName(user: User): string {
     return `${user.firstName || ''} ${user.lastName || ''}`.trim();
+  }
+
+  getStudents(): Observable<any> {
+    return this.http.getData(BASE_URL, '/batches/students');
+  }
+
+  getTeachers(): Observable<any> {
+    return this.http.getData(BASE_URL, '/batches/teachers');
+  }
+
+  getParents(): Observable<any> {
+    return this.http.getData(BASE_URL, '/batches/parents');
   }
 }

@@ -86,6 +86,7 @@
           <tr>
             <th>#</th>
             <th>Course</th>
+            <th>Subject</th>
             <th>Category / Level</th>
             <th>Duration</th>
             <th>Pricing</th>
@@ -117,6 +118,15 @@
                   </div>
                 </div>
               </div>
+            </td>
+
+            <!-- Subject -->
+            <td>
+              <span class="meta-chip meta-chip--violet" *ngIf="course.subjectId">
+                <i class="fa-solid fa-graduation-cap"></i>
+                {{ getSubjectName(course.subjectId) }}
+              </span>
+              <span class="no-val" *ngIf="!course.subjectId">—</span>
             </td>
 
             <!-- Category / Level -->
@@ -224,7 +234,7 @@
           </tr>
 
           <tr *ngIf="filteredCourses.length === 0">
-            <td colspan="7" class="pg-empty">
+            <td colspan="8" class="pg-empty">
               <i class="fa-solid fa-book-open pg-empty__icon"></i>
               No courses found.
             </td>
@@ -275,6 +285,24 @@
         />
       </div>
       <span class="thumb-preview-label">Thumbnail Preview</span>
+    </div>
+
+    <!-- Subject -->
+    <div class="form-group" [class.has-error]="subjectError">
+      <label>Subject <span class="required">*</span></label>
+      <select
+        class="form-control"
+        [(ngModel)]="formSubjectId"
+        (change)="subjectError = ''"
+      >
+        <option value="">Select subject...</option>
+        <option *ngFor="let subject of subjects" [value]="subject.id">
+          {{ subject.name }}
+        </option>
+      </select>
+      <div class="field-error" *ngIf="subjectError">
+        <i class="fa-solid fa-circle-exclamation"></i> {{ subjectError }}
+      </div>
     </div>
 
     <!-- Title -->
@@ -479,6 +507,13 @@
         <div class="view-showcase__title">{{ selectedCourse.title }}</div>
         <div class="view-showcase__meta">
           <span
+            class="meta-chip meta-chip--violet"
+            *ngIf="selectedCourse.subjectId"
+          >
+            <i class="fa-solid fa-graduation-cap"></i>
+            {{ getSubjectName(selectedCourse.subjectId) }}
+          </span>
+          <span
             class="meta-chip meta-chip--indigo"
             *ngIf="selectedCourse.category"
           >
@@ -501,6 +536,12 @@
     </div>
 
     <div class="view-detail-grid">
+      <div class="view-detail-item">
+        <div class="view-detail-label">Subject</div>
+        <div class="view-detail-val">
+          {{ getSubjectName(selectedCourse.subjectId) }}
+        </div>
+      </div>
       <div class="view-detail-item">
         <div class="view-detail-label">Duration (hrs)</div>
         <div class="view-detail-val">

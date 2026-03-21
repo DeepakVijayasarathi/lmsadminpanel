@@ -5,11 +5,7 @@ import {
   User,
   UserPayload,
   UserUpdatePayload,
-  Role,
 } from '../users.service';
-
-// Student role ID from DB
-const STUDENT_ROLE_NAME = 'Student';
 
 type ModalMode =
   | 'create'
@@ -24,13 +20,11 @@ type ModalMode =
   selector: 'app-students',
   standalone: false,
   templateUrl: './students.component.html',
-  styleUrls: ['../../../shared-page.css','./students.component.css'],
+  styleUrls: ['../../../shared-page.css', './students.component.css'],
 })
 export class StudentsComponent implements OnInit {
-  allUsers: User[] = [];
   students: User[] = [];
   filteredStudents: User[] = [];
-  roles: Role[] = [];
 
   searchTerm: string = '';
   filterStatus: string = '';
@@ -66,35 +60,16 @@ export class StudentsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadRolesAndUsers();
+    this.loadStudents();
   }
 
   // ─── Load ────────────────────────────────────────────────────
 
-  loadRolesAndUsers(): void {
+  loadStudents(): void {
     this.isLoading = true;
-    this.userService.getRoles().subscribe({
+    this.userService.getStudents().subscribe({
       next: (res: any) => {
-        this.roles = Array.isArray(res) ? res : (res?.data ?? []);
-        this.loadUsers();
-      },
-      error: () => {
-        this.commonService.error('Failed to load roles.');
-        this.loadUsers();
-      },
-    });
-  }
-
-  loadUsers(): void {
-    this.userService.getUsers().subscribe({
-      next: (res: any) => {
-        this.allUsers = Array.isArray(res) ? res : (res?.data ?? []);
-        const studentRole = this.roles.find(
-          (r) => r.name === STUDENT_ROLE_NAME,
-        );
-        this.students = this.allUsers.filter((u) =>
-          u.roleDto?.id === studentRole?.id
-        );
+        this.students = Array.isArray(res) ? res : (res?.data ?? []);
         this.applyFilters();
         this.isLoading = false;
       },
@@ -108,7 +83,6 @@ export class StudentsComponent implements OnInit {
   // ─── CRUD ────────────────────────────────────────────────────
 
   createUser(): void {
-    const studentRole = this.roles.find((r) => r.name === STUDENT_ROLE_NAME);
     const payload: UserPayload = {
       username: this.formUsername.trim(),
       firstName: this.formFirstName.trim(),
@@ -116,13 +90,12 @@ export class StudentsComponent implements OnInit {
       email: this.formEmail.trim(),
       password: this.formPassword,
       phone: this.formPhone.trim(),
-      roleId: studentRole?.id ?? '',
     };
     this.userService.createUser(payload).subscribe({
       next: () => {
         this.commonService.success('Student created successfully.');
         this.closeModal();
-        this.loadUsers();
+        this.loadStudents();
       },
       error: (err: any) => {
         this.commonService.error(
@@ -134,7 +107,6 @@ export class StudentsComponent implements OnInit {
 
   updateUser(): void {
     if (!this.selectedUser) return;
-    const studentRole = this.roles.find((r) => r.name === STUDENT_ROLE_NAME);
     const payload: UserUpdatePayload = {
       username: this.formUsername.trim(),
       firstName: this.formFirstName.trim(),
@@ -142,14 +114,14 @@ export class StudentsComponent implements OnInit {
       email: this.formEmail.trim(),
       password: this.formPassword,
       phone: this.formPhone.trim(),
-      roleId: studentRole?.id ?? this.selectedUser.roleDto?.id,
+      roleId: this.selectedUser.roleDto?.id,
       isActive: this.formIsActive,
     };
     this.userService.updateUser(this.selectedUser.id, payload).subscribe({
       next: () => {
         this.commonService.success('Student updated successfully.');
         this.closeModal();
-        this.loadUsers();
+        this.loadStudents();
       },
       error: (err: any) => {
         this.commonService.error(
@@ -167,7 +139,7 @@ export class StudentsComponent implements OnInit {
           `Student "${this.userService.getFullName(this.selectedUser!)}" deleted.`,
         );
         this.closeModal();
-        this.loadUsers();
+        this.loadStudents();
       },
       error: (err: any) => {
         this.commonService.error(
@@ -191,7 +163,7 @@ export class StudentsComponent implements OnInit {
             `Student "${this.userService.getFullName(this.selectedUser!)}" blocked.`,
           );
           this.closeModal();
-          this.loadUsers();
+          this.loadStudents();
         },
         error: (err: any) => {
           this.commonService.error(
@@ -336,6 +308,7 @@ export class StudentsComponent implements OnInit {
   onSearch(): void {
     this.applyFilters();
   }
+
   onFilterChange(): void {
     this.applyFilters();
   }
@@ -363,24 +336,20 @@ export class StudentsComponent implements OnInit {
   get totalActive(): number {
     return this.students.filter((u) => u.isActive).length;
   }
+
   get totalInactive(): number {
     return this.students.filter((u) => !u.isActive).length;
   }
 
-  onlyNumbers(event: KeyboardEvent) {
+  onlyNumbers(event: KeyboardEvent): void {
     const charCode = event.which ? event.which : event.keyCode;
     if (charCode < 48 || charCode > 57) {
       event.preventDefault();
     }
   }
 
-  sanitizeNumber() {
-    this.formPhone = this.formPhone.replace(/[^0-9]/g, '');
-  }
-
-  onPaste(event: ClipboardEvent) {
+  onPaste(event: ClipboardEvent): void {
     const pastedData = event.clipboardData?.getData('text') || '';
-
     if (!/^\d+$/.test(pastedData)) {
       event.preventDefault();
     }
