@@ -8,7 +8,6 @@ const BASE_URL = environment.apiUrl;
 export interface Batch {
   id: string;
   name?: string;
-  batchName?: string;
   courseId: string;
   teacherIds: string[];
   studentIds: string[];
@@ -45,7 +44,7 @@ export interface CreateBatchPayload {
 }
 
 export interface UpdateBatchPayload {
-  batchName: string;
+  name: string;
   courseId: string;
   teacherIds: string[];
   studentIds: string[];
@@ -202,7 +201,7 @@ export class BatchesComponent implements OnInit {
   updateBatch(): void {
     if (!this.selectedBatch) return;
     const payload: UpdateBatchPayload = {
-      batchName: this.formName.trim(),
+      name: this.formName.trim(),
       courseId: this.formCourseId,
       teacherIds: [...this.formTeacherIds],
       studentIds: [...(this.selectedBatch.studentIds || [])],
@@ -479,7 +478,7 @@ export class BatchesComponent implements OnInit {
   }
 
   // ── Display helpers ──────────────────────────────────
-  getBatchName(batch: Batch): string { return batch.batchName || batch.name || '—'; }
+  getBatchName(batch: Batch): string { return batch.name || '—'; }
   getCourseTitle(courseId: string): string { return this.courses.find(c => c.id === courseId)?.title ?? '—'; }
 
   getTeacherNameById(id: string): string {
