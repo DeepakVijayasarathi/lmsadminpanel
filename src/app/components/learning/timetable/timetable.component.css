@@ -816,47 +816,48 @@
   z-index: 1100;
   width: 640px;
   max-width: 96vw;
-  height: 90vh;          /* fixed height so flex children are properly bounded */
   max-height: 90vh;
-  display: flex;
-  flex-direction: column;
+  overflow-y: auto;
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 24px 80px rgba(0,0,0,0.18);
-  overflow: hidden;
 }
 
-/* close button */
+/* close button — sits inside .sd-hero (position:relative) */
 .sd-close {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 12px;
+  right: 12px;
   z-index: 10;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: none;
   background: rgba(255,255,255,0.25);
   color: #fff;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.15s;
+  flex-shrink: 0;
 }
 .sd-close:hover { background: rgba(255,255,255,0.4); }
 
 /* ── Hero ── */
 .sd-hero {
-  position: relative;
-  padding: 24px 24px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 20px 52px 18px 20px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
   color: #fff;
+  border-radius: 16px 16px 0 0;
 }
 .sd-hero--live      { background: linear-gradient(135deg, #ef4444 0%, #f87171 100%); }
 .sd-hero--completed { background: linear-gradient(135deg, #10b981 0%, #34d399 100%); }
@@ -1127,12 +1128,16 @@
 
 /* ── Footer ── */
 .sd-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
   padding: 14px 24px;
   border-top: 1px solid #f1f5f9;
   background: #fff;
+  border-radius: 0 0 16px 16px;
 }
 
 /* full-width info card */
@@ -1163,6 +1168,104 @@
   font-size: 12px;
   padding: 6px 10px;
 }
+
+/* ── Link in progress ── */
+.sd-link-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #92400e;
+  font-weight: 500;
+}
+.sd-link-progress__bar {
+  height: 4px;
+  border-radius: 4px;
+  background: #fde68a;
+  overflow: hidden;
+}
+.sd-link-progress__fill {
+  height: 100%;
+  width: 40%;
+  border-radius: 4px;
+  background: #f59e0b;
+  animation: link-progress 1.6s ease-in-out infinite;
+}
+@keyframes link-progress {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+.tt-rec-btn--pending { color: #f59e0b; cursor: default; font-weight: 600; }
+
+/* ── WhatsApp ── */
+.wa-action-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.wa-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.wa-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.wa-btn--green  { background: #25d366; color: #fff; }
+.wa-btn--teal   { background: #128c7e; color: #fff; }
+.wa-btn--ghost  { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+.wa-btn:hover:not(:disabled) { opacity: 0.88; }
+
+.wa-custom-form {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.wa-custom-form__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #166534;
+}
+.wa-custom-form__input,
+.wa-custom-form__textarea {
+  width: 100%;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  background: #fff;
+}
+.wa-custom-form__textarea { resize: vertical; }
+
+.wa-auto-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #1d4ed8;
+  font-weight: 500;
+}
+.wa-auto-badge i { color: #3b82f6; }
 
 /* ── Processing card ── */
 .sd-processing-card {
@@ -1197,6 +1300,62 @@
   color: #b45309;
   line-height: 1.5;
 }
+
+/* native video in modal */
+.sd-video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: block;
+  background: #000;
+}
+
+/* speed controls */
+.sd-speed-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+.sd-speed-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 4px;
+}
+.sd-speed-btn {
+  padding: 4px 10px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 20px;
+  background: #fff;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sd-speed-btn:hover { border-color: #6366f1; color: #6366f1; }
+.sd-speed-btn.active { background: #6366f1; border-color: #6366f1; color: #fff; }
+
+/* BBB meeting URL link inside card */
+.sd-meeting-url {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  color: #6366f1;
+  text-decoration: none;
+  word-break: break-all;
+  line-height: 1.4;
+}
+.sd-meeting-url:hover { text-decoration: underline; }
+.sd-meeting-url i { font-size: 10px; margin-right: 2px; }
+
+/* BBB card needs flex-wrap for long URL */
+.sd-bbb-card { flex-wrap: wrap; gap: 10px; align-items: flex-start; }
+.sd-bbb-card .sd-copy-btn { align-self: flex-start; margin-top: 2px; }
 
 /* ── Bucket / Recording URL box ─────────────────────────────────────── */
 .tt-rec-url-box {

@@ -182,16 +182,10 @@
                         <span *ngIf="recordingPolling[slot.id]" class="tt-rec-btn" style="cursor:default;" title="Processing recording…">
                           <i class="fa-solid fa-circle-notch fa-spin"></i> Processing…
                         </span>
-                        <button *ngIf="!slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id]"
-                          class="tt-rec-btn"
-                          [disabled]="recordingId === slot.id"
-                          (click)="triggerRecording(slot); $event.stopPropagation()" title="Fetch recording from BBB">
-                          <i class="fa-solid"
-                             [class.fa-circle-notch]="recordingId === slot.id"
-                             [class.fa-spin]="recordingId === slot.id"
-                             [class.fa-record-vinyl]="recordingId !== slot.id"></i>
-                          {{ recordingId === slot.id ? '…' : 'Record' }}
-                        </button>
+                        <span *ngIf="!slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id]"
+                          class="tt-rec-btn tt-rec-btn--pending" title="Recording link being prepared">
+                          <i class="fa-solid fa-hourglass-half"></i> Pending
+                        </span>
                       </ng-container>
 
                     </div>
@@ -285,16 +279,10 @@
               <span *ngIf="recordingPolling[slot.id]" style="font-size:12px;color:#6366f1;">
                 <i class="fa-solid fa-circle-notch fa-spin"></i> Processing…
               </span>
-              <button *ngIf="!slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id] && slot.status === 'completed'"
-                class="pg-btn pg-btn--ghost" style="font-size:12px;padding:5px 12px;"
-                [disabled]="recordingId === slot.id"
-                (click)="triggerRecording(slot)">
-                <i class="fa-solid"
-                   [class.fa-circle-notch]="recordingId === slot.id"
-                   [class.fa-spin]="recordingId === slot.id"
-                   [class.fa-record-vinyl]="recordingId !== slot.id"></i>
-                {{ recordingId === slot.id ? 'Fetching…' : 'Get Recording' }}
-              </button>
+              <span *ngIf="!slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id] && slot.status === 'completed'"
+                style="font-size:12px;color:#f59e0b;font-weight:600;display:flex;align-items:center;gap:4px;">
+                <i class="fa-solid fa-hourglass-half"></i> Pending
+              </span>
               <span *ngIf="slot.status !== 'completed' && !slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl" style="color:#cbd5e1;font-size:12px;">—</span>
             </td>
             <td>
@@ -469,11 +457,9 @@
 <div class="pg-modal-backdrop" *ngIf="modalMode === 'view'" (click)="closeModal()"></div>
 <div class="sd-modal" *ngIf="modalMode === 'view' && selectedSlot">
 
-  <!-- Close -->
-  <button class="sd-close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-
   <!-- ── Hero Banner ── -->
   <div [class]="'sd-hero sd-hero--' + selectedSlot.status">
+    <button class="sd-close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
     <div class="sd-hero__left">
       <div class="sd-hero__icon"><i class="fa-solid fa-book-open"></i></div>
       <div>
@@ -491,7 +477,7 @@
   </div>
 
   <!-- ── Info Grid ── -->
-  <div class="sd-body">
+  <div class="sd-body" style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
     <div class="sd-info-grid">
 
       <div class="sd-info-card">
@@ -534,11 +520,13 @@
         </div>
       </div>
 
-      <div class="sd-info-card sd-info-card--full">
+      <div class="sd-info-card sd-info-card--full sd-bbb-card">
         <div class="sd-bbb-logo">BBB</div>
         <div style="min-width:0;flex:1;">
-          <div class="sd-info-card__label">BigBlueButton Room ID</div>
-          <div class="sd-info-card__val sd-info-card__val--mono">{{ selectedSlot.meetingId }}</div>
+          <div class="sd-info-card__label">BigBlueButton Meeting</div>
+          <a *ngIf="selectedSlot.meetingLink" [href]="selectedSlot.meetingLink" target="_blank" class="sd-meeting-url">
+            <i class="fa-solid fa-link"></i> {{ selectedSlot.meetingLink }}
+          </a>
         </div>
         <button class="sd-copy-btn" (click)="copyLink(selectedSlot)" [title]="copiedId === selectedSlot.id ? 'Copied!' : 'Copy link'">
           <i [class]="copiedId === selectedSlot.id ? 'fa-solid fa-check' : 'fa-regular fa-copy'"></i>
@@ -589,17 +577,14 @@
         {{ recordingError[selectedSlot.id] }}
       </div>
 
-      <!-- Fetch button -->
-      <button *ngIf="!selectedSlot.bucketUrl && !selectedSlot.mp4Url && !selectedSlot.playbackUrl && !recordingPolling[selectedSlot.id]"
-        class="sd-fetch-btn"
-        [disabled]="recordingId === selectedSlot.id"
-        (click)="triggerRecording(selectedSlot)">
-        <i class="fa-solid"
-           [class.fa-circle-notch]="recordingId === selectedSlot.id"
-           [class.fa-spin]="recordingId === selectedSlot.id"
-           [class.fa-record-vinyl]="recordingId !== selectedSlot.id"></i>
-        {{ recordingId === selectedSlot.id ? 'Fetching recording…' : 'Get Recording from BBB' }}
-      </button>
+      <!-- No recording yet → link in progress -->
+      <div *ngIf="!selectedSlot.bucketUrl && !selectedSlot.mp4Url && !selectedSlot.playbackUrl && !recordingPolling[selectedSlot.id] && !recordingProcessing[selectedSlot.id]"
+        class="sd-link-progress">
+        <div class="sd-link-progress__bar">
+          <div class="sd-link-progress__fill"></div>
+        </div>
+        <span><i class="fa-solid fa-link"></i> Recording link is being prepared…</span>
+      </div>
 
       <!-- Player card -->
       <div *ngIf="selectedSlot.bucketUrl || selectedSlot.mp4Url || selectedSlot.playbackUrl" class="sd-player-card">
@@ -614,9 +599,23 @@
             <i class="fa-solid fa-arrow-up-right-from-square"></i> BBB Playback
           </a>
         </div>
-        <app-video-player *ngIf="selectedSlot.bucketUrl || (!selectedSlot.playbackUrl && selectedSlot.mp4Url)"
-          [videoUrl]="selectedSlot.bucketUrl || selectedSlot.mp4Url">
-        </app-video-player>
+        <ng-container *ngIf="selectedSlot.bucketUrl || (!selectedSlot.playbackUrl && selectedSlot.mp4Url)">
+          <video #videoEl
+            class="sd-video"
+            controls
+            preload="metadata"
+            [src]="getSafeUrl(selectedSlot.bucketUrl || selectedSlot.mp4Url)">
+          </video>
+          <div class="sd-speed-bar">
+            <span class="sd-speed-label">Speed</span>
+            <button *ngFor="let rate of [0.5, 1, 1.5, 2, 3]"
+              class="sd-speed-btn"
+              [class.active]="videoEl.playbackRate === rate"
+              (click)="videoEl.playbackRate = rate">
+              {{ rate }}x
+            </button>
+          </div>
+        </ng-container>
         <iframe *ngIf="!selectedSlot.bucketUrl && !selectedSlot.mp4Url && selectedSlot.playbackUrl"
           [src]="getSafeUrl(selectedSlot.playbackUrl)"
           class="sd-player-card__iframe"
@@ -625,6 +624,75 @@
       </div>
 
     </ng-container>
+
+    <!-- ── WhatsApp ── -->
+    <div class="sd-section-title"><i class="fa-brands fa-whatsapp"></i> WhatsApp Notifications</div>
+
+    <div class="wa-action-row">
+      <!-- Send Reminder -->
+      <button class="wa-btn wa-btn--green"
+        [disabled]="waReminderSending === selectedSlot.id"
+        (click)="sendWhatsappReminder(selectedSlot)">
+        <i class="fa-solid" [class.fa-circle-notch]="waReminderSending===selectedSlot.id"
+           [class.fa-spin]="waReminderSending===selectedSlot.id"
+           [class.fa-bell]="waReminderSending!==selectedSlot.id"></i>
+        {{ waReminderSending === selectedSlot.id ? 'Sending…' : 'Send Class Reminder' }}
+      </button>
+
+      <!-- Send Timetable -->
+      <button class="wa-btn wa-btn--teal" *ngIf="selectedSlot.batchId"
+        [disabled]="waTimetableSending === selectedSlot.id"
+        (click)="sendWhatsappTimetable(selectedSlot)">
+        <i class="fa-solid" [class.fa-circle-notch]="waTimetableSending===selectedSlot.id"
+           [class.fa-spin]="waTimetableSending===selectedSlot.id"
+           [class.fa-calendar-days]="waTimetableSending!==selectedSlot.id"></i>
+        {{ waTimetableSending === selectedSlot.id ? 'Sending…' : 'Send Timetable' }}
+      </button>
+
+      <!-- Custom Message toggle -->
+      <button class="wa-btn wa-btn--ghost" (click)="waShowCustom = !waShowCustom">
+        <i class="fa-solid fa-pen-to-square"></i> Custom
+      </button>
+    </div>
+
+    <!-- Success / Error for reminder -->
+    <div *ngIf="waSuccess[selectedSlot.id]" class="sd-alert sd-alert--info" style="background:#f0fdf4;border-color:#86efac;color:#166534;">
+      <i class="fa-solid fa-circle-check"></i> {{ waSuccess[selectedSlot.id] }}
+    </div>
+    <div *ngIf="waError[selectedSlot.id]" class="sd-alert sd-alert--error">
+      <i class="fa-solid fa-triangle-exclamation"></i> {{ waError[selectedSlot.id] }}
+    </div>
+    <!-- Success / Error for timetable -->
+    <div *ngIf="waSuccess[selectedSlot.id + '_tt']" class="sd-alert sd-alert--info" style="background:#f0fdf4;border-color:#86efac;color:#166534;">
+      <i class="fa-solid fa-circle-check"></i> {{ waSuccess[selectedSlot.id + '_tt'] }}
+    </div>
+    <div *ngIf="waError[selectedSlot.id + '_tt']" class="sd-alert sd-alert--error">
+      <i class="fa-solid fa-triangle-exclamation"></i> {{ waError[selectedSlot.id + '_tt'] }}
+    </div>
+
+    <!-- Custom send form -->
+    <div *ngIf="waShowCustom" class="wa-custom-form">
+      <div class="wa-custom-form__title"><i class="fa-brands fa-whatsapp"></i> Send Custom Message</div>
+      <input class="wa-custom-form__input" type="tel" placeholder="+91 9876543210"
+        [(ngModel)]="waCustomPhone" />
+      <textarea class="wa-custom-form__textarea" rows="3" placeholder="Type your message…"
+        [(ngModel)]="waCustomMessage"></textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="wa-btn wa-btn--ghost" (click)="waShowCustom=false">Cancel</button>
+        <button class="wa-btn wa-btn--green" [disabled]="waCustomSending || !waCustomPhone || !waCustomMessage"
+          (click)="sendWhatsappCustom()">
+          <i class="fa-solid" [class.fa-circle-notch]="waCustomSending" [class.fa-spin]="waCustomSending"
+             [class.fa-paper-plane]="!waCustomSending"></i>
+          {{ waCustomSending ? 'Sending…' : 'Send' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Auto-reminder info -->
+    <div class="wa-auto-badge">
+      <i class="fa-solid fa-robot"></i>
+      <span>Auto-reminder active — sessions are notified 15 min before start</span>
+    </div>
 
     <!-- ── Analytics ── -->
     <ng-container *ngIf="selectedSlot.status === 'completed'">

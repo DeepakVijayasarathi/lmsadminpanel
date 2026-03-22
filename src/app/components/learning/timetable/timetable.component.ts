@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { TimetableService, SessionAnalytic } from '../../../services/timetable.service';
+import { WhatsappService } from '../../../services/whatsapp.service';
 import { CommonService } from '../../../services/common.service';
 import { HttpGeneralService } from '../../../services/http.service';
 import { environment } from '../../../../environments/environment';
@@ -8,24 +9,26 @@ import { environment } from '../../../../environments/environment';
 const BASE_URL = environment.apiUrl;
 
 export interface TimetableSlot {
-  id:           string;
-  day:          string;
-  session:      number;
-  sessionId:    string | null;
-  subject:      string;
-  topic:        string;
-  teacher:      string;
-  batch:        string;
-  category:     'Foundation' | 'Standard' | 'Advanced';
-  startTime:    string;
-  endTime:      string;
-  meetingId:    string;
-  meetingLink:  string;
-  recordingUrl: string;
-  playbackUrl:  string;
-  mp4Url:       string;
-  bucketUrl:    string;
-  status:       'scheduled' | 'live' | 'completed' | 'cancelled';
+  id:             string;
+  day:            string;
+  session:        number;
+  sessionId:      string | null;
+  batchId:        string | null;
+  subject:        string;
+  topic:          string;
+  teacher:        string;
+  batch:          string;
+  category:       'Foundation' | 'Standard' | 'Advanced';
+  startTime:      string;
+  endTime:        string;
+  scheduledStart: string;   // ISO datetime from r.startTime (used for auto-reminder)
+  meetingId:      string;
+  meetingLink:    string;
+  recordingUrl:   string;
+  playbackUrl:    string;
+  mp4Url:         string;
+  bucketUrl:      string;
+  status:         'scheduled' | 'live' | 'completed' | 'cancelled';
 }
 
 export interface TimetablePayload {
@@ -564,6 +567,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     Object.keys(this.pollingIntervals).forEach(id => clearInterval(this.pollingIntervals[id]));
     Object.keys(this.livePollingIntervals).forEach(id => clearInterval(this.livePollingIntervals[id]));
+    clearInterval(this.autoReminderInterval);
   }
 
   // ── API loaders ───────────────────────────────────────────────────────────
@@ -575,6 +579,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
     this.loadSubjects();
     this.loadTopics();
     this.loadCourses();
+    this.startAutoReminder();
   }
 
   private loadBatches(): void {
@@ -669,10 +674,12 @@ export class TimetableComponent implements OnInit, OnDestroy {
             meetingLink:  tt.meetingLink  ?? r.meetingUrl ?? '',
             recordingUrl: tt.recordingUrl ?? tt.playbackUrl ?? r.recordingUrl ?? '',
             playbackUrl:  tt.playbackUrl  ?? r.playbackUrl ?? '',
-            bucketUrl:    r.bucketUrl     ?? tt.bucketUrl  ?? '',
-            mp4Url:       tt.mp4Url       ?? r.mp4Url      ?? r.bucketUrl ?? '',
-            courseId:     r.courseId      ?? null,
-            sessionId:    r.sessionId     ?? null,
+            bucketUrl:      r.bucketUrl     ?? tt.bucketUrl  ?? '',
+            mp4Url:         tt.mp4Url       ?? r.mp4Url      ?? r.bucketUrl ?? '',
+            courseId:       r.courseId      ?? null,
+            sessionId:      r.sessionId     ?? null,
+            batchId:        r.batchId       ?? null,
+            scheduledStart: r.startTime     ?? '',
           };
         });
         // Auto-start live polling for any live slots not already being polled
@@ -701,10 +708,89 @@ export class TimetableComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ── WhatsApp ──────────────────────────────────────────────────────────────
+  waReminderSending = '';
+  waTimetableSending = '';
+  waCustomSending = false;
+  waCustomPhone = '';
+  waCustomMessage = '';
+  waShowCustom = false;
+  waSuccess: Record<string, string> = {};
+  waError: Record<string, string> = {};
+
+  private autoReminderInterval: any;
+  private reminderSent = new Set<string>();   // in-memory deduplication
+
+  sendWhatsappReminder(slot: TimetableSlot): void {
+    this.waReminderSending = slot.id;
+    this.waSuccess[slot.id] = '';
+    this.waError[slot.id] = '';
+    this.whatsappService.sendReminder(slot.id).subscribe({
+      next: () => {
+        this.waReminderSending = '';
+        this.waSuccess[slot.id] = 'Reminder sent to all batch students!';
+      },
+      error: (err) => {
+        this.waReminderSending = '';
+        this.waError[slot.id] = err?.error?.message ?? 'Failed to send reminder.';
+      }
+    });
+  }
+
+  sendWhatsappTimetable(slot: TimetableSlot): void {
+    if (!slot.batchId) return;
+    this.waTimetableSending = slot.id;
+    this.whatsappService.sendTimetable(slot.batchId).subscribe({
+      next: () => {
+        this.waTimetableSending = '';
+        this.waSuccess[slot.id + '_tt'] = 'Timetable sent to all batch students!';
+      },
+      error: (err) => {
+        this.waTimetableSending = '';
+        this.waError[slot.id + '_tt'] = err?.error?.message ?? 'Failed to send timetable.';
+      }
+    });
+  }
+
+  sendWhatsappCustom(): void {
+    if (!this.waCustomPhone || !this.waCustomMessage) return;
+    this.waCustomSending = true;
+    this.whatsappService.sendCustom(this.waCustomPhone, this.waCustomMessage).subscribe({
+      next: () => {
+        this.waCustomSending = false;
+        this.waCustomPhone = '';
+        this.waCustomMessage = '';
+        this.waShowCustom = false;
+        this.commonService.success('Message sent successfully!');
+      },
+      error: (err) => {
+        this.waCustomSending = false;
+        this.commonService.error(err?.error?.message ?? 'Failed to send message.');
+      }
+    });
+  }
+
+  private startAutoReminder(): void {
+    this.autoReminderInterval = setInterval(() => {
+      const now = new Date();
+      this.slots.forEach(slot => {
+        if (!slot.scheduledStart || slot.status !== 'scheduled') return;
+        if (this.reminderSent.has(slot.id)) return;
+        const start = new Date(slot.scheduledStart);
+        const diffMin = (start.getTime() - now.getTime()) / 60000;
+        if (diffMin >= 14 && diffMin <= 16) {
+          this.reminderSent.add(slot.id);
+          this.whatsappService.sendReminder(slot.id).subscribe();
+        }
+      });
+    }, 30000);
+  }
+
   constructor(
     private timetableService: TimetableService,
     private commonService: CommonService,
     private httpService: HttpGeneralService<any>,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private whatsappService: WhatsappService
   ) {}
 }
