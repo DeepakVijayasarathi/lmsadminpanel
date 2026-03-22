@@ -1,4 +1,21 @@
+<!-- dashboard.component.html -->
+
 <div class="ad">
+
+  <!-- Loading overlay -->
+  <div class="ad-loading-overlay" *ngIf="loading">
+    <div class="ad-spinner"></div>
+    <p>Loading dashboard...</p>
+  </div>
+
+  <!-- Error banner -->
+  <div class="ad-error-banner" *ngIf="!loading && error">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    <span>{{ error }}</span>
+    <button (click)="loadDashboard()">
+      <i class="fa-solid fa-rotate-right"></i> Retry
+    </button>
+  </div>
 
   <!-- Top Bar -->
   <div class="ad-topbar">
@@ -27,7 +44,7 @@
   </div>
 
   <!-- Alert Strip -->
-  <div class="ad-alerts">
+  <div class="ad-alerts" *ngIf="systemAlerts.length">
     <div *ngFor="let a of systemAlerts" class="ad-alert ad-alert--{{ a.type }}">
       <i class="{{ a.icon }}"></i>
       <span>{{ a.message }}</span>
@@ -48,9 +65,12 @@
           [class.ad-stat__trend--down]="card.trend < 0"
           [class.ad-stat__trend--flat]="card.trend === 0">
           <i class="fa-solid"
-            [ngClass]="card.trend > 0 ? 'fa-arrow-trend-up' : card.trend < 0 ? 'fa-arrow-trend-down' : 'fa-minus'">
+            [ngClass]="card.trend > 0 ? 'fa-arrow-trend-up'
+                     : card.trend < 0 ? 'fa-arrow-trend-down'
+                     : 'fa-minus'">
           </i>
-          {{ card.trend === 0 ? 'No change' : (card.trend > 0 ? '+' : '') + card.trend + '%' }}
+          {{ card.trend === 0 ? 'No change'
+             : (card.trend > 0 ? '+' : '') + card.trend + '%' }}
         </span>
       </div>
     </div>
@@ -121,7 +141,14 @@
           </div>
           <button class="ad-link">View all <i class="fa-solid fa-arrow-right"></i></button>
         </div>
-        <div class="ad-table-wrap">
+
+        <!-- Empty state -->
+        <div class="ad-empty" *ngIf="!loading && upcomingClasses.length === 0">
+          <i class="fa-solid fa-calendar-xmark"></i>
+          <span>No live sessions scheduled for today.</span>
+        </div>
+
+        <div class="ad-table-wrap" *ngIf="upcomingClasses.length > 0">
           <table class="ad-table">
             <thead>
               <tr>
@@ -160,9 +187,9 @@
                   <span class="ad-status ad-status--{{ cls.status }}">
                     <i class="fa-solid"
                       [ngClass]="{
-                        'fa-circle-dot':    cls.status === 'live',
-                        'fa-hourglass-half':cls.status === 'upcoming',
-                        'fa-calendar-check':cls.status === 'scheduled'
+                        'fa-circle-dot':     cls.status === 'live',
+                        'fa-hourglass-half': cls.status === 'upcoming',
+                        'fa-calendar-check': cls.status === 'scheduled'
                       }">
                     </i>
                     {{ cls.status | titlecase }}
@@ -186,41 +213,57 @@
         </div>
         <div class="ad-actions">
           <button class="ad-action" (click)="navigate('/users')">
-            <span class="ad-action__icon" style="background:#eef2ff;color:#4f46e5"><i class="fa-solid fa-user-plus"></i></span>
+            <span class="ad-action__icon" style="background:#eef2ff;color:#4f46e5">
+              <i class="fa-solid fa-user-plus"></i>
+            </span>
             <span>Add Student</span>
           </button>
           <button class="ad-action" (click)="navigate('/users')">
-            <span class="ad-action__icon" style="background:#d1fae5;color:#059669"><i class="fa-solid fa-chalkboard-user"></i></span>
+            <span class="ad-action__icon" style="background:#d1fae5;color:#059669">
+              <i class="fa-solid fa-chalkboard-user"></i>
+            </span>
             <span>Add Teacher</span>
           </button>
           <button class="ad-action" (click)="navigate('/courses')">
-            <span class="ad-action__icon" style="background:#ffedd5;color:#ea580c"><i class="fa-solid fa-book-open"></i></span>
+            <span class="ad-action__icon" style="background:#ffedd5;color:#ea580c">
+              <i class="fa-solid fa-book-open"></i>
+            </span>
             <span>New Course</span>
           </button>
           <button class="ad-action" (click)="navigate('/batches')">
-            <span class="ad-action__icon" style="background:#f3e8ff;color:#9333ea"><i class="fa-solid fa-layer-group"></i></span>
+            <span class="ad-action__icon" style="background:#f3e8ff;color:#9333ea">
+              <i class="fa-solid fa-layer-group"></i>
+            </span>
             <span>New Batch</span>
           </button>
           <button class="ad-action" (click)="navigate('/exams')">
-            <span class="ad-action__icon" style="background:#e0f2fe;color:#0284c7"><i class="fa-solid fa-file-pen"></i></span>
+            <span class="ad-action__icon" style="background:#e0f2fe;color:#0284c7">
+              <i class="fa-solid fa-file-pen"></i>
+            </span>
             <span>Create Quiz</span>
           </button>
           <button class="ad-action" (click)="navigate('/library')">
-            <span class="ad-action__icon" style="background:#ffe4e6;color:#e11d48"><i class="fa-solid fa-book-bookmark"></i></span>
+            <span class="ad-action__icon" style="background:#ffe4e6;color:#e11d48">
+              <i class="fa-solid fa-book-bookmark"></i>
+            </span>
             <span>Upload Book</span>
           </button>
           <button class="ad-action" (click)="navigate('/attendance-report')">
-            <span class="ad-action__icon" style="background:#ccfbf1;color:#0d9488"><i class="fa-solid fa-chart-bar"></i></span>
+            <span class="ad-action__icon" style="background:#ccfbf1;color:#0d9488">
+              <i class="fa-solid fa-chart-bar"></i>
+            </span>
             <span>Reports</span>
           </button>
           <button class="ad-action" (click)="navigate('/payments')">
-            <span class="ad-action__icon" style="background:#fef3c7;color:#d97706"><i class="fa-solid fa-indian-rupee-sign"></i></span>
+            <span class="ad-action__icon" style="background:#fef3c7;color:#d97706">
+              <i class="fa-solid fa-indian-rupee-sign"></i>
+            </span>
             <span>Payments</span>
           </button>
         </div>
       </div>
 
-      <!-- User Distribution -->
+      <!-- User Distribution — dynamic donut -->
       <div class="ad-card">
         <div class="ad-card__head">
           <div>
@@ -231,16 +274,20 @@
         <div class="ad-donut-wrap">
           <div class="ad-donut">
             <svg viewBox="0 0 100 100">
-              <circle class="ad-donut__bg"  cx="50" cy="50" r="38"/>
-              <circle class="ad-donut__seg" cx="50" cy="50" r="38" stroke="#4f46e5"
-                stroke-dasharray="222.6 238.8" stroke-dashoffset="0"/>
-              <circle class="ad-donut__seg" cx="50" cy="50" r="38" stroke="#10b981"
-                stroke-dasharray="11.9 238.8" stroke-dashoffset="-222.6"/>
-              <circle class="ad-donut__seg" cx="50" cy="50" r="38" stroke="#f59e0b"
-                stroke-dasharray="4.8 238.8" stroke-dashoffset="-234.5"/>
+              <!-- Background ring -->
+              <circle class="ad-donut__bg" cx="50" cy="50" r="38"/>
+              <!-- Dynamic segments from API -->
+              <circle
+                *ngFor="let seg of donutSegments"
+                class="ad-donut__seg"
+                cx="50" cy="50" r="38"
+                [attr.stroke]="seg.color"
+                [attr.stroke-dasharray]="seg.dasharray"
+                [attr.stroke-dashoffset]="seg.dashoffset">
+              </circle>
             </svg>
             <div class="ad-donut__center">
-              <strong>3,052</strong>
+              <strong>{{ donutTotal | number }}</strong>
               <span>Total</span>
             </div>
           </div>
@@ -266,14 +313,23 @@
           </div>
           <button class="ad-link">View all <i class="fa-solid fa-arrow-right"></i></button>
         </div>
-        <div class="ad-feed">
+
+        <!-- Empty state -->
+        <div class="ad-empty" *ngIf="!loading && recentActivities.length === 0">
+          <i class="fa-solid fa-inbox"></i>
+          <span>No recent activity.</span>
+        </div>
+
+        <div class="ad-feed" *ngIf="recentActivities.length > 0">
           <div *ngFor="let act of recentActivities" class="ad-feed__item">
             <div class="ad-feed__icon ad-feed__icon--{{ act.type }}">
               <i class="{{ act.icon }}"></i>
             </div>
             <div class="ad-feed__body">
               <p class="ad-feed__msg">{{ act.message }}</p>
-              <span class="ad-feed__time"><i class="fa-regular fa-clock"></i> {{ act.time }}</span>
+              <span class="ad-feed__time">
+                <i class="fa-regular fa-clock"></i> {{ act.time }}
+              </span>
             </div>
           </div>
         </div>
@@ -293,24 +349,28 @@
       <div class="ad-curr">
         <div class="ad-curr__item">
           <i class="fa-solid fa-building-columns" style="color:#4f46e5"></i>
-          <strong>8</strong><span>Boards</span>
+          <strong>{{ curriculum.boards }}</strong>
+          <span>Boards</span>
         </div>
         <div class="ad-curr__item">
           <i class="fa-solid fa-school" style="color:#10b981"></i>
-          <strong>24</strong><span>Classes</span>
+          <strong>{{ curriculum.classes }}</strong>
+          <span>Classes</span>
         </div>
         <div class="ad-curr__item">
           <i class="fa-solid fa-atom" style="color:#f97316"></i>
-          <strong>96</strong><span>Subjects</span>
+          <strong>{{ curriculum.subjects }}</strong>
+          <span>Subjects</span>
         </div>
         <div class="ad-curr__item">
           <i class="fa-solid fa-list-check" style="color:#a855f7"></i>
-          <strong>1,248</strong><span>Topics</span>
+          <strong>{{ curriculum.topics | number }}</strong>
+          <span>Topics</span>
         </div>
       </div>
     </div>
 
-    <!-- Exams -->
+    <!-- Exams & Assessments -->
     <div class="ad-card">
       <div class="ad-card__head">
         <h3 class="ad-card__title">Exams &amp; Assessments</h3>
@@ -319,83 +379,108 @@
         <div class="ad-row">
           <span class="ad-row__dot" style="background:#4f46e5"></span>
           <span class="ad-row__lbl">Total Quizzes Created</span>
-          <strong class="ad-row__val">342</strong>
+          <strong class="ad-row__val">{{ examSummary.totalQuizzes }}</strong>
         </div>
         <div class="ad-row">
           <span class="ad-row__dot" style="background:#10b981"></span>
           <span class="ad-row__lbl">Quizzes Attempted Today</span>
-          <strong class="ad-row__val">87</strong>
+          <strong class="ad-row__val">{{ examSummary.quizzesAttemptedToday }}</strong>
         </div>
         <div class="ad-row">
           <span class="ad-row__dot" style="background:#f97316"></span>
           <span class="ad-row__lbl">Avg. Score This Week</span>
-          <strong class="ad-row__val">72%</strong>
+          <strong class="ad-row__val">{{ examSummary.averageScoreThisWeek }}%</strong>
         </div>
         <div class="ad-row">
           <span class="ad-row__dot" style="background:#a855f7"></span>
           <span class="ad-row__lbl">Pending Result Reviews</span>
-          <strong class="ad-row__val">14</strong>
+          <strong class="ad-row__val">{{ examSummary.pendingResultReviews }}</strong>
         </div>
       </div>
     </div>
 
-    <!-- Payments -->
+    <!-- Payment Summary -->
     <div class="ad-card">
       <div class="ad-card__head">
         <h3 class="ad-card__title">Payment Summary</h3>
       </div>
       <div class="ad-rows">
         <div class="ad-row">
-          <span class="ad-row__icon" style="background:#d1fae5;color:#059669"><i class="fa-solid fa-circle-check"></i></span>
+          <span class="ad-row__icon" style="background:#d1fae5;color:#059669">
+            <i class="fa-solid fa-circle-check"></i>
+          </span>
           <span class="ad-row__lbl">Received</span>
-          <strong class="ad-row__val" style="color:#059669">&#8377;4,82,500</strong>
+          <strong class="ad-row__val" style="color:#059669">
+            {{ formatCurrency(paymentSummary.totalReceived) }}
+          </strong>
         </div>
         <div class="ad-row">
-          <span class="ad-row__icon" style="background:#fef3c7;color:#d97706"><i class="fa-solid fa-hourglass-half"></i></span>
+          <span class="ad-row__icon" style="background:#fef3c7;color:#d97706">
+            <i class="fa-solid fa-hourglass-half"></i>
+          </span>
           <span class="ad-row__lbl">Pending</span>
-          <strong class="ad-row__val" style="color:#d97706">&#8377;38,200</strong>
+          <strong class="ad-row__val" style="color:#d97706">
+            {{ formatCurrency(paymentSummary.totalPending) }}
+          </strong>
         </div>
         <div class="ad-row">
-          <span class="ad-row__icon" style="background:#fee2e2;color:#dc2626"><i class="fa-solid fa-rotate-left"></i></span>
+          <span class="ad-row__icon" style="background:#fee2e2;color:#dc2626">
+            <i class="fa-solid fa-rotate-left"></i>
+          </span>
           <span class="ad-row__lbl">Refund Requests</span>
-          <strong class="ad-row__val" style="color:#dc2626">12</strong>
+          <strong class="ad-row__val" style="color:#dc2626">
+            {{ paymentSummary.refundRequests }}
+          </strong>
         </div>
         <div class="ad-row">
-          <span class="ad-row__icon" style="background:#eef2ff;color:#4f46e5"><i class="fa-solid fa-users"></i></span>
+          <span class="ad-row__icon" style="background:#eef2ff;color:#4f46e5">
+            <i class="fa-solid fa-users"></i>
+          </span>
           <span class="ad-row__lbl">Active Subscriptions</span>
-          <strong class="ad-row__val" style="color:#4f46e5">1,204</strong>
+          <strong class="ad-row__val" style="color:#4f46e5">
+            {{ paymentSummary.activeSubscriptions | number }}
+          </strong>
         </div>
       </div>
     </div>
 
-    <!-- Notifications -->
+    <!-- Notifications Sent -->
     <div class="ad-card">
       <div class="ad-card__head">
         <h3 class="ad-card__title">Notifications Sent</h3>
       </div>
       <div class="ad-rows">
         <div class="ad-row">
-          <span class="ad-row__icon" style="background:#dcfce7;color:#16a34a"><i class="fa-brands fa-whatsapp"></i></span>
+          <span class="ad-row__icon" style="background:#dcfce7;color:#16a34a">
+            <i class="fa-brands fa-whatsapp"></i>
+          </span>
           <span class="ad-row__lbl">WhatsApp Today</span>
-          <strong class="ad-row__val">1,284</strong>
+          <strong class="ad-row__val">{{ notificationSummary.whatsAppToday | number }}</strong>
         </div>
         <div class="ad-row">
-          <span class="ad-row__icon" style="background:#e0f2fe;color:#0284c7"><i class="fa-solid fa-bell"></i></span>
+          <span class="ad-row__icon" style="background:#e0f2fe;color:#0284c7">
+            <i class="fa-solid fa-bell"></i>
+          </span>
           <span class="ad-row__lbl">Class Reminders</span>
-          <strong class="ad-row__val">640</strong>
+          <strong class="ad-row__val">{{ notificationSummary.classReminders | number }}</strong>
         </div>
         <div class="ad-row">
-          <span class="ad-row__icon" style="background:#ffedd5;color:#ea580c"><i class="fa-solid fa-clipboard-list"></i></span>
+          <span class="ad-row__icon" style="background:#ffedd5;color:#ea580c">
+            <i class="fa-solid fa-clipboard-list"></i>
+          </span>
           <span class="ad-row__lbl">Assignment Alerts</span>
-          <strong class="ad-row__val">312</strong>
+          <strong class="ad-row__val">{{ notificationSummary.assignmentAlerts | number }}</strong>
         </div>
         <div class="ad-row">
-          <span class="ad-row__icon" style="background:#ffe4e6;color:#e11d48"><i class="fa-solid fa-phone-volume"></i></span>
+          <span class="ad-row__icon" style="background:#ffe4e6;color:#e11d48">
+            <i class="fa-solid fa-phone-volume"></i>
+          </span>
           <span class="ad-row__lbl">Missed Class Calls</span>
-          <strong class="ad-row__val">87</strong>
+          <strong class="ad-row__val">{{ notificationSummary.missedClassCalls | number }}</strong>
         </div>
       </div>
     </div>
 
   </div>
+
 </div>

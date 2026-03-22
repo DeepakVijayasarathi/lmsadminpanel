@@ -140,9 +140,9 @@
                 <i
                   class="fas"
                   [ngClass]="{
-                    'fa-clock':        refund.status?.toLowerCase() === 'pending',
-                    'fa-circle-check': refund.status?.toLowerCase() === 'approved',
-                    'fa-circle-xmark': refund.status?.toLowerCase() === 'rejected'
+                    'fa-clock':        refund.status.toLowerCase() === 'pending',
+                    'fa-circle-check': refund.status.toLowerCase() === 'approved',
+                    'fa-circle-xmark': refund.status.toLowerCase() === 'rejected'
                   }"
                 ></i>
                 {{ refund.status }}

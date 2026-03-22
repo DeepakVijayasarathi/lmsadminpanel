@@ -47,6 +47,7 @@ import { SessionSlotsComponent } from './components/learning/session-slots/sessi
 import { RegistrationComponent } from './components/registration/registration.component';
 import { VideoPlayerComponent } from './components/controls/video-player/video-player.component';
 import { RecordVideoComponent } from './components/learning/record-video/record-video.component';
+import { CommonDashboardComponent } from './components/common-dashboard/common-dashboard.component';
 
 @NgModule({
   declarations: [
@@ -88,7 +89,8 @@ import { RecordVideoComponent } from './components/learning/record-video/record-
     ActionButtonsComponent,
     RegistrationComponent,
     VideoPlayerComponent,
-    RecordVideoComponent
+    RecordVideoComponent,
+    CommonDashboardComponent
   ],
   imports: [
     BrowserModule,
