@@ -35,6 +35,7 @@ export class AuthService {
             res.refreshToken,
             res.expiresTime,
           );
+          localStorage.setItem('roleName', res.roleName);
           this.isLoggedInSubject.next(true);
         }),
       );
@@ -56,6 +57,7 @@ export class AuthService {
             res.refreshToken,
             res.expiresTime,
           );
+          localStorage.setItem('roleName', res.roleName);
           this.isLoggedInSubject.next(true);
         }),
       );
@@ -73,6 +75,7 @@ export class AuthService {
             res.refreshToken,
             res.expiresTime,
           );
+          localStorage.setItem('roleName', res.roleName);
         }),
         catchError((err) => {
           this.commonService.error(

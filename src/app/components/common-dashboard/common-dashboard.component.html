@@ -1,5 +1,7 @@
-<app-dashboard></app-dashboard>
+<app-dashboard *ngIf="roleName === ROLE_IDS.ADMIN"></app-dashboard>
 
-<app-teacher-dashboard></app-teacher-dashboard>
+<!-- Teacher -->
+<app-teacher-dashboard *ngIf="roleName === ROLE_IDS.TEACHER"></app-teacher-dashboard>
 
-<app-student-dashboard></app-student-dashboard>
+<!-- Student -->
+<app-student-dashboard *ngIf="roleName === ROLE_IDS.STUDENT"></app-student-dashboard>

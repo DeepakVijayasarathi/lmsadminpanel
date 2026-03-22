@@ -33,6 +33,7 @@ import { RecordVideoComponent } from './components/learning/record-video/record-
 import { TeacherDashboardComponent } from './components/teacher-dashboard/teacher-dashboard.component';
 import { StudentDashboardComponent } from './components/student-dashboard/student-dashboard.component';
 import { RegistrationComponent } from './components/registration/registration.component';
+import { CommonDashboardComponent } from './components/common-dashboard/common-dashboard.component';
 
 const AG = [AuthGuard];
 
@@ -42,9 +43,10 @@ const routes: Routes = [
   { path: 'register', component: RegistrationComponent },
 
   // dashboard
-  { path: 'dashboard', component: DashboardComponent, canActivate: AG },
-  { path: 'student-dashboard', component: StudentDashboardComponent, canActivate: AG },
-  { path: 'teacher-dashboard', component: TeacherDashboardComponent, canActivate: AG },
+  { path: 'dashboard', component: CommonDashboardComponent, canActivate: AG },
+  // { path: 'admin-dashboard', component: DashboardComponent, canActivate: AG },
+  // { path: 'student-dashboard', component: StudentDashboardComponent, canActivate: AG },
+  // { path: 'teacher-dashboard', component: TeacherDashboardComponent, canActivate: AG },
 
   // User
   { path: 'students',    component: StudentsComponent,    canActivate: AG },
