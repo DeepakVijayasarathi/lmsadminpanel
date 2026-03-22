@@ -1,4 +1,21 @@
+<!-- student-dashboard.component.html -->
+
 <div class="sd">
+
+  <!-- Loading overlay -->
+  <div class="sd-loading-overlay" *ngIf="loading">
+    <div class="sd-spinner"></div>
+    <p>Loading your dashboard...</p>
+  </div>
+
+  <!-- Error banner -->
+  <div class="sd-error-banner" *ngIf="!loading && error">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    <span>{{ error }}</span>
+    <button (click)="loadDashboard()">
+      <i class="fa-solid fa-rotate-right"></i> Retry
+    </button>
+  </div>
 
   <!-- Top Bar -->
   <div class="sd-topbar">
@@ -49,7 +66,19 @@
           </div>
           <span class="sd-badge sd-badge--blue">{{ todaysClasses.length }} Classes</span>
         </div>
-        <div class="sd-timeline">
+
+        <!-- Skeleton -->
+        <div class="sd-skeleton-list" *ngIf="loading">
+          <div class="sd-skeleton-row" *ngFor="let i of [1,2,3]"></div>
+        </div>
+
+        <!-- Empty state -->
+        <div class="sd-empty" *ngIf="!loading && todaysClasses.length === 0">
+          <i class="fa-solid fa-calendar-xmark"></i>
+          <span>No classes scheduled for today</span>
+        </div>
+
+        <div class="sd-timeline" *ngIf="todaysClasses.length > 0">
           <div *ngFor="let cls of todaysClasses" class="sd-tl-item sd-tl-item--{{ cls.status }}">
             <div class="sd-tl-time">{{ cls.time }}</div>
             <div class="sd-tl-dot">
@@ -62,7 +91,8 @@
               </i>
             </div>
             <div class="sd-tl-body">
-              <div class="sd-tl-subject">{{ cls.subject }}
+              <div class="sd-tl-subject">
+                {{ cls.subject }}
                 <span *ngIf="cls.status === 'live'" class="sd-live-tag">
                   <span class="sd-live-dot"></span> LIVE
                 </span>
@@ -74,7 +104,7 @@
               </div>
             </div>
             <div class="sd-tl-action" *ngIf="cls.status === 'live'">
-              <button class="sd-btn-join">Join Now</button>
+              <button class="sd-btn-join" (click)="joinClass(cls.meetingUrl)">Join Now</button>
             </div>
           </div>
         </div>
@@ -89,9 +119,23 @@
           </div>
           <button class="sd-link">View all <i class="fa-solid fa-arrow-right"></i></button>
         </div>
-        <div class="sd-courses">
+
+        <!-- Skeleton -->
+        <div class="sd-skeleton-list" *ngIf="loading">
+          <div class="sd-skeleton-row" *ngFor="let i of [1,2,3,4]"></div>
+        </div>
+
+        <!-- Empty state -->
+        <div class="sd-empty" *ngIf="!loading && courses.length === 0">
+          <i class="fa-solid fa-book-open"></i>
+          <span>No courses enrolled yet</span>
+        </div>
+
+        <div class="sd-courses" *ngIf="courses.length > 0">
           <div *ngFor="let c of courses" class="sd-course">
-            <div class="sd-course__icon" [style.background]="c.color + '18'" [style.color]="c.color">
+            <div class="sd-course__icon"
+              [style.background]="c.color + '18'"
+              [style.color]="c.color">
               <i class="{{ c.icon }}"></i>
             </div>
             <div class="sd-course__body">
@@ -100,7 +144,10 @@
                 <span class="sd-course__pct" [style.color]="c.color">{{ c.progress }}%</span>
               </div>
               <div class="sd-course__track">
-                <div class="sd-course__fill" [style.width.%]="c.progress" [style.background-color]="c.color"></div>
+                <div class="sd-course__fill"
+                  [style.width.%]="c.progress"
+                  [style.background-color]="c.color">
+                </div>
               </div>
               <div class="sd-course__meta">{{ c.done }} / {{ c.lessons }} lessons completed</div>
             </div>
@@ -122,7 +169,14 @@
           </div>
           <span class="sd-badge sd-badge--red">{{ assignments.length }}</span>
         </div>
-        <div class="sd-assign-list">
+
+        <!-- Empty state -->
+        <div class="sd-empty" *ngIf="!loading && assignments.length === 0">
+          <i class="fa-solid fa-circle-check" style="color:#059669"></i>
+          <span>All assignments submitted!</span>
+        </div>
+
+        <div class="sd-assign-list" *ngIf="assignments.length > 0">
           <div *ngFor="let a of assignments" class="sd-assign sd-assign--{{ a.priority }}">
             <div class="sd-assign__priority"></div>
             <div class="sd-assign__body">
@@ -145,7 +199,14 @@
             <p class="sd-card__sub">Latest quiz scores</p>
           </div>
         </div>
-        <div class="sd-results">
+
+        <!-- Empty state -->
+        <div class="sd-empty" *ngIf="!loading && recentResults.length === 0">
+          <i class="fa-solid fa-file-circle-question"></i>
+          <span>No quiz results yet</span>
+        </div>
+
+        <div class="sd-results" *ngIf="recentResults.length > 0">
           <div *ngFor="let r of recentResults" class="sd-result">
             <div class="sd-result__left">
               <span class="sd-result__subj">{{ r.subject }}</span>
@@ -163,16 +224,32 @@
         </div>
       </div>
 
-      <!-- Quick Links -->
+      <!-- Quick Links (static — no API needed) -->
       <div class="sd-card">
         <div class="sd-card__head">
           <h3 class="sd-card__title">Quick Access</h3>
         </div>
         <div class="sd-quicklinks">
-          <button class="sd-ql"><i class="fa-solid fa-play-circle" style="color:#4f46e5"></i><span>Recorded Classes</span><i class="fa-solid fa-chevron-right sd-ql__arr"></i></button>
-          <button class="sd-ql"><i class="fa-solid fa-book-bookmark" style="color:#0d9488"></i><span>Digital Library</span><i class="fa-solid fa-chevron-right sd-ql__arr"></i></button>
-          <button class="sd-ql"><i class="fa-solid fa-chart-line" style="color:#d97706"></i><span>My Progress</span><i class="fa-solid fa-chevron-right sd-ql__arr"></i></button>
-          <button class="sd-ql"><i class="fa-solid fa-trophy" style="color:#db2777"></i><span>Leaderboard</span><i class="fa-solid fa-chevron-right sd-ql__arr"></i></button>
+          <button class="sd-ql">
+            <i class="fa-solid fa-play-circle"  style="color:#4f46e5"></i>
+            <span>Recorded Classes</span>
+            <i class="fa-solid fa-chevron-right sd-ql__arr"></i>
+          </button>
+          <button class="sd-ql">
+            <i class="fa-solid fa-book-bookmark" style="color:#0d9488"></i>
+            <span>Digital Library</span>
+            <i class="fa-solid fa-chevron-right sd-ql__arr"></i>
+          </button>
+          <button class="sd-ql">
+            <i class="fa-solid fa-chart-line"   style="color:#d97706"></i>
+            <span>My Progress</span>
+            <i class="fa-solid fa-chevron-right sd-ql__arr"></i>
+          </button>
+          <button class="sd-ql">
+            <i class="fa-solid fa-trophy"       style="color:#db2777"></i>
+            <span>Leaderboard</span>
+            <i class="fa-solid fa-chevron-right sd-ql__arr"></i>
+          </button>
         </div>
       </div>
 

@@ -1,5 +1,7 @@
 <!-- menu.component.html -->
+
 <div class="pg">
+
   <!-- Page Header -->
   <div class="pg-head">
     <div class="pg-head__left">
@@ -21,23 +23,17 @@
   <!-- Stats -->
   <div class="pg-stats">
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-indigo">
-        <i class="fa-solid fa-bars"></i>
-      </div>
+      <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-bars"></i></div>
       <div class="pg-stat__val">{{ menus.length }}</div>
       <div class="pg-stat__lbl">Total Menus</div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-emerald">
-        <i class="fa-solid fa-folder-tree"></i>
-      </div>
+      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-folder-tree"></i></div>
       <div class="pg-stat__val">{{ totalParents }}</div>
       <div class="pg-stat__lbl">Parent Menus</div>
     </div>
     <div class="pg-stat">
-      <div class="pg-stat__icon chip-sky">
-        <i class="fa-solid fa-sitemap"></i>
-      </div>
+      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-sitemap"></i></div>
       <div class="pg-stat__val">{{ totalChildren }}</div>
       <div class="pg-stat__lbl">Sub Menus</div>
     </div>
@@ -72,13 +68,15 @@
             <th>Name</th>
             <th>URL / Route</th>
             <th>Type</th>
+            <th>Visible</th>
             <th>Parent</th>
             <th>Children</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <!-- When searching: flat list -->
+
+          <!-- Flat search results -->
           <ng-container *ngIf="searchQuery.trim(); else treeView">
             <tr *ngFor="let menu of filteredMenus">
               <td class="seq-cell">{{ menu.sequence }}</td>
@@ -88,16 +86,16 @@
                 </span>
               </td>
               <td class="name-cell">{{ menu.name }}</td>
-              <td class="url-cell">
-                <code>{{ menu.url }}</code>
+              <td class="url-cell"><code>{{ menu.url ?? '—' }}</code></td>
+              <td>
+                <span class="pg-badge {{ menuTypeBadgeClass(menu.menuType) }}">
+                  {{ menu.menuType }}
+                </span>
               </td>
               <td>
-                <span
-                  class="pg-badge {{
-                    menu.parentId ? 'pg-badge--blue' : 'pg-badge--indigo'
-                  }}"
-                >
-                  {{ menu.parentId ? "Sub Menu" : "Parent" }}
+                <span class="visibility-badge" [class.visibility-badge--on]="menu.isVisible" [class.visibility-badge--off]="!menu.isVisible">
+                  <i class="fa-solid {{ menu.isVisible ? 'fa-eye' : 'fa-eye-slash' }}"></i>
+                  {{ menu.isVisible ? 'Visible' : 'Hidden' }}
                 </span>
               </td>
               <td>{{ getParentName(menu.parentId) }}</td>
@@ -105,42 +103,23 @@
                 <span class="child-count" *ngIf="childCount(menu) > 0">
                   <i class="fa-solid fa-sitemap"></i> {{ childCount(menu) }}
                 </span>
-                <span class="no-children" *ngIf="childCount(menu) === 0"
-                  >—</span
-                >
+                <span class="no-children" *ngIf="childCount(menu) === 0">—</span>
               </td>
               <td>
-                <button
-                  class="pg-action-btn"
-                  title="View"
-                  (click)="openViewModal(menu)"
-                >
-                  <i class="fa-solid fa-eye"></i>
-                </button>
-                <button
-                  class="pg-action-btn"
-                  title="Edit"
-                  (click)="openEditModal(menu)"
-                >
-                  <i class="fa-solid fa-pen-to-square"></i>
-                </button>
-                <button
-                  class="pg-action-btn pg-action-btn--danger"
-                  title="Delete"
-                  (click)="openDeleteModal(menu)"
-                >
-                  <i class="fa-solid fa-trash"></i>
-                </button>
+                <button class="pg-action-btn" title="View"   (click)="openViewModal(menu)"><i class="fa-solid fa-eye"></i></button>
+                <button class="pg-action-btn" title="Edit"   (click)="openEditModal(menu)"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDeleteModal(menu)"><i class="fa-solid fa-trash"></i></button>
               </td>
             </tr>
             <tr *ngIf="filteredMenus.length === 0">
-              <td colspan="8" class="pg-empty">No menus match your search.</td>
+              <td colspan="9" class="pg-empty">No menus match your search.</td>
             </tr>
           </ng-container>
 
-          <!-- Default: tree view (parent + indented children) -->
+          <!-- Tree view -->
           <ng-template #treeView>
             <ng-container *ngFor="let menu of topLevelMenus">
+
               <!-- Parent row -->
               <tr class="row-parent">
                 <td class="seq-cell">{{ menu.sequence }}</td>
@@ -150,51 +129,35 @@
                   </span>
                 </td>
                 <td class="name-cell name-cell--parent">
-                  <i
-                    class="fa-solid fa-chevron-right tree-arrow"
-                    *ngIf="childCount(menu) > 0"
-                  ></i>
+                  <i class="fa-solid fa-chevron-right tree-arrow" *ngIf="childCount(menu) > 0"></i>
                   {{ menu.name }}
                 </td>
-                <td class="url-cell">
-                  <code>{{ menu.url }}</code>
+                <td class="url-cell"><code>{{ menu.url ?? '—' }}</code></td>
+                <td>
+                  <span class="pg-badge {{ menuTypeBadgeClass(menu.menuType) }}">
+                    {{ menu.menuType }}
+                  </span>
                 </td>
                 <td>
-                  <span class="pg-badge pg-badge--indigo">Parent</span>
+                  <span class="visibility-badge" [class.visibility-badge--on]="menu.isVisible" [class.visibility-badge--off]="!menu.isVisible">
+                    <i class="fa-solid {{ menu.isVisible ? 'fa-eye' : 'fa-eye-slash' }}"></i>
+                    {{ menu.isVisible ? 'Visible' : 'Hidden' }}
+                  </span>
                 </td>
                 <td>—</td>
                 <td class="children-cell">
                   <span class="child-count" *ngIf="childCount(menu) > 0">
                     <i class="fa-solid fa-sitemap"></i> {{ childCount(menu) }}
                   </span>
-                  <span class="no-children" *ngIf="childCount(menu) === 0"
-                    >—</span
-                  >
+                  <span class="no-children" *ngIf="childCount(menu) === 0">—</span>
                 </td>
                 <td>
-                  <button
-                    class="pg-action-btn"
-                    title="View"
-                    (click)="openViewModal(menu)"
-                  >
-                    <i class="fa-solid fa-eye"></i>
-                  </button>
-                  <button
-                    class="pg-action-btn"
-                    title="Edit"
-                    (click)="openEditModal(menu)"
-                  >
-                    <i class="fa-solid fa-pen-to-square"></i>
-                  </button>
-                  <button
-                    class="pg-action-btn pg-action-btn--danger"
-                    title="Delete"
-                    (click)="openDeleteModal(menu)"
-                  >
-                    <i class="fa-solid fa-trash"></i>
-                  </button>
+                  <button class="pg-action-btn" title="View"   (click)="openViewModal(menu)"><i class="fa-solid fa-eye"></i></button>
+                  <button class="pg-action-btn" title="Edit"   (click)="openEditModal(menu)"><i class="fa-solid fa-pen-to-square"></i></button>
+                  <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDeleteModal(menu)"><i class="fa-solid fa-trash"></i></button>
                 </td>
               </tr>
+
               <!-- Child rows -->
               <tr class="row-child" *ngFor="let child of childrenOf(menu)">
                 <td class="seq-cell child-seq">{{ child.sequence }}</td>
@@ -207,65 +170,50 @@
                   <span class="tree-connector"></span>
                   {{ child.name }}
                 </td>
-                <td class="url-cell">
-                  <code>{{ child.url }}</code>
+                <td class="url-cell"><code>{{ child.url ?? '—' }}</code></td>
+                <td>
+                  <span class="pg-badge {{ menuTypeBadgeClass(child.menuType) }}">
+                    {{ child.menuType }}
+                  </span>
                 </td>
                 <td>
-                  <span class="pg-badge pg-badge--blue">Sub Menu</span>
+                  <span class="visibility-badge" [class.visibility-badge--on]="child.isVisible" [class.visibility-badge--off]="!child.isVisible">
+                    <i class="fa-solid {{ child.isVisible ? 'fa-eye' : 'fa-eye-slash' }}"></i>
+                    {{ child.isVisible ? 'Visible' : 'Hidden' }}
+                  </span>
                 </td>
                 <td class="parent-name-cell">{{ menu.name }}</td>
                 <td>—</td>
                 <td>
-                  <button
-                    class="pg-action-btn"
-                    title="View"
-                    (click)="openViewModal(child)"
-                  >
-                    <i class="fa-solid fa-eye"></i>
-                  </button>
-                  <button
-                    class="pg-action-btn"
-                    title="Edit"
-                    (click)="openEditModal(child)"
-                  >
-                    <i class="fa-solid fa-pen-to-square"></i>
-                  </button>
-                  <button
-                    class="pg-action-btn pg-action-btn--danger"
-                    title="Delete"
-                    (click)="openDeleteModal(child)"
-                  >
-                    <i class="fa-solid fa-trash"></i>
-                  </button>
+                  <button class="pg-action-btn" title="View"   (click)="openViewModal(child)"><i class="fa-solid fa-eye"></i></button>
+                  <button class="pg-action-btn" title="Edit"   (click)="openEditModal(child)"><i class="fa-solid fa-pen-to-square"></i></button>
+                  <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDeleteModal(child)"><i class="fa-solid fa-trash"></i></button>
                 </td>
               </tr>
-            </ng-container>
 
+            </ng-container>
             <tr *ngIf="topLevelMenus.length === 0">
-              <td colspan="8" class="pg-empty">No menus found.</td>
+              <td colspan="9" class="pg-empty">No menus found.</td>
             </tr>
           </ng-template>
+
         </tbody>
       </table>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════
+<!-- ═══════════════════════════════════════════
      MODAL OVERLAY
-═══════════════════════════════════════════════════ -->
+═══════════════════════════════════════════ -->
 <div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
 
-<!-- ─── Create / Edit Modal ─────────────────────────── -->
+<!-- ─── Create / Edit Modal ──────────────────── -->
 <div class="modal" *ngIf="modalMode === 'create' || modalMode === 'edit'">
   <div class="modal__header">
     <h3>
-      <i
-        class="fa-solid fa-{{
-          modalMode === 'create' ? 'plus-circle' : 'pen-to-square'
-        }}"
-      ></i>
-      {{ modalMode === "create" ? "Add New Menu" : "Edit Menu" }}
+      <i class="fa-solid fa-{{ modalMode === 'create' ? 'plus-circle' : 'pen-to-square' }}"></i>
+      {{ modalMode === 'create' ? 'Add New Menu' : 'Edit Menu' }}
     </h3>
     <button class="modal__close" (click)="closeModal()">
       <i class="fa-solid fa-xmark"></i>
@@ -274,6 +222,7 @@
 
   <div class="modal__body">
     <div class="form-grid">
+
       <!-- Name -->
       <div class="form-group form-group--full" [class.has-error]="nameError">
         <label>Menu Name <span class="required">*</span></label>
@@ -291,7 +240,7 @@
 
       <!-- URL -->
       <div class="form-group" [class.has-error]="urlError">
-        <label>URL / Route <span class="required">*</span></label>
+        <label>URL / Route <span class="hint">(optional)</span></label>
         <div class="input-with-prefix">
           <span class="input-prefix">/</span>
           <input
@@ -322,57 +271,75 @@
         </div>
       </div>
 
-      <!-- Icon -->
-      <div class="form-group">
-        <label>Icon <span class="hint">(Font Awesome class)</span></label>
-        <div class="icon-input-row">
-          <input
-            type="text"
-            class="form-control"
-            placeholder="e.g. fa-solid fa-house"
-            [(ngModel)]="formIcon"
-          />
-          <span class="icon-preview" *ngIf="formIcon">
-            <i class="{{ formIcon }}"></i>
-          </span>
-          <span class="icon-preview icon-preview--empty" *ngIf="!formIcon">
-            <i class="fa-solid fa-image"></i>
-          </span>
+      <!-- Icon + Visibility — side by side -->
+      <div style="display: flex; gap: 16px; align-items: flex-start;" class="form-group--full">
+        <!-- Icon (left) -->
+        <div class="form-group" style="flex: 1;">
+          <label>Icon <span class="hint">(Font Awesome class)</span></label>
+          <div class="icon-input-row">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="e.g. fa-solid fa-house"
+              [(ngModel)]="formIcon"
+            />
+            <span class="icon-preview" *ngIf="formIcon">
+              <i class="{{ formIcon }}"></i>
+            </span>
+            <span class="icon-preview icon-preview--empty" *ngIf="!formIcon">
+              <i class="fa-solid fa-image"></i>
+            </span>
+          </div>
+        </div>
+        <!-- Visibility (right) -->
+        <div class="form-group" style="flex: 1;">
+          <label>Visibility</label>
+          <div class="toggle-row" style="height: 40px;">
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="formIsVisible" />
+              <span class="toggle-track">
+                <span class="toggle-thumb"></span>
+              </span>
+            </label>
+            <span class="toggle-label">
+              <i class="fa-solid {{ formIsVisible ? 'fa-eye' : 'fa-eye-slash' }}"
+                [style.color]="formIsVisible ? '#059669' : '#94a3b8'">
+              </i>
+              {{ formIsVisible ? 'Visible in navigation' : 'Hidden from navigation' }}
+            </span>
+          </div>
         </div>
       </div>
 
-      <!-- Parent -->
+      <!-- Parent Menu -->
       <div class="form-group form-group--full">
-        <label
-          >Parent Menu
-          <span class="hint"
-            >(optional — leave blank for top-level)</span
-          ></label
-        >
+        <label>Parent Menu <span class="hint">(optional — leave blank for top-level)</span></label>
         <select class="form-control form-select" [(ngModel)]="formParentId">
           <option [ngValue]="null">— None (Top Level) —</option>
           <option *ngFor="let p of parentOptions()" [ngValue]="p.id">
-            <i class="{{ p.icon }}"></i> {{ p.name }}
+            {{ p.name }}
           </option>
         </select>
       </div>
+
+      <!-- Is Visible toggle -->
+      <!-- <div class="form-group form-group--full">
+
+      </div> -->
+
     </div>
   </div>
 
   <div class="modal__footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
     <button class="pg-btn pg-btn--primary" (click)="submitForm()">
-      <i
-        class="fa-solid fa-{{
-          modalMode === 'create' ? 'plus' : 'floppy-disk'
-        }}"
-      ></i>
-      {{ modalMode === "create" ? "Create Menu" : "Save Changes" }}
+      <i class="fa-solid fa-{{ modalMode === 'create' ? 'plus' : 'floppy-disk' }}"></i>
+      {{ modalMode === 'create' ? 'Create Menu' : 'Save Changes' }}
     </button>
   </div>
 </div>
 
-<!-- ─── View Modal ───────────────────────────────────── -->
+<!-- ─── View Modal ────────────────────────────── -->
 <div class="modal modal--sm" *ngIf="modalMode === 'view' && selectedMenu">
   <div class="modal__header">
     <h3><i class="fa-solid fa-eye"></i> Menu Details</h3>
@@ -389,67 +356,57 @@
       </span>
       <div class="view-icon-meta">
         <div class="view-title">{{ selectedMenu.name }}</div>
-        <code class="view-url">{{ selectedMenu.url }}</code>
+        <code class="view-url">{{ selectedMenu.url ?? '—' }}</code>
       </div>
     </div>
 
     <div class="view-detail-grid">
       <div class="view-detail-item">
-        <div class="view-detail-label">Type</div>
-        <div class="view-detail-val">
-          <span
-            class="pg-badge {{
-              selectedMenu.parentId ? 'pg-badge--blue' : 'pg-badge--indigo'
-            }}"
-          >
-            {{ selectedMenu.parentId ? "Sub Menu" : "Parent Menu" }}
-          </span>
-        </div>
-      </div>
-      <div class="view-detail-item">
         <div class="view-detail-label">Sequence</div>
         <div class="view-detail-val seq-badge">{{ selectedMenu.sequence }}</div>
       </div>
-      <div class="view-detail-item" *ngIf="selectedMenu.parentId">
-        <div class="view-detail-label">Parent Menu</div>
+      <div class="view-detail-item">
+        <div class="view-detail-label">Visibility</div>
         <div class="view-detail-val">
-          {{ getParentName(selectedMenu.parentId) }}
+          <span class="visibility-badge"
+            [class.visibility-badge--on]="selectedMenu.isVisible"
+            [class.visibility-badge--off]="!selectedMenu.isVisible">
+            <i class="fa-solid {{ selectedMenu.isVisible ? 'fa-eye' : 'fa-eye-slash' }}"></i>
+            {{ selectedMenu.isVisible ? 'Visible' : 'Hidden' }}
+          </span>
         </div>
       </div>
-      <div
-        class="view-detail-item"
-        *ngIf="!selectedMenu.parentId && childCount(selectedMenu) > 0"
-      >
+      <div class="view-detail-item" *ngIf="selectedMenu.parentId">
+        <div class="view-detail-label">Parent Menu</div>
+        <div class="view-detail-val">{{ getParentName(selectedMenu.parentId) }}</div>
+      </div>
+      <div class="view-detail-item" *ngIf="!selectedMenu.parentId && childCount(selectedMenu) > 0">
         <div class="view-detail-label">Sub Menus</div>
         <div class="view-detail-val">
-          <span class="child-count"
-            ><i class="fa-solid fa-sitemap"></i>
-            {{ childCount(selectedMenu) }} children</span
-          >
+          <span class="child-count">
+            <i class="fa-solid fa-sitemap"></i> {{ childCount(selectedMenu) }} children
+          </span>
         </div>
       </div>
       <div class="view-detail-item form-group--full">
         <div class="view-detail-label">Icon Class</div>
-        <div class="view-detail-val">
-          <code>{{ selectedMenu.icon || "—" }}</code>
-        </div>
+        <div class="view-detail-val"><code>{{ selectedMenu.icon || '—' }}</code></div>
       </div>
     </div>
 
     <!-- Children list -->
-    <div
-      class="view-children"
-      *ngIf="!selectedMenu.parentId && childCount(selectedMenu) > 0"
-    >
+    <div class="view-children" *ngIf="!selectedMenu.parentId && childCount(selectedMenu) > 0">
       <div class="view-children-title">Sub Menus</div>
       <div class="view-children-list">
-        <div
-          class="view-child-item"
-          *ngFor="let child of childrenOf(selectedMenu)"
-        >
+        <div class="view-child-item" *ngFor="let child of childrenOf(selectedMenu)">
           <i class="{{ child.icon || 'fa-solid fa-circle-dot' }}"></i>
           <span>{{ child.name }}</span>
-          <code>{{ child.url }}</code>
+          <code>{{ child.url ?? '—' }}</code>
+          <span class="visibility-badge visibility-badge--sm"
+            [class.visibility-badge--on]="child.isVisible"
+            [class.visibility-badge--off]="!child.isVisible">
+            <i class="fa-solid {{ child.isVisible ? 'fa-eye' : 'fa-eye-slash' }}"></i>
+          </span>
         </div>
       </div>
     </div>
@@ -457,16 +414,13 @@
 
   <div class="modal__footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
-    <button
-      class="pg-btn pg-btn--primary"
-      (click)="openEditModal(selectedMenu)"
-    >
+    <button class="pg-btn pg-btn--primary" (click)="openEditModal(selectedMenu)">
       <i class="fa-solid fa-pen-to-square"></i> Edit
     </button>
   </div>
 </div>
 
-<!-- ─── Delete Confirm Modal ─────────────────────────── -->
+<!-- ─── Delete Confirm Modal ──────────────────── -->
 <div class="modal modal--sm" *ngIf="modalMode === 'delete' && selectedMenu">
   <div class="modal__header modal__header--danger">
     <h3><i class="fa-solid fa-triangle-exclamation"></i> Delete Menu</h3>
@@ -476,12 +430,9 @@
   </div>
 
   <div class="modal__body modal__body--center">
-    <div class="delete-icon">
-      <i class="fa-solid fa-trash-can"></i>
-    </div>
+    <div class="delete-icon"><i class="fa-solid fa-trash-can"></i></div>
     <p class="delete-msg">
-      Are you sure you want to delete
-      <strong>"{{ selectedMenu.name }}"</strong>?
+      Are you sure you want to delete <strong>"{{ selectedMenu.name }}"</strong>?
     </p>
     <div class="delete-warning" *ngIf="childCount(selectedMenu) > 0">
       <i class="fa-solid fa-triangle-exclamation"></i>

@@ -1,3 +1,5 @@
+// menu.component.ts
+
 import { Component, OnInit } from '@angular/core';
 import { CommonService } from '../../../services/common.service';
 import { HttpGeneralService } from '../../../services/http.service';
@@ -8,18 +10,21 @@ const BASE_URL = environment.apiUrl;
 export interface MenuItem {
   id: string;
   name: string;
-  url: string;
+  url: string | null;
   icon: string;
+  menuType: string;
   parentId: string | null;
   sequence: number;
+  isVisible: boolean;
 }
 
 export interface MenuPayload {
   name: string;
-  url: string;
+  url: string | null;
   icon: string;
   parentId: string | null;
   sequence: number;
+  isVisible: boolean;
 }
 
 type ModalMode = 'create' | 'edit' | 'view' | 'delete' | null;
@@ -44,13 +49,19 @@ export class MenuComponent implements OnInit {
   formName: string = '';
   formUrl: string = '';
   formIcon: string = '';
+  formMenuType: string = 'Menu';
   formParentId: string | null = null;
   formSequence: number = 1;
+  formIsVisible: boolean = true;
 
-  // Validation
+  // Validation errors
   nameError: string = '';
   urlError: string = '';
   sequenceError: string = '';
+  menuTypeError: string = '';
+
+  // Menu type options
+  readonly menuTypeOptions = ['Menu', 'Header', 'Footer', 'Sidebar', 'Utility'];
 
   constructor(
     private commonService: CommonService,
@@ -61,7 +72,7 @@ export class MenuComponent implements OnInit {
     this.loadMenus();
   }
 
-  // ─── API Calls ──────────────────────────────────────────────
+  // ─── API ─────────────────────────────────────────────────────
 
   loadMenus(): void {
     this.isLoading = true;
@@ -79,128 +90,115 @@ export class MenuComponent implements OnInit {
   }
 
   createMenu(): void {
-    const payload: MenuPayload = {
-      name: this.formName.trim(),
-      url: this.formUrl.trim(),
-      icon: this.formIcon.trim(),
-      parentId: this.formParentId || null,
-      sequence: Number(this.formSequence),
-    };
+    const payload = this.buildPayload();
     this.httpService.postData(BASE_URL, '/menu', payload).subscribe({
       next: () => {
-        this.commonService.success(
-          `Menu "${payload.name}" created successfully.`,
-        );
+        this.commonService.success(`Menu "${payload.name}" created successfully.`);
         this.closeModal();
         this.loadMenus();
       },
       error: (err: any) => {
-        const msg = err?.error?.message || 'Failed to create menu.';
-        this.commonService.error(msg);
+        this.commonService.error(err?.error?.message || 'Failed to create menu.');
       },
     });
   }
 
   updateMenu(): void {
     if (!this.selectedMenu) return;
-    const payload: MenuPayload = {
-      name: this.formName.trim(),
-      url: this.formUrl.trim(),
-      icon: this.formIcon.trim(),
-      parentId: this.formParentId || null,
-      sequence: Number(this.formSequence),
-    };
-    this.httpService
-      .putData(BASE_URL, `/menu/${this.selectedMenu.id}`, payload)
-      .subscribe({
-        next: () => {
-          this.commonService.success(
-            `Menu "${payload.name}" updated successfully.`,
-          );
-          this.closeModal();
-          this.loadMenus();
-        },
-        error: (err: any) => {
-          const msg = err?.error?.message || 'Failed to update menu.';
-          this.commonService.error(msg);
-        },
-      });
+    const payload = this.buildPayload();
+    this.httpService.putData(BASE_URL, `/menu/${this.selectedMenu.id}`, payload).subscribe({
+      next: () => {
+        this.commonService.success(`Menu "${payload.name}" updated successfully.`);
+        this.closeModal();
+        this.loadMenus();
+      },
+      error: (err: any) => {
+        this.commonService.error(err?.error?.message || 'Failed to update menu.');
+      },
+    });
   }
 
   deleteMenu(): void {
     if (!this.selectedMenu) return;
-    this.httpService
-      .deleteData(BASE_URL, `/menu/${this.selectedMenu.id}`)
-      .subscribe({
-        next: () => {
-          this.commonService.success(
-            `Menu "${this.selectedMenu!.name}" deleted successfully.`,
-          );
-          this.closeModal();
-          this.loadMenus();
-        },
-        error: (err: any) => {
-          const msg = err?.error?.message || 'Failed to delete menu.';
-          this.commonService.error(msg);
-        },
-      });
+    this.httpService.deleteData(BASE_URL, `/menu/${this.selectedMenu.id}`).subscribe({
+      next: () => {
+        this.commonService.success(`Menu "${this.selectedMenu!.name}" deleted.`);
+        this.closeModal();
+        this.loadMenus();
+      },
+      error: (err: any) => {
+        this.commonService.error(err?.error?.message || 'Failed to delete menu.');
+      },
+    });
   }
 
-  // ─── Modal Helpers ───────────────────────────────────────────
+  private buildPayload(): MenuPayload {
+    return {
+      name:      this.formName.trim(),
+      url:       this.formUrl.trim() || null,
+      icon:      this.formIcon.trim(),
+      parentId:  this.formParentId || null,
+      sequence:  Number(this.formSequence),
+      isVisible: this.formIsVisible,
+    };
+  }
+
+  // ─── Modal helpers ────────────────────────────────────────────
 
   openCreateModal(): void {
-    this.modalMode = 'create';
+    this.modalMode    = 'create';
     this.selectedMenu = null;
-    this.formName = '';
-    this.formUrl = '';
-    this.formIcon = '';
+    this.formName     = '';
+    this.formUrl      = '';
+    this.formIcon     = '';
+    this.formMenuType = 'Menu';
     this.formParentId = null;
     this.formSequence = this.nextSequence();
+    this.formIsVisible = true;
     this.clearErrors();
   }
 
   openEditModal(menu: MenuItem): void {
-    this.modalMode = 'edit';
-    this.selectedMenu = menu;
-    this.formName = menu.name;
-    this.formUrl = menu.url;
-    this.formIcon = menu.icon;
-    this.formParentId = menu.parentId;
-    this.formSequence = menu.sequence;
+    this.modalMode     = 'edit';
+    this.selectedMenu  = menu;
+    this.formName      = menu.name;
+    this.formUrl       = menu.url ?? '';
+    this.formIcon      = menu.icon;
+    this.formMenuType  = menu.menuType || 'Menu';
+    this.formParentId  = menu.parentId;
+    this.formSequence  = menu.sequence;
+    this.formIsVisible = menu.isVisible ?? true;
     this.clearErrors();
   }
 
   openViewModal(menu: MenuItem): void {
-    this.modalMode = 'view';
+    this.modalMode    = 'view';
     this.selectedMenu = menu;
   }
 
   openDeleteModal(menu: MenuItem): void {
-    this.modalMode = 'delete';
+    this.modalMode    = 'delete';
     this.selectedMenu = menu;
   }
 
   closeModal(): void {
-    this.modalMode = null;
+    this.modalMode    = null;
     this.selectedMenu = null;
     this.clearErrors();
   }
 
   clearErrors(): void {
-    this.nameError = '';
-    this.urlError = '';
+    this.nameError     = '';
+    this.urlError      = '';
     this.sequenceError = '';
+    this.menuTypeError = '';
   }
 
-  // ─── Form Submit ─────────────────────────────────────────────
+  // ─── Form submit & validation ─────────────────────────────────
 
   submitForm(): void {
     if (!this.validateForm()) return;
-    if (this.modalMode === 'create') {
-      this.createMenu();
-    } else if (this.modalMode === 'edit') {
-      this.updateMenu();
-    }
+    this.modalMode === 'create' ? this.createMenu() : this.updateMenu();
   }
 
   validateForm(): boolean {
@@ -212,9 +210,8 @@ export class MenuComponent implements OnInit {
       valid = false;
     } else {
       const duplicate = this.menus.find(
-        (m) =>
-          m.name.toLowerCase() === this.formName.trim().toLowerCase() &&
-          m.id !== this.selectedMenu?.id,
+        m => m.name.toLowerCase() === this.formName.trim().toLowerCase()
+          && m.id !== this.selectedMenu?.id,
       );
       if (duplicate) {
         this.nameError = 'A menu with this name already exists.';
@@ -222,8 +219,8 @@ export class MenuComponent implements OnInit {
       }
     }
 
-    if (!this.formUrl.trim()) {
-      this.urlError = 'URL / route is required.';
+    if (!this.formMenuType) {
+      this.menuTypeError = 'Menu type is required.';
       valid = false;
     }
 
@@ -239,61 +236,60 @@ export class MenuComponent implements OnInit {
 
   nextSequence(): number {
     if (!this.menus.length) return 1;
-    return Math.max(...this.menus.map((m) => m.sequence)) + 1;
+    return Math.max(...this.menus.map(m => m.sequence)) + 1;
   }
 
   getParentName(parentId: string | null): string {
     if (!parentId) return '—';
-    return this.menus.find((m) => m.id === parentId)?.name ?? parentId;
+    return this.menus.find(m => m.id === parentId)?.name ?? '—';
   }
 
-  // Only top-level menus (no parent) as parent options; exclude self on edit
   parentOptions(): MenuItem[] {
     return this.menus.filter(
-      (m) => m.parentId === null && m.id !== this.selectedMenu?.id,
+      m => m.parentId === null && m.id !== this.selectedMenu?.id,
     );
   }
 
-  isParentMenu(menu: MenuItem): boolean {
-    return this.menus.some((m) => m.parentId === menu.id);
-  }
-
   childCount(menu: MenuItem): number {
-    return this.menus.filter((m) => m.parentId === menu.id).length;
+    return this.menus.filter(m => m.parentId === menu.id).length;
   }
 
   childrenOf(menu: MenuItem): MenuItem[] {
     return this.menus
-      .filter((m) => m.parentId === menu.id)
+      .filter(m => m.parentId === menu.id)
       .sort((a, b) => a.sequence - b.sequence);
   }
 
-  // Top-level menus sorted by sequence
   get topLevelMenus(): MenuItem[] {
     return this.filteredMenus
-      .filter((m) => m.parentId === null)
+      .filter(m => m.parentId === null)
       .sort((a, b) => a.sequence - b.sequence);
   }
 
-  onSearch(): void {
-    this.applySearch();
-  }
+  onSearch(): void { this.applySearch(); }
 
   applySearch(): void {
     const q = this.searchQuery.toLowerCase().trim();
     this.filteredMenus = q
-      ? this.menus.filter(
-          (m) =>
-            m.name.toLowerCase().includes(q) || m.url.toLowerCase().includes(q),
+      ? this.menus.filter(m =>
+          m.name.toLowerCase().includes(q) ||
+          (m.url ?? '').toLowerCase().includes(q) ||
+          m.menuType.toLowerCase().includes(q),
         )
       : [...this.menus];
   }
 
-  get totalParents(): number {
-    return this.menus.filter((m) => m.parentId === null).length;
-  }
+  get totalParents(): number  { return this.menus.filter(m => !m.parentId).length; }
+  get totalChildren(): number { return this.menus.filter(m =>  m.parentId).length; }
 
-  get totalChildren(): number {
-    return this.menus.filter((m) => m.parentId !== null).length;
+  menuTypeBadgeClass(type: string): string {
+    const map: Record<string, string> = {
+      Menu:    'pg-badge--indigo',
+      Header:  'pg-badge--sky',
+      Footer:  'pg-badge--slate',
+      Sidebar: 'pg-badge--purple',
+      Utility: 'pg-badge--orange',
+    };
+    return map[type] ?? 'pg-badge--indigo';
   }
 }

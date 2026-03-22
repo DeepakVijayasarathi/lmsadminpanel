@@ -1,12 +1,16 @@
+// dashboard.component.ts
+
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpGeneralService } from '../../services/http.service';
-import { CommonService } from '../../services/common.service';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
 import {
   ApexAxisChartSeries, ApexChart, ApexXAxis, ApexYAxis,
   ApexDataLabels, ApexStroke, ApexFill, ApexTooltip,
   ApexGrid, ApexMarkers
 } from 'ng-apexcharts';
+
+// ── Local interfaces ──────────────────────────────────────────────────────────
 
 interface StatCard {
   title: string;
@@ -43,6 +47,79 @@ interface QuickStat {
   color: string;
 }
 
+// ── API response shape (matches AdminDashboardDto from backend) ───────────────
+
+interface AdminDashboardApiResponse {
+  statCards: {
+    totalStudents: number;
+    totalTeachers: number;
+    activeBatches: number;
+    onlineCourses: number;
+    todaysLiveSessions: number;
+    monthlyRevenue: number;
+  };
+  upcomingClasses: {
+    liveSessionId: string;
+    subject: string;
+    teacher: string;
+    batch: string;
+    time: string;
+    endTime: string;
+    students: number;
+    status: string;
+  }[];
+  recentActivities: {
+    type: string;
+    message: string;
+    time: string;
+    icon: string;
+  }[];
+  quickStats: {
+    label: string;
+    value: number;
+    color: string;
+  }[];
+  enrollmentTrend: {
+    month: string;
+    value: number;
+  }[];
+  roleDistribution: {
+    role: string;
+    count: number;
+    percentage: number;
+    color: string;
+  }[];
+  curriculum: {
+    boards: number;
+    classes: number;
+    subjects: number;
+    topics: number;
+  };
+  examSummary: {
+    totalQuizzes: number;
+    quizzesAttemptedToday: number;
+    averageScoreThisWeek: number;
+    pendingResultReviews: number;
+  };
+  paymentSummary: {
+    totalReceived: number;
+    totalPending: number;
+    refundRequests: number;
+    activeSubscriptions: number;
+  };
+  notificationSummary: {
+    whatsAppToday: number;
+    classReminders: number;
+    assignmentAlerts: number;
+    missedClassCalls: number;
+  };
+  systemAlerts: {
+    type: string;
+    message: string;
+    icon: string;
+  }[];
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: false,
@@ -50,283 +127,297 @@ interface QuickStat {
   styleUrl: './dashboard.component.css',
 })
 export class DashboardComponent implements OnInit, OnDestroy {
+
+  // ── UI state ──────────────────────────────────────────────────────────────
+  loading = true;
+  error   = '';
+
   currentDate = new Date();
   currentTime = '';
   private timeInterval: any;
 
+  // ── Bottom-row data ───────────────────────────────────────────────────────
+  curriculum = { boards: 0, classes: 0, subjects: 0, topics: 0 };
+
+  examSummary = {
+    totalQuizzes: 0,
+    quizzesAttemptedToday: 0,
+    averageScoreThisWeek: 0,
+    pendingResultReviews: 0,
+  };
+
+  paymentSummary = {
+    totalReceived: 0,
+    totalPending: 0,
+    refundRequests: 0,
+    activeSubscriptions: 0,
+  };
+
+  notificationSummary = {
+    whatsAppToday: 0,
+    classReminders: 0,
+    assignmentAlerts: 0,
+    missedClassCalls: 0,
+  };
+
+  // ── Stat cards (skeleton '—' replaced after API load) ─────────────────────
   statCards: StatCard[] = [
     {
       title: 'Total Students',
-      value: '3,214',
+      value: '—',
       subtitle: 'Active students enrolled',
       icon: 'fa-solid fa-user-graduate',
-      trend: 14.2,
-      trendLabel: 'vs last month',
+      trend: 0, trendLabel: 'vs last month',
       colorClass: 'card-indigo',
     },
     {
       title: 'Expert Faculty',
-      value: '58',
+      value: '—',
       subtitle: 'Subject specialists',
       icon: 'fa-solid fa-chalkboard-user',
-      trend: 6.3,
-      trendLabel: 'vs last month',
+      trend: 0, trendLabel: 'vs last month',
       colorClass: 'card-emerald',
     },
     {
       title: 'Active Batches',
-      value: '24',
+      value: '—',
       subtitle: 'Across all grades',
       icon: 'fa-solid fa-layer-group',
-      trend: 9.5,
-      trendLabel: 'vs last month',
+      trend: 0, trendLabel: 'vs last month',
       colorClass: 'card-orange',
     },
     {
       title: 'Online Courses',
-      value: '86',
+      value: '—',
       subtitle: 'Published on BBB',
       icon: 'fa-solid fa-book-open',
-      trend: 21.0,
-      trendLabel: 'vs last month',
+      trend: 0, trendLabel: 'vs last month',
       colorClass: 'card-purple',
     },
     {
       title: "Today's Live Sessions",
-      value: '18',
+      value: '—',
       subtitle: 'BigBlueButton sessions',
       icon: 'fa-solid fa-video',
-      trend: 0,
-      trendLabel: 'same as yesterday',
+      trend: 0, trendLabel: 'same as yesterday',
       colorClass: 'card-sky',
     },
     {
       title: 'Monthly Revenue',
-      value: '₹8,64,000',
+      value: '—',
       subtitle: 'Course fee collected',
       icon: 'fa-solid fa-indian-rupee-sign',
-      trend: 28.4,
-      trendLabel: 'vs last month',
+      trend: 0, trendLabel: 'vs last month',
       colorClass: 'card-rose',
     },
   ];
 
-  upcomingClasses: UpcomingClass[] = [
-    {
-      subject: 'Physics – Electrostatics',
-      teacher: 'Dr. Vikram Sharma',
-      batch: 'Grade 10 – Batch A',
-      time: '07:00 AM',
-      endTime: '08:30 AM',
-      duration: '90 min',
-      students: 48,
-      status: 'live',
-    },
-    {
-      subject: 'Mathematics – Calculus',
-      teacher: 'Mr. Arjun Verma',
-      batch: 'Grade 11 – Batch A',
-      time: '09:00 AM',
-      endTime: '10:30 AM',
-      duration: '90 min',
-      students: 42,
-      status: 'live',
-    },
-    {
-      subject: 'Chemistry – Organic Reactions',
-      teacher: 'Ms. Pooja Iyer',
-      batch: 'Grade 10 – Batch B',
-      time: '11:00 AM',
-      endTime: '12:30 PM',
-      duration: '90 min',
-      students: 38,
-      status: 'upcoming',
-    },
-    {
-      subject: 'Biology – Genetics',
-      teacher: 'Dr. Meena Krishnan',
-      batch: 'Grade 9 – Batch A',
-      time: '14:00 PM',
-      endTime: '15:30 PM',
-      duration: '90 min',
-      students: 36,
-      status: 'scheduled',
-    },
-    {
-      subject: 'Computer Science – Data Structures',
-      teacher: 'Dr. Kiran Patel',
-      batch: 'Grade 12 – Batch A',
-      time: '18:00 PM',
-      endTime: '19:30 PM',
-      duration: '90 min',
-      students: 22,
-      status: 'scheduled',
-    },
-  ];
+  // ── Main data arrays ──────────────────────────────────────────────────────
+  upcomingClasses:  UpcomingClass[]  = [];
+  recentActivities: RecentActivity[] = [];
+  quickStats:       QuickStat[]      = [];
+  enrollmentData:   { month: string; value: number }[] = [];
+  roleDistribution: { role: string; count: number; percentage: number; color: string }[] = [];
+  systemAlerts:     { type: string; message: string; icon: string }[] = [];
 
-  recentActivities: RecentActivity[] = [
-    {
-      type: 'user',
-      message: '12 new students enrolled in Grade 10 – Batch A',
-      time: '5 min ago',
-      icon: 'fa-solid fa-user-plus',
-    },
-    {
-      type: 'payment',
-      message: 'Course fee ₹18,000 received from Rohan Mehta (Grade 11)',
-      time: '22 min ago',
-      icon: 'fa-solid fa-circle-check',
-    },
-    {
-      type: 'exam',
-      message: 'Mid-Term Exam – Term 2 results published – Avg 68%',
-      time: '1 hr ago',
-      icon: 'fa-solid fa-file-circle-check',
-    },
-    {
-      type: 'course',
-      message: 'New course "Thermodynamics Masterclass" uploaded by Dr. Vikram',
-      time: '2 hrs ago',
-      icon: 'fa-solid fa-book',
-    },
-    {
-      type: 'alert',
-      message: '5 students missed Unit Test 4 – Mathematics session',
-      time: '3 hrs ago',
-      icon: 'fa-solid fa-triangle-exclamation',
-    },
-    {
-      type: 'user',
-      message: 'Faculty account created for Dr. Kiran Patel (Mathematics)',
-      time: '5 hrs ago',
-      icon: 'fa-solid fa-user-tie',
-    },
-    {
-      type: 'payment',
-      message: 'Refund request submitted by Priya Desai (Grade 10 – Batch B)',
-      time: 'Yesterday',
-      icon: 'fa-solid fa-rotate-left',
-    },
-  ];
+  // ── Dynamic donut SVG ─────────────────────────────────────────────────────
+  donutTotal    = 0;
+  donutSegments: { color: string; dasharray: string; dashoffset: string }[] = [];
 
-  quickStats: QuickStat[] = [
-    { label: 'Mock Test Attempt Rate',    value: 82, max: 100, color: '#4f46e5' },
-    { label: 'Avg. Session Attendance',   value: 88, max: 100, color: '#10b981' },
-    { label: 'Syllabus Completion Rate',  value: 67, max: 100, color: '#f59e0b' },
-    { label: 'Student Satisfaction',      value: 94, max: 100, color: '#06b6d4' },
-  ];
-
-  enrollmentData = [
-    { month: 'Oct', value: 310 },
-    { month: 'Nov', value: 420 },
-    { month: 'Dec', value: 390 },
-    { month: 'Jan', value: 510 },
-    { month: 'Feb', value: 620 },
-    { month: 'Mar', value: 740 },
-  ];
-
-  chartSeries: ApexAxisChartSeries = [
-    { name: 'Students Enrolled', data: [310, 420, 390, 510, 620, 740] }
-  ];
+  // ── ApexCharts ────────────────────────────────────────────────────────────
+  chartSeries: ApexAxisChartSeries = [{ name: 'Students Enrolled', data: [] }];
 
   chartConfig: ApexChart = {
-    type: 'area',
-    height: 200,
+    type: 'area', height: 200,
     toolbar: { show: false },
     sparkline: { enabled: false },
-    animations: { enabled: true, speed: 800 }
+    animations: { enabled: true, speed: 800 },
   };
 
   chartXAxis: ApexXAxis = {
-    categories: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
+    categories: [],
     axisBorder: { show: false },
-    axisTicks: { show: false },
-    labels: { style: { colors: '#9ca3af', fontSize: '12px', fontFamily: 'inherit', fontWeight: 600 } }
+    axisTicks:  { show: false },
+    labels: { style: { colors: '#9ca3af', fontSize: '12px', fontFamily: 'inherit', fontWeight: 600 } },
   };
 
   chartYAxis: ApexYAxis = {
     labels: {
       style: { colors: '#9ca3af', fontSize: '11px', fontFamily: 'inherit' },
-      formatter: (val: number) => val.toString()
+      formatter: (val: number) => val.toString(),
     },
-    min: 0
+    min: 0,
   };
 
   chartStroke: ApexStroke = { curve: 'smooth', width: 2.5 };
 
   chartFill: ApexFill = {
     type: 'gradient',
-    gradient: {
-      shadeIntensity: 1,
-      opacityFrom: 0.35,
-      opacityTo: 0.02,
-      stops: [0, 100]
-    }
+    gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02, stops: [0, 100] },
   };
 
-  chartColors = ['#4f46e5'];
-
+  chartColors       = ['#4f46e5'];
   chartDataLabels: ApexDataLabels = { enabled: false };
 
   chartGrid: ApexGrid = {
-    borderColor: '#f1f4f9',
-    strokeDashArray: 4,
+    borderColor: '#f1f4f9', strokeDashArray: 4,
     xaxis: { lines: { show: false } },
-    yaxis: { lines: { show: true } },
-    padding: { top: 0, right: 10, bottom: 0, left: 10 }
+    yaxis: { lines: { show: true  } },
+    padding: { top: 0, right: 10, bottom: 0, left: 10 },
   };
 
   chartMarkers: ApexMarkers = {
-    size: 4,
-    colors: ['#fff'],
-    strokeColors: ['#4f46e5'],
-    strokeWidth: 2,
-    hover: { size: 6 }
+    size: 4, colors: ['#fff'],
+    strokeColors: ['#4f46e5'], strokeWidth: 2,
+    hover: { size: 6 },
   };
 
   chartTooltip: ApexTooltip = {
     theme: 'light',
-    y: { formatter: (val: number) => `${val} students` }
+    y: { formatter: (val: number) => `${val} students` },
   };
 
-  roleDistribution = [
-    { role: 'Secondary (Grade 8-10)', count: 1842, percentage: 57, color: '#10b981' },
-    { role: 'Senior (Grade 11-12)',   count: 1186, percentage: 37, color: '#4f46e5' },
-    { role: 'Faculty',                count: 58,   percentage: 4,  color: '#f59e0b' },
-    { role: 'Parents',                count: 128,  percentage: 2,  color: '#06b6d4' },
-  ];
-
-  systemAlerts = [
-    { type: 'warning', message: '4 faculty accounts pending subject verification', icon: 'fa-solid fa-clock' },
-    { type: 'info',    message: '8 refund requests awaiting review',               icon: 'fa-solid fa-info-circle' },
-    { type: 'success', message: 'BBB server health: all 18 rooms running smoothly', icon: 'fa-solid fa-circle-check' },
-    { type: 'error',   message: '1 live session had BBB connection drop – resolved', icon: 'fa-solid fa-circle-xmark' },
-  ];
-
+  // ── Constructor ───────────────────────────────────────────────────────────
   constructor(
-    private readonly httpService: HttpGeneralService<any>,
-    private common: CommonService,
-    private router: Router
+    private http:   HttpClient,
+    private router: Router,
   ) {}
 
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
   ngOnInit(): void {
     this.updateTime();
     this.timeInterval = setInterval(() => this.updateTime(), 1000);
+    this.loadDashboard();
   }
 
   ngOnDestroy(): void {
     if (this.timeInterval) clearInterval(this.timeInterval);
   }
 
+  // ── API call (public so the Retry button can call it) ─────────────────────
+  loadDashboard(): void {
+    this.loading = true;
+    this.error   = '';
+
+    this.http
+      .get<AdminDashboardApiResponse>(`${environment.apiUrl}/dashboard/admin`)
+      .subscribe({
+        next:  data => this.mapToComponent(data),
+        error: err  => {
+          this.error   = err?.error?.message ?? 'Failed to load dashboard data.';
+          this.loading = false;
+        },
+      });
+  }
+
+  // ── Map API → component properties ───────────────────────────────────────
+  private mapToComponent(data: AdminDashboardApiResponse): void {
+
+    // Stat cards
+    const sc = data.statCards;
+    this.statCards[0].value = sc.totalStudents.toLocaleString('en-IN');
+    this.statCards[1].value = sc.totalTeachers.toLocaleString('en-IN');
+    this.statCards[2].value = sc.activeBatches.toString();
+    this.statCards[3].value = sc.onlineCourses.toString();
+    this.statCards[4].value = sc.todaysLiveSessions.toString();
+    this.statCards[5].value = this.formatCurrency(sc.monthlyRevenue);
+
+    // Today's classes table
+    this.upcomingClasses = data.upcomingClasses.map(c => ({
+      subject:  c.subject,
+      teacher:  c.teacher,
+      batch:    c.batch,
+      time:     c.time,
+      endTime:  c.endTime,
+      duration: this.calcDuration(c.time, c.endTime),
+      students: c.students,
+      status:   c.status as 'live' | 'upcoming' | 'scheduled',
+    }));
+
+    // Recent activity feed
+    this.recentActivities = data.recentActivities.map(a => ({
+      type:    a.type as RecentActivity['type'],
+      message: a.message,
+      time:    a.time,
+      icon:    a.icon,
+    }));
+
+    // Platform performance bars
+    this.quickStats = data.quickStats.map(q => ({
+      label: q.label,
+      value: q.value,
+      max:   100,
+      color: q.color,
+    }));
+
+    // Enrollment area chart
+    this.enrollmentData = data.enrollmentTrend;
+    this.chartSeries    = [{ name: 'Students Enrolled', data: data.enrollmentTrend.map(e => e.value) }];
+    this.chartXAxis     = { ...this.chartXAxis, categories: data.enrollmentTrend.map(e => e.month) };
+
+    // Role distribution + dynamic donut
+    this.roleDistribution = data.roleDistribution;
+    this.buildDonut(data.roleDistribution);
+
+    // Alert strip
+    this.systemAlerts = data.systemAlerts;
+
+    // Bottom row
+    this.curriculum          = data.curriculum;
+    this.examSummary         = data.examSummary;
+    this.paymentSummary      = data.paymentSummary;
+    this.notificationSummary = data.notificationSummary;
+
+    this.loading = false;
+  }
+
+  // ── Donut SVG builder ─────────────────────────────────────────────────────
+  // Circle circumference at r = 38:  2 * π * 38 ≈ 238.76
+  private buildDonut(roles: { count: number; percentage: number; color: string }[]): void {
+    const CIRC  = 238.76;
+    this.donutTotal = roles.reduce((sum, r) => sum + r.count, 0);
+
+    let offset = 0;
+    this.donutSegments = roles.map(r => {
+      const arc = (r.percentage / 100) * CIRC;
+      const seg = {
+        color:      r.color,
+        dasharray:  `${arc.toFixed(1)} ${CIRC}`,
+        dashoffset: `-${offset.toFixed(1)}`,
+      };
+      offset += arc;
+      return seg;
+    });
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  /** "07:00 AM" + "08:30 AM" → "90 min" */
+  private calcDuration(start: string, end: string): string {
+    const toMins = (t: string): number => {
+      const parts  = t.trim().split(' ');
+      const period = parts[1] ?? '';
+      const [hStr, mStr] = (parts[0] ?? '').split(':');
+      let h = parseInt(hStr, 10);
+      const m = parseInt(mStr, 10);
+      if (period === 'PM' && h !== 12) h += 12;
+      if (period === 'AM' && h === 12) h = 0;
+      return h * 60 + m;
+    };
+    const diff = toMins(end) - toMins(start);
+    return diff > 0 ? `${diff} min` : '';
+  }
+
   private updateTime(): void {
     const now = new Date();
     this.currentTime = now.toLocaleTimeString('en-IN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true,
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
     });
     this.currentDate = now;
+  }
+
+  formatCurrency(amount: number): string {
+    return '₹' + Number(amount).toLocaleString('en-IN');
   }
 
   navigate(path: string): void {
