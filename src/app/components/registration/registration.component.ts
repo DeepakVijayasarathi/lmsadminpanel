@@ -577,7 +577,7 @@ export class RegistrationComponent implements OnInit {
 
     setTimeout(() => {
       this.router.navigate(['/login']);
-    }, 2500); // 2.5s so user sees the success screen briefly
+    }, 5000); // ← changed from 2500 to 5000
   }
 
   resetForm() {

@@ -740,3 +740,71 @@
     </div>
   </div>
 </div>
+
+<div class="success-overlay" *ngIf="showSuccess && successData">
+  <div class="success-popup">
+
+    <div class="success-icon-wrap">
+      <div class="success-ring success-ring--animated"></div>
+      <div class="success-check">✓</div>
+    </div>
+
+    <h2 class="success-title">
+      {{ successData.role === 'teacher' ? 'Welcome aboard! 🎉' : "You're enrolled! 🎓" }}
+    </h2>
+
+    <p class="success-sub">
+      {{
+        successData.role === 'teacher'
+          ? 'Your teacher account has been created successfully.'
+          : 'You are now enrolled in ' + successData.course?.title + '.'
+      }}
+    </p>
+
+    <div class="success-details">
+      <div class="sd-row">
+        <span class="sd-key">Name</span>
+        <span class="sd-val">{{ form.firstName }} {{ form.lastName }}</span>
+      </div>
+      <div class="sd-row">
+        <span class="sd-key">Email</span>
+        <span class="sd-val">{{ form.email }}</span>
+      </div>
+      <div class="sd-row">
+        <span class="sd-key">Role</span>
+        <span class="sd-val" style="text-transform: capitalize">{{ successData.role }}</span>
+      </div>
+      <ng-container *ngIf="successData.role === 'student'">
+        <div class="sd-row">
+          <span class="sd-key">Course</span>
+          <span class="sd-val">{{ successData.course?.title }}</span>
+        </div>
+        <div class="sd-row">
+          <span class="sd-key">Amount Paid</span>
+          <span class="sd-val success-green">
+            {{ (successData.extra?.amount || 0) === 0 ? 'Free' : formatCurrency(successData.extra?.amount) }}
+          </span>
+        </div>
+        <div class="sd-row" *ngIf="successData.extra?.subscriptionId">
+          <span class="sd-key">Subscription ID</span>
+          <span class="sd-val mono">{{ successData.extra.subscriptionId }}</span>
+        </div>
+        <div class="sd-row" *ngIf="successData.extra?.txnRef">
+          <span class="sd-key">Razorpay Ref</span>
+          <span class="sd-val mono">{{ successData.extra.txnRef }}</span>
+        </div>
+      </ng-container>
+    </div>
+
+    <div class="success-redirect-bar">
+      <div class="redirect-progress"></div>
+    </div>
+    <p class="redirect-label">Redirecting to login in 5 seconds...</p>
+
+    <button class="btn btn-primary" (click)="goToLogin()"
+      style="margin-top: 12px; width: 100%">
+      Go to Login Now →
+    </button>
+
+  </div>
+</div>

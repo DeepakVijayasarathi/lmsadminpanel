@@ -1217,3 +1217,148 @@
   /* Toast full width */
   .toast { left: 16px; right: 16px; bottom: 16px; max-width: 100%; }
 }
+
+/* ── SUCCESS OVERLAY POPUP ── */
+.success-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInOverlay 0.3s ease;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.success-popup {
+  background: var(--card-bg, #fff);
+  border-radius: 20px;
+  padding: 40px 36px 32px;
+  width: 100%;
+  max-width: 460px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  animation: popupSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+
+@keyframes popupSlideUp {
+  from { opacity: 0; transform: translateY(40px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+/* Reuse your existing success icon styles — add these if not already present */
+.success-popup .success-icon-wrap {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+}
+
+.success-popup .success-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid #22c55e;
+  animation: pulseRing 1.2s ease-out infinite;
+}
+
+@keyframes pulseRing {
+  0%   { transform: scale(1);   opacity: 1; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.success-popup .success-check {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #22c55e;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.success-popup .success-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-primary, #111);
+}
+
+.success-popup .success-sub {
+  font-size: 14px;
+  color: var(--text-muted, #666);
+  margin-bottom: 20px;
+}
+
+.success-popup .success-details {
+  background: var(--input-bg, #f8fafc);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.success-popup .sd-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  font-size: 13px;
+}
+
+.success-popup .sd-row:last-child { border-bottom: none; }
+
+.success-popup .sd-key {
+  color: var(--text-muted, #888);
+  font-weight: 500;
+}
+
+.success-popup .sd-val {
+  font-weight: 600;
+  color: var(--text-primary, #111);
+  max-width: 240px;
+  text-align: right;
+  word-break: break-all;
+}
+
+.success-popup .success-green { color: #16a34a; }
+.success-popup .mono          { font-family: monospace; font-size: 12px; }
+
+/* Progress bar countdown */
+.success-redirect-bar {
+  height: 4px;
+  background: var(--border, #e5e7eb);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.redirect-progress {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  border-radius: 99px;
+  animation: shrinkBar 5s linear forwards; /* match your 5s timer */
+}
+
+@keyframes shrinkBar {
+  from { width: 100%; }
+  to   { width: 0%;   }
+}
+
+.redirect-label {
+  font-size: 12px;
+  color: var(--text-muted, #888);
+  margin-bottom: 4px;
+}
