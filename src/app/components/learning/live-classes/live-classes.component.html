@@ -11,11 +11,7 @@
         <div class="pg-head__sub">Manage and schedule online live sessions for all batches</div>
       </div>
     </div>
-    <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary" (click)="openScheduleModal()">
-        <i class="fa-solid fa-plus"></i> Schedule Session
-      </button>
-    </div>
+    <div class="pg-head__right"></div>
   </div>
 
   <!-- Stats -->
@@ -77,7 +73,6 @@
             <th>Batch</th>
             <th>Teacher</th>
             <th>Date &amp; Time</th>
-            <th>Duration</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -85,7 +80,7 @@
         <tbody>
           <!-- Loading -->
           <tr *ngIf="isLoading">
-            <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">
+            <td colspan="6" style="text-align:center;padding:32px;color:#94a3b8;">
               <i class="fa-solid fa-circle-notch fa-spin" style="font-size:20px;display:block;margin-bottom:8px;"></i>
               Loading sessions…
             </td>
@@ -111,9 +106,6 @@
                 <div class="pg-cell__sub">{{ cls.startTime }} – {{ cls.endTime }}</div>
               </td>
               <td>
-                <span class="pg-cell__primary">{{ getDuration(cls.startTime, cls.endTime) }}</span>
-              </td>
-              <td>
                 <span [class]="getStatusBadge(cls.status)">
                   <i *ngIf="cls.status === 'live'" class="fa-solid fa-circle" style="font-size:8px;"></i>
                   {{ cls.status | titlecase }}
@@ -121,38 +113,40 @@
               </td>
               <td>
                 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                  <!-- BBB Join button (calls API for signed URL) -->
+                  <!-- Live: Join button -->
                   <button
-                    *ngIf="cls.status === 'live' || cls.status === 'upcoming'"
+                    *ngIf="cls.status === 'live'"
                     class="pg-btn pg-btn--primary"
-                    [style.background]="cls.status === 'live' ? '#ef4444' : ''"
-                    style="font-size:12px;padding:5px 12px;"
+                    style="font-size:12px;padding:5px 12px;background:#ef4444;"
                     [disabled]="joiningId === cls.id"
                     (click)="joinLive(cls)">
                     <i class="fa-solid"
                        [class.fa-circle-notch]="joiningId === cls.id"
                        [class.fa-spin]="joiningId === cls.id"
                        [class.fa-circle-play]="joiningId !== cls.id"></i>
-                    {{ cls.status === 'live' ? 'Join Live' : 'Join BBB' }}
+                    Join Live
                   </button>
+
+                  <!-- Upcoming: show meeting URL as clickable link -->
+                  <a
+                    *ngIf="cls.status === 'upcoming' && cls.meetingLink"
+                    [href]="cls.meetingLink" target="_blank"
+                    class="pg-btn pg-btn--primary"
+                    style="font-size:12px;padding:5px 12px;text-decoration:none;">
+                    <i class="fa-solid fa-link"></i> Join URL
+                  </a>
+                  <span *ngIf="cls.status === 'upcoming' && !cls.meetingLink"
+                    style="font-size:12px;color:#94a3b8;">No URL yet</span>
 
                   <button class="pg-action-btn" title="View" (click)="openViewModal(cls)">
                     <i class="fa-solid fa-eye"></i>
-                  </button>
-                  <button class="pg-action-btn" title="Edit" (click)="openEditModal(cls)"
-                    [disabled]="cls.status === 'completed' || cls.status === 'cancelled'">
-                    <i class="fa-solid fa-pen"></i>
-                  </button>
-                  <button class="pg-action-btn pg-action-btn--danger" title="Cancel" (click)="openCancelModal(cls)"
-                    [disabled]="cls.status !== 'upcoming'">
-                    <i class="fa-solid fa-xmark"></i>
                   </button>
                 </div>
               </td>
             </tr>
 
             <tr *ngIf="filteredClasses.length === 0">
-              <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">
+              <td colspan="6" style="text-align:center;padding:32px;color:#94a3b8;">
                 <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
                 No sessions found
               </td>
@@ -191,34 +185,37 @@
         </div>
       </div>
 
-      <!-- Batch ID -->
+      <!-- Batch -->
       <div class="form-group" [class.has-error]="formBatchIdError">
-        <label>Batch ID <span class="required">*</span></label>
-        <input type="text" class="form-control"
-          placeholder="e.g. 3fa85f64-5717-4562-b3fc-…"
-          [(ngModel)]="formBatchId" (input)="formBatchIdError=''" />
+        <label>Batch <span class="required">*</span></label>
+        <select class="form-control" [(ngModel)]="formBatchId" (change)="formBatchIdError=''">
+          <option value="">Select batch…</option>
+          <option *ngFor="let b of batches" [value]="b.id">{{ b.name }}</option>
+        </select>
         <div class="field-error" *ngIf="formBatchIdError">
           <i class="fa-solid fa-circle-exclamation"></i> {{ formBatchIdError }}
         </div>
       </div>
 
-      <!-- Course ID -->
+      <!-- Course -->
       <div class="form-group" [class.has-error]="formCourseIdError">
-        <label>Course ID <span class="required">*</span></label>
-        <input type="text" class="form-control"
-          placeholder="e.g. 3fa85f64-5717-4562-b3fc-…"
-          [(ngModel)]="formCourseId" (input)="formCourseIdError=''" />
+        <label>Course <span class="required">*</span></label>
+        <select class="form-control" [(ngModel)]="formCourseId" (change)="formCourseIdError=''">
+          <option value="">Select course…</option>
+          <option *ngFor="let c of courses" [value]="c.id">{{ c.title }}</option>
+        </select>
         <div class="field-error" *ngIf="formCourseIdError">
           <i class="fa-solid fa-circle-exclamation"></i> {{ formCourseIdError }}
         </div>
       </div>
 
-      <!-- Teacher ID -->
+      <!-- Teacher -->
       <div class="form-group" [class.has-error]="formTeacherIdError">
-        <label>Teacher ID <span class="required">*</span></label>
-        <input type="text" class="form-control"
-          placeholder="e.g. 3fa85f64-5717-4562-b3fc-…"
-          [(ngModel)]="formTeacherId" (input)="formTeacherIdError=''" />
+        <label>Teacher <span class="required">*</span></label>
+        <select class="form-control" [(ngModel)]="formTeacherId" (change)="formTeacherIdError=''">
+          <option value="">Select teacher…</option>
+          <option *ngFor="let t of teachers" [value]="t.id">{{ t.name }}</option>
+        </select>
         <div class="field-error" *ngIf="formTeacherIdError">
           <i class="fa-solid fa-circle-exclamation"></i> {{ formTeacherIdError }}
         </div>
@@ -323,11 +320,6 @@
          [class.fa-spin]="joiningId === selectedClass.id"
          [class.fa-circle-play]="joiningId !== selectedClass.id"></i>
       {{ selectedClass.status === 'live' ? 'Join Live' : 'Join BBB' }}
-    </button>
-    <button class="pg-btn pg-btn--primary" style="background:#4f46e5;"
-      *ngIf="selectedClass.status === 'upcoming'"
-      (click)="openEditModal(selectedClass)">
-      <i class="fa-solid fa-pen-to-square"></i> Edit
     </button>
   </div>
 </div>

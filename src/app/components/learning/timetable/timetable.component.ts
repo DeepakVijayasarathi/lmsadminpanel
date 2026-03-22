@@ -218,7 +218,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   // ── Join (BBB signed URL) ─────────────────────────────────────────────────
   joinSlot(slot: TimetableSlot, isModerator = false): void {
     this.joiningId = slot.id;
-    this.timetableService.getJoinUrl(slot.id, 'Admin', isModerator).subscribe({
+    this.timetableService.getJoinUrl(slot.id, 'Admin', isModerator ? 'admin' : 'student').subscribe({
       next: ({ joinUrl }) => {
         window.open(joinUrl, '_blank');
         this.joiningId = '';

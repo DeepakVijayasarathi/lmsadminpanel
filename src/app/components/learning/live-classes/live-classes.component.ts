@@ -1,6 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonService } from '../../../services/common.service';
 import { LiveSessionService, LiveSessionDto } from '../../../services/live-session.service';
+import { HttpGeneralService } from '../../../services/http.service';
+import { environment } from '../../../../environments/environment';
+
+const BASE_URL = environment.apiUrl;
 
 export interface LiveClass {
   id: string;
@@ -56,16 +60,91 @@ export class LiveClassesComponent implements OnInit {
 
   liveClasses: LiveClass[] = [];
 
+  batches: { id: string; name: string }[] = [];
+  courses: { id: string; title: string }[] = [];
+  teachers: { id: string; name: string }[] = [];
+
+  private currentUserName = 'User';
+  private currentUserRole: 'admin' | 'teacher' | 'student' = 'admin';
+
   constructor(
     private commonService: CommonService,
-    private liveSessionService: LiveSessionService
+    private liveSessionService: LiveSessionService,
+    private httpService: HttpGeneralService<any>
   ) {}
 
   ngOnInit(): void {
     this.loadSessions();
+    this.loadDropdownData();
+    this.loadCurrentUser();
   }
 
   // ─── API ────────────────────────────────────────────────────
+
+  loadCurrentUser(): void {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const userId = payload.userId;
+      const roleName = (payload.roleName ?? '').toString().toLowerCase();
+      this.currentUserRole =
+        roleName === 'teacher' ? 'teacher' :
+        roleName === 'student' ? 'student' : 'admin';
+      if (userId) {
+        this.httpService.getData(BASE_URL, `/users/${userId}`).subscribe({
+          next: (res: any) => {
+            const first = res.firstName ?? '';
+            const last  = res.lastName  ?? '';
+            this.currentUserName = (`${first} ${last}`).trim() || res.userName || res.sub || 'User';
+          },
+          error: () => {
+            this.currentUserName = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ?? payload.sub ?? 'User';
+          }
+        });
+      }
+    } catch {}
+  }
+
+  loadDropdownData(): void {
+    this.httpService.getData(BASE_URL, '/batches').subscribe({
+      next: (res: any) => {
+        const raw: any[] = Array.isArray(res) ? res : (res?.data ?? []);
+        this.batches = raw.map(b => ({ id: b.id, name: b.name || b.batchName || b.id }));
+        this.refreshNames();
+      },
+      error: () => {}
+    });
+    this.httpService.getData(BASE_URL, '/courses').subscribe({
+      next: (res: any) => {
+        const raw: any[] = Array.isArray(res) ? res : (res?.data ?? []);
+        this.courses = raw.map(c => ({ id: c.id, title: c.title || c.name || c.id }));
+      },
+      error: () => {}
+    });
+    this.httpService.getData(BASE_URL, '/users').subscribe({
+      next: (res: any) => {
+        const raw: any[] = Array.isArray(res) ? res : (res?.data ?? []);
+        this.teachers = raw
+          .filter(u => (u.roleDto?.name ?? '').toLowerCase() === 'teacher')
+          .map(u => ({
+            id: u.id,
+            name: (`${u.firstName ?? ''} ${u.lastName ?? ''}`).trim() || u.username || u.id
+          }));
+        this.refreshNames();
+      },
+      error: () => {}
+    });
+  }
+
+  /** After batches/teachers load, patch names on already-loaded sessions */
+  private refreshNames(): void {
+    this.liveClasses = this.liveClasses.map(cls => ({
+      ...cls,
+      batch: this.batches.find(b => b.id === cls.batchId)?.name || cls.batch,
+      teacher: this.teachers.find(t => t.id === cls.teacherId)?.name || cls.teacher
+    }));
+  }
 
   loadSessions(): void {
     this.isLoading = true;
@@ -83,7 +162,7 @@ export class LiveClassesComponent implements OnInit {
 
   joinLive(cls: LiveClass): void {
     this.joiningId = cls.id;
-    this.liveSessionService.getJoinUrl(cls.id, 'Admin', true).subscribe({
+    this.liveSessionService.getJoinUrl(cls.id, this.currentUserName, this.currentUserRole).subscribe({
       next: ({ joinUrl }) => {
         window.open(joinUrl, '_blank');
         this.joiningId = '';
@@ -95,6 +174,7 @@ export class LiveClassesComponent implements OnInit {
       }
     });
   }
+
 
   // ─── Filters ────────────────────────────────────────────────
 
@@ -237,10 +317,14 @@ export class LiveClassesComponent implements OnInit {
     const subject = titleParts[0] ?? dto.title;
     const topic = titleParts.slice(1).join(' – ') || subject;
 
-    const batchName = dto.batch?.name ?? dto.batch?.batchName ?? this.shortId(dto.batchId);
-    const teacherName = dto.teacher
-      ? (`${dto.teacher.firstName ?? ''} ${dto.teacher.lastName ?? ''}`).trim() || this.shortId(dto.teacherId)
-      : this.shortId(dto.teacherId);
+    const batchName =
+      this.batches.find(b => b.id === dto.batchId)?.name
+      ?? dto.batch?.name ?? dto.batch?.batchName
+      ?? '';
+    const teacherName =
+      this.teachers.find(t => t.id === dto.teacherId)?.name
+      ?? (dto.teacher ? (`${dto.teacher.firstName ?? ''} ${dto.teacher.lastName ?? ''}`).trim() : '')
+      ?? '';
 
     return {
       id: dto.id,
@@ -302,9 +386,6 @@ export class LiveClassesComponent implements OnInit {
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} ${mer}`;
   }
 
-  private shortId(id: string): string {
-    return id ? '…' + id.slice(-8) : 'N/A';
-  }
 
   getDuration(start: string, end: string): string {
     const parse = (t: string): number => {

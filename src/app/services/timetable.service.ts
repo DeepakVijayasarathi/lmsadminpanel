@@ -83,9 +83,9 @@ export class TimetableService {
     return this.http.put<TimetableSlotDto>(`${BASE}/timetable/${id}`, payload);
   }
 
-  getJoinUrl(id: string, fullName: string, isModerator = false): Observable<{ joinUrl: string }> {
+  getJoinUrl(id: string, fullName: string, role: 'admin' | 'teacher' | 'student' = 'admin'): Observable<{ joinUrl: string }> {
     return this.http.get<{ joinUrl: string }>(`${BASE}/${id}/join-url`, {
-      params: { fullName, isModerator: String(isModerator) }
+      params: { fullName, role }
     });
   }
 

@@ -29,6 +29,14 @@ export interface CreateLiveSessionDto {
   endTime: string;
 }
 
+export interface JoinUrlsDto {
+  sessionId: string;
+  title: string;
+  adminUrl: string;
+  teacherUrl: string;
+  studentUrl: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class LiveSessionService {
   constructor(private http: HttpClient) {}
@@ -41,11 +49,17 @@ export class LiveSessionService {
     return this.http.post<LiveSessionDto>(BASE, dto);
   }
 
-  getJoinUrl(id: string, fullName: string, isModerator: boolean): Observable<{ joinUrl: string }> {
+  /** GET /livesession/{id}/join-url?fullName=...&role=admin|teacher|student */
+  getJoinUrl(id: string, fullName: string, role: 'admin' | 'teacher' | 'student'): Observable<{ joinUrl: string }> {
     const params = new HttpParams()
       .set('fullName', fullName)
-      .set('isModerator', String(isModerator));
+      .set('role', role);
     return this.http.get<{ joinUrl: string }>(`${BASE}/${id}/join-url`, { params });
+  }
+
+  /** GET /livesession/{id}/join-urls — returns all 3 role URLs at once */
+  getJoinUrls(id: string): Observable<JoinUrlsDto> {
+    return this.http.get<JoinUrlsDto>(`${BASE}/${id}/join-urls`);
   }
 
   start(id: string): Observable<LiveSessionDto> {
