@@ -14,7 +14,7 @@
       <button class="pg-btn pg-btn--outline">
         <i class="fa-solid fa-download"></i> Export
       </button>
-      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
+      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()" *ngIf="p.canCreate">
         <i class="fa-solid fa-plus"></i> Add Course
       </button>
     </div>
@@ -198,21 +198,21 @@
             <!-- Actions -->
             <td>
               <div class="action-group">
-                <button
+                <button *ngIf="p.canRead"
                   class="pg-action-btn"
                   title="View"
                   (click)="openViewModal(course)"
                 >
                   <i class="fa-solid fa-eye"></i>
                 </button>
-                <button
+                <button *ngIf="p.canUpdate"
                   class="pg-action-btn"
                   title="Edit"
                   (click)="openEditModal(course)"
                 >
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button
+                <button *ngIf="p.canUpdate"
                   class="pg-action-btn pg-action-btn--emerald"
                   [title]="course.isPublished ? 'Unpublish' : 'Publish'"
                   (click)="openPublishModal(course)"
@@ -222,7 +222,7 @@
                     [ngClass]="course.isPublished ? 'fa-eye-slash' : 'fa-upload'"
                   ></i>
                 </button>
-                <button
+                <button *ngIf="p.canDelete"
                   class="pg-action-btn pg-action-btn--danger"
                   title="Delete"
                   (click)="openDeleteModal(course)"
@@ -593,7 +593,7 @@
   </div>
   <div class="modal__footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
-    <button
+    <button *ngIf="p.canUpdate"
       class="pg-btn"
       [ngClass]="
         selectedCourse.isPublished ? 'pg-btn--warn' : 'pg-btn--emerald'
@@ -610,7 +610,7 @@
       ></i>
       {{ selectedCourse.isPublished ? "Unpublish" : "Publish" }}
     </button>
-    <button
+    <button *ngIf="p.canUpdate"
       class="pg-btn pg-btn--primary"
       (click)="openEditModal(selectedCourse)"
     >

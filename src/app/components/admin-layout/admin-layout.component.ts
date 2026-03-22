@@ -3,6 +3,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { HttpGeneralService } from '../../services/http.service';
 import { environment } from '../../../environments/environment';
+import { PermissionService } from '../../auth/permission.service';
 
 interface NavItem {
   label: string;
@@ -38,6 +39,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private httpService: HttpGeneralService<any>,
+    private permissionService: PermissionService
   ) {
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
@@ -70,7 +72,12 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       .getData(environment.apiUrl, '/menu/get-user-access-menu')
       .subscribe({
         next: (res: any) => {
-          const flat: any[] = Array.isArray(res) ? res : (res?.data ?? []);
+          const raw: any[] = Array.isArray(res) ? res : (res?.data ?? []);
+
+          this.permissionService.load(res);
+
+          // Unwrap { menu, permission } wrapper
+          const flat = raw.map((item) => item.menu ?? item);
 
           this.standaloneMenus = flat
             .filter((m) => !m.parentId && !m.isVisible && m.isActive)
@@ -90,9 +97,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
           this.navGroups = parents
             .map((parent) => {
               const groupChildren = children
-                .filter(
-                  (c) => c.parentId === parent.id && !c.isVisible && c.isActive,
-                )
+                .filter((c) => c.parentId === parent.id && !c.isVisible && c.isActive)
                 .sort((a, b) => a.sequence - b.sequence)
                 .map((c) => ({
                   label: c.name,
