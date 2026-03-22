@@ -30,6 +30,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   expandedGroups: Set<string> = new Set(['Users', 'Curriculum']);
   menus = [];
 
+  standaloneMenus: NavItem[] = [];
+
   navGroups: NavGroup[] = [];
 
   constructor(
@@ -70,30 +72,22 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
         next: (res: any) => {
           const flat: any[] = Array.isArray(res) ? res : (res?.data ?? []);
 
+          this.standaloneMenus = flat
+            .filter((m) => !m.parentId && !m.isVisible && m.isActive)
+            .sort((a, b) => a.sequence - b.sequence)
+            .map((m) => ({
+              label: m.name,
+              icon: m.icon,
+              route: m.url,
+            }));
+
           const parents = flat
-            .filter((m) => !m.parentId)
+            .filter((m) => !m.parentId && m.isVisible && m.isActive)
             .sort((a, b) => a.sequence - b.sequence);
+
           const children = flat.filter((m) => m.parentId);
 
-          if (parents.length === 0) {
-            this.navGroups = [
-              {
-                groupLabel: 'Menu',
-                items: flat
-                  .filter((m) => m.isVisible && m.isActive)
-                  .sort((a, b) => a.sequence - b.sequence)
-                  .map((m) => ({
-                    label: m.name,
-                    icon: m.icon,
-                    route: m.url,
-                  })),
-              },
-            ];
-            return;
-          }
-
           this.navGroups = parents
-            .filter((p) => p.isVisible && p.isActive)
             .map((parent) => {
               const groupChildren = children
                 .filter(
@@ -113,7 +107,10 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
             })
             .filter((g) => g.items.length > 0);
         },
-        error: () => {},
+
+        error: (err) => {
+          console.error('Menu load error:', err);
+        },
       });
   }
 
