@@ -1,6 +1,8 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
+import { HttpGeneralService } from '../../services/http.service';
+import { environment } from '../../../environments/environment';
 
 interface NavItem {
   label: string;
@@ -21,89 +23,21 @@ interface NavGroup {
   styleUrls: ['./admin-layout.component.css'],
 })
 export class AdminLayoutComponent implements OnInit, OnDestroy {
-  sidebarOpen = true;       // desktop: expanded vs icon-only
-  mobileSidebarOpen = false; // mobile drawer
+  sidebarOpen = true;
+  mobileSidebarOpen = false;
   isMobile = false;
   currentRoute = '';
   expandedGroups: Set<string> = new Set(['Users', 'Curriculum']);
+  menus = [];
 
-  navGroups: NavGroup[] = [
-    {
-      groupLabel: 'Users',
-      items: [
-        { label: 'Students',  icon: 'fa-solid fa-user-graduate',    route: '/students' },
-        { label: 'Teachers',  icon: 'fa-solid fa-chalkboard-user',  route: '/teachers' },
-        { label: 'Parents',   icon: 'fa-solid fa-people-roof',      route: '/parents'  },
-      ],
-    },
-    {
-      groupLabel: 'Curriculum',
-      items: [
-        { label: 'Boards',    icon: 'fa-solid fa-building-columns', route: '/boards'   },
-        { label: 'Classes',   icon: 'fa-solid fa-school',           route: '/classes'  },
-        { label: 'Subjects',  icon: 'fa-solid fa-atom',             route: '/subjects' },
-        { label: 'Topics',    icon: 'fa-solid fa-list-check',       route: '/topics'   },
-      ],
-    },
-    {
-      groupLabel: 'Learning',
-      items: [
-        { label: 'Courses',       icon: 'fa-solid fa-book-open',      route: '/courses'           },
-        { label: 'Batches',       icon: 'fa-solid fa-layer-group',    route: '/batches'           },
-        { label: 'Library',       icon: 'fa-solid fa-book-bookmark',  route: '/library'           },
-        { label: 'Timetable',     icon: 'fa-solid fa-calendar-days',  route: '/timetable'         },
-        { label: 'Session Slots', icon: 'fa-solid fa-calendar-check', route: '/session-slots'     },
-        { label: 'My Meetings',   icon: 'fa-solid fa-circle-play',    route: '/my-meetings'       },
-      ],
-    },
-    {
-      groupLabel: 'Dashboards',
-      items: [
-        { label: 'Teacher Dashboard', icon: 'fa-solid fa-chalkboard-user', route: '/teacher-dashboard' },
-        { label: 'Student Dashboard', icon: 'fa-solid fa-user-graduate',   route: '/student-dashboard' },
-      ],
-    },
-    {
-      groupLabel: 'Assessment',
-      items: [
-        { label: 'Exams & Quizzes', icon: 'fa-solid fa-file-pen',         route: '/exams'   },
-        { label: 'Results',         icon: 'fa-solid fa-file-circle-check', route: '/results' },
-      ],
-    },
-    {
-      groupLabel: 'Communication',
-      items: [
-        { label: 'Notifications', icon: 'fa-solid fa-bell',       route: '/notifications', badge: 5 },
-        { label: 'Announcements', icon: 'fa-solid fa-bullhorn',   route: '/announcements'           },
-      ],
-    },
-    {
-      groupLabel: 'Finance',
-      items: [
-        { label: 'Subscriptions', icon: 'fa-solid fa-id-card',          route: '/subscriptions' },
-        { label: 'Refunds',       icon: 'fa-solid fa-rotate-left',      route: '/refunds', badge: 12 },
-      ],
-    },
-    {
-      groupLabel: 'Reports',
-      items: [
-        { label: 'Attendance',  icon: 'fa-solid fa-user-check',      route: '/attendance-report' },
-        { label: 'Performance', icon: 'fa-solid fa-chart-line',      route: '/performance-report'},
-        { label: 'Revenue',     icon: 'fa-solid fa-chart-bar',       route: '/revenue-report'    },
-      ],
-    },
-    {
-      groupLabel: 'System',
-      items: [
-        { label: 'Roles & Permissions', icon: 'fa-solid fa-user-shield', route: '/roles'    },
-        { label: 'Settings',            icon: 'fa-solid fa-gear',        route: '/settings' },
-        { label: 'Menu',                icon: 'fa-solid fa-bars',        route: '/menu'     },
-      ],
-    },
-  ];
+  navGroups: NavGroup[] = [];
 
-  constructor(private router: Router, private authService: AuthService) {
-    this.router.events.subscribe(event => {
+  constructor(
+    private router: Router,
+    private authService: AuthService,
+    private httpService: HttpGeneralService<any>,
+  ) {
+    this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         this.currentRoute = event.urlAfterRedirects;
         if (this.isMobile) this.mobileSidebarOpen = false;
@@ -113,12 +47,12 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.checkViewport();
-    // Auto-expand group containing active route
-    this.navGroups.forEach(g => {
-      if (g.items.some(i => i.route === this.currentRoute)) {
+    this.navGroups.forEach((g) => {
+      if (g.items.some((i) => i.route === this.currentRoute)) {
         this.expandedGroups.add(g.groupLabel);
       }
     });
+    this.loadMenus();
   }
 
   ngOnDestroy(): void {}
@@ -127,6 +61,60 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   checkViewport(): void {
     this.isMobile = window.innerWidth < 768;
     if (!this.isMobile) this.mobileSidebarOpen = false;
+  }
+
+  loadMenus(): void {
+    this.httpService
+      .getData(environment.apiUrl, '/menu/get-user-access-menu')
+      .subscribe({
+        next: (res: any) => {
+          const flat: any[] = Array.isArray(res) ? res : (res?.data ?? []);
+
+          const parents = flat
+            .filter((m) => !m.parentId)
+            .sort((a, b) => a.sequence - b.sequence);
+          const children = flat.filter((m) => m.parentId);
+
+          if (parents.length === 0) {
+            this.navGroups = [
+              {
+                groupLabel: 'Menu',
+                items: flat
+                  .filter((m) => m.isVisible && m.isActive)
+                  .sort((a, b) => a.sequence - b.sequence)
+                  .map((m) => ({
+                    label: m.name,
+                    icon: m.icon,
+                    route: m.url,
+                  })),
+              },
+            ];
+            return;
+          }
+
+          this.navGroups = parents
+            .filter((p) => p.isVisible && p.isActive)
+            .map((parent) => {
+              const groupChildren = children
+                .filter(
+                  (c) => c.parentId === parent.id && !c.isVisible && c.isActive,
+                )
+                .sort((a, b) => a.sequence - b.sequence)
+                .map((c) => ({
+                  label: c.name,
+                  icon: c.icon,
+                  route: c.url,
+                }));
+
+              return {
+                groupLabel: parent.name,
+                items: groupChildren,
+              };
+            })
+            .filter((g) => g.items.length > 0);
+        },
+        error: () => {},
+      });
   }
 
   toggleSidebar(): void {
@@ -175,7 +163,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   get activeLabel(): string {
     if (this.currentRoute === '/dashboard') return 'Dashboard';
     for (const g of this.navGroups) {
-      const found = g.items.find(i => i.route === this.currentRoute);
+      const found = g.items.find((i) => i.route === this.currentRoute);
       if (found) return found.label;
     }
     return 'Admin Panel';
