@@ -1,7 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { debounceTime, distinctUntilChanged, Subject, switchMap, catchError, of } from 'rxjs';
+import { HttpGeneralService } from '../../../services/http.service';
+import { environment } from '../../../../environments/environment';
 
 export interface AttendanceRecord {
-  id: number;
+  studentId: string;
   student: string;
   batch: string;
   class: string;
@@ -12,44 +16,145 @@ export interface AttendanceRecord {
   status: 'regular' | 'irregular' | 'absent';
 }
 
+export interface AttendanceStats {
+  totalStudents: number;
+  avgAttendance: number;
+  regularCount: number;
+  irregularCount: number;
+  absentCount: number;
+}
+
+export interface AttendanceResponse {
+  stats: AttendanceStats;
+  records: AttendanceRecord[];
+}
+
 @Component({
   selector: 'app-attendance-report',
   standalone: false,
   templateUrl: './attendance-report.component.html',
   styleUrls: ['../../../shared-page.css', './attendance-report.component.css']
 })
-export class AttendanceReportComponent {
+export class AttendanceReportComponent implements OnInit {
+
+  private readonly API_URL = `${environment.apiUrl}/reports/attendants`;
+
   searchQuery = '';
   statusFilter = '';
+  batchIdFilter: string | null = null;
 
-  records: AttendanceRecord[] = [
-    { id: 1,  student: 'Aarav Singh',    batch: 'Batch A', class: 'Grade 10', presentDays: 24, totalDays: 26, percentage: 92, lastAttended: '2026-03-15', status: 'regular' },
-    { id: 2,  student: 'Priya Sharma',   batch: 'Batch B', class: 'Grade 8',  presentDays: 22, totalDays: 26, percentage: 85, lastAttended: '2026-03-16', status: 'regular' },
-    { id: 3,  student: 'Rahul Verma',    batch: 'Batch A', class: 'Grade 10', presentDays: 18, totalDays: 26, percentage: 69, lastAttended: '2026-03-14', status: 'irregular' },
-    { id: 4,  student: 'Neha Patel',     batch: 'Batch C', class: 'Grade 12', presentDays: 25, totalDays: 26, percentage: 96, lastAttended: '2026-03-16', status: 'regular' },
-    { id: 5,  student: 'Kiran Mehta',    batch: 'Batch B', class: 'Grade 9',  presentDays: 14, totalDays: 26, percentage: 54, lastAttended: '2026-03-10', status: 'irregular' },
-    { id: 6,  student: 'Saurabh Joshi',  batch: 'Batch D', class: 'Grade 11', presentDays: 5,  totalDays: 26, percentage: 19, lastAttended: '2026-03-01', status: 'absent' },
-    { id: 7,  student: 'Divya Nair',     batch: 'Batch C', class: 'Grade 12', presentDays: 23, totalDays: 26, percentage: 88, lastAttended: '2026-03-15', status: 'regular' },
-    { id: 8,  student: 'Arjun Desai',    batch: 'Batch D', class: 'Grade 11', presentDays: 20, totalDays: 26, percentage: 77, lastAttended: '2026-03-13', status: 'irregular' },
-    { id: 9,  student: 'Sneha Kulkarni', batch: 'Batch A', class: 'Grade 10', presentDays: 11, totalDays: 26, percentage: 42, lastAttended: '2026-03-08', status: 'absent' },
-    { id: 10, student: 'Rohan Mehta',    batch: 'Batch B', class: 'Grade 11', presentDays: 26, totalDays: 26, percentage: 100,lastAttended: '2026-03-16', status: 'regular' },
-  ];
+  records: AttendanceRecord[] = [];
+  stats: AttendanceStats = {
+    totalStudents: 0,
+    avgAttendance: 0,
+    regularCount: 0,
+    irregularCount: 0,
+    absentCount: 0
+  };
 
-  get filteredRecords(): AttendanceRecord[] {
-    const q = this.searchQuery.toLowerCase();
-    return this.records.filter(r => {
-      const matchSearch = !q || r.student.toLowerCase().includes(q) || r.batch.toLowerCase().includes(q) || r.class.toLowerCase().includes(q);
-      const matchStatus = !this.statusFilter || r.status === this.statusFilter;
-      return matchSearch && matchStatus;
-    });
+  isLoading = false;
+  errorMessage = '';
+
+  private filterChange$ = new Subject<void>();
+
+  constructor(private httpService: HttpGeneralService<any>) {}
+
+  ngOnInit(): void {
+    // Debounce filter/search changes to avoid excessive API calls
+    this.filterChange$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(() => this.fetchAttendance())
+      )
+      .subscribe({
+        next: (data) => this.handleResponse(data),
+        error: (err) => this.handleError(err)
+      });
+
+    // Initial load
+    this.loadAttendance();
   }
 
-  get regularCount(): number { return this.filteredRecords.filter(r => r.status === 'regular').length; }
-  get irregularCount(): number { return this.filteredRecords.filter(r => r.status === 'irregular').length; }
-  get absentCount(): number { return this.filteredRecords.filter(r => r.status === 'absent').length; }
-  get avgAttendance(): number {
-    if (!this.filteredRecords.length) return 0;
-    return Math.round(this.filteredRecords.reduce((s, r) => s + r.percentage, 0) / this.filteredRecords.length);
+  onSearchChange(value?: string): void {
+    if (value !== undefined) this.searchQuery = value;
+    this.filterChange$.next();
+  }
+
+  onStatusFilterChange(): void {
+    this.filterChange$.next();
+  }
+
+  /** Alias used by some template variants */
+  onStatusChange(value?: string): void {
+    if (value !== undefined) this.statusFilter = value;
+    this.filterChange$.next();
+  }
+
+  /** Alias used by some template variants */
+  retryLoad(): void {
+    this.loadAttendance();
+  }
+
+  loadAttendance(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.fetchAttendance()
+      .pipe(catchError(err => { this.handleError(err); return of(null); }))
+      .subscribe(data => {
+        if (data) this.handleResponse(data);
+        this.isLoading = false;
+      });
+  }
+
+   private fetchAttendance() {
+    const params: string[] = [];
+
+    if (this.batchIdFilter) {
+      params.push(`batchId=${encodeURIComponent(this.batchIdFilter)}`);
+    }
+    if (this.searchQuery?.trim()) {
+      params.push(`search=${encodeURIComponent(this.searchQuery.trim())}`);
+    }
+    if (this.statusFilter) {
+      params.push(`status=${encodeURIComponent(this.statusFilter)}`);
+    }
+
+    const queryString = params.length ? `?${params.join('&')}` : '';
+    const apiRoute = `${this.API_URL}${queryString}`;
+
+    return this.httpService.getData('', apiRoute);
+  }
+
+  private handleResponse(data: AttendanceResponse): void {
+    this.records = data.records ?? [];
+    this.stats = data.stats ?? {
+      totalStudents: 0,
+      avgAttendance: 0,
+      regularCount: 0,
+      irregularCount: 0,
+      absentCount: 0
+    };
+    this.isLoading = false;
+    this.errorMessage = '';
+  }
+
+  private handleError(err: any): void {
+    console.error('Failed to load attendance data:', err);
+    this.errorMessage = 'Failed to load attendance data. Please try again.';
+    this.isLoading = false;
+  }
+
+  // Stats are now driven by the API response (server-side filtering)
+  get avgAttendance(): number { return this.stats.avgAttendance; }
+  get regularCount(): number { return this.stats.regularCount; }
+  get irregularCount(): number { return this.stats.irregularCount; }
+  get absentCount(): number { return this.stats.absentCount; }
+
+  // filteredRecords now reflects whatever the API returned
+  get filteredRecords(): AttendanceRecord[] {
+    return this.records;
   }
 
   percentageColor(pct: number): string {
@@ -59,11 +164,16 @@ export class AttendanceReportComponent {
   }
 
   statusBadge(status: string): string {
-    const map: Record<string, string> = { regular: 'pg-badge--green', irregular: 'pg-badge--yellow', absent: 'pg-badge--red' };
+    const map: Record<string, string> = {
+      regular: 'pg-badge--green',
+      irregular: 'pg-badge--yellow',
+      absent: 'pg-badge--red'
+    };
     return map[status] || 'pg-badge--gray';
   }
 
   formatDate(dateStr: string): string {
+    if (!dateStr) return '—';
     const d = new Date(dateStr);
     return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   }

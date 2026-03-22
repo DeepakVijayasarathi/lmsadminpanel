@@ -56,9 +56,14 @@
       <div class="pg-toolbar">
         <div class="pg-search">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" placeholder="Search students, batch..." [(ngModel)]="searchQuery" />
+          <input
+            type="text"
+            placeholder="Search students, batch..."
+            [value]="searchQuery"
+            (input)="onSearchChange($any($event.target).value)"
+          />
         </div>
-        <select class="pg-filter" [(ngModel)]="statusFilter">
+        <select class="pg-filter" [value]="statusFilter" (change)="onStatusChange($any($event.target).value)">
           <option value="">All Status</option>
           <option value="regular">Regular</option>
           <option value="irregular">Irregular</option>
@@ -66,7 +71,26 @@
         </select>
       </div>
     </div>
-    <div class="pg-table-wrap">
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" style="text-align:center;padding:48px 32px;color:#64748b;">
+      <i class="fa-solid fa-circle-notch fa-spin" style="font-size:28px;display:block;margin-bottom:12px;color:#14b8a6;"></i>
+      Loading attendance data...
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="!isLoading && errorMessage" style="text-align:center;padding:48px 32px;color:#ef4444;">
+      <i class="fa-solid fa-circle-exclamation" style="font-size:28px;display:block;margin-bottom:12px;"></i>
+      {{ errorMessage }}
+      <div style="margin-top:16px;">
+        <button class="pg-btn pg-btn--outline" (click)="retryLoad()">
+          <i class="fa-solid fa-rotate-right"></i> Retry
+        </button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="pg-table-wrap" *ngIf="!isLoading && !errorMessage">
       <table class="pg-table">
         <thead>
           <tr>
@@ -98,7 +122,11 @@
             <td>
               <div style="display:flex;align-items:center;gap:10px;">
                 <div style="flex:1;background:#f1f5f9;border-radius:4px;height:6px;min-width:80px;">
-                  <div [style.width.%]="rec.percentage" [style.background]="percentageColor(rec.percentage)" style="height:6px;border-radius:4px;transition:width 0.3s;"></div>
+                  <div
+                    [style.width.%]="rec.percentage"
+                    [style.background]="percentageColor(rec.percentage)"
+                    style="height:6px;border-radius:4px;transition:width 0.3s;">
+                  </div>
                 </div>
                 <strong [style.color]="percentageColor(rec.percentage)">{{ rec.percentage }}%</strong>
               </div>
