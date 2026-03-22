@@ -46,6 +46,7 @@ import { TimetableComponent } from './components/learning/timetable/timetable.co
 import { SessionSlotsComponent } from './components/learning/session-slots/session-slots.component';
 import { RegistrationComponent } from './components/registration/registration.component';
 import { VideoPlayerComponent } from './components/controls/video-player/video-player.component';
+import { RecordVideoComponent } from './components/learning/record-video/record-video.component';
 
 @NgModule({
   declarations: [
@@ -86,7 +87,8 @@ import { VideoPlayerComponent } from './components/controls/video-player/video-p
     CommonPaginationComponent,
     ActionButtonsComponent,
     RegistrationComponent,
-    VideoPlayerComponent
+    VideoPlayerComponent,
+    RecordVideoComponent
   ],
   imports: [
     BrowserModule,

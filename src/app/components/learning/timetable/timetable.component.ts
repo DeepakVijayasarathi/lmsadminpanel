@@ -11,6 +11,7 @@ export interface TimetableSlot {
   id:           string;
   day:          string;
   session:      number;
+  sessionId:    string | null;
   subject:      string;
   topic:        string;
   teacher:      string;
@@ -23,6 +24,7 @@ export interface TimetableSlot {
   recordingUrl: string;
   playbackUrl:  string;
   mp4Url:       string;
+  bucketUrl:    string;
   status:       'scheduled' | 'live' | 'completed' | 'cancelled';
 }
 
@@ -62,10 +64,12 @@ export class TimetableComponent implements OnInit, OnDestroy {
   joiningId    = '';
   startingId   = '';   // slot ID being started  → live
   endingId     = '';   // slot ID being ended    → completed
-  recordingId      = '';
-  recordingPolling: Record<string, boolean> = {};
-  recordingError:   Record<string, string>  = {};
+  recordingId         = '';
+  recordingPolling:   Record<string, boolean> = {};
+  recordingError:     Record<string, string>  = {};
+  recordingProcessing: Record<string, boolean> = {};
   private pollingIntervals: Record<string, ReturnType<typeof setInterval>> = {};
+  private livePollingIntervals: Record<string, ReturnType<typeof setInterval>> = {};
 
   // ── Analytics ─────────────────────────────────────────────────────────────
   analytics:        SessionAnalytic[] = [];
@@ -227,22 +231,54 @@ export class TimetableComponent implements OnInit, OnDestroy {
   startSession(slot: TimetableSlot): void {
     this.startingId = slot.id;
     this.timetableService.start(slot.id).subscribe({
-      next: () => { this.startingId = ''; this.loadSlots(); },
+      next: () => {
+        this.startingId = '';
+        this.loadSlots();
+        this.startLivePolling(slot.id);
+      },
       error: () => { this.startingId = ''; }
     });
   }
 
   endSession(slot: TimetableSlot): void {
     this.endingId = slot.id;
+    this.stopLivePolling(slot.id);
     this.timetableService.end(slot.id).subscribe({
       next: () => {
         this.endingId = '';
         this.loadSlots();
-        // Auto-start recording poll after session ends
         this.triggerRecording(slot);
       },
       error: () => { this.endingId = ''; }
     });
+  }
+
+  // ── Live session auto-end polling ─────────────────────────────────────────
+  // Polls every 20s; if BBB ended the session on their side, auto-ends it here.
+  private startLivePolling(id: string): void {
+    if (this.livePollingIntervals[id]) return;
+    this.livePollingIntervals[id] = setInterval(() => {
+      this.timetableService.getById(id).subscribe({
+        next: (res: any) => {
+          const status = (res?.status ?? res?.timetable?.status ?? '').toLowerCase();
+          if (status && status !== 'live') {
+            this.stopLivePolling(id);
+            const slot = this.slots.find(s => s.id === id);
+            if (slot) {
+              slot.status = status as any;
+              if (status === 'completed') this.triggerRecording(slot);
+            }
+            this.loadSlots();
+          }
+        },
+        error: () => this.stopLivePolling(id)
+      });
+    }, 20000);
+  }
+
+  private stopLivePolling(id: string): void {
+    clearInterval(this.livePollingIntervals[id]);
+    delete this.livePollingIntervals[id];
   }
 
   // ── Recording ─────────────────────────────────────────────────────────────
@@ -262,18 +298,27 @@ export class TimetableComponent implements OnInit, OnDestroy {
       next: (res) => {
         if (res.isReady) {
           this.stopPolling(slot.id);
-          this.timetableService.triggerRecording(slot.id).subscribe({
-            next: (rec) => {
-              this.recordingId = '';
-              this.applyRecordingUrls(slot.id, rec.playbackUrl, rec.mp4Url);
-            },
-            error: (err) => {
-              this.recordingId = '';
-              this.recordingError[slot.id] = err?.error?.message ?? 'Failed to fetch recording.';
-            }
-          });
+          delete this.recordingProcessing[slot.id];
+          // If the ready response already includes URLs, use them directly
+          if (res.bucketUrl || res.playbackUrl || res.mp4Url) {
+            this.recordingId = '';
+            this.applyRecordingUrls(slot.id, res.playbackUrl, res.mp4Url, res.bucketUrl);
+          } else {
+            this.timetableService.triggerRecording(slot.id).subscribe({
+              next: (rec) => {
+                this.recordingId = '';
+                this.applyRecordingUrls(slot.id, rec.playbackUrl, rec.mp4Url, rec.bucketUrl);
+              },
+              error: (err) => {
+                this.recordingId = '';
+                this.recordingError[slot.id] = err?.error?.message ?? 'Failed to fetch recording.';
+              }
+            });
+          }
+        } else {
+          // isReady: false → still processing, keep polling
+          this.recordingProcessing[slot.id] = true;
         }
-        // isReady: false → keep polling
       },
       error: () => {
         this.stopPolling(slot.id);
@@ -287,14 +332,16 @@ export class TimetableComponent implements OnInit, OnDestroy {
     clearInterval(this.pollingIntervals[id]);
     delete this.pollingIntervals[id];
     delete this.recordingPolling[id];
+    delete this.recordingProcessing[id];
   }
 
-  private applyRecordingUrls(id: string, playbackUrl: string | null, mp4Url: string | null): void {
+  private applyRecordingUrls(id: string, playbackUrl: string | null, mp4Url: string | null, bucketUrl?: string | null): void {
     const found = this.slots.find(s => s.id === id);
     if (found) {
-      found.playbackUrl = playbackUrl ?? '';
-      found.mp4Url      = mp4Url      ?? '';
-      found.recordingUrl = playbackUrl ?? mp4Url ?? '';
+      found.playbackUrl  = playbackUrl ?? '';
+      found.mp4Url       = mp4Url      ?? '';
+      found.bucketUrl    = bucketUrl   ?? mp4Url ?? '';
+      found.recordingUrl = bucketUrl   ?? playbackUrl ?? mp4Url ?? '';
     }
   }
 
@@ -345,7 +392,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
       (slot as any).courseId ?? null;
     // Resolve sessionId from apiSessionSlots by slot number
     const sessionSlot = this.getSessionSlot(slot.session);
-    const sessionId = sessionSlot?.id ?? (slot as any).sessionId ?? null;
+    const sessionId = sessionSlot?.id ?? slot.sessionId ?? null;
     // Resolve teacherId from batch or teacher list
     const teacherId =
       b?.teacherId ?? b?.teacher?.id ?? b?.teacherDto?.id ?? b?.assignedTeacherId ??
@@ -516,6 +563,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   ngOnDestroy(): void {
     Object.keys(this.pollingIntervals).forEach(id => clearInterval(this.pollingIntervals[id]));
+    Object.keys(this.livePollingIntervals).forEach(id => clearInterval(this.livePollingIntervals[id]));
   }
 
   // ── API loaders ───────────────────────────────────────────────────────────
@@ -597,6 +645,12 @@ export class TimetableComponent implements OnInit, OnDestroy {
     this.timetableService.getAll().subscribe({
       next: (res: any) => {
         const list = Array.isArray(res) ? res : (res?.data ?? []);
+        // Stop stale live polls for slots no longer live
+        Object.keys(this.livePollingIntervals).forEach(id => {
+          if (!list.find((r: any) => r.id === id && (r.status ?? r.timetable?.status ?? '').toLowerCase() === 'live')) {
+            this.stopLivePolling(id);
+          }
+        });
         this.slots = list.map((r: any) => {
           const tt = r.timetable ?? r;
           return {
@@ -615,11 +669,14 @@ export class TimetableComponent implements OnInit, OnDestroy {
             meetingLink:  tt.meetingLink  ?? r.meetingUrl ?? '',
             recordingUrl: tt.recordingUrl ?? tt.playbackUrl ?? r.recordingUrl ?? '',
             playbackUrl:  tt.playbackUrl  ?? r.playbackUrl ?? '',
-            mp4Url:       tt.mp4Url       ?? r.mp4Url      ?? '',
+            bucketUrl:    r.bucketUrl     ?? tt.bucketUrl  ?? '',
+            mp4Url:       tt.mp4Url       ?? r.mp4Url      ?? r.bucketUrl ?? '',
             courseId:     r.courseId      ?? null,
             sessionId:    r.sessionId     ?? null,
           };
         });
+        // Auto-start live polling for any live slots not already being polled
+        this.slots.filter(s => s.status === 'live').forEach(s => this.startLivePolling(s.id));
         this.isLoading = false;
       },
       error: () => {

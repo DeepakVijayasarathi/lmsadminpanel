@@ -29,6 +29,7 @@ import { ParentsComponent } from './components/users/parents/parents.component';
 import { MenuComponent } from './components/system/menu/menu.component';
 import { TimetableComponent } from './components/learning/timetable/timetable.component';
 import { SessionSlotsComponent } from './components/learning/session-slots/session-slots.component';
+import { RecordVideoComponent } from './components/learning/record-video/record-video.component';
 import { TeacherDashboardComponent } from './components/teacher-dashboard/teacher-dashboard.component';
 import { StudentDashboardComponent } from './components/student-dashboard/student-dashboard.component';
 import { RegistrationComponent } from './components/registration/registration.component';
@@ -64,6 +65,7 @@ const routes: Routes = [
   { path: 'timetable',     component: TimetableComponent,    canActivate: AG },
   { path: 'session-slots', component: SessionSlotsComponent, canActivate: AG },
   { path: 'my-meetings',   component: LiveClassesComponent,  canActivate: AG },
+  { path: 'record-video',  component: RecordVideoComponent,  canActivate: AG },
 
   // Assessment
   { path: 'exams',    component: ExamsComponent,   canActivate: AG },

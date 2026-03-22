@@ -168,12 +168,13 @@
 
                       <!-- completed → Play / Download or Get Recording -->
                       <ng-container *ngIf="slot.status === 'completed'">
-                        <ng-container *ngIf="slot.mp4Url || slot.playbackUrl">
-                          <a *ngIf="slot.mp4Url" [href]="slot.mp4Url" target="_blank"
+                        <ng-container *ngIf="slot.bucketUrl || slot.mp4Url || slot.playbackUrl">
+                          <a *ngIf="slot.bucketUrl || slot.mp4Url"
+                             [href]="slot.bucketUrl || slot.mp4Url" target="_blank"
                              class="tt-rec-btn tt-rec-btn--ready" (click)="$event.stopPropagation()" title="Play MP4">
                             <i class="fa-solid fa-circle-play"></i> MP4
                           </a>
-                          <a *ngIf="slot.playbackUrl && !slot.mp4Url" [href]="slot.playbackUrl" target="_blank"
+                          <a *ngIf="slot.playbackUrl && !slot.bucketUrl && !slot.mp4Url" [href]="slot.playbackUrl" target="_blank"
                              class="tt-rec-btn tt-rec-btn--ready" (click)="$event.stopPropagation()" title="BBB Playback">
                             <i class="fa-solid fa-circle-play"></i> Play
                           </a>
@@ -181,7 +182,7 @@
                         <span *ngIf="recordingPolling[slot.id]" class="tt-rec-btn" style="cursor:default;" title="Processing recording…">
                           <i class="fa-solid fa-circle-notch fa-spin"></i> Processing…
                         </span>
-                        <button *ngIf="!slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id]"
+                        <button *ngIf="!slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id]"
                           class="tt-rec-btn"
                           [disabled]="recordingId === slot.id"
                           (click)="triggerRecording(slot); $event.stopPropagation()" title="Fetch recording from BBB">
@@ -269,9 +270,11 @@
               </div>
             </td>
             <td>
-              <ng-container *ngIf="slot.mp4Url || slot.playbackUrl">
-                <a *ngIf="slot.mp4Url" [href]="slot.mp4Url" target="_blank"
-                   class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 12px;text-decoration:none;margin-right:4px;">
+              <ng-container *ngIf="slot.bucketUrl || slot.mp4Url || slot.playbackUrl">
+                <a *ngIf="slot.bucketUrl || slot.mp4Url"
+                   [href]="slot.bucketUrl || slot.mp4Url" target="_blank"
+                   class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 12px;text-decoration:none;margin-right:4px;"
+                   title="{{ slot.bucketUrl || slot.mp4Url }}">
                   <i class="fa-solid fa-circle-play"></i> MP4
                 </a>
                 <a *ngIf="slot.playbackUrl" [href]="slot.playbackUrl" target="_blank"
@@ -282,7 +285,7 @@
               <span *ngIf="recordingPolling[slot.id]" style="font-size:12px;color:#6366f1;">
                 <i class="fa-solid fa-circle-notch fa-spin"></i> Processing…
               </span>
-              <button *ngIf="!slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id] && slot.status === 'completed'"
+              <button *ngIf="!slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id] && slot.status === 'completed'"
                 class="pg-btn pg-btn--ghost" style="font-size:12px;padding:5px 12px;"
                 [disabled]="recordingId === slot.id"
                 (click)="triggerRecording(slot)">
@@ -292,7 +295,7 @@
                    [class.fa-record-vinyl]="recordingId !== slot.id"></i>
                 {{ recordingId === slot.id ? 'Fetching…' : 'Get Recording' }}
               </button>
-              <span *ngIf="slot.status !== 'completed' && !slot.mp4Url && !slot.playbackUrl" style="color:#cbd5e1;font-size:12px;">—</span>
+              <span *ngIf="slot.status !== 'completed' && !slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl" style="color:#cbd5e1;font-size:12px;">—</span>
             </td>
             <td>
               <span [class]="getStatusClass(slot.status)">
@@ -464,214 +467,229 @@
 
 <!-- ── VIEW MODAL ──────────────────────────────────────────────────────── -->
 <div class="pg-modal-backdrop" *ngIf="modalMode === 'view'" (click)="closeModal()"></div>
-<div class="pg-modal" *ngIf="modalMode === 'view' && selectedSlot">
-  <div class="pg-modal__head">
-    <h3>Session Details</h3>
-    <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-  </div>
-  <div class="pg-modal__body">
-    <div class="tt-view-detail">
+<div class="sd-modal" *ngIf="modalMode === 'view' && selectedSlot">
 
-      <!-- Hero -->
-      <div class="tt-view-hero">
-        <div [class]="'tt-view-badge ' + getSubjectColor(selectedSlot.subject)">
-          <i class="fa-solid fa-book-open"></i> {{ selectedSlot.subject }}
-        </div>
-        <span [class]="'tt-exam-tag ' + getCategoryChip(selectedSlot.category)">{{ selectedSlot.category }}</span>
-        <span [class]="getStatusClass(selectedSlot.status)">
-          <i *ngIf="selectedSlot.status === 'live'" class="fa-solid fa-circle" style="font-size:8px;"></i>
-          {{ selectedSlot.status | titlecase }}
-        </span>
+  <!-- Close -->
+  <button class="sd-close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+
+  <!-- ── Hero Banner ── -->
+  <div [class]="'sd-hero sd-hero--' + selectedSlot.status">
+    <div class="sd-hero__left">
+      <div class="sd-hero__icon"><i class="fa-solid fa-book-open"></i></div>
+      <div>
+        <div class="sd-hero__subject">{{ selectedSlot.subject }}</div>
+        <div class="sd-hero__topic">{{ selectedSlot.topic || 'No topic specified' }}</div>
       </div>
-
-      <div class="tt-view-rows">
-        <div class="tt-view-row">
-          <span class="tt-view-label"><i class="fa-solid fa-book"></i> Topic</span>
-          <span class="tt-view-val">{{ selectedSlot.topic || '—' }}</span>
-        </div>
-        <div class="tt-view-row">
-          <span class="tt-view-label"><i class="fa-solid fa-layer-group"></i> Batch</span>
-          <span class="tt-view-val">{{ selectedSlot.batch }}</span>
-        </div>
-        <div class="tt-view-row">
-          <span class="tt-view-label"><i class="fa-solid fa-calendar"></i> Day</span>
-          <span class="tt-view-val">{{ selectedSlot.day }}</span>
-        </div>
-        <div class="tt-view-row">
-          <span class="tt-view-label"><i class="fa-solid fa-hashtag"></i> Session</span>
-          <span class="tt-view-val">Session {{ selectedSlot.session }}</span>
-        </div>
-        <div class="tt-view-row">
-          <span class="tt-view-label"><i class="fa-solid fa-chalkboard-user"></i> Teacher</span>
-          <span class="tt-view-val">{{ selectedSlot.teacher }}</span>
-        </div>
-        <div class="tt-view-row">
-          <span class="tt-view-label"><i class="fa-solid fa-clock"></i> Time</span>
-          <span class="tt-view-val">{{ selectedSlot.startTime }} – {{ selectedSlot.endTime }}</span>
-        </div>
-      </div>
-
-      <!-- BBB meeting box -->
-      <div class="tt-bbb-box">
-        <div class="tt-bbb-box__header">
-          <i class="fa-solid fa-circle-play"></i>
-          <span>BigBlueButton Meeting Room</span>
-        </div>
-        <div class="tt-bbb-box__id">Room ID: <strong>{{ selectedSlot.meetingId }}</strong></div>
-        <div class="tt-bbb-box__link">{{ selectedSlot.meetingLink }}</div>
-        <button class="tt-bbb-box__copy" (click)="copyLink(selectedSlot)">
-          <i [class]="copiedId === selectedSlot.id ? 'fa-solid fa-check' : 'fa-regular fa-copy'"></i>
-          {{ copiedId === selectedSlot.id ? 'Copied!' : 'Copy Link' }}
-        </button>
-      </div>
-
-      <!-- Join button → API signed URL -->
-      <button *ngIf="canJoin(selectedSlot.status)"
-        class="pg-btn pg-btn--primary tt-join-full"
-        [disabled]="joiningId === selectedSlot.id"
-        (click)="joinSlot(selectedSlot, selectedSlot.status === 'live')">
-        <i class="fa-solid"
-           [class.fa-circle-notch]="joiningId === selectedSlot.id"
-           [class.fa-spin]="joiningId === selectedSlot.id"
-           [class.fa-video]="joiningId !== selectedSlot.id"></i>
-        {{ selectedSlot.status === 'live' ? 'Join Live Session on BBB' : 'Join Session on BBB' }}
-      </button>
-
-      <!-- ── Recording section (completed) ─────────────────────────────── -->
-      <ng-container *ngIf="selectedSlot.status === 'completed'">
-
-        <!-- Polling: BBB still processing -->
-        <div *ngIf="recordingPolling[selectedSlot.id]" class="tt-rec-error" style="background:#f0f9ff;border-color:#bae6fd;color:#0369a1;">
-          <i class="fa-solid fa-circle-notch fa-spin"></i>
-          BBB is processing the recording. Checking every 30 seconds…
-        </div>
-
-        <!-- Fetch button when no recording yet and not polling -->
-        <button *ngIf="!selectedSlot.mp4Url && !selectedSlot.playbackUrl && !recordingPolling[selectedSlot.id]"
-          class="pg-btn pg-btn--ghost tt-join-full"
-          [disabled]="recordingId === selectedSlot.id"
-          (click)="triggerRecording(selectedSlot)">
-          <i class="fa-solid"
-             [class.fa-circle-notch]="recordingId === selectedSlot.id"
-             [class.fa-spin]="recordingId === selectedSlot.id"
-             [class.fa-record-vinyl]="recordingId !== selectedSlot.id"></i>
-          {{ recordingId === selectedSlot.id ? 'Fetching recording…' : 'Get Recording from BBB' }}
-        </button>
-
-        <!-- Error message -->
-        <div *ngIf="recordingError[selectedSlot.id]" class="tt-rec-error">
-          <i class="fa-solid fa-triangle-exclamation"></i>
-          {{ recordingError[selectedSlot.id] }}
-        </div>
-
-        <!-- Player when recording is ready -->
-        <div *ngIf="selectedSlot.mp4Url || selectedSlot.playbackUrl" class="tt-rec-player">
-          <div class="tt-rec-player__head">
-            <i class="fa-solid fa-circle-play"></i> Session Recording
-            <div style="display:flex;gap:8px;margin-left:auto;">
-              <a *ngIf="selectedSlot.mp4Url" [href]="selectedSlot.mp4Url" download
-                 class="tt-rec-player__ext" title="Download MP4">
-                <i class="fa-solid fa-download"></i> Download MP4
-              </a>
-              <a *ngIf="selectedSlot.playbackUrl" [href]="selectedSlot.playbackUrl" target="_blank"
-                 class="tt-rec-player__ext" title="Open BBB Playback">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i> BBB Playback
-              </a>
-            </div>
-          </div>
-
-          <!-- BBB presentation playback → full session (camera + screen share + slides) -->
-          <iframe *ngIf="selectedSlot.playbackUrl"
-            [src]="getSafeUrl(selectedSlot.playbackUrl)"
-            class="tt-rec-player__iframe"
-            allowfullscreen
-            frameborder="0">
-          </iframe>
-
-          <!-- MP4/WebM fallback → camera only (shown only if no playbackUrl) -->
-          <app-video-player *ngIf="!selectedSlot.playbackUrl && selectedSlot.mp4Url"
-            [videoUrl]="selectedSlot.mp4Url">
-          </app-video-player>
-        </div>
-
-      </ng-container>
-
-      <!-- ── Attendance Analytics (completed) ──────────────────────────── -->
-      <ng-container *ngIf="selectedSlot.status === 'completed'">
-        <div class="tt-analytics">
-          <div class="tt-analytics__head">
-            <i class="fa-solid fa-chart-bar"></i> Attendance Analytics
-          </div>
-
-          <!-- Loading -->
-          <div *ngIf="analyticsLoading" style="text-align:center;padding:20px;color:#94a3b8;">
-            <i class="fa-solid fa-circle-notch fa-spin"></i> Loading analytics…
-          </div>
-
-          <!-- Empty -->
-          <div *ngIf="!analyticsLoading && analytics.length === 0"
-               style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">
-            No attendance data available.
-          </div>
-
-          <!-- Table -->
-          <div *ngIf="!analyticsLoading && analytics.length > 0" class="tt-analytics__wrap">
-            <table class="tt-analytics__table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Role</th>
-                  <th title="Online time">Online</th>
-                  <th title="Talk time">Talk</th>
-                  <th title="Webcam time">Cam</th>
-                  <th title="Chat messages">Msg</th>
-                  <th title="Raise hand">✋</th>
-                  <th title="Activity score">Score</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let a of analytics">
-                  <td>
-                    <div class="pg-with-avatar">
-                      <div [class]="'pg-avatar ' + (a.isModerator ? 'av-indigo' : 'av-sky')">
-                        {{ a.userName.charAt(0) }}
-                      </div>
-                      <span class="pg-cell__primary">{{ a.userName }}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span [class]="a.isModerator ? 'pg-badge pg-badge--blue' : 'pg-badge pg-badge--gray'">
-                      {{ a.isModerator ? 'Teacher' : 'Student' }}
-                    </span>
-                  </td>
-                  <td>{{ secsToMin(a.onlineTimeSeconds) }}</td>
-                  <td>{{ secsToMin(a.talkTimeSeconds) }}</td>
-                  <td>{{ secsToMin(a.webcamTimeSeconds) }}</td>
-                  <td>{{ a.messageCount }}</td>
-                  <td>{{ a.raiseHandCount }}</td>
-                  <td><span [class]="scoreClass(a.activityScore)">{{ a.activityScore }}</span></td>
-                  <td>
-                    <span [class]="a.status === 'Online' ? 'pg-badge pg-badge--green' : 'pg-badge pg-badge--gray'">
-                      <i *ngIf="a.status === 'Online'" class="fa-solid fa-circle" style="font-size:6px;"></i>
-                      {{ a.status }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </ng-container>
-
+    </div>
+    <div class="sd-hero__badges">
+      <span [class]="'sd-badge sd-badge--cat ' + getCategoryChip(selectedSlot.category)">{{ selectedSlot.category }}</span>
+      <span [class]="'sd-badge ' + getStatusClass(selectedSlot.status)">
+        <i *ngIf="selectedSlot.status === 'live'" class="fa-solid fa-circle sd-live-dot"></i>
+        {{ selectedSlot.status | titlecase }}
+      </span>
     </div>
   </div>
-  <div class="pg-modal__foot">
+
+  <!-- ── Info Grid ── -->
+  <div class="sd-body">
+    <div class="sd-info-grid">
+
+      <div class="sd-info-card">
+        <div class="sd-info-card__icon av-indigo"><i class="fa-solid fa-chalkboard-user"></i></div>
+        <div>
+          <div class="sd-info-card__label">Teacher</div>
+          <div class="sd-info-card__val">{{ selectedSlot.teacher }}</div>
+        </div>
+      </div>
+
+      <div class="sd-info-card">
+        <div class="sd-info-card__icon av-sky"><i class="fa-solid fa-layer-group"></i></div>
+        <div>
+          <div class="sd-info-card__label">Batch</div>
+          <div class="sd-info-card__val">{{ selectedSlot.batch }}</div>
+        </div>
+      </div>
+
+      <div class="sd-info-card">
+        <div class="sd-info-card__icon av-emerald"><i class="fa-solid fa-calendar-days"></i></div>
+        <div>
+          <div class="sd-info-card__label">Day</div>
+          <div class="sd-info-card__val">{{ selectedSlot.day }}</div>
+        </div>
+      </div>
+
+      <div class="sd-info-card">
+        <div class="sd-info-card__icon av-rose"><i class="fa-solid fa-hashtag"></i></div>
+        <div>
+          <div class="sd-info-card__label">Session</div>
+          <div class="sd-info-card__val">Session {{ selectedSlot.session }}</div>
+        </div>
+      </div>
+
+      <div class="sd-info-card" *ngIf="selectedSlot.startTime || selectedSlot.endTime">
+        <div class="sd-info-card__icon av-amber"><i class="fa-solid fa-clock"></i></div>
+        <div>
+          <div class="sd-info-card__label">Time</div>
+          <div class="sd-info-card__val">{{ selectedSlot.startTime || '—' }} – {{ selectedSlot.endTime || '—' }}</div>
+        </div>
+      </div>
+
+      <div class="sd-info-card sd-info-card--full">
+        <div class="sd-bbb-logo">BBB</div>
+        <div style="min-width:0;flex:1;">
+          <div class="sd-info-card__label">BigBlueButton Room ID</div>
+          <div class="sd-info-card__val sd-info-card__val--mono">{{ selectedSlot.meetingId }}</div>
+        </div>
+        <button class="sd-copy-btn" (click)="copyLink(selectedSlot)" [title]="copiedId === selectedSlot.id ? 'Copied!' : 'Copy link'">
+          <i [class]="copiedId === selectedSlot.id ? 'fa-solid fa-check' : 'fa-regular fa-copy'"></i>
+          {{ copiedId === selectedSlot.id ? 'Copied!' : 'Copy' }}
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ── Join Button ── -->
+    <button *ngIf="canJoin(selectedSlot.status)"
+      class="sd-join-btn"
+      [class.sd-join-btn--live]="selectedSlot.status === 'live'"
+      [disabled]="joiningId === selectedSlot.id"
+      (click)="joinSlot(selectedSlot, selectedSlot.status === 'live')">
+      <i class="fa-solid"
+         [class.fa-circle-notch]="joiningId === selectedSlot.id"
+         [class.fa-spin]="joiningId === selectedSlot.id"
+         [class.fa-video]="joiningId !== selectedSlot.id"></i>
+      {{ joiningId === selectedSlot.id ? 'Connecting…' : (selectedSlot.status === 'live' ? 'Join Live Session' : 'Join Session') }}
+    </button>
+
+    <!-- ── Recording Section ── -->
+    <ng-container *ngIf="selectedSlot.status === 'completed'">
+
+      <div class="sd-section-title"><i class="fa-solid fa-circle-play"></i> Session Recording</div>
+
+      <!-- Polling: checking ready -->
+      <div *ngIf="recordingPolling[selectedSlot.id] && !recordingProcessing[selectedSlot.id]" class="sd-alert sd-alert--info">
+        <i class="fa-solid fa-circle-notch fa-spin"></i>
+        Checking recording status…
+      </div>
+
+      <!-- isReady: false — BBB still encoding -->
+      <div *ngIf="recordingProcessing[selectedSlot.id]" class="sd-processing-card">
+        <div class="sd-processing-card__icon">
+          <i class="fa-solid fa-film fa-beat-fade"></i>
+        </div>
+        <div>
+          <div class="sd-processing-card__title">Video is Processing</div>
+          <div class="sd-processing-card__sub">BigBlueButton is still encoding the recording. This may take a few minutes. We'll keep checking automatically.</div>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="recordingError[selectedSlot.id]" class="sd-alert sd-alert--error">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        {{ recordingError[selectedSlot.id] }}
+      </div>
+
+      <!-- Fetch button -->
+      <button *ngIf="!selectedSlot.bucketUrl && !selectedSlot.mp4Url && !selectedSlot.playbackUrl && !recordingPolling[selectedSlot.id]"
+        class="sd-fetch-btn"
+        [disabled]="recordingId === selectedSlot.id"
+        (click)="triggerRecording(selectedSlot)">
+        <i class="fa-solid"
+           [class.fa-circle-notch]="recordingId === selectedSlot.id"
+           [class.fa-spin]="recordingId === selectedSlot.id"
+           [class.fa-record-vinyl]="recordingId !== selectedSlot.id"></i>
+        {{ recordingId === selectedSlot.id ? 'Fetching recording…' : 'Get Recording from BBB' }}
+      </button>
+
+      <!-- Player card -->
+      <div *ngIf="selectedSlot.bucketUrl || selectedSlot.mp4Url || selectedSlot.playbackUrl" class="sd-player-card">
+        <div class="sd-player-card__actions">
+          <a *ngIf="selectedSlot.bucketUrl || selectedSlot.mp4Url"
+             [href]="selectedSlot.bucketUrl || selectedSlot.mp4Url" download
+             class="sd-player-card__btn">
+            <i class="fa-solid fa-download"></i> Download
+          </a>
+          <a *ngIf="selectedSlot.playbackUrl" [href]="selectedSlot.playbackUrl" target="_blank"
+             class="sd-player-card__btn sd-player-card__btn--ghost">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> BBB Playback
+          </a>
+        </div>
+        <app-video-player *ngIf="selectedSlot.bucketUrl || (!selectedSlot.playbackUrl && selectedSlot.mp4Url)"
+          [videoUrl]="selectedSlot.bucketUrl || selectedSlot.mp4Url">
+        </app-video-player>
+        <iframe *ngIf="!selectedSlot.bucketUrl && !selectedSlot.mp4Url && selectedSlot.playbackUrl"
+          [src]="getSafeUrl(selectedSlot.playbackUrl)"
+          class="sd-player-card__iframe"
+          allowfullscreen frameborder="0">
+        </iframe>
+      </div>
+
+    </ng-container>
+
+    <!-- ── Analytics ── -->
+    <ng-container *ngIf="selectedSlot.status === 'completed'">
+      <div class="sd-section-title"><i class="fa-solid fa-chart-bar"></i> Attendance Analytics</div>
+
+      <div *ngIf="analyticsLoading" class="sd-alert sd-alert--info">
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Loading analytics…
+      </div>
+
+      <div *ngIf="!analyticsLoading && analytics.length === 0" class="sd-empty">
+        <i class="fa-solid fa-users-slash"></i> No attendance data available
+      </div>
+
+      <div *ngIf="!analyticsLoading && analytics.length > 0" class="sd-table-wrap">
+        <table class="sd-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Role</th>
+              <th title="Online time">Online</th>
+              <th title="Talk time">Talk</th>
+              <th title="Webcam time">Cam</th>
+              <th title="Messages">Msg</th>
+              <th title="Raise hand">✋</th>
+              <th title="Activity score">Score</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let a of analytics">
+              <td>
+                <div class="pg-with-avatar">
+                  <div [class]="'pg-avatar ' + (a.isModerator ? 'av-indigo' : 'av-sky')">{{ a.userName.charAt(0) }}</div>
+                  <span>{{ a.userName }}</span>
+                </div>
+              </td>
+              <td><span [class]="a.isModerator ? 'pg-badge pg-badge--blue' : 'pg-badge pg-badge--gray'">{{ a.isModerator ? 'Teacher' : 'Student' }}</span></td>
+              <td>{{ secsToMin(a.onlineTimeSeconds) }}</td>
+              <td>{{ secsToMin(a.talkTimeSeconds) }}</td>
+              <td>{{ secsToMin(a.webcamTimeSeconds) }}</td>
+              <td>{{ a.messageCount }}</td>
+              <td>{{ a.raiseHandCount }}</td>
+              <td><span [class]="scoreClass(a.activityScore)">{{ a.activityScore }}</span></td>
+              <td>
+                <span [class]="a.status === 'Online' ? 'pg-badge pg-badge--green' : 'pg-badge pg-badge--gray'">
+                  <i *ngIf="a.status === 'Online'" class="fa-solid fa-circle" style="font-size:6px;"></i>
+                  {{ a.status }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="sd-footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
     <button class="pg-btn pg-btn--primary" (click)="openEdit(selectedSlot); modalMode = 'edit'">
-      <i class="fa-solid fa-pen"></i> Edit
+      <i class="fa-solid fa-pen"></i> Edit Session
     </button>
   </div>
+
 </div>
 
 <!-- ── DELETE MODAL ────────────────────────────────────────────────────── -->

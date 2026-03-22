@@ -42,6 +42,7 @@ export interface TimetablePayload {
 export interface RecordingResult {
   isReady:      boolean;
   playbackUrl:  string | null;
+  bucketUrl:    string | null;
   mp4Url:       string | null;
   deskshareUrl: string | null;
 }
@@ -70,6 +71,10 @@ export class TimetableService {
     return this.http.get<TimetableSlotDto[]>(`${BASE}`);
   }
 
+  getById(id: string): Observable<any> {
+    return this.http.get<any>(`${BASE}/${id}`);
+  }
+
   createSlot(payload: TimetablePayload): Observable<TimetableSlotDto> {
     return this.http.post<TimetableSlotDto>(`${BASE}/timetable`, payload);
   }
@@ -92,8 +97,8 @@ export class TimetableService {
     return this.http.post(`${BASE}/${id}/end`, {});
   }
 
-  checkRecordingReady(id: string): Observable<{ isReady: boolean }> {
-    return this.http.get<{ isReady: boolean }>(`${BASE}/${id}/recording-ready`);
+  checkRecordingReady(id: string): Observable<RecordingResult> {
+    return this.http.get<RecordingResult>(`${BASE}/${id}/recording-ready`);
   }
 
   triggerRecording(id: string): Observable<RecordingResult> {

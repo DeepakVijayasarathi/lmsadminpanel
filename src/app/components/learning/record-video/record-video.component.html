@@ -1,0 +1,58 @@
+<div class="rv-container">
+  <div class="rv-header">
+    <h2>Record Video</h2>
+    <p class="rv-subtitle">Record and upload your video lesson</p>
+  </div>
+
+  <!-- Camera Preview -->
+  <div class="rv-video-wrap">
+    <video #preview class="rv-video" autoplay muted playsinline
+      [class.hidden]="isPreviewing"></video>
+    <video #playback class="rv-video" controls
+      [class.hidden]="!isPreviewing"></video>
+
+    <div class="rv-placeholder" *ngIf="!isRecording && !isPreviewing">
+      <span class="rv-cam-icon">&#128247;</span>
+      <p>Camera preview will appear here</p>
+    </div>
+
+    <div class="rv-badge" *ngIf="isRecording">
+      <span class="rv-dot"></span> REC &nbsp;{{ formattedTime }}
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="rv-controls">
+    <button class="btn-start" (click)="startRecording()"
+      [disabled]="isRecording || isUploading">
+      &#9679; Start Recording
+    </button>
+
+    <button class="btn-stop" (click)="stopRecording()"
+      [disabled]="!isRecording">
+      &#9632; Stop
+    </button>
+
+    <ng-container *ngIf="isPreviewing && !uploadSuccess">
+      <button class="btn-upload" (click)="uploadVideo()"
+        [disabled]="isUploading">
+        <span *ngIf="!isUploading">&#8679; Upload</span>
+        <span *ngIf="isUploading">Uploading...</span>
+      </button>
+
+      <button class="btn-discard" (click)="discardRecording()"
+        [disabled]="isUploading">
+        &#128465; Discard
+      </button>
+    </ng-container>
+  </div>
+
+  <!-- Status Messages -->
+  <div class="rv-alert rv-success" *ngIf="uploadSuccess">
+    &#10003; Video uploaded successfully!
+  </div>
+
+  <div class="rv-alert rv-error" *ngIf="uploadError">
+    &#9888; {{ uploadError }}
+  </div>
+</div>
