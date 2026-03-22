@@ -7,6 +7,8 @@ import { environment } from '../../../../environments/environment';
 
 const BASE_URL = environment.apiUrl;
 
+// ── Interfaces ────────────────────────────────────────────────────────────────
+
 export interface MenuTreeItem {
   id: string;
   name: string;
@@ -16,28 +18,33 @@ export interface MenuTreeItem {
   parentId: string | null;
   sequence: number;
   isVisible: boolean;
-  children: MenuTreeItem[];
+  children: MenuTreeItem[];   // API returns "children"
 }
 
 export interface RolePermission {
-  menuId: string;
+  menuId:    string;
   canCreate: boolean;
-  canRead: boolean;
+  canRead:   boolean;
   canUpdate: boolean;
   canDelete: boolean;
 }
 
+/**
+ * GET /role/role-by-menu returns menus[] (the assigned menu tree).
+ * We derive RolePermission[] from it: every menu in menus[] gets all=true,
+ * every menu NOT in menus[] gets all=false.
+ */
 export interface RoleApiResponse {
-  id: string;
-  name: string;
+  id:          string;
+  name:        string;
   description: string;
-  permissions: RolePermission[];
+  menus:       MenuTreeItem[];
 }
 
 export interface RolePayload {
-  name: string;
+  name:        string;
   description: string;
-  permissions: RolePermission[];
+  permissions: RolePermission[];   // only rows with at least one true flag
 }
 
 type ModalMode = 'create' | 'edit' | 'view' | 'delete' | null;
@@ -154,11 +161,16 @@ export class RolesComponent implements OnInit {
       });
   }
 
+  /**
+   * Only send rows that have at least one permission enabled.
+   */
   private buildPayload(): RolePayload {
     return {
       name:        this.formName.trim(),
       description: this.formDescription.trim(),
-      permissions: this.formPermissions,
+      permissions: this.formPermissions.filter(
+        p => p.canRead || p.canCreate || p.canUpdate || p.canDelete,
+      ),
     };
   }
 
@@ -230,19 +242,34 @@ export class RolesComponent implements OnInit {
     return result;
   }
 
+  /** All permissions off — used when opening Create */
   buildDefaultPermissions(): RolePermission[] {
     return this.flatMenus.map(m => ({
-      menuId: m.id, canCreate: false, canRead: false, canUpdate: false, canDelete: false,
+      menuId:    m.id,
+      canCreate: false,
+      canRead:   false,
+      canUpdate: false,
+      canDelete: false,
     }));
   }
 
+  /**
+   * Seed from role.menus (tree of assigned menus).
+   * Any menu present in the role's menus tree → all four flags = true.
+   * Any menu NOT present → all false.
+   */
   buildPermissionsFromRole(role: RoleApiResponse): RolePermission[] {
-    return this.flatMenus.map(m => {
-      const existing = role.permissions?.find(p => p.menuId === m.id);
-      return existing ?? {
-        menuId: m.id, canCreate: false, canRead: false, canUpdate: false, canDelete: false,
-      };
-    });
+    const assignedIds = new Set<string>(
+      this.flattenTree(role.menus ?? []).map(m => m.id),
+    );
+
+    return this.flatMenus.map(m => ({
+      menuId:    m.id,
+      canCreate: assignedIds.has(m.id),
+      canRead:   assignedIds.has(m.id),
+      canUpdate: assignedIds.has(m.id),
+      canDelete: assignedIds.has(m.id),
+    }));
   }
 
   getPermissionForMenu(menuId: string): RolePermission | undefined {
@@ -257,22 +284,17 @@ export class RolesComponent implements OnInit {
     return (parent.children?.length ?? 0) > 0;
   }
 
-  /** Find the parent node that owns a given child id */
   private findParentOf(childId: string): MenuTreeItem | undefined {
     return this.menuTree.find(p => p.children?.some(c => c.id === childId));
   }
 
   // ══════════════════════════════════════════════════════════════════════════
   //  CHILD → PARENT AUTO-SYNC
+  //  When any child perm is turned ON  → that same column turns ON for parent.
+  //  When a child perm is turned OFF   → parent turns OFF only if no sibling
+  //                                       still has that column ON.
   // ══════════════════════════════════════════════════════════════════════════
 
-  /**
-   * Called when a single permission cell on a CHILD row changes.
-   *
-   * Turning a child permission ON  → mirror that column ON  for the parent.
-   * Turning a child permission OFF → turn parent OFF only when no other
-   *                                   sibling still has that column ON.
-   */
   onChildPermChange(childId: string, key: PermKey, checked: boolean): void {
     const parent = this.findParentOf(childId);
     if (!parent) return;
@@ -281,24 +303,16 @@ export class RolesComponent implements OnInit {
     if (!parentPerm) return;
 
     if (checked) {
-      // ✅ child turned ON → parent gets the same column ON
       parentPerm[key] = true;
     } else {
-      // ❌ child turned OFF → keep parent ON only if another sibling still has it
       const siblingHasKey = this.childrenOf(parent).some(c => {
-        if (c.id === childId) return false;           // skip the one we just unchecked
+        if (c.id === childId) return false;
         return !!(this.getPermissionForMenu(c.id)?.[key]);
       });
-      if (!siblingHasKey) {
-        parentPerm[key] = false;
-      }
+      if (!siblingHasKey) parentPerm[key] = false;
     }
   }
 
-  /**
-   * Called when the ROW "All" checkbox on a CHILD row changes.
-   * Applies the row-all to the child, then syncs every column to the parent.
-   */
   onChildRowAllChange(childId: string, checked: boolean): void {
     this.toggleRowAll(childId, checked);
     for (const col of this.permCols) {
@@ -369,9 +383,7 @@ export class RolesComponent implements OnInit {
   // ── Stats ─────────────────────────────────────────────────────────────────
 
   getActivePermCount(role: RoleApiResponse): number {
-    return (role.permissions || []).filter(
-      p => p.canCreate || p.canRead || p.canUpdate || p.canDelete,
-    ).length;
+    return this.flattenTree(role.menus ?? []).length;
   }
 
   // ── Search ────────────────────────────────────────────────────────────────
