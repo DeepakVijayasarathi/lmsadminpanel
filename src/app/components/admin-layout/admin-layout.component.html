@@ -17,10 +17,19 @@
     <!-- Nav -->
     <nav class="al-nav">
 
-      <!-- Dashboard -->
-      <a class="al-nav__item" [class.al-nav__item--active]="isActive('/dashboard')" (click)="navigate('/dashboard')">
-        <span class="al-nav__icon"><i class="fa-solid fa-gauge-high"></i></span>
-        <span class="al-nav__label">Dashboard</span>
+      <!-- Satndalone -->
+      <a class="al-nav__item"
+        *ngFor="let item of standaloneMenus"
+        [class.al-nav__item--active]="isActive(item.route)"
+        (click)="navigate(item.route)">
+
+        <span class="al-nav__icon">
+          <i class="{{ item.icon }}"></i>
+        </span>
+
+        <span class="al-nav__label">
+          {{ item.label }}
+        </span>
       </a>
 
       <!-- Groups -->

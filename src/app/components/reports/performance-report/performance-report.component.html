@@ -22,7 +22,7 @@
     <div class="pg-stat">
       <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-users"></i></div>
       <div>
-        <div class="pg-stat__val">{{ filteredRecords.length }}</div>
+        <div class="pg-stat__val">{{ studentsTracked }}</div>
         <div class="pg-stat__lbl">Students Tracked</div>
       </div>
     </div>
@@ -56,16 +56,34 @@
       <div class="pg-toolbar">
         <div class="pg-search">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" placeholder="Search students, batch..." [(ngModel)]="searchQuery" />
+          <input
+            type="text"
+            placeholder="Search students, batch..."
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="onSearchChange()"
+          />
         </div>
-        <select class="pg-filter" [(ngModel)]="subjectFilter">
+        <select class="pg-filter" [(ngModel)]="subjectFilter" (ngModelChange)="onSubjectChange()">
           <option value="">All Subjects</option>
           <option *ngFor="let s of subjects" [value]="s">{{ s }}</option>
         </select>
       </div>
     </div>
+
+    <!-- Error Banner -->
+    <div *ngIf="error" class="pg-error-banner">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      {{ error }}
+      <button class="pg-retry-btn" (click)="onSearchChange()">Retry</button>
+    </div>
+
     <div class="pg-table-wrap">
-      <table class="pg-table">
+      <!-- Loading overlay -->
+      <div *ngIf="isLoading" class="pg-loading-overlay">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size:24px;color:#94a3b8;"></i>
+      </div>
+
+      <table class="pg-table" [class.pg-table--loading]="isLoading">
         <thead>
           <tr>
             <th>#</th>
@@ -79,7 +97,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let rec of filteredRecords; let i = index">
+          <tr *ngFor="let rec of records; let i = index">
             <td class="idx-cell">{{ i + 1 }}</td>
             <td>
               <div class="pg-with-avatar">
@@ -92,7 +110,11 @@
             <td>
               <div style="display:flex;align-items:center;gap:10px;">
                 <div style="flex:1;background:#f1f5f9;border-radius:4px;height:6px;min-width:80px;">
-                  <div [style.width.%]="rec.avgScore" [style.background]="scoreColor(rec.avgScore)" style="height:6px;border-radius:4px;transition:width 0.3s;"></div>
+                  <div
+                    [style.width.%]="rec.avgScore"
+                    [style.background]="scoreColor(rec.avgScore)"
+                    style="height:6px;border-radius:4px;transition:width 0.3s;">
+                  </div>
                 </div>
                 <strong [style.color]="scoreColor(rec.avgScore)">{{ rec.avgScore }}%</strong>
               </div>
@@ -104,12 +126,13 @@
               </span>
             </td>
             <td>
-              <i *ngIf="rec.trend === 'up'" class="fa-solid fa-arrow-trend-up" style="color:#10b981;font-size:16px;"></i>
-              <i *ngIf="rec.trend === 'down'" class="fa-solid fa-arrow-trend-down" style="color:#ef4444;font-size:16px;"></i>
-              <i *ngIf="rec.trend === 'stable'" class="fa-solid fa-minus" style="color:#9ca3af;font-size:16px;"></i>
+              <i *ngIf="rec.trend === 'up'"     class="fa-solid fa-arrow-trend-up"   style="color:#10b981;font-size:16px;"></i>
+              <i *ngIf="rec.trend === 'down'"   class="fa-solid fa-arrow-trend-down" style="color:#ef4444;font-size:16px;"></i>
+              <i *ngIf="rec.trend === 'stable'" class="fa-solid fa-minus"            style="color:#9ca3af;font-size:16px;"></i>
             </td>
           </tr>
-          <tr *ngIf="filteredRecords.length === 0">
+
+          <tr *ngIf="!isLoading && records.length === 0 && !error">
             <td colspan="8" style="text-align:center;padding:32px;color:#94a3b8;">
               <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
               No records found

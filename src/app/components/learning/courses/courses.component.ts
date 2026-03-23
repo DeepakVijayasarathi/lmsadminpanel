@@ -2,12 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { CommonService } from '../../../services/common.service';
 import { HttpGeneralService } from '../../../services/http.service';
 import { environment } from '../../../../environments/environment';
+import { Permission, PermissionService } from '../../../auth/permission.service';
+import { Router } from '@angular/router';
 
 const BASE_URL = environment.apiUrl;
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
-export interface Subject {
+export interface Class {
   id: string;
   name: string;
 }
@@ -17,7 +19,7 @@ export interface Course {
   title: string;
   description: string;
   thumbnailUrl: string;
-  subjectId?: string;
+  classId?: string;
   category?: string;
   level?: string;
   isPublished?: boolean;
@@ -30,7 +32,7 @@ export interface Course {
 }
 
 export interface CoursePayload {
-  subjectId: string;
+  classId: string;
   title: string;
   description: string;
   thumbnailUrl: string;
@@ -56,7 +58,7 @@ type ModalMode = 'create' | 'edit' | 'view' | 'delete' | 'publish' | null;
 export class CoursesComponent implements OnInit {
   courses: Course[] = [];
   filteredCourses: Course[] = [];
-  subjects: Subject[] = [];
+  classes: Class[] = [];
 
   searchQuery: string = '';
   statusFilter: string = '';
@@ -82,7 +84,7 @@ export class CoursesComponent implements OnInit {
   selectedCourse: Course | null = null;
 
   // ── Form fields ────────────────────────────────────────────────
-  formSubjectId: string = '';
+  formClassId: string = '';
   formTitle: string = '';
   formDescription: string = '';
   formThumbnailUrl: string = '';
@@ -98,7 +100,7 @@ export class CoursesComponent implements OnInit {
   // ── Validation ─────────────────────────────────────────────────
   titleError: string = '';
   priceError: string = '';
-  subjectError: string = '';
+  classError: string = '';
 
   // ── Constants ──────────────────────────────────────────────────
   readonly LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
@@ -116,25 +118,31 @@ export class CoursesComponent implements OnInit {
   constructor(
     private commonService: CommonService,
     private httpService: HttpGeneralService<any>,
+    private permissionService: PermissionService,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
-    this.loadSubjects();
+    this.loadClasses();
     this.loadCourses();
+  }
+
+  get p(): Permission {
+    return this.permissionService.for(this.router.url);
   }
 
   // ════════════════════════════════════════════════════════════════
   //  API CALLS
   // ════════════════════════════════════════════════════════════════
 
-  /** GET /subject */
-  loadSubjects(): void {
-    this.httpService.getData(BASE_URL, '/subject').subscribe({
+  /** GET /class */
+  loadClasses(): void {
+    this.httpService.getData(BASE_URL, '/class').subscribe({
       next: (res: any) => {
-        this.subjects = Array.isArray(res) ? res : (res?.data ?? []);
+        this.classes = Array.isArray(res) ? res : (res?.data ?? []);
       },
       error: () => {
-        this.commonService.error('Failed to load subjects.');
+        this.commonService.error('Failed to load classes.');
       },
     });
   }
@@ -279,7 +287,7 @@ export class CoursesComponent implements OnInit {
 
   openEditModal(course: Course): void {
     this.selectedCourse = course;
-    this.formSubjectId = course.subjectId ?? '';
+    this.formClassId = course.classId ?? '';
     this.formTitle = course.title;
     this.formDescription = course.description ?? '';
     this.formThumbnailUrl = course.thumbnailUrl ?? '';
@@ -293,7 +301,7 @@ export class CoursesComponent implements OnInit {
     this.formInstallmentCount = course.installmentCount ?? null;
     this.titleError = '';
     this.priceError = '';
-    this.subjectError = '';
+    this.classError = '';
     this.modalMode = 'edit';
   }
 
@@ -317,7 +325,7 @@ export class CoursesComponent implements OnInit {
     this.selectedCourse = null;
     this.titleError = '';
     this.priceError = '';
-    this.subjectError = '';
+    this.classError = '';
   }
 
   submitForm(): void {
@@ -332,7 +340,7 @@ export class CoursesComponent implements OnInit {
 
   private buildPayload(): CoursePayload {
     return {
-      subjectId: this.formSubjectId,
+      classId: this.formClassId,
       title: this.formTitle.trim(),
       description: this.formDescription.trim(),
       thumbnailUrl: this.formThumbnailUrl.trim(),
@@ -351,11 +359,11 @@ export class CoursesComponent implements OnInit {
   validateForm(): boolean {
     this.titleError = '';
     this.priceError = '';
-    this.subjectError = '';
+    this.classError = '';
     let valid = true;
 
-    if (!this.formSubjectId) {
-      this.subjectError = 'Please select a subject.';
+    if (!this.formClassId) {
+      this.classError = 'Please select a class.';
       valid = false;
     }
 
@@ -383,7 +391,7 @@ export class CoursesComponent implements OnInit {
   }
 
   resetForm(): void {
-    this.formSubjectId = '';
+    this.formClassId = '';
     this.formTitle = '';
     this.formDescription = '';
     this.formThumbnailUrl = '';
@@ -397,7 +405,7 @@ export class CoursesComponent implements OnInit {
     this.formInstallmentCount = null;
     this.titleError = '';
     this.priceError = '';
-    this.subjectError = '';
+    this.classError = '';
   }
 
   // ════════════════════════════════════════════════════════════════
@@ -435,9 +443,9 @@ export class CoursesComponent implements OnInit {
     this.currentPage = 1;
   }
 
-  getSubjectName(subjectId?: string): string {
-    if (!subjectId) return '—';
-    return this.subjects.find((s) => s.id === subjectId)?.name ?? '—';
+  getClassName(classId?: string): string {
+    if (!classId) return '—';
+    return this.classes.find((c) => c.id === classId)?.name ?? '—';
   }
 
   getStatusBadge(course: Course): string {

@@ -1,4 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, takeUntil } from 'rxjs/operators';
+import { HttpGeneralService } from '../../../services/http.service';
+import { environment } from '../../../../environments/environment';
 
 export interface RevenueRecord {
   month: string;
@@ -10,32 +15,97 @@ export interface RevenueRecord {
   growth: number;
 }
 
+export interface RevenueStats {
+  totalRevenue: number;
+  totalSubscriptions: number;
+  totalCourseFees: number;
+  latestMonthTotal: number;
+  latestMonthLabel: string;
+}
+
+export interface RevenueResponse {
+  stats: RevenueStats;
+  records: RevenueRecord[];
+}
+
 @Component({
   selector: 'app-revenue-report',
   standalone: false,
   templateUrl: './revenue-report.component.html',
   styleUrls: ['../../../shared-page.css', './revenue-report.component.css']
 })
-export class RevenueReportComponent {
+export class RevenueReportComponent implements OnInit, OnDestroy {
+  private readonly API_URL = `${environment.apiUrl}/reports/revenue`;
+  private destroy$ = new Subject<void>();
+  private filterChange$ = new Subject<void>();
+
   yearFilter = '';
 
-  records: RevenueRecord[] = [
-    { month: 'October 2025',  year: '2025', subscriptions: 240000, courseFees: 162000, batchFees: 58000, total: 460000, growth: 5.2 },
-    { month: 'November 2025', year: '2025', subscriptions: 255000, courseFees: 175000, batchFees: 62000, total: 492000, growth: 6.9 },
-    { month: 'December 2025', year: '2025', subscriptions: 210000, courseFees: 148000, batchFees: 48000, total: 406000, growth: -17.4 },
-    { month: 'January 2026',  year: '2026', subscriptions: 310000, courseFees: 198000, batchFees: 72000, total: 580000, growth: 42.8 },
-    { month: 'February 2026', year: '2026', subscriptions: 285000, courseFees: 182000, batchFees: 68000, total: 535000, growth: -7.7 },
-    { month: 'March 2026',    year: '2026', subscriptions: 340000, courseFees: 210000, batchFees: 82000, total: 632000, growth: 18.1 },
-  ];
+  records: RevenueRecord[] = [];
 
-  get filteredRecords(): RevenueRecord[] {
-    return this.yearFilter ? this.records.filter(r => r.year === this.yearFilter) : this.records;
+  stats: RevenueStats = {
+    totalRevenue: 0,
+    totalSubscriptions: 0,
+    totalCourseFees: 0,
+    latestMonthTotal: 0,
+    latestMonthLabel: ''
+  };
+
+  isLoading = false;
+  error: string | null = null;
+
+  constructor(private httpService: HttpGeneralService<any>) {}
+
+  ngOnInit(): void {
+    this.filterChange$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(() => {
+          this.isLoading = true;
+          this.error = null;
+
+          const queryString = this.yearFilter
+            ? `?year=${encodeURIComponent(this.yearFilter)}`
+            : '';
+          const apiRoute = `${this.API_URL}${queryString}`;
+
+          return this.httpService.getData('', apiRoute);
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (response) => {
+          this.records = response.records;
+          this.stats = response.stats;
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Failed to fetch revenue data:', err);
+          this.error = 'Failed to load revenue data. Please try again.';
+          this.isLoading = false;
+        }
+      });
+
+    // Initial load
+    this.filterChange$.next();
   }
 
-  get totalRevenue(): number { return this.filteredRecords.reduce((s, r) => s + r.total, 0); }
-  get totalSubscriptions(): number { return this.filteredRecords.reduce((s, r) => s + r.subscriptions, 0); }
-  get totalCourseFees(): number { return this.filteredRecords.reduce((s, r) => s + r.courseFees, 0); }
-  get latestMonth(): RevenueRecord | null { return this.filteredRecords.length ? this.filteredRecords[this.filteredRecords.length - 1] : null; }
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  onYearChange(): void {
+    this.filterChange$.next();
+  }
+
+  // Stats from API response
+  get totalRevenue(): number { return this.stats.totalRevenue; }
+  get totalSubscriptions(): number { return this.stats.totalSubscriptions; }
+  get totalCourseFees(): number { return this.stats.totalCourseFees; }
+  get latestMonthTotal(): number { return this.stats.latestMonthTotal; }
+  get latestMonthLabel(): string { return this.stats.latestMonthLabel; }
 
   formatAmount(amount: number): string {
     return '₹' + amount.toLocaleString('en-IN');

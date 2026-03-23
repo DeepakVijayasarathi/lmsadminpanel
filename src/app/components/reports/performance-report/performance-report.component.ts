@@ -1,7 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil, switchMap } from 'rxjs/operators';
+import { HttpGeneralService } from '../../../services/http.service';
+import { environment } from '../../../../environments/environment';
 
 export interface PerformanceRecord {
-  id: number;
+  studentId: string;
   student: string;
   batch: string;
   subject: string;
@@ -11,49 +16,107 @@ export interface PerformanceRecord {
   trend: 'up' | 'down' | 'stable';
 }
 
+export interface PerformanceStats {
+  studentsTracked: number;
+  avgScore: number;
+  topPerformers: number;
+  needSupport: number;
+}
+
+export interface PerformanceResponse {
+  stats: PerformanceStats;
+  records: PerformanceRecord[];
+  subjects: string[];
+}
+
 @Component({
   selector: 'app-performance-report',
   standalone: false,
   templateUrl: './performance-report.component.html',
   styleUrls: ['../../../shared-page.css', './performance-report.component.css']
 })
-export class PerformanceReportComponent {
+export class PerformanceReportComponent implements OnInit, OnDestroy {
+  private readonly API_URL = `${environment.apiUrl}/reports/performance`;
+  private destroy$ = new Subject<void>();
+  private filterChange$ = new Subject<void>();
+
   searchQuery = '';
   subjectFilter = '';
 
-  records: PerformanceRecord[] = [
-    { id: 1,  student: 'Aarav Singh',    batch: 'Grade 10 – Batch A', subject: 'Mathematics',    avgScore: 91, quizzesTaken: 14, rank: 2,  trend: 'up' },
-    { id: 2,  student: 'Priya Sharma',   batch: 'Grade 11 – Batch A', subject: 'Physics',        avgScore: 88, quizzesTaken: 12, rank: 4,  trend: 'stable' },
-    { id: 3,  student: 'Rahul Verma',    batch: 'Grade 10 – Batch B', subject: 'English',        avgScore: 65, quizzesTaken: 10, rank: 18, trend: 'down' },
-    { id: 4,  student: 'Neha Patel',     batch: 'Grade 12 – Batch A', subject: 'Chemistry',      avgScore: 78, quizzesTaken: 11, rank: 7,  trend: 'up' },
-    { id: 5,  student: 'Kiran Mehta',    batch: 'Grade 9 – Batch A',  subject: 'Biology',        avgScore: 55, quizzesTaken: 9,  rank: 26, trend: 'down' },
-    { id: 6,  student: 'Saurabh Joshi',  batch: 'Grade 11 – Batch B', subject: 'Mathematics',    avgScore: 95, quizzesTaken: 15, rank: 1,  trend: 'up' },
-    { id: 7,  student: 'Divya Nair',     batch: 'Grade 12 – Batch A', subject: 'History',        avgScore: 72, quizzesTaken: 13, rank: 9,  trend: 'stable' },
-    { id: 8,  student: 'Arjun Desai',    batch: 'Grade 12 – Batch B', subject: 'Physics',        avgScore: 83, quizzesTaken: 14, rank: 5,  trend: 'up' },
-    { id: 9,  student: 'Sneha Kulkarni', batch: 'Grade 10 – Batch A', subject: 'Computer Science',avgScore: 47, quizzesTaken: 8,  rank: 34, trend: 'down' },
-    { id: 10, student: 'Rohan Mehta',    batch: 'Grade 11 – Batch A', subject: 'Economics',      avgScore: 79, quizzesTaken: 11, rank: 6,  trend: 'stable' },
-  ];
+  records: PerformanceRecord[] = [];
+  subjects: string[] = [];
 
-  get subjects(): string[] {
-    return [...new Set(this.records.map(r => r.subject))].sort();
+  stats: PerformanceStats = {
+    studentsTracked: 0,
+    avgScore: 0,
+    topPerformers: 0,
+    needSupport: 0
+  };
+
+  isLoading = false;
+  error: string | null = null;
+
+  constructor(private httpService: HttpGeneralService<any>) {}
+
+  ngOnInit(): void {
+    this.filterChange$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(() => {
+          this.isLoading = true;
+          this.error = null;
+
+          const params: string[] = [];
+          if (this.searchQuery?.trim()) {
+            params.push(`search=${encodeURIComponent(this.searchQuery.trim())}`);
+          }
+          if (this.subjectFilter) {
+            params.push(`subject=${encodeURIComponent(this.subjectFilter)}`);
+          }
+
+          const apiRoute = `${this.API_URL}${params.length ? '?' + params.join('&') : ''}`;
+
+          return this.httpService.getData('', apiRoute);
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (response) => {
+          this.records = response.records;
+          this.subjects = response.subjects;
+          this.stats = response.stats;
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Failed to fetch performance data:', err);
+          this.error = 'Failed to load performance data. Please try again.';
+          this.isLoading = false;
+        }
+      });
+
+    // Trigger initial load
+    this.filterChange$.next();
   }
 
-  get filteredRecords(): PerformanceRecord[] {
-    const q = this.searchQuery.toLowerCase();
-    return this.records.filter(r => {
-      const matchSearch = !q || r.student.toLowerCase().includes(q) || r.batch.toLowerCase().includes(q) || r.subject.toLowerCase().includes(q);
-      const matchSubject = !this.subjectFilter || r.subject === this.subjectFilter;
-      return matchSearch && matchSubject;
-    });
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  get avgScore(): number {
-    if (!this.filteredRecords.length) return 0;
-    return Math.round(this.filteredRecords.reduce((s, r) => s + r.avgScore, 0) / this.filteredRecords.length);
+  onSearchChange(): void {
+    this.filterChange$.next();
   }
 
-  get topPerformers(): number { return this.filteredRecords.filter(r => r.avgScore >= 85).length; }
-  get needSupport(): number { return this.filteredRecords.filter(r => r.avgScore < 60).length; }
+  onSubjectChange(): void {
+    this.filterChange$.next();
+  }
+
+  // Stats pulled from API response (not computed locally)
+  get studentsTracked(): number { return this.stats.studentsTracked; }
+  get avgScore(): number { return this.stats.avgScore; }
+  get topPerformers(): number { return this.stats.topPerformers; }
+  get needSupport(): number { return this.stats.needSupport; }
 
   scoreColor(score: number): string {
     if (score >= 85) return '#10b981';

@@ -29,8 +29,8 @@
     <div class="pg-stat">
       <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-calendar-days"></i></div>
       <div>
-        <div class="pg-stat__val">{{ latestMonth ? formatAmount(latestMonth.total) : '—' }}</div>
-        <div class="pg-stat__lbl">Latest Month</div>
+        <div class="pg-stat__val">{{ latestMonthTotal ? formatAmount(latestMonthTotal) : '—' }}</div>
+        <div class="pg-stat__lbl">{{ latestMonthLabel || 'Latest Month' }}</div>
       </div>
     </div>
     <div class="pg-stat">
@@ -54,15 +54,28 @@
     <div class="pg-card__head">
       <span class="pg-card__title">Monthly Revenue Breakdown</span>
       <div class="pg-toolbar">
-        <select class="pg-filter" [(ngModel)]="yearFilter">
+        <select class="pg-filter" [(ngModel)]="yearFilter" (ngModelChange)="onYearChange()">
           <option value="">All Years</option>
           <option value="2025">2025</option>
           <option value="2026">2026</option>
         </select>
       </div>
     </div>
+
+    <!-- Error Banner -->
+    <div *ngIf="error" class="pg-error-banner">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      {{ error }}
+      <button class="pg-retry-btn" (click)="onYearChange()">Retry</button>
+    </div>
+
     <div class="pg-table-wrap">
-      <table class="pg-table">
+      <!-- Loading Overlay -->
+      <div *ngIf="isLoading" class="pg-loading-overlay">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size:24px;color:#94a3b8;"></i>
+      </div>
+
+      <table class="pg-table" [class.pg-table--loading]="isLoading">
         <thead>
           <tr>
             <th>#</th>
@@ -75,7 +88,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let rec of filteredRecords; let i = index">
+          <tr *ngFor="let rec of records; let i = index">
             <td class="idx-cell">{{ i + 1 }}</td>
             <td>
               <div class="pg-cell__primary">{{ rec.month }}</div>
@@ -93,7 +106,8 @@
               </span>
             </td>
           </tr>
-          <tr *ngIf="filteredRecords.length === 0">
+
+          <tr *ngIf="!isLoading && records.length === 0 && !error">
             <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">
               <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
               No data found

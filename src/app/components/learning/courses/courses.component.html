@@ -14,7 +14,7 @@
       <button class="pg-btn pg-btn--outline">
         <i class="fa-solid fa-download"></i> Export
       </button>
-      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
+      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()" *ngIf="p.canCreate">
         <i class="fa-solid fa-plus"></i> Add Course
       </button>
     </div>
@@ -86,7 +86,7 @@
           <tr>
             <th>#</th>
             <th>Course</th>
-            <th>Subject</th>
+            <th>Class</th>
             <th>Category / Level</th>
             <th>Duration</th>
             <th>Pricing</th>
@@ -120,13 +120,13 @@
               </div>
             </td>
 
-            <!-- Subject -->
+            <!-- Class -->
             <td>
-              <span class="meta-chip meta-chip--violet" *ngIf="course.subjectId">
+              <span class="meta-chip meta-chip--violet" *ngIf="course.classId">
                 <i class="fa-solid fa-graduation-cap"></i>
-                {{ getSubjectName(course.subjectId) }}
+                {{ getClassName(course.classId) }}
               </span>
-              <span class="no-val" *ngIf="!course.subjectId">—</span>
+              <span class="no-val" *ngIf="!course.classId">—</span>
             </td>
 
             <!-- Category / Level -->
@@ -198,21 +198,21 @@
             <!-- Actions -->
             <td>
               <div class="action-group">
-                <button
+                <button *ngIf="p.canRead"
                   class="pg-action-btn"
                   title="View"
                   (click)="openViewModal(course)"
                 >
                   <i class="fa-solid fa-eye"></i>
                 </button>
-                <button
+                <button *ngIf="p.canUpdate"
                   class="pg-action-btn"
                   title="Edit"
                   (click)="openEditModal(course)"
                 >
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button
+                <button *ngIf="p.canUpdate"
                   class="pg-action-btn pg-action-btn--emerald"
                   [title]="course.isPublished ? 'Unpublish' : 'Publish'"
                   (click)="openPublishModal(course)"
@@ -222,7 +222,7 @@
                     [ngClass]="course.isPublished ? 'fa-eye-slash' : 'fa-upload'"
                   ></i>
                 </button>
-                <button
+                <button *ngIf="p.canDelete"
                   class="pg-action-btn pg-action-btn--danger"
                   title="Delete"
                   (click)="openDeleteModal(course)"
@@ -294,21 +294,21 @@
       <span class="thumb-preview-label">Thumbnail Preview</span>
     </div>
 
-    <!-- Subject -->
-    <div class="form-group" [class.has-error]="subjectError">
-      <label>Subject <span class="required">*</span></label>
+    <!-- Class -->
+    <div class="form-group" [class.has-error]="classError">
+      <label>Class <span class="required">*</span></label>
       <select
         class="form-control"
-        [(ngModel)]="formSubjectId"
-        (change)="subjectError = ''"
+        [(ngModel)]="formClassId"
+        (change)="classError = ''"
       >
-        <option value="">Select subject...</option>
-        <option *ngFor="let subject of subjects" [value]="subject.id">
-          {{ subject.name }}
+        <option value="">Select class...</option>
+        <option *ngFor="let class of classes" [value]="class.id">
+          {{ class.name }}
         </option>
       </select>
-      <div class="field-error" *ngIf="subjectError">
-        <i class="fa-solid fa-circle-exclamation"></i> {{ subjectError }}
+      <div class="field-error" *ngIf="classError">
+        <i class="fa-solid fa-circle-exclamation"></i> {{ classError }}
       </div>
     </div>
 
@@ -515,10 +515,10 @@
         <div class="view-showcase__meta">
           <span
             class="meta-chip meta-chip--violet"
-            *ngIf="selectedCourse.subjectId"
+            *ngIf="selectedCourse.classId"
           >
             <i class="fa-solid fa-graduation-cap"></i>
-            {{ getSubjectName(selectedCourse.subjectId) }}
+            {{ getClassName(selectedCourse.classId) }}
           </span>
           <span
             class="meta-chip meta-chip--indigo"
@@ -544,9 +544,9 @@
 
     <div class="view-detail-grid">
       <div class="view-detail-item">
-        <div class="view-detail-label">Subject</div>
+        <div class="view-detail-label">Class</div>
         <div class="view-detail-val">
-          {{ getSubjectName(selectedCourse.subjectId) }}
+          {{ getClassName(selectedCourse.classId) }}
         </div>
       </div>
       <div class="view-detail-item">
@@ -600,7 +600,7 @@
   </div>
   <div class="modal__footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
-    <button
+    <button *ngIf="p.canUpdate"
       class="pg-btn"
       [ngClass]="
         selectedCourse.isPublished ? 'pg-btn--warn' : 'pg-btn--emerald'
@@ -617,7 +617,7 @@
       ></i>
       {{ selectedCourse.isPublished ? "Unpublish" : "Publish" }}
     </button>
-    <button
+    <button *ngIf="p.canUpdate"
       class="pg-btn pg-btn--primary"
       (click)="openEditModal(selectedCourse)"
     >

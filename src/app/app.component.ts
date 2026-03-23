@@ -9,7 +9,7 @@ import { Router, NavigationEnd } from '@angular/router';
 })
 export class AppComponent {
   title = 'admin-panel';
-  isLoginPage = false;
+  isLoginPage = true;
 
   constructor(private router: Router) {
     this.router.events.subscribe(event => {
