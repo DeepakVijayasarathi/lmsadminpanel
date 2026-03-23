@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { SessionSlotService, SessionSlot, SessionSlotPayload } from '../../../services/session-slot.service';
 import { CommonService } from '../../../services/common.service';
+import { Permission, PermissionService } from '../../../auth/permission.service';
 
 type ModalMode = 'create' | 'edit' | 'view' | 'delete' | null;
 
@@ -33,10 +35,16 @@ export class SessionSlotsComponent implements OnInit {
   constructor(
     private sessionSlotService: SessionSlotService,
     private commonService: CommonService,
+    private permissionService: PermissionService,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
     this.loadSlots();
+  }
+
+  get p(): Permission {
+    return this.permissionService.for(this.router.url);
   }
 
   // ─── API ─────────────────────────────────────────────────

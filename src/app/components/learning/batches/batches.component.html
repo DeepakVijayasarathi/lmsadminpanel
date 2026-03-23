@@ -11,7 +11,7 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
+      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()" *ngIf="p.canCreate">
         <i class="fa-solid fa-plus"></i> Add Batch
       </button>
     </div>
@@ -103,19 +103,19 @@
             <td><span [class]="getStatusBadge(batch)">{{ getStatusLabel(batch) }}</span></td>
             <td>
               <div class="action-group">
-                <button class="pg-action-btn" title="View" (click)="openViewModal(batch)">
+                <button *ngIf="p.canRead" class="pg-action-btn" title="View" (click)="openViewModal(batch)">
                   <i class="fa-solid fa-eye"></i>
                 </button>
-                <button class="pg-action-btn" title="Edit" (click)="openEditModal(batch)">
+                <button *ngIf="p.canUpdate" class="pg-action-btn" title="Edit" (click)="openEditModal(batch)">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button class="pg-action-btn pg-action-btn--sky" title="Manage Students" (click)="openManageStudents(batch)">
+                <button *ngIf="p.canUpdate" class="pg-action-btn pg-action-btn--sky" title="Manage Students" (click)="openManageStudents(batch)">
                   <i class="fa-solid fa-user-graduate"></i>
                 </button>
-                <button class="pg-action-btn pg-action-btn--emerald" title="Manage Teachers" (click)="openManageTeachers(batch)">
+                <button *ngIf="p.canUpdate" class="pg-action-btn pg-action-btn--emerald" title="Manage Teachers" (click)="openManageTeachers(batch)">
                   <i class="fa-solid fa-chalkboard-user"></i>
                 </button>
-                <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDeleteModal(batch)">
+                <button *ngIf="p.canDelete" class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDeleteModal(batch)">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>

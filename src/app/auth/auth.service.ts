@@ -47,9 +47,14 @@ export class AuthService {
     });
   }
 
-  verifyOtp(email: string, otp: string) {
+  sendOtpWithDevice(payload: any) {
+    return this.http.post<any>(`${environment.apiUrl}/auth/login/send-otp`, payload);
+  }
+
+  verifyOtp(email: string, otp: string, payload?: any) {
+    const verifyPayload = payload || { email, otp };
     return this.http
-      .post<any>(`${environment.apiUrl}/auth/login/verify-otp`, { email, otp })
+      .post<any>(`${environment.apiUrl}/auth/login/verify-otp`, verifyPayload)
       .pipe(
         tap((res) => {
           this.tokenStorage.saveTokens(

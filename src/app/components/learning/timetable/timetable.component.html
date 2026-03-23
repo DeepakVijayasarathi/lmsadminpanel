@@ -12,7 +12,7 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary" (click)="openCreate()">
+      <button class="pg-btn pg-btn--primary" (click)="openCreate()" *ngIf="p.canCreate">
         <i class="fa-solid fa-plus"></i> Schedule Session
       </button>
     </div>
@@ -193,9 +193,9 @@
 
                   <!-- Hover actions -->
                   <div class="tt-slot__actions">
-                    <button class="tt-action" title="View"   (click)="openView(slot)">  <i class="fa-solid fa-eye"></i>   </button>
-                    <button class="tt-action" title="Edit"   (click)="openEdit(slot)">  <i class="fa-solid fa-pen"></i>   </button>
-                    <button class="tt-action tt-action--del" title="Delete" (click)="openDelete(slot)"><i class="fa-solid fa-trash"></i></button>
+                    <button *ngIf="p.canRead" class="tt-action" title="View"   (click)="openView(slot)">  <i class="fa-solid fa-eye"></i>   </button>
+                    <button *ngIf="p.canUpdate" class="tt-action" title="Edit"   (click)="openEdit(slot)">  <i class="fa-solid fa-pen"></i>   </button>
+                    <button *ngIf="p.canDelete" class="tt-action tt-action--del" title="Delete" (click)="openDelete(slot)"><i class="fa-solid fa-trash"></i></button>
                   </div>
                 </div>
               </ng-container>

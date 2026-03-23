@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonService } from '../../../services/common.service';
 import { HttpGeneralService } from '../../../services/http.service';
 import { environment } from '../../../../environments/environment';
+import { Permission, PermissionService } from '../../../auth/permission.service';
 
 const BASE_URL = environment.apiUrl;
 
@@ -120,11 +122,17 @@ export class ExamsComponent implements OnInit {
   constructor(
     private commonService: CommonService,
     private httpService: HttpGeneralService<any>,
+    private permissionService: PermissionService,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
     this.loadTopics();
     this.loadQuizzes();
+  }
+
+  get p(): Permission {
+    return this.permissionService.for(this.router.url);
   }
 
   // ════════════════════════════════════════════════════════════════

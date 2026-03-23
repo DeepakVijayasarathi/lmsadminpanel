@@ -12,7 +12,7 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
+      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()" *ngIf="p.canCreate">
         <i class="fas fa-plus"></i> Add Class
       </button>
     </div>
@@ -131,6 +131,7 @@
             <td>
               <div class="action-group">
                 <button
+                  *ngIf="p.canRead"
                   class="pg-action-btn"
                   title="View"
                   (click)="openViewModal(cls)"
@@ -138,6 +139,7 @@
                   <i class="fas fa-eye"></i>
                 </button>
                 <button
+                  *ngIf="p.canUpdate"
                   class="pg-action-btn"
                   title="Edit"
                   (click)="openEditModal(cls)"
@@ -145,6 +147,7 @@
                   <i class="fas fa-pen-to-square"></i>
                 </button>
                 <button
+                  *ngIf="p.canDelete"
                   class="pg-action-btn pg-action-btn--danger"
                   title="Delete"
                   (click)="openDeleteModal(cls)"

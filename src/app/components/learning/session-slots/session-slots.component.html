@@ -12,7 +12,7 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
+      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()" *ngIf="p.canCreate">
         <i class="fa-solid fa-plus"></i> Add Slot
       </button>
     </div>
@@ -79,13 +79,13 @@
             </td>
             <td>
               <div class="action-group">
-                <button class="pg-action-btn" title="View" (click)="openViewModal(slot)">
+                <button *ngIf="p.canRead" class="pg-action-btn" title="View" (click)="openViewModal(slot)">
                   <i class="fa-solid fa-eye"></i>
                 </button>
-                <button class="pg-action-btn" title="Edit" (click)="openEditModal(slot)">
+                <button *ngIf="p.canUpdate" class="pg-action-btn" title="Edit" (click)="openEditModal(slot)">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDeleteModal(slot)">
+                <button *ngIf="p.canDelete" class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDeleteModal(slot)">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>

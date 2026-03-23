@@ -153,6 +153,7 @@
             <td>
               <div class="action-group">
                 <button
+                  *ngIf="p.canRead"
                   class="pg-action-btn"
                   title="View Details"
                   (click)="openViewModal(refund)"
@@ -160,6 +161,7 @@
                   <i class="fas fa-eye"></i>
                 </button>
                 <button
+                  *ngIf="p.canUpdate"
                   class="pg-action-btn pg-action-btn--emerald"
                   title="Approve"
                   (click)="openApproveModal(refund)"
@@ -168,6 +170,7 @@
                   <i class="fas fa-check"></i>
                 </button>
                 <button
+                  *ngIf="p.canUpdate"
                   class="pg-action-btn pg-action-btn--danger"
                   title="Reject"
                   (click)="openRejectModal(refund)"
