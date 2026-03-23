@@ -330,21 +330,21 @@
 
     <!-- Result details grid -->
     <div class="tq-result-grid">
-      <div class="tq-result-item" *ngIf="result?.correctAnswers !== undefined">
+      <div class="tq-result-item" *ngIf="result?.correctCount !== undefined">
         <div class="tq-result-item-icon tq-result-item-icon--green">
           <i class="fa-solid fa-circle-check"></i>
         </div>
         <div>
-          <div class="tq-result-item-val">{{ result!.correctAnswers }}</div>
+          <div class="tq-result-item-val">{{ result!.correctCount }}</div>
           <div class="tq-result-item-lbl">Correct</div>
         </div>
       </div>
-      <div class="tq-result-item" *ngIf="result?.totalQuestions !== undefined">
+      <div class="tq-result-item" *ngIf="result?.questionResults">
         <div class="tq-result-item-icon tq-result-item-icon--blue">
           <i class="fa-solid fa-list-check"></i>
         </div>
         <div>
-          <div class="tq-result-item-val">{{ result!.totalQuestions }}</div>
+          <div class="tq-result-item-val">{{ result!.questionResults?.length }}</div>
           <div class="tq-result-item-lbl">Total</div>
         </div>
       </div>

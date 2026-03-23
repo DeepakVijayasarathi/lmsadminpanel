@@ -644,7 +644,7 @@
     <!-- ── WhatsApp ── -->
     <div class="sd-section-title"><i class="fa-brands fa-whatsapp"></i> WhatsApp Notifications</div>
 
-    <div class="wa-action-row">
+    <div class="wa-action-row" *ngIf="p.canUpdate || p.canCreate">
       <!-- Send Reminder -->
       <button class="wa-btn wa-btn--green"
         [disabled]="waReminderSending === selectedSlot.id"
@@ -769,7 +769,7 @@
   <!-- ── Footer ── -->
   <div class="sd-footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
-    <button class="pg-btn pg-btn--primary" (click)="openEdit(selectedSlot); modalMode = 'edit'">
+    <button class="pg-btn pg-btn--primary" *ngIf="p.canUpdate" (click)="openEdit(selectedSlot); modalMode = 'edit'">
       <i class="fa-solid fa-pen"></i> Edit Session
     </button>
   </div>

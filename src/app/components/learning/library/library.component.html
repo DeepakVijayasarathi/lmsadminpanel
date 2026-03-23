@@ -441,6 +441,7 @@
       <i class="fas fa-file-arrow-down"></i> Open File
     </button>
     <button
+      *ngIf="p.canDelete"
       class="pg-btn pg-btn--danger-outline"
       (click)="openDeleteModal(selectedBook)"
     >

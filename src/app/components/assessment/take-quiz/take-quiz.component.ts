@@ -32,8 +32,9 @@ export interface QuizResult {
   totalMarks?: number;
   passingMarks?: number;
   passed?: boolean;
-  correctAnswers?: number;
+  correctCount?: number;
   totalQuestions?: number;
+  questionResults?: any[];
   [key: string]: any;
 }
 
