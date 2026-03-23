@@ -22,7 +22,7 @@ export class PermissionService {
   load(data: { menu: { url: string | null }; permission: Permission }[]): void {
     this.map.clear();
     for (const item of data) {
-      if (item.menu.url) {
+      if (item.menu?.url) {
         this.map.set(item.menu.url, item.permission);
       }
     }
