@@ -34,6 +34,8 @@ import { TeacherDashboardComponent } from './components/teacher-dashboard/teache
 import { StudentDashboardComponent } from './components/student-dashboard/student-dashboard.component';
 import { RegistrationComponent } from './components/registration/registration.component';
 import { CommonDashboardComponent } from './components/common-dashboard/common-dashboard.component';
+import { TakeQuizComponent } from './components/assessment/take-quiz/take-quiz.component';
+import { StudentQuizzesComponent } from './components/assessment/student-quizzes/student-quizzes.component';
 
 const AG = [AuthGuard];
 
@@ -71,6 +73,8 @@ const routes: Routes = [
 
   // Assessment
   { path: 'exams',    component: ExamsComponent,   canActivate: AG },
+  { path: 'my-quizzes', component: StudentQuizzesComponent },
+  { path: 'exams/take/:id', component: TakeQuizComponent },
   { path: 'results',  component: ResultsComponent, canActivate: AG },
 
   // Communication

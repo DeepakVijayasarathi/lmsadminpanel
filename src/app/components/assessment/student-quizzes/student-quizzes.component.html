@@ -1,0 +1,179 @@
+<!-- student-quizzes.component.html -->
+<div class="pg">
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-purple">
+        <i class="fa-solid fa-file-pen"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">My Quizzes</div>
+        <div class="pg-head__sub">View and attend your assigned quizzes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-purple">
+        <i class="fa-solid fa-file-pen"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ quizzes.length }}</div>
+        <div class="pg-stat__lbl">Total Quizzes</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky">
+        <i class="fa-solid fa-list-check"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ totalQuestions }}</div>
+        <div class="pg-stat__lbl">Total Questions</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald">
+        <i class="fa-solid fa-layer-group"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ topics.length }}</div>
+        <div class="pg-stat__lbl">Topics</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-orange">
+        <i class="fa-solid fa-graduation-cap"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ courses.length }}</div>
+        <div class="pg-stat__lbl">Courses</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <span class="pg-card__title">Available Quizzes</span>
+      <div class="pg-toolbar">
+        <input
+          class="pg-search"
+          type="text"
+          placeholder="Search quizzes..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
+        />
+      </div>
+    </div>
+
+    <div class="pg-loading" *ngIf="isLoading">
+      <i class="fa-solid fa-spinner fa-spin"></i> Loading quizzes...
+    </div>
+
+    <div class="pg-table-wrap" *ngIf="!isLoading">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Quiz Title</th>
+            <th>Topic</th>
+            <th>Course</th>
+            <th>Duration</th>
+            <th>Marks</th>
+            <th>Passing</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let quiz of pagedQuizzes; let i = index">
+            <td class="idx-cell">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+
+            <!-- Title -->
+            <td>
+              <div class="quiz-title-cell">
+                <span class="quiz-icon">
+                  <i class="fa-solid fa-file-pen"></i>
+                </span>
+                <div>
+                  <div class="pg-cell__primary">{{ quiz.title }}</div>
+                  <div class="pg-cell__sub" *ngIf="quiz.description">
+                    {{ quiz.description | slice: 0 : 50
+                    }}{{ quiz.description.length > 50 ? "…" : "" }}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Topic -->
+            <td>
+              <span
+                class="pg-badge pg-badge--purple"
+                *ngIf="getTopicName(quiz.topicId) !== '—'"
+              >
+                {{ getTopicName(quiz.topicId) }}
+              </span>
+              <span class="no-val" *ngIf="getTopicName(quiz.topicId) === '—'"
+                >—</span
+              >
+            </td>
+
+            <!-- Course -->
+            <td>
+              <span
+                class="pg-badge pg-badge--orange"
+                *ngIf="getCourseName(quiz.courseId) !== '—'"
+              >
+                {{ getCourseName(quiz.courseId) }}
+              </span>
+              <span class="no-val" *ngIf="getCourseName(quiz.courseId) === '—'"
+                >—</span
+              >
+            </td>
+
+            <!-- Duration -->
+            <td>
+              <span class="info-chip info-chip--sky">
+                <i class="fa-solid fa-clock"></i> {{ quiz.durationMinutes }} min
+              </span>
+            </td>
+
+            <!-- Total Marks -->
+            <td class="marks-cell">{{ quiz.totalMarks }}</td>
+
+            <!-- Passing Marks -->
+            <td class="marks-cell passing">{{ quiz.passingMarks }}</td>
+
+            <!-- Attend -->
+            <td>
+              <button
+                class="attend-btn"
+                title="Attend Quiz"
+                (click)="attendQuiz(quiz)"
+              >
+                <i class="fa-solid fa-play"></i>
+                Attend
+              </button>
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredQuizzes.length === 0">
+            <td colspan="9" class="pg-empty">
+              <i class="fa-solid fa-file-pen pg-empty__icon"></i>
+              No quizzes found.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <app-common-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [pageSize]="pageSize"
+        [totalRecords]="filteredQuizzes.length"
+        (pageChange)="onPageChange($event)"
+      ></app-common-pagination>
+    </div>
+  </div>
+</div>

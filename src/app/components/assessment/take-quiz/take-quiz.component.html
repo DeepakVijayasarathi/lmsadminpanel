@@ -1,0 +1,410 @@
+<!-- take-quiz.component.html -->
+
+<!-- ═══════════════════════════════════════════════════
+     LOADING
+═══════════════════════════════════════════════════ -->
+<div class="tq-shell" *ngIf="phase === 'loading'">
+  <div class="tq-loading-screen">
+    <div class="tq-loading-spinner">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+    </div>
+    <p>Loading quiz...</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     INTRO / INFO SCREEN
+═══════════════════════════════════════════════════ -->
+<div class="tq-shell tq-shell--intro" *ngIf="phase === 'intro'">
+  <div class="tq-intro-card">
+    <!-- Back -->
+    <button class="tq-back-btn" (click)="goBack()">
+      <i class="fa-solid fa-arrow-left"></i> Back to My Quizzes
+    </button>
+
+    <!-- Icon & Title -->
+    <div class="tq-intro-hero">
+      <div class="tq-intro-icon">
+        <i class="fa-solid fa-file-pen"></i>
+      </div>
+      <h1 class="tq-intro-title">{{ quiz?.title ?? "Quiz" }}</h1>
+      <p class="tq-intro-desc" *ngIf="quiz?.description">
+        {{ quiz!.description }}
+      </p>
+    </div>
+
+    <!-- Meta grid -->
+    <div class="tq-meta-grid">
+      <div class="tq-meta-item">
+        <div class="tq-meta-icon tq-meta-icon--sky">
+          <i class="fa-solid fa-clock"></i>
+        </div>
+        <div class="tq-meta-body">
+          <div class="tq-meta-val">{{ quiz?.durationMinutes ?? "—" }} min</div>
+          <div class="tq-meta-lbl">Duration</div>
+        </div>
+      </div>
+      <div class="tq-meta-item">
+        <div class="tq-meta-icon tq-meta-icon--purple">
+          <i class="fa-solid fa-list-check"></i>
+        </div>
+        <div class="tq-meta-body">
+          <div class="tq-meta-val">{{ questions.length }}</div>
+          <div class="tq-meta-lbl">Questions</div>
+        </div>
+      </div>
+      <div class="tq-meta-item">
+        <div class="tq-meta-icon tq-meta-icon--emerald">
+          <i class="fa-solid fa-star"></i>
+        </div>
+        <div class="tq-meta-body">
+          <div class="tq-meta-val">{{ quiz?.totalMarks ?? "—" }}</div>
+          <div class="tq-meta-lbl">Total Marks</div>
+        </div>
+      </div>
+      <div class="tq-meta-item">
+        <div class="tq-meta-icon tq-meta-icon--orange">
+          <i class="fa-solid fa-trophy"></i>
+        </div>
+        <div class="tq-meta-body">
+          <div class="tq-meta-val">{{ quiz?.passingMarks ?? "—" }}</div>
+          <div class="tq-meta-lbl">Passing Marks</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="tq-instructions">
+      <div class="tq-instructions__title">
+        <i class="fa-solid fa-circle-info"></i> Instructions
+      </div>
+      <ul>
+        <li>Read each question carefully before selecting your answer.</li>
+        <li>You can navigate between questions using the question palette.</li>
+        <li>Unanswered questions will be skipped on submission.</li>
+        <li>
+          The timer starts as soon as you click <strong>Start Quiz</strong>.
+        </li>
+        <li>You cannot pause the quiz once started.</li>
+      </ul>
+    </div>
+
+    <button
+      class="tq-start-btn"
+      (click)="startQuiz()"
+      [disabled]="questions.length === 0"
+    >
+      <i class="fa-solid fa-play"></i>
+      {{ questions.length === 0 ? "No Questions Available" : "Start Quiz" }}
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     IN-PROGRESS
+═══════════════════════════════════════════════════ -->
+<div class="tq-shell tq-shell--exam" *ngIf="phase === 'in-progress'">
+  <!-- Top Bar -->
+  <div class="tq-topbar">
+    <div class="tq-topbar__left">
+      <div class="tq-topbar__icon">
+        <i class="fa-solid fa-file-pen"></i>
+      </div>
+      <div class="tq-topbar__info">
+        <div class="tq-topbar__title">{{ quiz?.title }}</div>
+        <div class="tq-topbar__prog">
+          {{ answeredCount }} / {{ questions.length }} answered
+        </div>
+      </div>
+    </div>
+    <div class="tq-topbar__center">
+      <!-- Progress bar -->
+      <div class="tq-progress-wrap">
+        <div class="tq-progress-bar">
+          <div class="tq-progress-fill" [style.width.%]="progressPercent"></div>
+        </div>
+        <span class="tq-progress-pct">{{ progressPercent }}%</span>
+      </div>
+    </div>
+    <div class="tq-topbar__right">
+      <div
+        class="tq-timer"
+        [class.tq-timer--warn]="timerWarning"
+        [class.tq-timer--crit]="timerCritical"
+      >
+        <i class="fa-solid fa-clock"></i>
+        <span>{{ timerDisplay }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="tq-exam-body">
+    <!-- Sidebar: Question Palette -->
+    <aside class="tq-sidebar">
+      <div class="tq-sidebar__head">
+        <span>Questions</span>
+        <span class="tq-sidebar__count">{{ questions.length }}</span>
+      </div>
+      <div class="tq-palette">
+        <button
+          class="tq-palette-btn"
+          *ngFor="let q of questions; let i = index"
+          [class.tq-palette-btn--answered]="isAnswered(i)"
+          [class.tq-palette-btn--current]="currentIndex === i"
+          (click)="goTo(i)"
+        >
+          {{ i + 1 }}
+        </button>
+      </div>
+      <div class="tq-legend">
+        <div class="tq-legend-item">
+          <span class="tq-legend-dot tq-legend-dot--answered"></span> Answered
+        </div>
+        <div class="tq-legend-item">
+          <span class="tq-legend-dot tq-legend-dot--unanswered"></span> Not
+          answered
+        </div>
+        <div class="tq-legend-item">
+          <span class="tq-legend-dot tq-legend-dot--current"></span> Current
+        </div>
+      </div>
+      <div class="tq-sidebar__summary">
+        <div class="tq-summary-row tq-summary-row--answered">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>{{ answeredCount }} Answered</span>
+        </div>
+        <div class="tq-summary-row tq-summary-row--unanswered">
+          <i class="fa-solid fa-circle"></i>
+          <span>{{ unansweredCount }} Not Answered</span>
+        </div>
+      </div>
+
+      <button class="tq-submit-side-btn" (click)="submitQuiz()">
+        <i class="fa-solid fa-paper-plane"></i> Submit Quiz
+      </button>
+    </aside>
+
+    <!-- Question Area -->
+    <main class="tq-main" *ngIf="currentQuestion">
+      <div class="tq-question-card">
+        <!-- Question header -->
+        <div class="tq-q-header">
+          <div class="tq-q-number">
+            <span>Question {{ currentIndex + 1 }}</span>
+            <span class="tq-q-of">of {{ questions.length }}</span>
+          </div>
+          <div class="tq-q-marks">
+            <i class="fa-solid fa-star"></i>
+            {{ currentQuestion.marks }} mark{{
+              currentQuestion.marks !== 1 ? "s" : ""
+            }}
+          </div>
+        </div>
+
+        <!-- Question text -->
+        <div class="tq-q-text">
+          {{ currentQuestion.questionText }}
+        </div>
+
+        <!-- Options -->
+        <div class="tq-options">
+          <button
+            class="tq-option"
+            *ngFor="let opt of optionKeys"
+            [class.tq-option--selected]="answers[currentQuestion.id] === opt"
+            (click)="selectOption(opt)"
+          >
+            <span
+              class="tq-option-badge"
+              [class.tq-option-badge--selected]="
+                answers[currentQuestion.id] === opt
+              "
+            >
+              {{ opt }}
+            </span>
+            <span class="tq-option-text">{{
+              getOptionText(currentQuestion, opt)
+            }}</span>
+            <i
+              class="fa-solid fa-circle-check tq-option-check"
+              *ngIf="answers[currentQuestion.id] === opt"
+            ></i>
+          </button>
+        </div>
+
+        <!-- Navigation -->
+        <div class="tq-nav">
+          <button
+            class="tq-nav-btn tq-nav-btn--prev"
+            (click)="prev()"
+            [disabled]="currentIndex === 0"
+          >
+            <i class="fa-solid fa-chevron-left"></i> Previous
+          </button>
+          <div class="tq-nav-dots">
+            <span
+              class="tq-nav-dot"
+              *ngFor="let q of questions; let i = index"
+              [class.tq-nav-dot--active]="i === currentIndex"
+              [class.tq-nav-dot--answered]="isAnswered(i)"
+            ></span>
+          </div>
+          <button
+            class="tq-nav-btn tq-nav-btn--next"
+            (click)="next()"
+            *ngIf="currentIndex < questions.length - 1"
+          >
+            Next <i class="fa-solid fa-chevron-right"></i>
+          </button>
+          <button
+            class="tq-nav-btn tq-nav-btn--submit"
+            (click)="submitQuiz()"
+            *ngIf="currentIndex === questions.length - 1"
+          >
+            <i class="fa-solid fa-paper-plane"></i> Submit
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SUBMITTING
+═══════════════════════════════════════════════════ -->
+<div class="tq-shell" *ngIf="phase === 'submitting'">
+  <div class="tq-loading-screen">
+    <div class="tq-loading-spinner tq-loading-spinner--purple">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+    </div>
+    <p>Submitting your answers...</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     RESULT
+═══════════════════════════════════════════════════ -->
+<div class="tq-shell tq-shell--result" *ngIf="phase === 'result'">
+  <div class="tq-result-card">
+    <!-- Result icon -->
+    <div
+      class="tq-result-hero"
+      [class.tq-result-hero--pass]="passed"
+      [class.tq-result-hero--fail]="!passed"
+    >
+      <div class="tq-result-icon">
+        <i
+          class="fa-solid"
+          [class.fa-trophy]="passed"
+          [class.fa-face-sad-cry]="!passed"
+        ></i>
+      </div>
+      <div class="tq-result-verdict">
+        {{ passed ? "Congratulations!" : "Better Luck Next Time" }}
+      </div>
+      <div class="tq-result-sub">
+        {{
+          passed
+            ? "You passed the quiz!"
+            : "You did not meet the passing criteria."
+        }}
+      </div>
+    </div>
+
+    <!-- Score display -->
+    <div class="tq-score-display">
+      <div
+        class="tq-score-ring"
+        [class.tq-score-ring--pass]="passed"
+        [class.tq-score-ring--fail]="!passed"
+      >
+        <div class="tq-score-inner">
+          <div class="tq-score-val">{{ result?.score ?? "—" }}</div>
+          <div class="tq-score-total">
+            / {{ result?.totalMarks ?? quiz?.totalMarks ?? "—" }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result details grid -->
+    <div class="tq-result-grid">
+      <div class="tq-result-item" *ngIf="result?.correctAnswers !== undefined">
+        <div class="tq-result-item-icon tq-result-item-icon--green">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div>
+          <div class="tq-result-item-val">{{ result!.correctAnswers }}</div>
+          <div class="tq-result-item-lbl">Correct</div>
+        </div>
+      </div>
+      <div class="tq-result-item" *ngIf="result?.totalQuestions !== undefined">
+        <div class="tq-result-item-icon tq-result-item-icon--blue">
+          <i class="fa-solid fa-list-check"></i>
+        </div>
+        <div>
+          <div class="tq-result-item-val">{{ result!.totalQuestions }}</div>
+          <div class="tq-result-item-lbl">Total</div>
+        </div>
+      </div>
+      <div class="tq-result-item">
+        <div class="tq-result-item-icon tq-result-item-icon--orange">
+          <i class="fa-solid fa-trophy"></i>
+        </div>
+        <div>
+          <div class="tq-result-item-val">
+            {{ result?.passingMarks ?? quiz?.passingMarks ?? "—" }}
+          </div>
+          <div class="tq-result-item-lbl">Passing Marks</div>
+        </div>
+      </div>
+      <div class="tq-result-item">
+        <div
+          class="tq-result-item-icon"
+          [class.tq-result-item-icon--green]="passed"
+          [class.tq-result-item-icon--red]="!passed"
+        >
+          <i
+            class="fa-solid"
+            [class.fa-check]="passed"
+            [class.fa-xmark]="!passed"
+          ></i>
+        </div>
+        <div>
+          <div class="tq-result-item-val">{{ passed ? "PASS" : "FAIL" }}</div>
+          <div class="tq-result-item-lbl">Result</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Answers summary: answered vs unanswered -->
+    <div class="tq-result-answered">
+      <div class="tq-result-answered-row">
+        <span>Answered</span>
+        <span class="tq-result-answered-val tq-result-answered-val--done">{{
+          answeredCount
+        }}</span>
+      </div>
+      <div class="tq-result-answered-row">
+        <span>Unanswered</span>
+        <span class="tq-result-answered-val tq-result-answered-val--skip">{{
+          unansweredCount
+        }}</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="tq-result-actions">
+      <button class="tq-result-btn tq-result-btn--ghost" (click)="goBack()">
+        <i class="fa-solid fa-arrow-left"></i> Back to Exams
+      </button>
+      <button
+        class="tq-result-btn tq-result-btn--primary"
+        (click)="retakeQuiz()"
+      >
+        <i class="fa-solid fa-rotate-right"></i> Retake Quiz
+      </button>
+    </div>
+  </div>
+</div>
