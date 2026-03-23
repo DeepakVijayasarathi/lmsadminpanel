@@ -23,12 +23,15 @@ export interface Quiz {
   durationMinutes: number;
   topicId: string | null;
   topic?: Topic;
+  courseId: string | null;
+  course?: any;
   questionCount?: number;
   createdAt?: string;
 }
 
 export interface QuizPayload {
   topicId: string | null;
+  courseId: string | null;
   title: string;
   description: string;
   totalMarks: number;
@@ -62,6 +65,7 @@ export class ExamsComponent implements OnInit {
   quizzes: Quiz[] = [];
   filteredQuizzes: Quiz[] = [];
   topics: Topic[] = [];
+  courses: any[] = [];
 
   searchQuery: string = '';
   isLoading: boolean = false;
@@ -89,6 +93,7 @@ export class ExamsComponent implements OnInit {
   formTitle: string = '';
   formDescription: string = '';
   formTopicId: string | null = null;
+  formCourseId: string | null = null;
   formTotalMarks: number = 100;
   formPassingMarks: number = 40;
   formDurationMinutes: number = 60;
@@ -129,6 +134,7 @@ export class ExamsComponent implements OnInit {
   ngOnInit(): void {
     this.loadTopics();
     this.loadQuizzes();
+    this.loadCourses();
   }
 
   get p(): Permission {
@@ -163,6 +169,17 @@ export class ExamsComponent implements OnInit {
       },
       error: () => {
         // Topics are optional; swallow the error silently
+      },
+    });
+  }
+
+  loadCourses(): void {
+    this.httpService.getData(BASE_URL, '/courses').subscribe({
+      next: (res: any) => {
+        this.courses = Array.isArray(res) ? res : (res?.data ?? []);
+      },
+      error: () => {
+        // Courses are optional; swallow the error silently
       },
     });
   }
@@ -284,6 +301,7 @@ export class ExamsComponent implements OnInit {
     this.formTitle = quiz.title;
     this.formDescription = quiz.description ?? '';
     this.formTopicId = quiz.topicId;
+    this.formCourseId = quiz.courseId;
     this.formTotalMarks = quiz.totalMarks;
     this.formPassingMarks = quiz.passingMarks;
     this.formDurationMinutes = quiz.durationMinutes;
@@ -365,6 +383,7 @@ export class ExamsComponent implements OnInit {
   private buildPayload(): QuizPayload {
     return {
       topicId: this.formTopicId || null,
+      courseId: this.formCourseId || null,
       title: this.formTitle.trim(),
       description: this.formDescription.trim(),
       totalMarks: this.formTotalMarks,
@@ -377,6 +396,7 @@ export class ExamsComponent implements OnInit {
     this.formTitle = '';
     this.formDescription = '';
     this.formTopicId = null;
+    this.formCourseId = null;
     this.formTotalMarks = 100;
     this.formPassingMarks = 40;
     this.formDurationMinutes = 60;
@@ -403,6 +423,11 @@ export class ExamsComponent implements OnInit {
     return this.topics.find((t) => t.id === topicId)?.name ?? '—';
   }
 
+  getCourseName(courseId: string | null): string {
+    if (!courseId) return '—';
+    return this.courses.find((c) => c.id === courseId)?.title ?? '—';
+  }
+
   getOption(q: Question, opt: OptionKey): string {
     const key = `option${opt}` as keyof Pick<Question, 'optionA' | 'optionB' | 'optionC' | 'optionD'>;
     return q[key];
@@ -419,7 +444,8 @@ export class ExamsComponent implements OnInit {
         !q ||
         quiz.title.toLowerCase().includes(q) ||
         quiz.description?.toLowerCase().includes(q) ||
-        this.getTopicName(quiz.topicId).toLowerCase().includes(q)
+        this.getTopicName(quiz.topicId).toLowerCase().includes(q) ||
+        this.getCourseName(quiz.courseId).toLowerCase().includes(q)
       );
     });
     this.currentPage = 1;

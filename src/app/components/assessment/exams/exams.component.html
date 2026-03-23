@@ -47,6 +47,15 @@
         <div class="pg-stat__lbl">Topics</div>
       </div>
     </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-orange">
+        <i class="fa-solid fa-graduation-cap"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ courses.length }}</div>
+        <div class="pg-stat__lbl">Courses</div>
+      </div>
+    </div>
   </div>
 
   <!-- Table Card -->
@@ -75,6 +84,7 @@
             <th>#</th>
             <th>Quiz Title</th>
             <th>Topic</th>
+            <th>Course</th>
             <th>Duration</th>
             <th>Marks</th>
             <th>Passing</th>
@@ -110,6 +120,16 @@
                 >—</span
               >
             </td>
+            <td>
+              <span
+                class="pg-badge pg-badge--orange"
+                *ngIf="getCourseName(quiz.courseId) !== '—'"
+              >
+                {{ getCourseName(quiz.courseId) }}
+              </span>
+              <span class="no-val" *ngIf="getCourseName(quiz.courseId) === '—'"
+                >—</span
+              >
             <td>
               <span class="info-chip info-chip--sky">
                 <i class="fa-solid fa-clock"></i> {{ quiz.durationMinutes }} min
@@ -234,6 +254,16 @@
           <option [ngValue]="null">— No Topic —</option>
           <option *ngFor="let topic of topics" [ngValue]="topic.id">
             {{ topic.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group form-group--full">
+        <label>Course <span class="required">*</span></label>
+        <select class="form-control form-select" [(ngModel)]="formCourseId">
+          <option [ngValue]="null">— No Course —</option>
+          <option *ngFor="let course of courses" [ngValue]="course.id">
+            {{ course.title }}
           </option>
         </select>
       </div>
