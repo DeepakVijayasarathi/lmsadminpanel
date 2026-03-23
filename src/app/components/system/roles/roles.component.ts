@@ -1,5 +1,3 @@
-// roles.component.ts
-
 import { Component, OnInit } from '@angular/core';
 import { CommonService } from '../../../services/common.service';
 import { HttpGeneralService } from '../../../services/http.service';
@@ -9,16 +7,25 @@ const BASE_URL = environment.apiUrl;
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
 
+export interface RoleMenuPermissionDto {
+  menuId:    string;
+  canCreate: boolean;
+  canRead:   boolean;
+  canUpdate: boolean;
+  canDelete: boolean;
+}
+
 export interface MenuTreeItem {
-  id: string;
-  name: string;
-  url: string | null;
-  icon: string;
-  menuType: string;
-  parentId: string | null;
-  sequence: number;
-  isVisible: boolean;
-  children: MenuTreeItem[];   // API returns "children"
+  id:                   string;
+  name:                 string;
+  url:                  string | null;
+  icon:                 string;
+  menuType:             string;
+  parentId:             string | null;
+  sequence:             number;
+  isVisible:            boolean;
+  children:             MenuTreeItem[];
+  roleMenuPermissionDto?: RoleMenuPermissionDto;
 }
 
 export interface RolePermission {
@@ -29,11 +36,6 @@ export interface RolePermission {
   canDelete: boolean;
 }
 
-/**
- * GET /role/role-by-menu returns menus[] (the assigned menu tree).
- * We derive RolePermission[] from it: every menu in menus[] gets all=true,
- * every menu NOT in menus[] gets all=false.
- */
 export interface RoleApiResponse {
   id:          string;
   name:        string;
@@ -44,7 +46,7 @@ export interface RoleApiResponse {
 export interface RolePayload {
   name:        string;
   description: string;
-  permissions: RolePermission[];   // only rows with at least one true flag
+  permissions: RolePermission[];
 }
 
 type ModalMode = 'create' | 'edit' | 'view' | 'delete' | null;
@@ -62,8 +64,12 @@ export class RolesComponent implements OnInit {
   menuTree:      MenuTreeItem[]    = [];
   flatMenus:     MenuTreeItem[]    = [];
 
-  searchQuery = '';
-  isLoading   = false;
+  // Kept separately so the table count survives modal close
+  totalMenuCount = 0;
+
+  searchQuery   = '';
+  isLoading     = false;
+  isPermLoading = false;
 
   modalMode:    ModalMode              = null;
   selectedRole: RoleApiResponse | null = null;
@@ -86,19 +92,23 @@ export class RolesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadMenuTree();
     this.loadRoles();
+    this.loadTotalMenuCount();
   }
 
   // ── API ───────────────────────────────────────────────────────────────────
 
-  loadMenuTree(): void {
+  /**
+   * Load total menu count once for the table's "X / Y" display.
+   * Uses the plain menu tree (no roleId).
+   */
+  loadTotalMenuCount(): void {
     this.httpService.getData(BASE_URL, '/role/menu-tree').subscribe({
       next: (res: any) => {
-        this.menuTree  = Array.isArray(res) ? res : (res?.data ?? []);
-        this.flatMenus = this.flattenTree(this.menuTree);
+        const tree: MenuTreeItem[] = Array.isArray(res) ? res : (res?.data ?? []);
+        this.totalMenuCount = this.flattenTree(tree).length;
       },
-      error: () => this.commonService.error('Failed to load menu tree.'),
+      error: () => {},
     });
   }
 
@@ -113,6 +123,62 @@ export class RolesComponent implements OnInit {
       error: () => {
         this.commonService.error('Failed to load roles.');
         this.isLoading = false;
+      },
+    });
+  }
+
+  /**
+   * Edit / View: GET /role/menu-tree/{roleId}
+   * Permissions live inside node.roleMenuPermissionDto
+   */
+  loadRoleMenuTree(roleId: string): void {
+    this.isPermLoading = true;
+    this.httpService.getData(BASE_URL, `/role/menu-tree/${roleId}`).subscribe({
+      next: (res: any) => {
+        const tree: MenuTreeItem[] = Array.isArray(res) ? res : (res?.data ?? []);
+        this.menuTree  = tree;
+        this.flatMenus = this.flattenTree(tree);
+
+        // ── Map roleMenuPermissionDto into formPermissions ──
+        this.formPermissions = this.flatMenus.map(m => ({
+          menuId:    m.id,
+          canRead:   m.roleMenuPermissionDto?.canRead   ?? false,
+          canCreate: m.roleMenuPermissionDto?.canCreate ?? false,
+          canUpdate: m.roleMenuPermissionDto?.canUpdate ?? false,
+          canDelete: m.roleMenuPermissionDto?.canDelete ?? false,
+        }));
+
+        this.isPermLoading = false;
+      },
+      error: () => {
+        this.commonService.error('Failed to load role permissions.');
+        this.isPermLoading = false;
+      },
+    });
+  }
+
+  /**
+   * Create: GET /role/menu-tree (no roleId) — all permissions false
+   */
+  loadPlainMenuTree(): void {
+    this.isPermLoading = true;
+    this.httpService.getData(BASE_URL, '/role/menu-tree').subscribe({
+      next: (res: any) => {
+        const tree: MenuTreeItem[] = Array.isArray(res) ? res : (res?.data ?? []);
+        this.menuTree  = tree;
+        this.flatMenus = this.flattenTree(tree);
+        this.formPermissions = this.flatMenus.map(m => ({
+          menuId:    m.id,
+          canRead:   false,
+          canCreate: false,
+          canUpdate: false,
+          canDelete: false,
+        }));
+        this.isPermLoading = false;
+      },
+      error: () => {
+        this.commonService.error('Failed to load menu tree.');
+        this.isPermLoading = false;
       },
     });
   }
@@ -161,9 +227,6 @@ export class RolesComponent implements OnInit {
       });
   }
 
-  /**
-   * Only send rows that have at least one permission enabled.
-   */
   private buildPayload(): RolePayload {
     return {
       name:        this.formName.trim(),
@@ -181,8 +244,9 @@ export class RolesComponent implements OnInit {
     this.selectedRole    = null;
     this.formName        = '';
     this.formDescription = '';
-    this.formPermissions = this.buildDefaultPermissions();
+    this.formPermissions = [];
     this.nameError       = '';
+    this.loadPlainMenuTree();
   }
 
   openEditModal(role: RoleApiResponse): void {
@@ -190,14 +254,16 @@ export class RolesComponent implements OnInit {
     this.selectedRole    = role;
     this.formName        = role.name;
     this.formDescription = role.description;
-    this.formPermissions = this.buildPermissionsFromRole(role);
+    this.formPermissions = [];
     this.nameError       = '';
+    this.loadRoleMenuTree(role.id);
   }
 
   openViewModal(role: RoleApiResponse): void {
     this.modalMode       = 'view';
     this.selectedRole    = role;
-    this.formPermissions = this.buildPermissionsFromRole(role);
+    this.formPermissions = [];
+    this.loadRoleMenuTree(role.id);
   }
 
   openDeleteModal(role: RoleApiResponse): void {
@@ -206,9 +272,14 @@ export class RolesComponent implements OnInit {
   }
 
   closeModal(): void {
-    this.modalMode    = null;
-    this.selectedRole = null;
-    this.nameError    = '';
+    this.modalMode       = null;
+    this.selectedRole    = null;
+    this.nameError       = '';
+    this.isPermLoading   = false;
+    this.menuTree        = [];
+    this.flatMenus       = [];
+    this.formPermissions = [];
+    // NOTE: totalMenuCount is intentionally NOT cleared
   }
 
   // ── Form ──────────────────────────────────────────────────────────────────
@@ -242,36 +313,6 @@ export class RolesComponent implements OnInit {
     return result;
   }
 
-  /** All permissions off — used when opening Create */
-  buildDefaultPermissions(): RolePermission[] {
-    return this.flatMenus.map(m => ({
-      menuId:    m.id,
-      canCreate: false,
-      canRead:   false,
-      canUpdate: false,
-      canDelete: false,
-    }));
-  }
-
-  /**
-   * Seed from role.menus (tree of assigned menus).
-   * Any menu present in the role's menus tree → all four flags = true.
-   * Any menu NOT present → all false.
-   */
-  buildPermissionsFromRole(role: RoleApiResponse): RolePermission[] {
-    const assignedIds = new Set<string>(
-      this.flattenTree(role.menus ?? []).map(m => m.id),
-    );
-
-    return this.flatMenus.map(m => ({
-      menuId:    m.id,
-      canCreate: assignedIds.has(m.id),
-      canRead:   assignedIds.has(m.id),
-      canUpdate: assignedIds.has(m.id),
-      canDelete: assignedIds.has(m.id),
-    }));
-  }
-
   getPermissionForMenu(menuId: string): RolePermission | undefined {
     return this.formPermissions.find(p => p.menuId === menuId);
   }
@@ -288,17 +329,11 @@ export class RolesComponent implements OnInit {
     return this.menuTree.find(p => p.children?.some(c => c.id === childId));
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  //  CHILD → PARENT AUTO-SYNC
-  //  When any child perm is turned ON  → that same column turns ON for parent.
-  //  When a child perm is turned OFF   → parent turns OFF only if no sibling
-  //                                       still has that column ON.
-  // ══════════════════════════════════════════════════════════════════════════
+  // ── Child → Parent auto-sync ──────────────────────────────────────────────
 
   onChildPermChange(childId: string, key: PermKey, checked: boolean): void {
     const parent = this.findParentOf(childId);
     if (!parent) return;
-
     const parentPerm = this.getPermissionForMenu(parent.id);
     if (!parentPerm) return;
 
@@ -320,7 +355,7 @@ export class RolesComponent implements OnInit {
     }
   }
 
-  // ── Row select-all (horizontal) ───────────────────────────────────────────
+  // ── Row select-all ────────────────────────────────────────────────────────
 
   isRowAllChecked(menuId: string): boolean {
     const p = this.getPermissionForMenu(menuId);
@@ -342,7 +377,7 @@ export class RolesComponent implements OnInit {
     }
   }
 
-  // ── Column select-all (vertical) ──────────────────────────────────────────
+  // ── Column select-all ─────────────────────────────────────────────────────
 
   isColAllChecked(key: PermKey): boolean {
     return this.formPermissions.length > 0 && this.formPermissions.every(p => p[key]);
@@ -367,8 +402,7 @@ export class RolesComponent implements OnInit {
   isGrandIndeterminate(): boolean {
     const total  = this.formPermissions.length * 4;
     const ticked = this.formPermissions.reduce(
-      (s, p) => s + [p.canCreate, p.canRead, p.canUpdate, p.canDelete].filter(Boolean).length,
-      0,
+      (s, p) => s + [p.canCreate, p.canRead, p.canUpdate, p.canDelete].filter(Boolean).length, 0,
     );
     return ticked > 0 && ticked < total;
   }
@@ -380,10 +414,19 @@ export class RolesComponent implements OnInit {
     });
   }
 
-  // ── Stats ─────────────────────────────────────────────────────────────────
+  // ── Stats / Count ─────────────────────────────────────────────────────────
 
+  /**
+   * Count menus that have at least one permission enabled for the role.
+   * Reads from role.menus (the assigned tree returned by role-by-menu).
+   */
   getActivePermCount(role: RoleApiResponse): number {
-    return this.flattenTree(role.menus ?? []).length;
+    return this.flattenTree(role.menus ?? []).filter(m =>
+      m.roleMenuPermissionDto?.canRead   ||
+      m.roleMenuPermissionDto?.canCreate ||
+      m.roleMenuPermissionDto?.canUpdate ||
+      m.roleMenuPermissionDto?.canDelete
+    ).length;
   }
 
   // ── Search ────────────────────────────────────────────────────────────────
@@ -402,10 +445,10 @@ export class RolesComponent implements OnInit {
   roleBadgeClass(name: string): string {
     const map: Record<string, string> = {
       'Super Admin': 'pg-badge--red',
-      Admin:   'pg-badge--purple',
-      Teacher: 'pg-badge--indigo',
-      Student: 'pg-badge--blue',
-      Parent:  'pg-badge--green',
+      Admin:         'pg-badge--purple',
+      Teacher:       'pg-badge--indigo',
+      Student:       'pg-badge--blue',
+      Parent:        'pg-badge--green',
     };
     return map[name] || 'pg-badge--gray';
   }

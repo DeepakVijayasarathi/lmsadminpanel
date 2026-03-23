@@ -266,3 +266,11 @@
   transition: background 0.15s;
 }
 .pg-btn--danger:hover { background: #dc2626; }
+
+.perm-loading {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+.perm-loading i { margin-right: 0.4rem; }
