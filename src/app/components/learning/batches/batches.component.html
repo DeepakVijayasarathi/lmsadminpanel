@@ -74,7 +74,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let batch of filteredBatches; let i = index">
+          <tr *ngFor="let batch of pagedBatches; let i = index">
             <td class="idx-cell">{{ i + 1 }}</td>
             <td>
               <div class="batch-name-cell">
@@ -129,6 +129,13 @@
           </tr>
         </tbody>
       </table>
+      <app-common-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [pageSize]="pageSize"
+        [totalRecords]="filteredBatches.length"
+        (pageChange)="onPageChange($event)">
+      </app-common-pagination>
     </div>
   </div>
 </div>

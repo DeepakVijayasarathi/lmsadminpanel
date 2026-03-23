@@ -21,6 +21,21 @@ export class PaymentsComponent {
   searchQuery = '';
   statusFilter = '';
 
+  pageSize = 10;
+  currentPage = 1;
+
+  get pagedPayments(): Payment[] {
+    return this.filteredPayments.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredPayments.length / this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+  }
+
   // Modal state
   showViewModal = false;
   selectedPayment: Payment | null = null;

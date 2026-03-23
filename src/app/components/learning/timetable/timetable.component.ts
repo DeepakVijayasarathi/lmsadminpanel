@@ -61,6 +61,21 @@ export class TimetableComponent implements OnInit, OnDestroy {
   categoryFilter = '';
   viewMode: 'grid' | 'list' = 'grid';
 
+  pageSize = 10;
+  currentPage = 1;
+
+  get pagedSlots(): TimetableSlot[] {
+    return this.filteredSlots.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredSlots.length / this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+  }
+
   // ── Loading ───────────────────────────────────────────────────────────────
   isLoading = false;
   isSaving = false;

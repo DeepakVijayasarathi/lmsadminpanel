@@ -38,6 +38,21 @@ export class LiveClassesComponent implements OnInit {
   isLoading = false;
   joiningId = '';
 
+  pageSize = 10;
+  currentPage = 1;
+
+  get pagedClasses(): LiveClass[] {
+    return this.filteredClasses.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredClasses.length / this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+  }
+
   modalMode: ModalMode = null;
   selectedClass: LiveClass | null = null;
 

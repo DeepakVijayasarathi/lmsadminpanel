@@ -62,6 +62,21 @@ export class CoursesComponent implements OnInit {
   statusFilter: string = '';
   isLoading: boolean = false;
 
+  pageSize = 10;
+  currentPage = 1;
+
+  get pagedCourses(): Course[] {
+    return this.filteredCourses.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredCourses.length / this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+  }
+
   // ── Modal state ────────────────────────────────────────────────
   modalMode: ModalMode = null;
   selectedCourse: Course | null = null;
@@ -417,6 +432,7 @@ export class CoursesComponent implements OnInit {
     }
 
     this.filteredCourses = list;
+    this.currentPage = 1;
   }
 
   getSubjectName(subjectId?: string): string {

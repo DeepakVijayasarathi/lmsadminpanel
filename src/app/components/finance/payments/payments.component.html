@@ -56,9 +56,9 @@
       <div class="pg-toolbar">
         <div class="pg-search">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" placeholder="Search student, transaction..." [(ngModel)]="searchQuery" />
+          <input type="text" placeholder="Search student, transaction..." [(ngModel)]="searchQuery" (ngModelChange)="currentPage = 1" />
         </div>
-        <select class="pg-filter" [(ngModel)]="statusFilter">
+        <select class="pg-filter" [(ngModel)]="statusFilter" (ngModelChange)="currentPage = 1">
           <option value="">All Status</option>
           <option value="success">Success</option>
           <option value="pending">Pending</option>
@@ -81,7 +81,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let payment of filteredPayments">
+          <tr *ngFor="let payment of pagedPayments">
             <td>
               <div class="pg-with-avatar">
                 <div class="pg-avatar av-indigo">{{ payment.student.charAt(0) }}</div>
@@ -119,6 +119,13 @@
           </tr>
         </tbody>
       </table>
+      <app-common-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [pageSize]="pageSize"
+        [totalRecords]="filteredPayments.length"
+        (pageChange)="onPageChange($event)">
+      </app-common-pagination>
     </div>
   </div>
 </div>

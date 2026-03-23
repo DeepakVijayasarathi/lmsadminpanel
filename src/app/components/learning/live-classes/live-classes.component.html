@@ -53,9 +53,9 @@
       <div class="pg-toolbar">
         <div class="pg-search">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" placeholder="Search title, batch..." [(ngModel)]="searchQuery" />
+          <input type="text" placeholder="Search title, batch..." [(ngModel)]="searchQuery" (ngModelChange)="currentPage = 1" />
         </div>
-        <select class="pg-filter" [(ngModel)]="statusFilter">
+        <select class="pg-filter" [(ngModel)]="statusFilter" (ngModelChange)="currentPage = 1">
           <option value="">All Status</option>
           <option value="live">Live</option>
           <option value="upcoming">Upcoming</option>
@@ -87,7 +87,7 @@
           </tr>
 
           <ng-container *ngIf="!isLoading">
-            <tr *ngFor="let cls of filteredClasses">
+            <tr *ngFor="let cls of pagedClasses">
               <td>
                 <div class="pg-cell__primary">{{ cls.subject }}</div>
                 <div class="pg-cell__sub">{{ cls.topic !== cls.subject ? cls.topic : '' }}</div>
@@ -154,6 +154,13 @@
           </ng-container>
         </tbody>
       </table>
+      <app-common-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [pageSize]="pageSize"
+        [totalRecords]="filteredClasses.length"
+        (pageChange)="onPageChange($event)">
+      </app-common-pagination>
     </div>
   </div>
 

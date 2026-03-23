@@ -95,7 +95,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let course of filteredCourses; let i = index">
+          <tr *ngFor="let course of pagedCourses; let i = index">
             <td class="idx-cell">{{ i + 1 }}</td>
 
             <!-- Course cell -->
@@ -241,6 +241,13 @@
           </tr>
         </tbody>
       </table>
+      <app-common-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [pageSize]="pageSize"
+        [totalRecords]="filteredCourses.length"
+        (pageChange)="onPageChange($event)">
+      </app-common-pagination>
     </div>
   </div>
 </div>

@@ -95,7 +95,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let sub of filteredSubscriptions; let i = index">
+          <tr *ngFor="let sub of pagedSubscriptions; let i = index">
             <td class="idx-cell">{{ i + 1 }}</td>
 
             <td>
@@ -184,6 +184,13 @@
           </tr>
         </tbody>
       </table>
+      <app-common-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [pageSize]="pageSize"
+        [totalRecords]="filteredSubscriptions.length"
+        (pageChange)="onPageChange($event)">
+      </app-common-pagination>
     </div>
   </div>
 </div>

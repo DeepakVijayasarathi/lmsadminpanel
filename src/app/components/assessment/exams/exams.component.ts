@@ -64,6 +64,21 @@ export class ExamsComponent implements OnInit {
   searchQuery: string = '';
   isLoading: boolean = false;
 
+  pageSize = 10;
+  currentPage = 1;
+
+  get pagedQuizzes(): Quiz[] {
+    return this.filteredQuizzes.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredQuizzes.length / this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+  }
+
   // ── Modal state ────────────────────────────────────────────────
   modalMode: ModalMode = null;
   selectedQuiz: Quiz | null = null;
@@ -399,6 +414,7 @@ export class ExamsComponent implements OnInit {
         this.getTopicName(quiz.topicId).toLowerCase().includes(q)
       );
     });
+    this.currentPage = 1;
   }
 
   get totalQuestions(): number {

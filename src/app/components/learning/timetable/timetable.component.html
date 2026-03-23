@@ -55,13 +55,13 @@
     <div class="pg-card__head">
       <div class="pg-card__title">Weekly Schedule</div>
       <div class="pg-toolbar">
-        <select class="pg-filter" [(ngModel)]="categoryFilter">
+        <select class="pg-filter" [(ngModel)]="categoryFilter" (ngModelChange)="currentPage = 1">
           <option value="">All Categories</option>
           <option value="Foundation">Foundation</option>
           <option value="Standard">Standard</option>
           <option value="Advanced">Advanced</option>
         </select>
-        <select class="pg-filter" [(ngModel)]="batchFilter">
+        <select class="pg-filter" [(ngModel)]="batchFilter" (ngModelChange)="currentPage = 1">
           <option value="">All Batches</option>
           <option *ngFor="let b of apiBatches" [value]="getBatchName(b)">{{ getBatchName(b) }}</option>
         </select>
@@ -227,7 +227,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let slot of filteredSlots">
+          <tr *ngFor="let slot of pagedSlots">
             <td>
               <div class="pg-cell__primary">{{ slot.day }}</div>
               <div class="pg-cell__sub">Session {{ slot.session }}</div>
@@ -336,6 +336,13 @@
           </tr>
         </tbody>
       </table>
+      <app-common-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [pageSize]="pageSize"
+        [totalRecords]="filteredSlots.length"
+        (pageChange)="onPageChange($event)">
+      </app-common-pagination>
     </div>
   </div>
 

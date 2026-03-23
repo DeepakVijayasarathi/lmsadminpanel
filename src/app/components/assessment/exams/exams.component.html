@@ -83,7 +83,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let quiz of filteredQuizzes; let i = index">
+          <tr *ngFor="let quiz of pagedQuizzes; let i = index">
             <td class="idx-cell">{{ i + 1 }}</td>
             <td>
               <div class="quiz-title-cell">
@@ -164,6 +164,13 @@
           </tr>
         </tbody>
       </table>
+      <app-common-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [pageSize]="pageSize"
+        [totalRecords]="filteredQuizzes.length"
+        (pageChange)="onPageChange($event)">
+      </app-common-pagination>
     </div>
   </div>
 </div>

@@ -30,6 +30,21 @@ export class TeachersComponent implements OnInit {
   filterStatus: string = '';
   isLoading: boolean = false;
 
+  pageSize = 10;
+  currentPage = 1;
+
+  get pagedTeachers(): User[] {
+    return this.filteredTeachers.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredTeachers.length / this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+  }
+
   modalMode: ModalMode = null;
   selectedUser: User | null = null;
 
@@ -319,6 +334,7 @@ export class TeachersComponent implements OnInit {
       );
     }
     this.filteredTeachers = list;
+    this.currentPage = 1;
   }
 
   get totalActive(): number {

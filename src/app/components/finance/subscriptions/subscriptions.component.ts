@@ -96,6 +96,21 @@ export class SubscriptionsComponent implements OnInit {
   isLoading: boolean = false;
   isSubmitting: boolean = false;
 
+  pageSize = 10;
+  currentPage = 1;
+
+  get pagedSubscriptions(): SubscriptionDetail[] {
+    return this.filteredSubscriptions.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredSubscriptions.length / this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+  }
+
   // Modal
   modalMode: ModalMode = null;
   selectedSub: SubscriptionDetail | null = null;
@@ -267,6 +282,7 @@ export class SubscriptionsComponent implements OnInit {
       );
     }
     this.filteredSubscriptions = list;
+    this.currentPage = 1;
   }
 
   // ════════════════════════════════════════════════════════════════

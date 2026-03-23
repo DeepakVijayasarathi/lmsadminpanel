@@ -77,6 +77,21 @@ export class BatchesComponent implements OnInit {
   isLoading = false;
   isSaving = false;
 
+  pageSize = 10;
+  currentPage = 1;
+
+  get pagedBatches(): Batch[] {
+    return this.filteredBatches.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredBatches.length / this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+  }
+
   modalMode: ModalMode = null;
   selectedBatch: Batch | null = null;
 
@@ -534,6 +549,7 @@ export class BatchesComponent implements OnInit {
     const q = this.searchQuery.toLowerCase().trim();
     if (q) list = list.filter(b => this.getBatchName(b).toLowerCase().includes(q) || this.getCourseTitle(b.courseId).toLowerCase().includes(q));
     this.filteredBatches = list;
+    this.currentPage = 1;
   }
 
   get totalActive():    number { return this.batches.filter(b => this.getStatusLabel(b) === 'Active').length; }

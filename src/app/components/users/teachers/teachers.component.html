@@ -89,7 +89,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let user of filteredTeachers">
+          <tr *ngFor="let user of pagedTeachers">
             <td>
               <div class="pg-with-avatar">
                 <div class="pg-avatar av-emerald">{{ getInitials(user) }}</div>
@@ -168,6 +168,13 @@
           </tr>
         </tbody>
       </table>
+      <app-common-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [pageSize]="pageSize"
+        [totalRecords]="filteredTeachers.length"
+        (pageChange)="onPageChange($event)">
+      </app-common-pagination>
     </div>
   </div>
 </div>
