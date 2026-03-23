@@ -169,7 +169,7 @@
 
             <td>
               <div class="action-group">
-                <button class="pg-action-btn" title="View Details" (click)="openViewModal(sub)">
+                <button *ngIf="p.canRead" class="pg-action-btn" title="View Details" (click)="openViewModal(sub)">
                   <i class="fa-solid fa-eye"></i>
                 </button>
               </div>

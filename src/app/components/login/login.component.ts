@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CommonService } from '../../services/common.service';
 import { AuthService } from '../../auth/auth.service';
@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   otpForm: FormGroup;
 
@@ -22,6 +22,10 @@ export class LoginComponent {
   otpEmail = '';
   resendCooldown = 0;
   private resendTimer: any;
+
+  // Device Info
+  private deviceId: string = '';
+  private deviceType: string = '';
 
   constructor(
     private fb: FormBuilder,
@@ -42,6 +46,52 @@ export class LoginComponent {
         [Validators.required, Validators.minLength(4), Validators.maxLength(6)],
       ],
     });
+  }
+
+  ngOnInit(): void {
+    this.initializeDeviceInfo();
+  }
+
+  /** Generate or retrieve device ID from localStorage */
+  private getOrCreateDeviceId(): string {
+    const storageKey = 'lms_device_id';
+    let deviceId = localStorage.getItem(storageKey);
+
+    if (!deviceId) {
+      // Generate a unique device ID using timestamp and random string
+      deviceId = this.generateUUID();
+      localStorage.setItem(storageKey, deviceId);
+    }
+
+    return deviceId;
+  }
+
+  /** Generate a UUID v4 */
+  private generateUUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+
+  /** Detect device type based on user agent */
+  private detectDeviceType(): string {
+    const userAgent = navigator.userAgent.toLowerCase();
+
+    if (/mobile|android|iphone|ipod|blackberry|iemobile|opera mini/i.test(userAgent)) {
+      return 'Mobile';
+    } else if (/ipad|tablet|android/i.test(userAgent)) {
+      return 'Tablet';
+    } else {
+      return 'Desktop';
+    }
+  }
+
+  /** Initialize device information */
+  private initializeDeviceInfo(): void {
+    this.deviceId = this.getOrCreateDeviceId();
+    this.deviceType = this.detectDeviceType();
   }
 
   togglePassword() {
@@ -65,6 +115,8 @@ export class LoginComponent {
     const payload = {
       email: this.email?.value,
       password: this.password?.value,
+      deviceId: this.deviceId,
+      deviceType: this.deviceType,
     };
 
     this.authService.login(payload).subscribe({
@@ -88,7 +140,14 @@ export class LoginComponent {
     this.isLoading = true;
     this.otpEmail = emailCtrl!.value;
 
-    this.authService.sendOtp(this.otpEmail).subscribe({
+    // Include device info with OTP send request
+    const payload = {
+      email: this.otpEmail,
+      deviceId: this.deviceId,
+      deviceType: this.deviceType,
+    };
+
+    this.authService.sendOtpWithDevice(payload).subscribe({
       next: () => {
         this.isLoading = false;
         this.otpStep = 'verify';
@@ -113,7 +172,15 @@ export class LoginComponent {
 
     this.isLoading = true;
 
-    this.authService.verifyOtp(this.otpEmail, otpCtrl!.value).subscribe({
+    // Include device info with OTP verification
+    const payload = {
+      email: this.otpEmail,
+      otp: otpCtrl!.value,
+      deviceId: this.deviceId,
+      deviceType: this.deviceType,
+    };
+
+    this.authService.verifyOtp(this.otpEmail, otpCtrl!.value, payload).subscribe({
       next: () => {
         this.isLoading = false;
         this.commonService.success('Login Successful', 'Success');
@@ -130,7 +197,14 @@ export class LoginComponent {
     if (this.resendCooldown > 0) return;
     this.isLoading = true;
 
-    this.authService.sendOtp(this.otpEmail).subscribe({
+    // Include device info with resend OTP request
+    const payload = {
+      email: this.otpEmail,
+      deviceId: this.deviceId,
+      deviceType: this.deviceType,
+    };
+
+    this.authService.sendOtpWithDevice(payload).subscribe({
       next: () => {
         this.isLoading = false;
         this.commonService.success('New OTP sent!', 'Resent');

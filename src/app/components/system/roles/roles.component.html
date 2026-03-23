@@ -1,5 +1,3 @@
-<!-- roles.component.html -->
-
 <div class="pg">
 
   <!-- Page Header -->
@@ -34,7 +32,7 @@
     </div>
     <div class="pg-stat">
       <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-layer-group"></i></div>
-      <div class="pg-stat__val">{{ flatMenus.length }}</div>
+      <div class="pg-stat__val">{{ totalMenuCount }}</div>
       <div class="pg-stat__lbl">Total Menus</div>
     </div>
   </div>
@@ -79,13 +77,19 @@
             <td>
               <span class="perm-count-chip">
                 <i class="fa-solid fa-key"></i>
-                {{ getActivePermCount(role) }} / {{ flatMenus.length }} menus
+                {{ getActivePermCount(role) }} / {{ totalMenuCount }} menus
               </span>
             </td>
             <td>
-              <button class="pg-action-btn" title="View"   (click)="openViewModal(role)"><i class="fa-solid fa-eye"></i></button>
-              <button class="pg-action-btn" title="Edit"   (click)="openEditModal(role)"><i class="fa-solid fa-pen-to-square"></i></button>
-              <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDeleteModal(role)"><i class="fa-solid fa-trash"></i></button>
+              <button class="pg-action-btn" title="View" (click)="openViewModal(role)">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+              <button class="pg-action-btn" title="Edit" (click)="openEditModal(role)">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDeleteModal(role)">
+                <i class="fa-solid fa-trash"></i>
+              </button>
             </td>
           </tr>
           <tr *ngIf="filteredRoles.length === 0">
@@ -102,7 +106,9 @@
 ══════════════════════════════════════ -->
 <div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
 
-<!-- ── Create / Edit Modal ─────────────── -->
+<!-- ══════════════════════════════════════
+     CREATE / EDIT MODAL
+══════════════════════════════════════ -->
 <div class="modal" *ngIf="modalMode === 'create' || modalMode === 'edit'">
 
   <div class="modal__header">
@@ -117,7 +123,7 @@
 
   <div class="modal__body">
 
-    <!-- Name + Description side by side -->
+    <!-- Name + Description -->
     <div class="form-row-2">
       <div class="form-group" [class.has-error]="nameError">
         <label>Role Name <span class="required">*</span></label>
@@ -143,52 +149,176 @@
       </div>
     </div>
 
-    <!-- Permissions label + grand select-all -->
-    <div class="perm-label-row">
-      <label class="perm-section-label">
-        <i class="fa-solid fa-key"></i> Permissions
-      </label>
-      <label class="grand-all-btn">
-        <input
-          type="checkbox"
-          [checked]="isGrandAllChecked()"
-          [indeterminate]="isGrandIndeterminate()"
-          (change)="toggleGrandAll($any($event.target).checked)"
-        />
-        <span>Select / Deselect All</span>
-      </label>
+    <!-- Permissions loading -->
+    <div class="perm-loading" *ngIf="isPermLoading">
+      <i class="fa-solid fa-spinner fa-spin"></i> Loading permissions...
     </div>
 
-    <!-- ── Permissions table ── -->
-    <div class="perm-table-wrap">
+    <ng-container *ngIf="!isPermLoading">
+
+      <!-- Permissions header -->
+      <div class="perm-label-row">
+        <label class="perm-section-label">
+          <i class="fa-solid fa-key"></i> Permissions
+        </label>
+        <label class="grand-all-btn">
+          <input
+            type="checkbox"
+            [checked]="isGrandAllChecked()"
+            [indeterminate]="isGrandIndeterminate()"
+            (change)="toggleGrandAll($any($event.target).checked)"
+          />
+          <span>Select / Deselect All</span>
+        </label>
+      </div>
+
+      <!-- Permissions table -->
+      <div class="perm-table-wrap">
+        <table class="perm-table">
+          <thead>
+            <tr>
+              <th class="th-menu">MENU</th>
+              <th class="th-perm" *ngFor="let col of permCols">
+                <div class="th-perm-inner">
+                  <span>{{ col.label | uppercase }}</span>
+                  <input
+                    type="checkbox"
+                    class="col-cb"
+                    [title]="'Toggle all ' + col.label"
+                    [checked]="isColAllChecked(col.key)"
+                    [indeterminate]="isColIndeterminate(col.key)"
+                    (change)="toggleColAll(col.key, $any($event.target).checked)"
+                  />
+                </div>
+              </th>
+              <th class="th-all">ALL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let parent of menuTree">
+
+              <!-- Parent row -->
+              <tr class="tr-parent">
+                <td class="td-menu td-menu--parent">
+                  <span class="menu-icon parent-icon">
+                    <i class="{{ parent.icon || 'fa-solid fa-folder' }}"></i>
+                  </span>
+                  <span class="menu-name">{{ parent.name }}</span>
+                  <span class="child-pill" *ngIf="hasChildren(parent)">
+                    {{ childrenOf(parent).length }}
+                  </span>
+                </td>
+                <ng-container *ngIf="getPermissionForMenu(parent.id) as perm">
+                  <td class="td-cb" *ngFor="let col of permCols">
+                    <input type="checkbox" class="cb" [(ngModel)]="perm[col.key]" />
+                  </td>
+                  <td class="td-cb td-all">
+                    <input
+                      type="checkbox"
+                      class="cb cb-all"
+                      [checked]="isRowAllChecked(parent.id)"
+                      [indeterminate]="isRowIndeterminate(parent.id)"
+                      (change)="toggleRowAll(parent.id, $any($event.target).checked)"
+                    />
+                  </td>
+                </ng-container>
+              </tr>
+
+              <!-- Child rows -->
+              <tr class="tr-child" *ngFor="let child of childrenOf(parent)">
+                <td class="td-menu td-menu--child">
+                  <span class="tree-branch"></span>
+                  <span class="menu-icon child-icon">
+                    <i class="{{ child.icon || 'fa-solid fa-circle-dot' }}"></i>
+                  </span>
+                  <span class="menu-name child-name">{{ child.name }}</span>
+                </td>
+                <ng-container *ngIf="getPermissionForMenu(child.id) as perm">
+                  <td class="td-cb" *ngFor="let col of permCols">
+                    <input
+                      type="checkbox"
+                      class="cb"
+                      [checked]="perm[col.key]"
+                      (change)="perm[col.key] = $any($event.target).checked;
+                                 onChildPermChange(child.id, col.key, $any($event.target).checked)"
+                    />
+                  </td>
+                  <td class="td-cb td-all">
+                    <input
+                      type="checkbox"
+                      class="cb cb-all"
+                      [checked]="isRowAllChecked(child.id)"
+                      [indeterminate]="isRowIndeterminate(child.id)"
+                      (change)="onChildRowAllChange(child.id, $any($event.target).checked)"
+                    />
+                  </td>
+                </ng-container>
+              </tr>
+
+            </ng-container>
+
+            <tr *ngIf="menuTree.length === 0">
+              <td colspan="6" class="pg-empty">No menus available.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </ng-container>
+  </div>
+
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button
+      class="pg-btn pg-btn--primary"
+      (click)="submitForm()"
+      [disabled]="isPermLoading"
+    >
+      <i class="fa-solid fa-{{ modalMode === 'create' ? 'plus' : 'floppy-disk' }}"></i>
+      {{ modalMode === 'create' ? 'Create Role' : 'Save Changes' }}
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     VIEW MODAL
+══════════════════════════════════════ -->
+<div class="modal" *ngIf="modalMode === 'view' && selectedRole">
+  <div class="modal__header">
+    <h3>
+      <span class="pg-badge {{ roleBadgeClass(selectedRole.name) }}">
+        {{ selectedRole.name }}
+      </span>
+      &nbsp; Permissions
+    </h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="modal__body">
+    <p class="role-desc-view" *ngIf="selectedRole.description">
+      {{ selectedRole.description }}
+    </p>
+
+    <!-- Permissions loading -->
+    <div class="perm-loading" *ngIf="isPermLoading">
+      <i class="fa-solid fa-spinner fa-spin"></i> Loading permissions...
+    </div>
+
+    <div class="perm-table-wrap" *ngIf="!isPermLoading">
       <table class="perm-table">
         <thead>
           <tr>
             <th class="th-menu">MENU</th>
-
-            <!-- READ | CREATE | UPDATE | DELETE — each with vertical select-all -->
             <th class="th-perm" *ngFor="let col of permCols">
-              <div class="th-perm-inner">
-                <span>{{ col.label | uppercase }}</span>
-                <input
-                  type="checkbox"
-                  class="col-cb"
-                  [title]="'Toggle all ' + col.label"
-                  [checked]="isColAllChecked(col.key)"
-                  [indeterminate]="isColIndeterminate(col.key)"
-                  (change)="toggleColAll(col.key, $any($event.target).checked)"
-                />
-              </div>
+              {{ col.label | uppercase }}
             </th>
-
-            <!-- ALL column -->
-            <th class="th-all">ALL</th>
           </tr>
         </thead>
         <tbody>
           <ng-container *ngFor="let parent of menuTree">
 
-            <!-- ── Parent row ── -->
             <tr class="tr-parent">
               <td class="td-menu td-menu--parent">
                 <span class="menu-icon parent-icon">
@@ -199,118 +329,11 @@
                   {{ childrenOf(parent).length }}
                 </span>
               </td>
-
-              <ng-container *ngIf="getPermissionForMenu(parent.id) as perm">
-                <!-- Per-column checkboxes — direct ngModel, no child sync needed -->
-                <td class="td-cb" *ngFor="let col of permCols">
-                  <input type="checkbox" class="cb" [(ngModel)]="perm[col.key]" />
-                </td>
-                <!-- Row ALL -->
-                <td class="td-cb td-all">
-                  <input
-                    type="checkbox"
-                    class="cb cb-all"
-                    [checked]="isRowAllChecked(parent.id)"
-                    [indeterminate]="isRowIndeterminate(parent.id)"
-                    (change)="toggleRowAll(parent.id, $any($event.target).checked)"
-                  />
-                </td>
-              </ng-container>
-            </tr>
-
-            <!-- ── Child rows ── -->
-            <tr class="tr-child" *ngFor="let child of childrenOf(parent)">
-              <td class="td-menu td-menu--child">
-                <span class="tree-branch"></span>
-                <span class="menu-icon child-icon">
-                  <i class="{{ child.icon || 'fa-solid fa-circle-dot' }}"></i>
-                </span>
-                <span class="menu-name child-name">{{ child.name }}</span>
-              </td>
-
-              <ng-container *ngIf="getPermissionForMenu(child.id) as perm">
-                <!--
-                  Child checkboxes: use (change) so we can call
-                  onChildPermChange AFTER the model updates,
-                  which auto-mirrors the column to the parent row.
-                -->
-                <td class="td-cb" *ngFor="let col of permCols">
-                  <input
-                    type="checkbox"
-                    class="cb"
-                    [checked]="perm[col.key]"
-                    (change)="perm[col.key] = $any($event.target).checked;
-                               onChildPermChange(child.id, col.key, $any($event.target).checked)"
-                  />
-                </td>
-                <!-- Child Row ALL -->
-                <td class="td-cb td-all">
-                  <input
-                    type="checkbox"
-                    class="cb cb-all"
-                    [checked]="isRowAllChecked(child.id)"
-                    [indeterminate]="isRowIndeterminate(child.id)"
-                    (change)="onChildRowAllChange(child.id, $any($event.target).checked)"
-                  />
-                </td>
-              </ng-container>
-            </tr>
-
-          </ng-container>
-
-          <tr *ngIf="menuTree.length === 0">
-            <td colspan="6" class="pg-empty">No menus available.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-  </div>
-
-  <div class="modal__footer">
-    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
-    <button class="pg-btn pg-btn--primary" (click)="submitForm()">
-      <i class="fa-solid fa-{{ modalMode === 'create' ? 'plus' : 'floppy-disk' }}"></i>
-      {{ modalMode === 'create' ? 'Create Role' : 'Save Changes' }}
-    </button>
-  </div>
-</div>
-
-<!-- ── View Modal ───────────────────────── -->
-<div class="modal" *ngIf="modalMode === 'view' && selectedRole">
-  <div class="modal__header">
-    <h3>
-      <span class="pg-badge {{ roleBadgeClass(selectedRole.name) }}">{{ selectedRole.name }}</span>
-      &nbsp; Permissions
-    </h3>
-    <button class="modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-  </div>
-
-  <div class="modal__body">
-    <p class="role-desc-view" *ngIf="selectedRole.description">{{ selectedRole.description }}</p>
-
-    <div class="perm-table-wrap">
-      <table class="perm-table">
-        <thead>
-          <tr>
-            <th class="th-menu">MENU</th>
-            <th class="th-perm" *ngFor="let col of permCols">{{ col.label | uppercase }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <ng-container *ngFor="let parent of menuTree">
-
-            <tr class="tr-parent">
-              <td class="td-menu td-menu--parent">
-                <span class="menu-icon parent-icon">
-                  <i class="{{ parent.icon || 'fa-solid fa-folder' }}"></i>
-                </span>
-                <span class="menu-name">{{ parent.name }}</span>
-                <span class="child-pill" *ngIf="hasChildren(parent)">{{ childrenOf(parent).length }}</span>
-              </td>
               <ng-container *ngIf="getPermissionForMenu(parent.id) as perm">
                 <td class="td-cb" *ngFor="let col of permCols">
-                  <i class="fa-solid {{ perm[col.key] ? 'fa-circle-check view-yes' : 'fa-circle-xmark view-no' }}"></i>
+                  <i class="fa-solid {{
+                    perm[col.key] ? 'fa-circle-check view-yes' : 'fa-circle-xmark view-no'
+                  }}"></i>
                 </td>
               </ng-container>
             </tr>
@@ -325,7 +348,9 @@
               </td>
               <ng-container *ngIf="getPermissionForMenu(child.id) as perm">
                 <td class="td-cb" *ngFor="let col of permCols">
-                  <i class="fa-solid {{ perm[col.key] ? 'fa-circle-check view-yes' : 'fa-circle-xmark view-no' }}"></i>
+                  <i class="fa-solid {{
+                    perm[col.key] ? 'fa-circle-check view-yes' : 'fa-circle-xmark view-no'
+                  }}"></i>
                 </td>
               </ng-container>
             </tr>
@@ -342,21 +367,31 @@
 
   <div class="modal__footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
-    <button class="pg-btn pg-btn--primary" (click)="openEditModal(selectedRole)">
+    <button
+      class="pg-btn pg-btn--primary"
+      (click)="openEditModal(selectedRole)"
+      [disabled]="isPermLoading"
+    >
       <i class="fa-solid fa-pen-to-square"></i> Edit Permissions
     </button>
   </div>
 </div>
 
-<!-- ── Delete Modal ─────────────────────── -->
+<!-- ══════════════════════════════════════
+     DELETE MODAL
+══════════════════════════════════════ -->
 <div class="modal modal--sm" *ngIf="modalMode === 'delete' && selectedRole">
   <div class="modal__header modal__header--danger">
     <h3><i class="fa-solid fa-triangle-exclamation"></i> Delete Role</h3>
-    <button class="modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
   </div>
   <div class="modal__body modal__body--center">
     <div class="delete-icon"><i class="fa-solid fa-trash-can"></i></div>
-    <p class="delete-msg">Are you sure you want to delete <strong>"{{ selectedRole.name }}"</strong>?</p>
+    <p class="delete-msg">
+      Are you sure you want to delete <strong>"{{ selectedRole.name }}"</strong>?
+    </p>
     <p class="delete-sub">This action cannot be undone.</p>
   </div>
   <div class="modal__footer">

@@ -1,10 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { TimetableService, SessionAnalytic } from '../../../services/timetable.service';
 import { WhatsappService } from '../../../services/whatsapp.service';
 import { CommonService } from '../../../services/common.service';
 import { HttpGeneralService } from '../../../services/http.service';
 import { environment } from '../../../../environments/environment';
+import { Permission, PermissionService } from '../../../auth/permission.service';
 
 const BASE_URL = environment.apiUrl;
 
@@ -597,6 +599,10 @@ export class TimetableComponent implements OnInit, OnDestroy {
     this.startAutoReminder();
   }
 
+  get p(): Permission {
+    return this.permissionService.for(this.router.url);
+  }
+
   private loadBatches(): void {
     this.httpService.getData(BASE_URL, '/batches').subscribe({
       next: (res: any) => {
@@ -806,6 +812,8 @@ export class TimetableComponent implements OnInit, OnDestroy {
     private commonService: CommonService,
     private httpService: HttpGeneralService<any>,
     private sanitizer: DomSanitizer,
-    private whatsappService: WhatsappService
+    private whatsappService: WhatsappService,
+    private permissionService: PermissionService,
+    private router: Router
   ) {}
 }

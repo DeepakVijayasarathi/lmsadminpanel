@@ -13,7 +13,7 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
+      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()" *ngIf="p.canCreate">
         <i class="fas fa-upload"></i> Upload Book
       </button>
     </div>
@@ -155,18 +155,19 @@
             <!-- Actions -->
             <td>
               <div class="action-group">
-                <button class="pg-action-btn" title="View" (click)="openViewModal(book)">
+                <button *ngIf="p.canRead" class="pg-action-btn" title="View" (click)="openViewModal(book)">
                   <i class="fas fa-eye"></i>
                 </button>
                 <button
+                  *ngIf="p.canRead && book.fileUrl"
                   class="pg-action-btn pg-action-btn--teal"
                   title="Open File"
-                  *ngIf="book.fileUrl"
                   (click)="openFile(book.fileUrl)"
                 >
                   <i class="fas fa-file-arrow-down"></i>
                 </button>
                 <button
+                  *ngIf="p.canDelete"
                   class="pg-action-btn pg-action-btn--danger"
                   title="Delete"
                   (click)="openDeleteModal(book)"
