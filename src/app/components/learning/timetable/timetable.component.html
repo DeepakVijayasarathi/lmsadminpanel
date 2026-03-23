@@ -200,9 +200,18 @@
                 </div>
               </ng-container>
               <ng-template #emptyCell>
-                <div class="tt-cell-empty" (click)="openCreate(day, session)" title="Schedule session">
-                  <i class="fa-solid fa-plus"></i>
+               <div *ngIf="p.canCreate; else noAccess"
+                  class="tt-cell-empty"
+                  (click)="openCreate(day, session)"
+                  title="Schedule session">
+                <i class="fa-solid fa-plus"></i>
+               </div>
+
+               <ng-template #noAccess>
+                <div class="tt-cell-empty" title="No permission">
+                  <i class="fa-solid fa-lock"></i>
                 </div>
+               </ng-template>
               </ng-template>
             </td>
           </tr>
