@@ -159,7 +159,7 @@ export class RegistrationComponent implements OnInit {
   async loadCourses() {
     this.coursesLoading = true;
     try {
-      const data: any = await this.http.get(`${this.API}/courses`).toPromise();
+      const data: any = await this.http.get(`${this.API}/courses/get-course-register`).toPromise();
       this.courses = Array.isArray(data) ? data : data?.data || [];
     } catch (e: any) {
       this.toast('Failed to load courses: ' + (e.message || 'Unknown error'));

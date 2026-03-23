@@ -133,7 +133,7 @@ export class RolesComponent implements OnInit {
    */
   loadRoleMenuTree(roleId: string): void {
     this.isPermLoading = true;
-    this.httpService.getData(BASE_URL, `/role/menu-tree/${roleId}`).subscribe({
+    this.httpService.getData(BASE_URL, `/role/menu-tree?roleId=${roleId}`).subscribe({
       next: (res: any) => {
         const tree: MenuTreeItem[] = Array.isArray(res) ? res : (res?.data ?? []);
         this.menuTree  = tree;
