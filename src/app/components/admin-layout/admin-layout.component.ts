@@ -4,6 +4,7 @@ import { AuthService } from '../../auth/auth.service';
 import { HttpGeneralService } from '../../services/http.service';
 import { environment } from '../../../environments/environment';
 import { PermissionService } from '../../auth/permission.service';
+import { TokenStorageService } from '../../auth/token-storage.service';
 
 interface NavItem {
   label: string;
@@ -31,6 +32,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   expandedGroups: Set<string> = new Set(['Users', 'Curriculum']);
   menus = [];
 
+  userName = '';
+  roleName = '';
+
   standaloneMenus: NavItem[] = [];
 
   navGroups: NavGroup[] = [];
@@ -39,7 +43,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private httpService: HttpGeneralService<any>,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
+    private tokenStorage: TokenStorageService
   ) {
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
@@ -51,6 +56,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.checkViewport();
+    this.userName = this.tokenStorage.getUserName();
+    this.roleName = this.tokenStorage.getRoleName();
     this.navGroups.forEach((g) => {
       if (g.items.some((i) => i.route === this.currentRoute)) {
         this.expandedGroups.add(g.groupLabel);

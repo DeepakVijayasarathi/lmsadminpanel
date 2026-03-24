@@ -59,10 +59,10 @@
     <!-- Footer -->
     <div class="al-sidebar__footer">
       <div class="al-user">
-        <div class="al-user__avatar">A</div>
+        <div class="al-user__avatar">{{ (userName | slice:0:1) || 'U' }}</div>
         <div class="al-user__info">
-          <span class="al-user__name">Admin</span>
-          <span class="al-user__role">Super Admin</span>
+          <span class="al-user__name">{{ userName || 'User' }}</span>
+          <span class="al-user__role">{{ roleName || 'Member' }}</span>
         </div>
         <button class="al-user__logout" (click)="logout()" title="Logout">
           <i class="fa-solid fa-right-from-bracket"></i>
@@ -101,7 +101,7 @@
           <span class="al-header__badge">5</span>
         </button>
 
-        <div class="al-header__avatar" title="Admin">A</div>
+        <div class="al-header__avatar" [title]="userName || 'User'">{{ (userName | slice:0:1) || 'U' }}</div>
       </div>
     </header>
 
