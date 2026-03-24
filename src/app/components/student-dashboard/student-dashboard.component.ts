@@ -1,9 +1,24 @@
+// Utility to extract userId and roleName from JWT
+function getUserFromToken(): { userId: string | null, roleName: string | null } {
+  try {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return { userId: null, roleName: null };
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return {
+      userId: payload.userId ?? null,
+      roleName: payload.roleName ?? null
+    };
+  } catch {
+    return { userId: null, roleName: null };
+  }
+}
 // student-dashboard.component.ts
 
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { PerformanceService, StudentDetail, HomeworkBreakdownItem } from '../../services/performance.service';
 
 // ── API response shape (matches StudentDashboardDto from backend) ─────────────
 
@@ -72,6 +87,9 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
 
   // ── Component data (skeleton defaults) ────────────────────────────────────
   student = { name: '...', class: '...', avatar: '?', streak: 0 };
+  // Performance details
+  performanceDetail: StudentDetail | null = null;
+  homeworkBreakdown: HomeworkBreakdownItem[] = [];
 
   stats = [
     { label: 'Courses Enrolled', value: '—', icon: 'fa-solid fa-book-open',       color: '#0d9488', bg: '#ccfbf1' },
@@ -103,6 +121,7 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private http:   HttpClient,
     private router: Router,
+    private performanceService: PerformanceService
   ) {}
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -110,6 +129,26 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
     this.updateTime();
     this.timeInterval = setInterval(() => this.updateTime(), 1000);
     this.loadDashboard();
+    this.loadPerformance();
+  }
+  // ── Load performance details ─────────────────────────────────────────────
+  loadPerformance(): void {
+    const { userId, roleName } = getUserFromToken();
+    console.log('Decoded JWT:', { userId, roleName });
+    if ((roleName?.toLowerCase() !== 'student') || !userId) {
+      console.warn('User is not a student or userId missing');
+      return;
+    }
+    this.performanceService.getStudent(userId).subscribe({
+      next: (data) => {
+        console.log('Performance API response:', data);
+        this.performanceDetail = data;
+        this.homeworkBreakdown = data.homeworkBreakdown;
+      },
+      error: (err) => {
+        console.error('Performance API error:', err);
+      }
+    });
   }
 
   ngOnDestroy(): void {

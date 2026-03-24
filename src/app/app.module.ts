@@ -51,6 +51,8 @@ import { RecordVideoComponent } from './components/learning/record-video/record-
 import { CommonDashboardComponent } from './components/common-dashboard/common-dashboard.component';
 import { TakeQuizComponent } from './components/assessment/take-quiz/take-quiz.component';
 import { StudentQuizzesComponent } from './components/assessment/student-quizzes/student-quizzes.component';
+import { StudentPerformanceComponent } from './components/reports/student-performance/student-performance.component';
+import { TeacherPerformanceComponent } from './components/reports/teacher-performance/teacher-performance.component';
 
 @NgModule({
   declarations: [
@@ -96,7 +98,9 @@ import { StudentQuizzesComponent } from './components/assessment/student-quizzes
     RecordVideoComponent,
     CommonDashboardComponent,
     TakeQuizComponent,
-    StudentQuizzesComponent
+    StudentQuizzesComponent,
+    StudentPerformanceComponent,
+    TeacherPerformanceComponent,
   ],
   imports: [
     BrowserModule,

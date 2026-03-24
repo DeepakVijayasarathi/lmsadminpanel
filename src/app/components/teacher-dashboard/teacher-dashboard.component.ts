@@ -1,3 +1,17 @@
+// Utility to extract userId and roleName from JWT
+function getUserFromToken(): { userId: string | null, roleName: string | null } {
+  try {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return { userId: null, roleName: null };
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return {
+      userId: payload.userId ?? null,
+      roleName: payload.roleName ?? null
+    };
+  } catch {
+    return { userId: null, roleName: null };
+  }
+}
 // teacher-dashboard.component.ts
 
 import { Component, OnInit, OnDestroy } from '@angular/core';
@@ -5,6 +19,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { HttpGeneralService } from '../../services/http.service';
+import { PerformanceService, TeacherDetail, TeacherBatchHours } from '../../services/performance.service';
 
 // ── API response interface (matches TeacherDashboardDto from backend) ─────────
 
@@ -83,6 +98,9 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     avatar: '?',
     totalClasses: 0,
   };
+  // Performance details
+  performanceDetail: TeacherDetail | null = null;
+  batchBreakdown: TeacherBatchHours[] = [];
 
   stats = [
     { label: 'My Students',      value: '—', icon: 'fa-solid fa-user-graduate',  color: '#4f46e5', bg: '#eef2ff', trend: '' },
@@ -116,7 +134,8 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private http:   HttpClient,
     private router: Router,
-    private httpService: HttpGeneralService<any>
+    private httpService: HttpGeneralService<any>,
+    private performanceService: PerformanceService
   ) {}
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -124,6 +143,26 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     this.updateTime();
     this.timeInterval = setInterval(() => this.updateTime(), 1000);
     this.loadDashboard();
+    this.loadPerformance();
+  }
+  // ── Load performance details ─────────────────────────────────────────────
+  loadPerformance(): void {
+    const { userId, roleName } = getUserFromToken();
+    console.log('Decoded JWT:', { userId, roleName });
+    if ((roleName?.toLowerCase() !== 'teacher') || !userId) {
+      console.warn('User is not a teacher or userId missing');
+      return;
+    }
+    this.performanceService.getTeacher(userId).subscribe({
+      next: (data) => {
+        console.log('Performance API response:', data);
+        this.performanceDetail = data;
+        this.batchBreakdown = data.batchBreakdown;
+      },
+      error: (err) => {
+        console.error('Performance API error:', err);
+      }
+    });
   }
 
   ngOnDestroy(): void {

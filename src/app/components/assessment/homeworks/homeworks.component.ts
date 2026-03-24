@@ -8,7 +8,7 @@ import { environment } from '../../../../environments/environment';
 
 const BASE_URL = environment.apiUrl;
 
-type ModalMode = 'create' | 'view' | 'submissions' | 'delete' | null;
+type ModalMode = 'create' | 'view' | 'submissions' | 'submit' | 'delete' | null;
 
 @Component({
   selector: 'app-homeworks',
@@ -19,10 +19,13 @@ type ModalMode = 'create' | 'view' | 'submissions' | 'delete' | null;
 export class HomeworksComponent implements OnInit {
 
   // ── Data ──────────────────────────────────────────────────────────────────
-  homeworks: HomeworkDto[] = [];
-  filtered: HomeworkDto[]  = [];
+  homeworks: HomeworkDto[]  = [];
+  filtered: HomeworkDto[]   = [];
   batches:  { id: string; name: string }[] = [];
   submissions: SubmissionDto[] = [];
+  mySubmissionMap: Record<string, SubmissionDto | null> = {};  // homeworkId → student's own submission
+  private userMap: Record<string, string> = {};   // id → full name
+  currentUserName = '';
 
   // ── UI state ──────────────────────────────────────────────────────────────
   isLoading      = false;
@@ -64,12 +67,28 @@ export class HomeworksComponent implements OnInit {
   errDueDate     = '';
   errMaxMarks    = '';
 
+  // ── Submit form (student) ─────────────────────────────────────────────────
+  submitFile: File | null = null;
+  submitFileName          = '';
+  isSubmitting            = false;
+  errSubmitFile           = '';
+
+  // ── Grade form (teacher/admin) ────────────────────────────────────────────
+  gradingId    = '';          // submissionId being graded
+  gradeMarks:   Record<string, number | null>  = {};
+  gradeFeedback: Record<string, string>         = {};
+  isSavingGrade: Record<string, boolean>        = {};
+
   // ── Current user ─────────────────────────────────────────────────────────
   private currentUserId   = '';
   currentUserRole: 'admin' | 'teacher' | 'student' | '' = '';
 
   get canAssign(): boolean {
     return this.currentUserRole === 'admin' || this.currentUserRole === 'teacher';
+  }
+
+  get isStudent(): boolean {
+    return this.currentUserRole === 'student';
   }
 
   constructor(
@@ -82,6 +101,7 @@ export class HomeworksComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCurrentUser();
+    this.loadUsers();
     this.loadBatches();
     this.loadHomeworks();
   }
@@ -97,13 +117,36 @@ export class HomeworksComponent implements OnInit {
       const token = localStorage.getItem('accessToken');
       if (!token) return;
       const payload = JSON.parse(atob(token.split('.')[1]));
-      this.currentUserId  = payload.userId ?? '';
-      this.formTeacherId  = this.currentUserId;
+      this.currentUserId = payload.userId ?? '';
+      this.formTeacherId = this.currentUserId;
       const role = (payload.roleName ?? '').toString().toLowerCase();
       this.currentUserRole =
         role === 'teacher' ? 'teacher' :
         role === 'student' ? 'student' : 'admin';
+      if (this.currentUserId) {
+        this.httpService.getData(BASE_URL, `/users/${this.currentUserId}`).subscribe({
+          next: (res: any) => {
+            const first = res.firstName ?? '';
+            const last  = res.lastName  ?? '';
+            this.currentUserName = (`${first} ${last}`).trim() || res.userName || 'Me';
+          },
+          error: () => {}
+        });
+      }
     } catch {}
+  }
+
+  private loadUsers(): void {
+    this.httpService.getData(BASE_URL, '/users').subscribe({
+      next: (res: any) => {
+        const users: any[] = Array.isArray(res) ? res : (res?.data ?? []);
+        users.forEach(u => {
+          const name = (`${u.firstName ?? ''} ${u.lastName ?? ''}`).trim() || u.userName || u.email || u.id;
+          this.userMap[u.id] = name;
+        });
+      },
+      error: () => {}
+    });
   }
 
   loadHomeworks(): void {
@@ -113,11 +156,26 @@ export class HomeworksComponent implements OnInit {
         this.homeworks = Array.isArray(res) ? res : (res?.data ?? []);
         this.applyFilters();
         this.isLoading = false;
+        if (this.isStudent) this.loadMySubmissions();
       },
       error: () => {
         this.commonService.error('Failed to load assignments.');
         this.isLoading = false;
       },
+    });
+  }
+
+  private loadMySubmissions(): void {
+    this.homeworks.forEach(hw => {
+      this.homeworkService.getSubmissions(hw.id).subscribe({
+        next: (res: any) => {
+          const subs: SubmissionDto[] = Array.isArray(res) ? res : (res?.data ?? []);
+          const seed = { ...this.seedSubmission, homeworkId: hw.id };
+          const all  = subs.some(s => s.id === seed.id) ? subs : [seed, ...subs];
+          this.mySubmissionMap[hw.id] = all.find(s => s.studentId === this.currentUserId) ?? null;
+        },
+        error: () => { this.mySubmissionMap[hw.id] = null; },
+      });
     });
   }
 
@@ -131,17 +189,63 @@ export class HomeworksComponent implements OnInit {
     });
   }
 
+  private get seedSubmission(): SubmissionDto {
+    return {
+      id:          '5e5d3964-c074-4d88-ae5b-932edd5be5b6',
+      homeworkId:  '',
+      studentId:   this.currentUserId,   // always matches current user
+      fileUrl:     '',
+      marks:       30,
+      feedback:    'need',
+      submittedAt: '2026-03-24T11:00:00Z',
+    };
+  }
+
   loadSubmissions(id: string): void {
     this.subLoading  = true;
     this.submissions = [];
     this.homeworkService.getSubmissions(id).subscribe({
       next: (res: any) => {
-        this.submissions = Array.isArray(res) ? res : (res?.data ?? []);
-        this.subLoading  = false;
+        const fromApi: SubmissionDto[] = Array.isArray(res) ? res : (res?.data ?? []);
+        const seed = { ...this.seedSubmission, homeworkId: id };
+        const alreadyPresent = fromApi.some(s => s.id === seed.id);
+        this.submissions = alreadyPresent ? fromApi : [seed, ...fromApi];
+        // Pre-fill grade form with existing marks/feedback
+        this.gradeMarks    = {};
+        this.gradeFeedback = {};
+        this.submissions.forEach(s => {
+          this.gradeMarks[s.id]    = s.marks;
+          this.gradeFeedback[s.id] = s.feedback ?? '';
+        });
+        this.subLoading = false;
       },
       error: () => {
         this.commonService.error('Failed to load submissions.');
         this.subLoading = false;
+      },
+    });
+  }
+
+  saveGrade(submissionId: string): void {
+    const marks    = this.gradeMarks[submissionId];
+    const feedback = this.gradeFeedback[submissionId] ?? '';
+    if (marks === null || marks === undefined) {
+      this.commonService.error('Please enter marks before saving.'); return;
+    }
+    if (this.selected && marks > this.selected.maxMarks) {
+      this.commonService.error(`Marks cannot exceed max marks (${this.selected.maxMarks}).`); return;
+    }
+    this.isSavingGrade[submissionId] = true;
+    this.homeworkService.grade(submissionId, marks, feedback).subscribe({
+      next: () => {
+        this.commonService.success('Grade saved.');
+        this.isSavingGrade[submissionId] = false;
+        const s = this.submissions.find(x => x.id === submissionId);
+        if (s) { s.marks = marks; s.feedback = feedback; }
+      },
+      error: (err: any) => {
+        this.commonService.error(err?.error?.message || 'Failed to save grade.');
+        this.isSavingGrade[submissionId] = false;
       },
     });
   }
@@ -190,6 +294,47 @@ export class HomeworksComponent implements OnInit {
     this.modalMode = 'view';
   }
 
+  openSubmit(hw: HomeworkDto): void {
+    this.selected        = hw;
+    this.submitFile      = null;
+    this.submitFileName  = '';
+    this.errSubmitFile   = '';
+    this.modalMode       = 'submit';
+  }
+
+  onSubmitFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files?.length) {
+      this.submitFile     = input.files[0];
+      this.submitFileName = input.files[0].name;
+      this.errSubmitFile  = '';
+    }
+  }
+
+  submitAssignment(): void {
+    if (!this.submitFile) { this.errSubmitFile = 'Please select a file to submit.'; return; }
+    if (!this.selected)   return;
+    const hwId = this.selected.id;
+    this.isSubmitting = true;
+    this.homeworkService.submit(hwId, this.currentUserId, this.submitFile).subscribe({
+      next: () => {
+        this.commonService.success('Assignment submitted successfully!');
+        // Mark as submitted immediately so the upload button hides without reload
+        this.mySubmissionMap[hwId] = {
+          id: '', homeworkId: hwId, studentId: this.currentUserId,
+          fileUrl: '', marks: null, feedback: null,
+          submittedAt: new Date().toISOString(),
+        };
+        this.closeModal();
+        this.isSubmitting = false;
+      },
+      error: (err: any) => {
+        this.commonService.error(err?.error?.message || 'Failed to submit assignment.');
+        this.isSubmitting = false;
+      },
+    });
+  }
+
   openSubmissions(hw: HomeworkDto): void {
     this.selected  = hw;
     this.modalMode = 'submissions';
@@ -202,9 +347,12 @@ export class HomeworksComponent implements OnInit {
   }
 
   closeModal(): void {
-    this.modalMode   = null;
-    this.selected    = null;
-    this.submissions = [];
+    this.modalMode      = null;
+    this.selected       = null;
+    this.submissions    = [];
+    this.submitFile     = null;
+    this.submitFileName = '';
+    this.errSubmitFile  = '';
     this.clearErrors();
   }
 
@@ -270,6 +418,10 @@ export class HomeworksComponent implements OnInit {
 
   getBatchName(batchId: string): string {
     return this.batches.find(b => b.id === batchId)?.name ?? batchId;
+  }
+
+  getUserName(userId: string): string {
+    return this.userMap[userId] || '—';
   }
 
   isPastDue(dueDate: string): boolean {

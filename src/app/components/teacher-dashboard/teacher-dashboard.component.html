@@ -56,6 +56,70 @@
       </div>
     </div>
 
+    <!-- ── PERFORMANCE SECTION ─────────────────────────────────── -->
+    <div class="td-perf-card" *ngIf="performanceDetail">
+
+      <!-- Header -->
+      <div class="td-perf-header">
+        <div class="td-perf-header__left">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Teaching Performance</span>
+        </div>
+        <span class="td-perf-badge">
+          <i class="fa-solid fa-chalkboard-user"></i> Summary
+        </span>
+      </div>
+
+      <!-- Key Stat Tiles -->
+      <div class="td-perf-tiles">
+        <div class="td-perf-tile td-perf-tile--teal">
+          <div class="td-perf-tile__icon"><i class="fa-solid fa-video"></i></div>
+          <div class="td-perf-tile__val">{{ performanceDetail.totalClassesTaken }}</div>
+          <div class="td-perf-tile__lbl">Classes Taken</div>
+        </div>
+        <div class="td-perf-tile td-perf-tile--indigo">
+          <div class="td-perf-tile__icon"><i class="fa-solid fa-clock"></i></div>
+          <div class="td-perf-tile__val">{{ performanceDetail.totalHoursTaught }}h</div>
+          <div class="td-perf-tile__lbl">Hours Taught</div>
+        </div>
+        <div class="td-perf-tile td-perf-tile--violet">
+          <div class="td-perf-tile__icon"><i class="fa-solid fa-layer-group"></i></div>
+          <div class="td-perf-tile__val">{{ performanceDetail.batchesCovered }}</div>
+          <div class="td-perf-tile__lbl">Batches Covered</div>
+        </div>
+      </div>
+
+      <!-- Batch Breakdown -->
+      <div class="td-perf-breakdown" *ngIf="batchBreakdown.length">
+        <div class="td-perf-breakdown__title">
+          <i class="fa-solid fa-layer-group"></i> Batch-wise Hours
+        </div>
+        <div class="td-batch-perf-list">
+          <div class="td-batch-perf-row" *ngFor="let b of batchBreakdown">
+            <div class="td-batch-perf-info">
+              <span class="td-batch-perf-name">{{ b.batchName }}</span>
+              <span class="td-batch-perf-meta">
+                <i class="fa-solid fa-video"></i> {{ b.classes }} classes
+                &nbsp;·&nbsp;
+                <i class="fa-solid fa-clock"></i> {{ b.hoursTaught }}h
+              </span>
+            </div>
+            <div class="td-batch-perf-bar-wrap">
+              <div class="td-batch-perf-bar-track">
+                <div class="td-batch-perf-bar-fill"
+                     [style.width.%]="(b.hoursTaught / performanceDetail.totalHoursTaught) * 100">
+                </div>
+              </div>
+              <span class="td-batch-perf-pct">
+                {{ (b.hoursTaught / performanceDetail.totalHoursTaught * 100) | number:'1.0-0' }}%
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
     <!-- ── MAIN GRID ───────────────────────────────────────────── -->
     <div class="td-grid">
 

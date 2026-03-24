@@ -37,6 +37,8 @@ import { RegistrationComponent } from './components/registration/registration.co
 import { CommonDashboardComponent } from './components/common-dashboard/common-dashboard.component';
 import { TakeQuizComponent } from './components/assessment/take-quiz/take-quiz.component';
 import { StudentQuizzesComponent } from './components/assessment/student-quizzes/student-quizzes.component';
+import { StudentPerformanceComponent } from './components/reports/student-performance/student-performance.component';
+import { TeacherPerformanceComponent } from './components/reports/teacher-performance/teacher-performance.component';
 
 const AG = [AuthGuard];
 
@@ -77,6 +79,7 @@ const routes: Routes = [
   { path: 'my-quizzes', component: StudentQuizzesComponent },
   { path: 'exams/take/:id', component: TakeQuizComponent },
   { path: 'results',  component: ResultsComponent, canActivate: AG },
+  { path: 'homeworks',   component: HomeworksComponent,  canActivate: AG },
 
   // Communication
   { path: 'notifications', component: NotificationsComponent, canActivate: AG },
@@ -88,9 +91,11 @@ const routes: Routes = [
   { path: 'refunds',       component: RefundsComponent,       canActivate: AG },
 
   // Reports
-  { path: 'attendance-report',   component: AttendanceReportComponent,   canActivate: AG },
-  { path: 'performance-report',  component: PerformanceReportComponent,  canActivate: AG },
-  { path: 'revenue-report',      component: RevenueReportComponent,      canActivate: AG },
+  { path: 'attendance-report',    component: AttendanceReportComponent,    canActivate: AG },
+  { path: 'performance-report',   component: PerformanceReportComponent,   canActivate: AG },
+  { path: 'revenue-report',       component: RevenueReportComponent,       canActivate: AG },
+  { path: 'student-performance',  component: StudentPerformanceComponent,  canActivate: AG },
+  { path: 'teacher-performance',  component: TeacherPerformanceComponent,  canActivate: AG },
 
   // System
   { path: 'roles',    component: RolesComponent,    canActivate: AG },

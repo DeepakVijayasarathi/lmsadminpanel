@@ -82,8 +82,10 @@
           <tr>
             <th>Title</th>
             <th>Batch</th>
+            <th *ngIf="!isStudent">Teacher</th>
             <th>Due Date</th>
             <th>Max Marks</th>
+            <th *ngIf="isStudent">My Score</th>
             <th>Attachment</th>
             <th>Status</th>
             <th>Actions</th>
@@ -98,6 +100,9 @@
             <td>
               <span class="pg-badge pg-badge--blue">{{ getBatchName(hw.batchId) }}</span>
             </td>
+            <td *ngIf="!isStudent">
+              <div class="pg-cell__primary">{{ getUserName(hw.teacherId) }}</div>
+            </td>
             <td>
               <div class="pg-cell__primary">{{ hw.dueDate | date:'d MMM yyyy' }}</div>
               <div class="pg-cell__sub hw-overdue" *ngIf="isPastDue(hw.dueDate)">
@@ -107,6 +112,32 @@
             <td>
               <span class="hw-marks">{{ hw.maxMarks }}</span>
             </td>
+
+            <!-- My Score (students only) -->
+            <td *ngIf="isStudent">
+              <ng-container *ngIf="mySubmissionMap[hw.id] as sub; else noSub">
+                <ng-container *ngIf="sub.marks !== null && sub.marks !== undefined; else pendingSub">
+                  <div class="hw-my-score">
+                    <span class="hw-my-score__val">{{ sub.marks }} / {{ hw.maxMarks }}</span>
+                    <span class="pg-badge pg-badge--green hw-my-score__grade">
+                      {{ ((sub.marks / hw.maxMarks) * 100) >= 75 ? 'Good' :
+                         ((sub.marks / hw.maxMarks) * 100) >= 50 ? 'Average' : 'Low' }}
+                    </span>
+                  </div>
+                  <div class="pg-cell__sub hw-my-score__fb" *ngIf="sub.feedback">
+                    <i class="fa-solid fa-comment-dots"></i> {{ sub.feedback }}
+                  </div>
+                </ng-container>
+                <ng-template #pendingSub>
+                  <span class="pg-badge pg-badge--amber">Submitted</span>
+                  <div class="pg-cell__sub">Awaiting grade</div>
+                </ng-template>
+              </ng-container>
+              <ng-template #noSub>
+                <span class="pg-cell__sub">—</span>
+              </ng-template>
+            </td>
+
             <td>
               <a *ngIf="hw.attachmentUrl" [href]="hw.attachmentUrl" target="_blank" class="hw-attach-btn">
                 <i class="fa-solid fa-paperclip"></i> View
@@ -123,10 +154,24 @@
                 <button class="pg-action-btn" title="View" (click)="openView(hw)" *ngIf="p.canRead">
                   <i class="fa-solid fa-eye"></i>
                 </button>
-                <button class="pg-action-btn pg-action-btn--blue" title="Submissions" (click)="openSubmissions(hw)">
+                <!-- Student: submit button — hidden once submitted -->
+                <button class="pg-action-btn pg-action-btn--green" title="Submit Assignment"
+                        *ngIf="isStudent && hw.isActive && !isPastDue(hw.dueDate) && !mySubmissionMap[hw.id]"
+                        (click)="openSubmit(hw)">
+                  <i class="fa-solid fa-upload"></i>
+                </button>
+                <!-- Student: already submitted indicator -->
+                <span class="hw-submitted-tag" title="Already submitted"
+                      *ngIf="isStudent && mySubmissionMap[hw.id]">
+                  <i class="fa-solid fa-circle-check"></i>
+                  {{ mySubmissionMap[hw.id]?.marks !== null && mySubmissionMap[hw.id]?.marks !== undefined ? 'Graded' : 'Submitted' }}
+                </span>
+                <!-- Admin/Teacher: view submissions -->
+                <button class="pg-action-btn pg-action-btn--blue" title="Submissions"
+                        *ngIf="canAssign" (click)="openSubmissions(hw)">
                   <i class="fa-solid fa-inbox"></i>
                 </button>
-                <button class="pg-action-btn pg-action-btn--red" title="Delete" (click)="openDelete(hw)" *ngIf="p.canDelete">
+                <button class="pg-action-btn pg-action-btn--red" title="Delete" (click)="openDelete(hw)" *ngIf="p.canDelete && canAssign">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
@@ -195,10 +240,11 @@
         </div>
 
         <div class="pg-form-row">
-          <label class="pg-label">Teacher ID <span class="pg-req">*</span></label>
-          <input class="pg-input" [class.pg-input--err]="errTeacherId"
-                 placeholder="Teacher GUID" [(ngModel)]="formTeacherId">
-          <span class="pg-err" *ngIf="errTeacherId">{{ errTeacherId }}</span>
+          <label class="pg-label">Teacher</label>
+          <div class="hw-readonly-field">
+            <i class="fa-solid fa-chalkboard-user"></i>
+            {{ currentUserName || 'Loading…' }}
+          </div>
         </div>
       </div>
 
@@ -307,45 +353,119 @@
         <p>No submissions yet.</p>
       </div>
 
-      <div class="pg-table-wrap" *ngIf="!subLoading && submissions.length > 0">
-        <table class="pg-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Student ID</th>
-              <th>Submitted At</th>
-              <th>Marks</th>
-              <th>Feedback</th>
-              <th>File</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let s of submissions; let i = index">
-              <td>{{ i + 1 }}</td>
-              <td>
-                <span class="pg-cell__sub">{{ s.studentId | slice:0:8 }}…</span>
-              </td>
-              <td>{{ s.submittedAt | date:'d MMM yyyy, h:mm a' }}</td>
-              <td>
-                <span *ngIf="s.marks !== null" class="hw-marks">{{ s.marks }} / {{ selected!.maxMarks }}</span>
-                <span *ngIf="s.marks === null" class="pg-cell__sub">Not graded</span>
-              </td>
-              <td>
-                <span *ngIf="s.feedback">{{ s.feedback }}</span>
-                <span *ngIf="!s.feedback" class="pg-cell__sub">—</span>
-              </td>
-              <td>
-                <a [href]="s.fileUrl" target="_blank" class="hw-attach-btn">
-                  <i class="fa-solid fa-file-arrow-down"></i> View
-                </a>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="hw-sub-list" *ngIf="!subLoading && submissions.length > 0">
+        <div class="hw-sub-card" *ngFor="let s of submissions; let i = index">
+
+          <!-- Header row -->
+          <div class="hw-sub-card__head">
+            <div class="hw-sub-card__avatar">{{ i + 1 }}</div>
+            <div class="hw-sub-card__info">
+              <div class="hw-sub-card__student">{{ getUserName(s.studentId) }}</div>
+              <div class="hw-sub-card__time">
+                <i class="fa-regular fa-clock"></i> {{ s.submittedAt | date:'d MMM yyyy, h:mm a' }}
+              </div>
+            </div>
+            <div class="hw-sub-card__status">
+              <span class="pg-badge pg-badge--green" *ngIf="s.marks !== null">
+                <i class="fa-solid fa-check"></i> Graded
+              </span>
+              <span class="pg-badge pg-badge--gray" *ngIf="s.marks === null">Pending</span>
+            </div>
+            <a [href]="s.fileUrl" target="_blank" class="hw-attach-btn">
+              <i class="fa-solid fa-file-arrow-down"></i> File
+            </a>
+          </div>
+
+          <!-- Grade form (teacher/admin only) -->
+          <div class="hw-grade-form" *ngIf="canAssign">
+            <div class="hw-grade-row">
+              <div class="pg-form-row" style="flex:1">
+                <label class="pg-label">
+                  Marks <span class="pg-hint">/ {{ selected!.maxMarks }}</span>
+                </label>
+                <input class="pg-input" type="number" min="0"
+                       [max]="selected!.maxMarks"
+                       [(ngModel)]="gradeMarks[s.id]"
+                       placeholder="0">
+              </div>
+              <div class="pg-form-row" style="flex:3">
+                <label class="pg-label">Feedback</label>
+                <input class="pg-input" type="text"
+                       [(ngModel)]="gradeFeedback[s.id]"
+                       placeholder="Great work! / Needs improvement…">
+              </div>
+              <button class="pg-btn pg-btn--primary hw-grade-save"
+                      (click)="saveGrade(s.id)"
+                      [disabled]="isSavingGrade[s.id]">
+                <i class="fa-solid"
+                   [class.fa-circle-notch]="isSavingGrade[s.id]"
+                   [class.fa-spin]="isSavingGrade[s.id]"
+                   [class.fa-floppy-disk]="!isSavingGrade[s.id]"></i>
+                {{ isSavingGrade[s.id] ? '' : 'Save' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Read-only grade display for students -->
+          <div class="hw-grade-display" *ngIf="!canAssign && s.marks !== null">
+            <span class="hw-marks">{{ s.marks }} / {{ selected!.maxMarks }}</span>
+            <span class="hw-feedback" *ngIf="s.feedback">{{ s.feedback }}</span>
+          </div>
+
+        </div>
       </div>
     </div>
     <div class="pg-modal__foot">
       <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     SUBMIT MODAL  (student)
+     ════════════════════════════════════════════════════════════ -->
+<div class="pg-modal-backdrop" *ngIf="modalMode === 'submit' && selected" (click)="closeModal()">
+  <div class="pg-modal pg-modal--sm" (click)="$event.stopPropagation()">
+    <div class="pg-modal__head">
+      <span><i class="fa-solid fa-upload"></i> Submit Assignment</span>
+      <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="pg-modal__body">
+
+      <!-- Assignment summary -->
+      <div class="hw-submit-info">
+        <div class="hw-submit-info__title">{{ selected.title }}</div>
+        <div class="hw-submit-info__meta">
+          <span><i class="fa-regular fa-calendar"></i> Due: {{ selected.dueDate | date:'d MMM yyyy, h:mm a' }}</span>
+          <span><i class="fa-solid fa-star"></i> Max Marks: {{ selected.maxMarks }}</span>
+        </div>
+        <div class="hw-submit-info__desc" *ngIf="selected.description">{{ selected.description }}</div>
+        <a *ngIf="selected.attachmentUrl" [href]="selected.attachmentUrl" target="_blank" class="hw-attach-btn" style="margin-top:8px">
+          <i class="fa-solid fa-paperclip"></i> View Assignment File
+        </a>
+      </div>
+
+      <!-- File upload -->
+      <div class="pg-form-row" style="margin-top:16px">
+        <label class="pg-label">Your Submission File <span class="pg-req">*</span></label>
+        <div class="hw-file-zone">
+          <label class="hw-file-label" [class.hw-file-label--selected]="submitFileName">
+            <i class="fa-solid" [class.fa-cloud-arrow-up]="!submitFileName" [class.fa-file-check]="submitFileName"></i>
+            <span>{{ submitFileName || 'Click to upload your answer file' }}</span>
+            <input type="file" class="hw-file-input" (change)="onSubmitFileChange($event)">
+          </label>
+        </div>
+        <span class="pg-err" *ngIf="errSubmitFile">{{ errSubmitFile }}</span>
+      </div>
+
+    </div>
+    <div class="pg-modal__foot">
+      <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+      <button class="pg-btn pg-btn--primary" (click)="submitAssignment()" [disabled]="isSubmitting">
+        <i class="fa-solid" [class.fa-circle-notch]="isSubmitting" [class.fa-spin]="isSubmitting"
+           [class.fa-upload]="!isSubmitting"></i>
+        {{ isSubmitting ? 'Submitting…' : 'Submit' }}
+      </button>
     </div>
   </div>
 </div>

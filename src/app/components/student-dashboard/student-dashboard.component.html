@@ -53,6 +53,165 @@
       </div>
     </div>
 
+    <!-- ── PERFORMANCE SECTION ─────────────────────────────────── -->
+    <div class="sd-perf-card" *ngIf="performanceDetail">
+
+      <!-- Header -->
+      <div class="sd-perf-header">
+        <div class="sd-perf-header__left">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Performance Summary</span>
+        </div>
+        <div class="sd-perf-grade"
+             [class.grade-a]="performanceDetail.grade === 'A'"
+             [class.grade-b]="performanceDetail.grade === 'B'"
+             [class.grade-c]="performanceDetail.grade === 'C'"
+             [class.grade-d]="performanceDetail.grade === 'D'"
+             [class.grade-f]="performanceDetail.grade === 'F'">
+          {{ performanceDetail.grade }}
+        </div>
+      </div>
+
+      <!-- Score Meters -->
+      <div class="sd-perf-meters">
+
+        <div class="sd-perf-meter">
+          <div class="sd-perf-meter__ring"
+               [style.--pct]="performanceDetail.attendancePercent + '%'"
+               [style.--clr]="performanceDetail.attendancePercent >= 85 ? '#059669' : performanceDetail.attendancePercent >= 70 ? '#d97706' : '#dc2626'">
+            <span>{{ performanceDetail.attendancePercent }}%</span>
+          </div>
+          <div class="sd-perf-meter__label">
+            <i class="fa-solid fa-calendar-check"></i> Attendance
+          </div>
+        </div>
+
+        <div class="sd-perf-meter">
+          <div class="sd-perf-meter__ring"
+               [style.--pct]="performanceDetail.homeworkPercent + '%'"
+               [style.--clr]="performanceDetail.homeworkPercent >= 75 ? '#4f46e5' : performanceDetail.homeworkPercent >= 50 ? '#d97706' : '#dc2626'">
+            <span>{{ performanceDetail.homeworkPercent }}%</span>
+          </div>
+          <div class="sd-perf-meter__label">
+            <i class="fa-solid fa-file-pen"></i> Homework
+          </div>
+        </div>
+
+        <div class="sd-perf-meter">
+          <div class="sd-perf-meter__ring"
+               [style.--pct]="performanceDetail.avgQuizScore + '%'"
+               [style.--clr]="performanceDetail.avgQuizScore >= 75 ? '#db2777' : performanceDetail.avgQuizScore >= 50 ? '#d97706' : '#dc2626'">
+            <span>{{ performanceDetail.avgQuizScore }}%</span>
+          </div>
+          <div class="sd-perf-meter__label">
+            <i class="fa-solid fa-trophy"></i> Quiz Score
+          </div>
+        </div>
+
+        <div class="sd-perf-meter">
+          <div class="sd-perf-meter__ring"
+               [style.--pct]="performanceDetail.overallScore + '%'"
+               [style.--clr]="performanceDetail.overallScore >= 75 ? '#0891b2' : performanceDetail.overallScore >= 50 ? '#d97706' : '#dc2626'">
+            <span>{{ performanceDetail.overallScore }}%</span>
+          </div>
+          <div class="sd-perf-meter__label">
+            <i class="fa-solid fa-star"></i> Overall
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Progress Bars -->
+      <div class="sd-perf-bars">
+        <div class="sd-perf-bar-row">
+          <span class="sd-perf-bar-label"><i class="fa-solid fa-calendar-check"></i> Attendance</span>
+          <div class="sd-perf-bar-track">
+            <div class="sd-perf-bar-fill"
+                 [style.width.%]="performanceDetail.attendancePercent"
+                 [style.background]="performanceDetail.attendancePercent >= 85 ? '#059669' : performanceDetail.attendancePercent >= 70 ? '#d97706' : '#dc2626'">
+            </div>
+          </div>
+          <span class="sd-perf-bar-val">{{ performanceDetail.attendancePercent }}%</span>
+        </div>
+        <div class="sd-perf-bar-row">
+          <span class="sd-perf-bar-label"><i class="fa-solid fa-file-pen"></i> Homework</span>
+          <div class="sd-perf-bar-track">
+            <div class="sd-perf-bar-fill"
+                 [style.width.%]="performanceDetail.homeworkPercent"
+                 [style.background]="'#4f46e5'">
+            </div>
+          </div>
+          <span class="sd-perf-bar-val">{{ performanceDetail.homeworkPercent }}%</span>
+        </div>
+        <div class="sd-perf-bar-row">
+          <span class="sd-perf-bar-label"><i class="fa-solid fa-trophy"></i> Quiz Score</span>
+          <div class="sd-perf-bar-track">
+            <div class="sd-perf-bar-fill"
+                 [style.width.%]="performanceDetail.avgQuizScore"
+                 [style.background]="'#db2777'">
+            </div>
+          </div>
+          <span class="sd-perf-bar-val">{{ performanceDetail.avgQuizScore }}%</span>
+        </div>
+        <div class="sd-perf-bar-row">
+          <span class="sd-perf-bar-label"><i class="fa-solid fa-star"></i> Overall</span>
+          <div class="sd-perf-bar-track">
+            <div class="sd-perf-bar-fill"
+                 [style.width.%]="performanceDetail.overallScore"
+                 [style.background]="'#0891b2'">
+            </div>
+          </div>
+          <span class="sd-perf-bar-val">{{ performanceDetail.overallScore }}%</span>
+        </div>
+      </div>
+
+      <!-- Homework Breakdown -->
+      <div class="sd-hw-breakdown" *ngIf="homeworkBreakdown.length">
+        <div class="sd-hw-breakdown__title">
+          <i class="fa-solid fa-book-open"></i> Homework Breakdown
+        </div>
+        <div class="sd-hw-list">
+          <div class="sd-hw-item" *ngFor="let hw of homeworkBreakdown">
+            <div class="sd-hw-item__left">
+              <div class="sd-hw-status-dot"
+                   [class.submitted]="hw.submitted && hw.graded"
+                   [class.pending]="hw.submitted && !hw.graded"
+                   [class.missing]="!hw.submitted">
+              </div>
+              <div>
+                <div class="sd-hw-title">{{ hw.title }}</div>
+                <div class="sd-hw-meta">
+                  <span *ngIf="hw.submittedAt">
+                    <i class="fa-regular fa-clock"></i> {{ hw.submittedAt | date:'d MMM, h:mm a' }}
+                  </span>
+                  <span *ngIf="!hw.submittedAt" class="sd-hw-not-submitted">Not submitted</span>
+                  <span *ngIf="hw.feedback" class="sd-hw-feedback">
+                    <i class="fa-solid fa-comment"></i> {{ hw.feedback }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="sd-hw-item__right">
+              <div class="sd-hw-score" *ngIf="hw.graded && hw.marksObtained !== null">
+                <span class="sd-hw-score__obtained">{{ hw.marksObtained }}</span>
+                <span class="sd-hw-score__max">/{{ hw.maxMarks }}</span>
+              </div>
+              <span class="sd-hw-badge"
+                    [class.graded]="hw.graded"
+                    [class.pending-review]="hw.submitted && !hw.graded"
+                    [class.missing]="!hw.submitted">
+                <i *ngIf="hw.graded" class="fa-solid fa-circle-check"></i>
+                <i *ngIf="hw.submitted && !hw.graded" class="fa-regular fa-clock"></i>
+                <i *ngIf="!hw.submitted" class="fa-solid fa-circle-xmark"></i>
+                {{ hw.graded ? 'Graded' : hw.submitted ? 'Pending Review' : 'Missing' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
     <!-- ── MAIN GRID ───────────────────────────────────────────── -->
     <div class="sd-grid">
 

@@ -1,0 +1,214 @@
+/* ── Row index ───────────────────────────────────────────────── */
+.sp-idx {
+  color: #94a3b8;
+  font-size: 12px;
+  width: 36px;
+  text-align: center;
+}
+
+/* ── Score cell (bar + value) ────────────────────────────────── */
+.sp-score-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sp-bar-wrap {
+  flex: 1;
+  min-width: 60px;
+  max-width: 100px;
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sp-bar {
+  height: 6px;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.sp-score-val {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sp-score-val--bold {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ── Grade badge ─────────────────────────────────────────────── */
+.sp-grade {
+  font-size: 13px;
+  font-weight: 800;
+  min-width: 32px;
+  text-align: center;
+  padding: 3px 10px;
+}
+
+/* ── Badge colours not covered by shared ────────────────────── */
+.pg-badge--amber {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.pg-badge--orange {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.pg-badge--red {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* ── Clickable table rows ────────────────────────────────────── */
+.sp-table .sp-row { cursor: pointer; transition: background 0.12s; }
+.sp-table .sp-row:hover { background: #f0f9ff; }
+
+/* ── Modal batch badge ───────────────────────────────────────── */
+.sp-modal-batch { margin-left: 8px; font-size: 12px; }
+
+/* ── Score strip inside modal ────────────────────────────────── */
+.sp-detail-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.sp-detail-stat {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  text-align: center;
+}
+
+.sp-detail-stat--overall {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.sp-detail-stat__val {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.sp-detail-stat__lbl {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* ── Section title ───────────────────────────────────────────── */
+.sp-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Homework list ───────────────────────────────────────────── */
+.sp-hw-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sp-hw-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.sp-hw-item__left {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sp-hw-item__icon {
+  font-size: 16px;
+  width: 20px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.sp-hw-item__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.sp-hw-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 3px;
+}
+
+.sp-hw-item__meta i { color: #6366f1; }
+
+.sp-hw-feedback {
+  color: #475569;
+  font-style: italic;
+}
+
+.sp-hw-item__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sp-hw-score {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.sp-hw-pct {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sp-hw-max {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* ── Status colours ──────────────────────────────────────────── */
+.sp-hw-graded    { background: #f0fdf4; border-color: #bbf7d0; }
+.sp-hw-submitted { background: #fffbeb; border-color: #fde68a; }
+.sp-hw-missing   { background: #fef2f2; border-color: #fecaca; }
+
+.sp-hw-graded    .sp-hw-item__icon { color: #10b981; }
+.sp-hw-submitted .sp-hw-item__icon { color: #f59e0b; }
+.sp-hw-missing   .sp-hw-item__icon { color: #ef4444; }
+
+/* ── Responsive: collapse bars on small screens ──────────────── */
+@media (max-width: 768px) {
+  .sp-bar-wrap { display: none; }
+  .sp-detail-strip { grid-template-columns: 1fr 1fr; }
+}

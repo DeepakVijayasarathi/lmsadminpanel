@@ -1,0 +1,208 @@
+<div class="pg">
+
+  <!-- ── PAGE HEADER ──────────────────────────────────────────────── -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-teal">
+        <i class="fa-solid fa-chalkboard-user"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Teacher Performance</div>
+        <div class="pg-head__sub">Click any row to see per-batch hours breakdown</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STATS ────────────────────────────────────────────────────── -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-teal"><i class="fa-solid fa-chalkboard-user"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ stats.totalTeachers }}</div>
+        <div class="pg-stat__lbl">Total Teachers</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-clock"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ stats.totalHoursDelivered | number:'1.1-1' }}</div>
+        <div class="pg-stat__lbl">Total Hours</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-person-chalkboard"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ stats.totalClassesDelivered }}</div>
+        <div class="pg-stat__lbl">Total Classes</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-amber"><i class="fa-solid fa-hourglass-half"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ stats.avgHoursPerTeacher | number:'1.1-1' }}</div>
+        <div class="pg-stat__lbl">Avg Hrs / Teacher</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TABLE CARD ───────────────────────────────────────────────── -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <div class="pg-card__title">All Teachers</div>
+      <div class="pg-toolbar">
+        <input class="pg-search" type="text" placeholder="Search teacher…"
+               [(ngModel)]="searchQuery" (ngModelChange)="applySearch()">
+        <select class="pg-filter" [(ngModel)]="teacherFilter" (ngModelChange)="onTeacherChange()">
+          <option value="">All Teachers</option>
+          <option *ngFor="let t of teachers" [value]="t.id">{{ t.name }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="pg-loading" *ngIf="isLoading">
+      <i class="fa-solid fa-circle-notch fa-spin"></i> Loading…
+    </div>
+
+    <div class="pg-empty" *ngIf="!isLoading && filtered.length === 0">
+      <i class="fa-solid fa-chalkboard"></i>
+      <p>No records found.</p>
+    </div>
+
+    <div class="pg-table-wrap" *ngIf="!isLoading && filtered.length > 0">
+      <table class="pg-table tp-table">
+        <thead>
+          <tr>
+            <th style="width:36px">#</th>
+            <th>Teacher</th>
+            <th>Classes</th>
+            <th>Hours Taught</th>
+            <th>Batches</th>
+            <th>Batch Preview</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of paged; let i = index"
+              class="tp-row" (click)="openDetail(r)" title="View batch breakdown">
+
+            <td class="tp-idx">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+
+            <td>
+              <div class="pg-with-avatar">
+                <div class="pg-avatar av-teal">{{ r.teacherName.charAt(0) }}</div>
+                <div class="pg-cell__primary">{{ r.teacherName }}</div>
+              </div>
+            </td>
+
+            <td>
+              <span class="tp-metric">{{ r.totalClassesTaken }}</span>
+              <div class="pg-cell__sub">sessions</div>
+            </td>
+
+            <td>
+              <span class="tp-metric">{{ r.totalHoursTaught | number:'1.1-1' }}</span>
+              <div class="pg-cell__sub">hrs</div>
+            </td>
+
+            <td>
+              <span class="pg-badge pg-badge--blue">{{ r.batchesCovered }}</span>
+            </td>
+
+            <td>
+              <div class="tp-batch-pills">
+                <span class="tp-pill" *ngFor="let b of r.batchBreakdown | slice:0:3">
+                  {{ b.batchName }}
+                </span>
+                <span class="tp-pill tp-pill--more" *ngIf="r.batchBreakdown.length > 3">
+                  +{{ r.batchBreakdown.length - 3 }} more
+                </span>
+              </div>
+              <div class="tp-view-hint"><i class="fa-solid fa-arrow-up-right-from-square"></i> View details</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-common-pagination *ngIf="totalPages > 1"
+      [currentPage]="currentPage" [totalPages]="totalPages"
+      (pageChange)="onPageChange($event)">
+    </app-common-pagination>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     TEACHER DETAIL MODAL
+     ════════════════════════════════════════════════════════ -->
+<div class="pg-modal-backdrop" *ngIf="detailOpen" (click)="closeDetail()">
+  <div class="pg-modal pg-modal--lg" (click)="$event.stopPropagation()">
+
+    <div class="pg-modal__head">
+      <span>
+        <i class="fa-solid fa-chalkboard-user"></i>
+        {{ detail ? detail.teacherName : 'Loading…' }}
+      </span>
+      <button class="pg-modal__close" (click)="closeDetail()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div class="pg-modal__body">
+
+      <div class="pg-loading" *ngIf="detailLoading">
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Loading…
+      </div>
+
+      <ng-container *ngIf="!detailLoading && detail">
+
+        <!-- Summary strip -->
+        <div class="tp-detail-strip">
+          <div class="tp-detail-stat">
+            <div class="tp-detail-stat__val">{{ detail.totalClassesTaken }}</div>
+            <div class="tp-detail-stat__lbl"><i class="fa-solid fa-person-chalkboard"></i> Total Classes</div>
+          </div>
+          <div class="tp-detail-stat">
+            <div class="tp-detail-stat__val">{{ detail.totalHoursTaught | number:'1.1-1' }}</div>
+            <div class="tp-detail-stat__lbl"><i class="fa-solid fa-clock"></i> Total Hours</div>
+          </div>
+          <div class="tp-detail-stat">
+            <div class="tp-detail-stat__val">{{ detail.batchesCovered }}</div>
+            <div class="tp-detail-stat__lbl"><i class="fa-solid fa-layer-group"></i> Batches</div>
+          </div>
+        </div>
+
+        <!-- Batch breakdown -->
+        <div class="tp-section-title">
+          <i class="fa-solid fa-layer-group"></i> Batch Breakdown
+        </div>
+
+        <div class="tp-batch-list">
+          <div class="tp-batch-card" *ngFor="let b of detail.batchBreakdown">
+            <div class="tp-batch-card__name">
+              <span class="pg-badge pg-badge--blue">{{ b.batchName }}</span>
+            </div>
+            <div class="tp-batch-card__stats">
+              <div class="tp-batch-card__stat">
+                <span class="tp-batch-card__val">{{ b.classes }}</span>
+                <span class="tp-batch-card__lbl">classes</span>
+              </div>
+              <div class="tp-batch-card__sep"></div>
+              <div class="tp-batch-card__stat">
+                <span class="tp-batch-card__val">{{ b.hoursTaught | number:'1.1-1' }}</span>
+                <span class="tp-batch-card__lbl">hrs taught</span>
+              </div>
+            </div>
+            <!-- Hours bar -->
+            <div class="tp-batch-card__bar-wrap" *ngIf="detail.totalHoursTaught > 0">
+              <div class="tp-batch-card__bar"
+                   [style.width.%]="(b.hoursTaught / detail.totalHoursTaught) * 100"></div>
+            </div>
+          </div>
+        </div>
+
+      </ng-container>
+    </div>
+
+    <div class="pg-modal__foot">
+      <button class="pg-btn pg-btn--ghost" (click)="closeDetail()">Close</button>
+    </div>
+  </div>
+</div>

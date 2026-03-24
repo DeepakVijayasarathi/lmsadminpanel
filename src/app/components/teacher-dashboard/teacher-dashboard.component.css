@@ -813,4 +813,206 @@
   .td-sub-assign { max-width: 100px; }
 
   .td-perf-label { width: 70px; }
+  .td-perf-tiles { grid-template-columns: 1fr; }
+  .td-batch-perf-bar-wrap { flex-direction: column; align-items: flex-start; }
+}
+
+/* ═══════════════════════════════════════════
+   TEACHER PERFORMANCE CARD
+   ═══════════════════════════════════════════ */
+.td-perf-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Header */
+.td-perf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.td-perf-header__left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.td-perf-header__left i { color: #0d9488; font-size: 16px; }
+
+.td-perf-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 20px;
+  background: #f0fdfa;
+  color: #0d9488;
+  border: 1px solid #99f6e4;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Key Stat Tiles */
+.td-perf-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.td-perf-tile {
+  border-radius: 16px;
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.td-perf-tile::before {
+  content: '';
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  opacity: 0.12;
+  background: currentColor;
+}
+
+.td-perf-tile--teal   { background: #f0fdfa; color: #0d9488; }
+.td-perf-tile--indigo { background: #eef2ff; color: #4f46e5; }
+.td-perf-tile--violet { background: #faf5ff; color: #7c3aed; }
+
+.td-perf-tile__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  background: rgba(255,255,255,0.7);
+}
+
+.td-perf-tile__val {
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1;
+  color: inherit;
+}
+
+.td-perf-tile__lbl {
+  font-size: 11px;
+  font-weight: 600;
+  color: inherit;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+/* Batch Breakdown */
+.td-perf-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.td-perf-breakdown__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 16px;
+}
+
+.td-perf-breakdown__title i { color: #0d9488; }
+
+.td-batch-perf-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.td-batch-perf-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+  transition: background 0.12s;
+}
+
+.td-batch-perf-row:hover { background: #f1f5f9; }
+
+.td-batch-perf-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.td-batch-perf-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.td-batch-perf-meta {
+  font-size: 11px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.td-batch-perf-meta i { color: #94a3b8; }
+
+.td-batch-perf-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.td-batch-perf-bar-track {
+  flex: 1;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+  min-width: 60px;
+}
+
+.td-batch-perf-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #0d9488, #0891b2);
+  transition: width 0.7s ease;
+}
+
+.td-batch-perf-pct {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0d9488;
+  flex-shrink: 0;
+  width: 36px;
+  text-align: right;
 }

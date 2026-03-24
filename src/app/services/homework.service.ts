@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -75,5 +75,10 @@ export class HomeworkService {
   /** GET /api/homeworks/{id}/submissions */
   getSubmissions(homeworkId: string): Observable<SubmissionDto[]> {
     return this.http.get<SubmissionDto[]>(`${BASE}/${homeworkId}/submissions`);
+  }
+
+  /** PUT /api/homeworks/submissions/{submissionId}/grade */
+  grade(submissionId: string, marks: number, feedback: string): Observable<any> {
+    return this.http.put(`${BASE}/submissions/${submissionId}/grade`, { marks, feedback });
   }
 }

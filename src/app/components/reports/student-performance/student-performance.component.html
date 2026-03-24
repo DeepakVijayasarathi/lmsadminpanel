@@ -1,0 +1,295 @@
+<div class="pg">
+
+  <!-- ── PAGE HEADER ──────────────────────────────────────────────── -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-indigo">
+        <i class="fa-solid fa-chart-line"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Student Performance</div>
+        <div class="pg-head__sub">Click any row to see full homework breakdown</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STATS ────────────────────────────────────────────────────── -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-users"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ stats.totalStudents }}</div>
+        <div class="pg-stat__lbl">Total Students</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-chart-simple"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ stats.avgOverallScore | number:'1.1-1' }}%</div>
+        <div class="pg-stat__lbl">Avg Overall Score</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-star"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ stats.topPerformers }}</div>
+        <div class="pg-stat__lbl">Top Performers</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-hand-holding-heart"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ stats.needSupport }}</div>
+        <div class="pg-stat__lbl">Need Support</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TABLE CARD ───────────────────────────────────────────────── -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <div class="pg-card__title">All Students</div>
+      <div class="pg-toolbar">
+        <input class="pg-search" type="text" placeholder="Search student or batch…"
+               [(ngModel)]="searchQuery" (ngModelChange)="applySearch()">
+        <select class="pg-filter" [(ngModel)]="batchFilter" (ngModelChange)="onBatchChange()">
+          <option value="">All Batches</option>
+          <option *ngFor="let b of batches" [value]="b.id">{{ b.name }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="pg-loading" *ngIf="isLoading">
+      <i class="fa-solid fa-circle-notch fa-spin"></i> Loading…
+    </div>
+
+    <div class="pg-empty" *ngIf="!isLoading && filtered.length === 0">
+      <i class="fa-solid fa-users-slash"></i>
+      <p>No records found.</p>
+    </div>
+
+    <div class="pg-table-wrap" *ngIf="!isLoading && filtered.length > 0">
+      <table class="pg-table sp-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student</th>
+            <th>Batch</th>
+            <th>Attendance</th>
+            <th>Homework</th>
+            <th>Quiz Avg</th>
+            <th>Overall</th>
+            <th>Grade</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of paged; let i = index"
+              class="sp-row" (click)="openDetail(r)" title="View full breakdown">
+
+            <td class="sp-idx">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+
+            <td>
+              <div class="pg-with-avatar">
+                <div class="pg-avatar av-indigo">{{ r.studentName.charAt(0) }}</div>
+                <div class="pg-cell__primary">{{ r.studentName }}</div>
+              </div>
+            </td>
+
+            <td><span class="pg-badge pg-badge--blue">{{ r.batchName }}</span></td>
+
+            <td>
+              <div class="sp-score-cell">
+                <div class="sp-bar-wrap">
+                  <div class="sp-bar" [style.width.%]="r.attendancePercent"
+                       [style.background]="scoreBarColor(r.attendancePercent)"></div>
+                </div>
+                <span class="sp-score-val" [style.color]="scoreBarColor(r.attendancePercent)">
+                  {{ r.attendancePercent | number:'1.0-1' }}%
+                </span>
+              </div>
+              <div class="pg-cell__sub">{{ r.attendedClasses }}/{{ r.totalClasses }} classes</div>
+            </td>
+
+            <td>
+              <div class="sp-score-cell">
+                <div class="sp-bar-wrap">
+                  <div class="sp-bar" [style.width.%]="r.homeworkPercent"
+                       [style.background]="scoreBarColor(r.homeworkPercent)"></div>
+                </div>
+                <span class="sp-score-val" [style.color]="scoreBarColor(r.homeworkPercent)">
+                  {{ r.homeworkPercent | number:'1.0-1' }}%
+                </span>
+              </div>
+              <div class="pg-cell__sub">
+                {{ r.homeworkSubmitted }}/{{ r.totalHomework }} submitted
+                &nbsp;·&nbsp;
+                {{ r.homeworkMarksObtained | number:'1.0-1' }}/{{ r.homeworkMaxMarks }} marks
+              </div>
+            </td>
+
+            <td>
+              <div class="sp-score-cell">
+                <div class="sp-bar-wrap">
+                  <div class="sp-bar" [style.width.%]="r.avgQuizScore"
+                       [style.background]="scoreBarColor(r.avgQuizScore)"></div>
+                </div>
+                <span class="sp-score-val" [style.color]="scoreBarColor(r.avgQuizScore)">
+                  {{ r.avgQuizScore | number:'1.0-1' }}%
+                </span>
+              </div>
+              <div class="pg-cell__sub">{{ r.quizzesTaken }} quiz{{ r.quizzesTaken !== 1 ? 'zes' : '' }}</div>
+            </td>
+
+            <td>
+              <div class="sp-score-cell">
+                <div class="sp-bar-wrap">
+                  <div class="sp-bar" [style.width.%]="r.overallScore"
+                       [style.background]="scoreBarColor(r.overallScore)"></div>
+                </div>
+                <span class="sp-score-val sp-score-val--bold" [style.color]="scoreBarColor(r.overallScore)">
+                  {{ r.overallScore | number:'1.1-1' }}%
+                </span>
+              </div>
+            </td>
+
+            <td>
+              <span class="pg-badge sp-grade" [ngClass]="gradeColor(r.grade)">{{ r.grade }}</span>
+            </td>
+
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-common-pagination *ngIf="totalPages > 1"
+      [currentPage]="currentPage" [totalPages]="totalPages"
+      (pageChange)="onPageChange($event)">
+    </app-common-pagination>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     STUDENT DETAIL MODAL
+     ════════════════════════════════════════════════════════ -->
+<div class="pg-modal-backdrop" *ngIf="detailOpen" (click)="closeDetail()">
+  <div class="pg-modal pg-modal--lg" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="pg-modal__head">
+      <span>
+        <i class="fa-solid fa-chart-line"></i>
+        {{ detail ? detail.studentName : 'Loading…' }}
+        <span class="pg-badge pg-badge--blue sp-modal-batch" *ngIf="detail">{{ detail.batchName }}</span>
+      </span>
+      <button class="pg-modal__close" (click)="closeDetail()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <!-- Body -->
+    <div class="pg-modal__body">
+
+      <!-- Loading spinner -->
+      <div class="pg-loading" *ngIf="detailLoading">
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Loading…
+      </div>
+
+      <ng-container *ngIf="!detailLoading && detail">
+
+        <!-- Score strip -->
+        <div class="sp-detail-strip">
+          <div class="sp-detail-stat">
+            <div class="sp-detail-stat__val" [style.color]="scoreBarColor(detail.attendancePercent)">
+              {{ detail.attendancePercent | number:'1.0-1' }}%
+            </div>
+            <div class="sp-detail-stat__lbl"><i class="fa-solid fa-calendar-check"></i> Attendance</div>
+          </div>
+          <div class="sp-detail-stat">
+            <div class="sp-detail-stat__val" [style.color]="scoreBarColor(detail.homeworkPercent)">
+              {{ detail.homeworkPercent | number:'1.0-1' }}%
+            </div>
+            <div class="sp-detail-stat__lbl"><i class="fa-solid fa-file-pen"></i> Homework</div>
+          </div>
+          <div class="sp-detail-stat">
+            <div class="sp-detail-stat__val" [style.color]="scoreBarColor(detail.avgQuizScore)">
+              {{ detail.avgQuizScore | number:'1.0-1' }}%
+            </div>
+            <div class="sp-detail-stat__lbl"><i class="fa-solid fa-circle-question"></i> Quiz Avg</div>
+          </div>
+          <div class="sp-detail-stat sp-detail-stat--overall">
+            <div class="sp-detail-stat__val" [style.color]="scoreBarColor(detail.overallScore)">
+              {{ detail.overallScore | number:'1.1-1' }}%
+            </div>
+            <div class="sp-detail-stat__lbl">
+              <i class="fa-solid fa-trophy"></i> Overall
+              <span class="pg-badge sp-grade" [ngClass]="gradeColor(detail.grade)" style="margin-left:6px">
+                {{ detail.grade }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Homework breakdown -->
+        <div class="sp-section-title">
+          <i class="fa-solid fa-file-pen"></i> Homework Breakdown
+        </div>
+
+        <div class="pg-empty" *ngIf="!detail.homeworkBreakdown?.length">
+          <i class="fa-regular fa-folder-open"></i>
+          <p>No homework assigned yet.</p>
+        </div>
+
+        <div class="sp-hw-list" *ngIf="detail.homeworkBreakdown?.length">
+          <div class="sp-hw-item" *ngFor="let hw of detail.homeworkBreakdown"
+               [ngClass]="hwStatusClass(hw)">
+
+            <div class="sp-hw-item__left">
+              <div class="sp-hw-item__icon">
+                <i class="fa-solid fa-circle-check" *ngIf="hw.graded"></i>
+                <i class="fa-solid fa-clock"        *ngIf="!hw.graded && hw.submitted"></i>
+                <i class="fa-solid fa-circle-xmark" *ngIf="!hw.submitted"></i>
+              </div>
+              <div>
+                <div class="sp-hw-item__title">{{ hw.title }}</div>
+                <div class="sp-hw-item__meta">
+                  <span *ngIf="hw.submittedAt">
+                    <i class="fa-regular fa-calendar"></i>
+                    Submitted {{ hw.submittedAt | date:'d MMM yyyy' }}
+                  </span>
+                  <span *ngIf="!hw.submittedAt" style="color:#94a3b8">Not submitted</span>
+                  <span *ngIf="hw.feedback" class="sp-hw-feedback">
+                    <i class="fa-solid fa-comment-dots"></i> {{ hw.feedback }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="sp-hw-item__right">
+              <ng-container *ngIf="hw.graded">
+                <span class="sp-hw-score"
+                      [style.color]="scoreBarColor((hw.marksObtained! / hw.maxMarks) * 100)">
+                  {{ hw.marksObtained }} / {{ hw.maxMarks }}
+                </span>
+                <span class="sp-hw-pct"
+                      [style.color]="scoreBarColor((hw.marksObtained! / hw.maxMarks) * 100)">
+                  {{ (hw.marksObtained! / hw.maxMarks) * 100 | number:'1.0-0' }}%
+                </span>
+              </ng-container>
+              <ng-container *ngIf="!hw.graded">
+                <span class="pg-badge" [ngClass]="hw.submitted ? 'pg-badge--amber' : 'pg-badge--gray'">
+                  {{ hwStatusLabel(hw) }}
+                </span>
+                <span class="sp-hw-max">/ {{ hw.maxMarks }}</span>
+              </ng-container>
+            </div>
+
+          </div>
+        </div>
+
+      </ng-container>
+    </div>
+
+    <div class="pg-modal__foot">
+      <button class="pg-btn pg-btn--ghost" (click)="closeDetail()">Close</button>
+    </div>
+  </div>
+</div>
