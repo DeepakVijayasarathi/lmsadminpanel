@@ -28,6 +28,21 @@ export class TokenStorageService {
     return !expiry || Date.now() > expiry;
   }
 
+  getUserName(): string {
+    const token = this.getAccessToken();
+    if (!token) return '';
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.name || payload.email || payload.sub || '';
+    } catch {
+      return '';
+    }
+  }
+
+  getRoleName(): string {
+    return localStorage.getItem('roleName') || '';
+  }
+
   clear() {
     localStorage.clear();
   }
