@@ -241,9 +241,17 @@
 
         <div class="pg-form-row">
           <label class="pg-label">Teacher</label>
-          <div class="hw-readonly-field">
-            <i class="fa-solid fa-chalkboard-user"></i>
-            {{ currentUserName || 'Loading…' }}
+          <div class="hw-teacher-card">
+            <div class="hw-teacher-card__avatar">
+              {{ (currentUserName | slice:0:1) || '?' }}
+            </div>
+            <div class="hw-teacher-card__info">
+              <span class="hw-teacher-card__name">{{ currentUserName || 'Loading…' }}</span>
+              <span class="hw-teacher-card__badge">
+                <i class="fa-solid fa-chalkboard-user"></i> Assigned Teacher
+              </span>
+            </div>
+            <i class="fa-solid fa-lock hw-teacher-card__lock" title="Auto-assigned"></i>
           </div>
         </div>
       </div>

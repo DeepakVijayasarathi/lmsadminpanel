@@ -1,5 +1,63 @@
 /* homeworks.component.css */
 
+/* ── Teacher read-only card (create modal) ────────────────── */
+.hw-teacher-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #f1f5f9;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.hw-teacher-card__avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4338ca, #6366f1);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.hw-teacher-card__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hw-teacher-card__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hw-teacher-card__badge {
+  font-size: 11px;
+  color: #6366f1;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hw-teacher-card__lock {
+  font-size: 12px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
 /* ── Overdue badge ────────────────────────────────────────── */
 .hw-overdue {
   color: #dc2626;
