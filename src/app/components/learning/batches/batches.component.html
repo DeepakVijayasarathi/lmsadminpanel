@@ -305,13 +305,13 @@
   </div>
   <div class="modal__footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
-    <button class="pg-btn pg-btn--sky" (click)="openManageStudents(selectedBatch!)">
+    <button *ngIf="p.canUpdate" class="pg-btn pg-btn--sky" (click)="openManageStudents(selectedBatch!)">
       <i class="fa-solid fa-user-graduate"></i> Students
     </button>
-    <button class="pg-btn pg-btn--emerald" (click)="openManageTeachers(selectedBatch!)">
+    <button *ngIf="p.canUpdate" class="pg-btn pg-btn--emerald" (click)="openManageTeachers(selectedBatch!)">
       <i class="fa-solid fa-chalkboard-user"></i> Teachers
     </button>
-    <button class="pg-btn pg-btn--primary" (click)="openEditModal(selectedBatch!)">
+    <button *ngIf="p.canUpdate" class="pg-btn pg-btn--primary" (click)="openEditModal(selectedBatch!)">
       <i class="fa-solid fa-pen-to-square"></i> Edit
     </button>
   </div>

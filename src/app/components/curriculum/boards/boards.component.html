@@ -240,6 +240,7 @@
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
     <button
       class="pg-btn pg-btn--primary"
+      *ngIf="p.canUpdate"
       (click)="openEditModal(selectedBoard)"
     >
       <i class="fas fa-pen-to-square"></i> Edit

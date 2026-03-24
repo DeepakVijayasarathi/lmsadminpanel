@@ -1,3 +1,4 @@
+<!-- results.component.html -->
 <div class="pg">
   <!-- Page Header -->
   <div class="pg-head">
@@ -9,11 +10,6 @@
         <div class="pg-head__title">Quiz Results</div>
         <div class="pg-head__sub">Student performance &amp; leaderboard</div>
       </div>
-    </div>
-    <div class="pg-head__right">
-      <button class="pg-btn pg-btn--outline">
-        <i class="fa-solid fa-download"></i> Export
-      </button>
     </div>
   </div>
 
@@ -31,13 +27,16 @@
           [disabled]="quizzesLoading"
         >
           <option value="" disabled>
-            {{ quizzesLoading ? "Loading quizzes�" : "� Choose a quiz �" }}
+            {{ quizzesLoading ? "Loading quizzes…" : "— Choose a quiz —" }}
           </option>
           <option *ngFor="let quiz of quizzes" [value]="quiz.id">
             {{ quiz.title }}
           </option>
         </select>
-        <i class="fa-solid fa-spinner fa-spin quiz-select-spin" *ngIf="quizzesLoading"></i>
+        <i
+          class="fa-solid fa-spinner fa-spin quiz-select-spin"
+          *ngIf="quizzesLoading"
+        ></i>
       </div>
 
       <!-- View Toggle -->
@@ -60,17 +59,16 @@
     </div>
   </div>
 
-  <!-- Empty state when no quiz selected -->
+  <!-- Empty state -->
   <div class="pg-empty-state" *ngIf="!selectedQuizId && !quizzesLoading">
     <i class="fa-solid fa-file-circle-check pg-empty__icon"></i>
     <p>Select a quiz above to view its results and leaderboard.</p>
   </div>
 
-  <!-- ------------------------------------------
+  <!-- ════════════════════════════════════════════════
        RESULTS VIEW
-  ------------------------------------------ -->
+  ════════════════════════════════════════════════ -->
   <ng-container *ngIf="selectedQuizId && activeView === 'results'">
-
     <!-- Stats -->
     <div class="pg-stats">
       <div class="pg-stat">
@@ -114,14 +112,12 @@
     <!-- Results Table Card -->
     <div class="pg-card">
       <div class="pg-card__head">
-        <span class="pg-card__title">
-          Results � {{ selectedQuizTitle }}
-        </span>
+        <span class="pg-card__title"> Results — {{ selectedQuizTitle }} </span>
         <div class="pg-toolbar">
           <input
             class="pg-search"
             type="text"
-            placeholder="Search student or quiz..."
+            placeholder="Search student or status..."
             [(ngModel)]="searchQuery"
           />
           <select class="pg-filter" [(ngModel)]="gradeFilter">
@@ -137,7 +133,7 @@
 
       <!-- Loading -->
       <div class="pg-loading" *ngIf="resultsLoading">
-        <i class="fa-solid fa-spinner fa-spin"></i> Loading results�
+        <i class="fa-solid fa-spinner fa-spin"></i> Loading results…
       </div>
 
       <div class="pg-table-wrap" *ngIf="!resultsLoading">
@@ -147,75 +143,100 @@
               <th>#</th>
               <th>Student</th>
               <th>Score / Total</th>
+              <th>Correct / Wrong</th>
               <th>Percentage</th>
               <th>Grade</th>
               <th>Status</th>
-              <th>Time Taken</th>
-              <th>Submitted</th>
+              <th>Attempted On</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let result of filteredResults; let i = index">
               <td class="idx-cell">{{ i + 1 }}</td>
 
-              <!-- Student -->
+              <!-- Student: show name if present, fall back to ID -->
               <td>
                 <div class="pg-with-avatar">
                   <div class="pg-avatar av-indigo">
-                    {{ getInitial(result.studentName) }}
+                    {{ getInitial(result.studentName || result.studentId) }}
                   </div>
-                  <span class="pg-cell__primary">
-                    {{ result.studentName ?? "�" }}
-                  </span>
+                  <div>
+                    <div class="pg-cell__primary">
+                      {{ result.studentName ?? "—" }}
+                    </div>
+                    <div class="pg-cell__sub" *ngIf="result.studentId">
+                      {{ result.studentId | slice: 0 : 8 }}…
+                    </div>
+                  </div>
                 </div>
               </td>
 
-              <!-- Score -->
+              <!-- Score / Total -->
               <td>
-                <strong>{{ result.score ?? "�" }}</strong>
-                <span class="no-val"> / {{ result.totalMarks ?? "�" }}</span>
+                <strong>{{ result.score ?? "—" }}</strong>
+                <span class="no-val"> / {{ result.totalMarks ?? "—" }}</span>
               </td>
 
-              <!-- Percentage -->
+              <!-- Correct / Wrong -->
               <td>
-                <strong>{{ result.percentage != null ? result.percentage + "%" : "�" }}</strong>
+                <span class="score-breakdown">
+                  <span class="score-correct">
+                    <i class="fa-solid fa-circle-check"></i>
+                    {{ result.correctCount ?? "—" }}
+                  </span>
+                  <span class="score-sep">/</span>
+                  <span class="score-wrong">
+                    <i class="fa-solid fa-circle-xmark"></i>
+                    {{ result.wrongCount ?? "—" }}
+                  </span>
+                </span>
+              </td>
+
+              <!-- Percentage — computed from score/totalMarks -->
+              <td>
+                <div class="pct-cell">
+                  <strong>{{ getPercentage(result) }}%</strong>
+                  <div class="mini-bar">
+                    <div
+                      class="mini-bar-fill"
+                      [style.width.%]="getPercentage(result)"
+                      [class.mini-bar-fill--pass]="result.passed"
+                      [class.mini-bar-fill--fail]="!result.passed"
+                    ></div>
+                  </div>
+                </div>
               </td>
 
               <!-- Grade -->
               <td>
-                <span class="pg-badge {{ gradeBadge(getGrade(result.percentage)) }}">
-                  {{ getGrade(result.percentage) }}
+                <span class="pg-badge {{ gradeBadge(getGrade(result)) }}">
+                  {{ getGrade(result) }}
                 </span>
               </td>
 
-              <!-- Status -->
+              <!-- Status: use result.passed (API field) -->
               <td>
                 <span
                   class="pg-badge"
-                  [ngClass]="result.isPassed ? 'pg-badge--green' : 'pg-badge--red'"
+                  [ngClass]="
+                    result.passed ? 'pg-badge--green' : 'pg-badge--red'
+                  "
                 >
                   <i
                     class="fa-solid"
-                    [ngClass]="result.isPassed ? 'fa-circle-check' : 'fa-circle-xmark'"
+                    [ngClass]="
+                      result.passed ? 'fa-circle-check' : 'fa-circle-xmark'
+                    "
                   ></i>
-                  {{ result.isPassed ? "Pass" : "Fail" }}
+                  {{ result.status ?? (result.passed ? "Pass" : "Fail") }}
                 </span>
               </td>
 
-              <!-- Time Taken -->
-              <td>
-                <span *ngIf="result.timeTakenMinutes != null">
-                  <i class="fa-solid fa-clock" style="color:var(--clr-sky)"></i>
-                  {{ result.timeTakenMinutes }} min
-                </span>
-                <span class="no-val" *ngIf="result.timeTakenMinutes == null">�</span>
-              </td>
-
-              <!-- Date -->
-              <td class="pg-cell__sub">{{ formatDate(result.submittedAt) }}</td>
+              <!-- Date: use attemptDate (API field) -->
+              <td class="pg-cell__sub">{{ formatDate(result) }}</td>
             </tr>
 
-            <tr *ngIf="filteredResults.length === 0">
+            <tr *ngIf="filteredResults.length === 0 && !resultsLoading">
               <td colspan="8" class="pg-empty">
                 <i class="fa-solid fa-file-circle-check pg-empty__icon"></i>
                 No results found.
@@ -225,23 +246,92 @@
         </table>
       </div>
     </div>
+
+    <!-- Question Breakdown (shown when only 1 result) -->
+    <div
+      class="pg-card"
+      *ngIf="
+        filteredResults.length === 1 &&
+        filteredResults[0].questionResults?.length
+      "
+    >
+      <div class="pg-card__head">
+        <span class="pg-card__title">
+          <i class="fa-solid fa-list-check"></i> Question Breakdown
+        </span>
+      </div>
+      <div class="pg-table-wrap">
+        <table class="pg-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Question</th>
+              <th>Selected</th>
+              <th>Correct</th>
+              <th>Result</th>
+              <th>Marks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="
+                let qr of filteredResults[0].questionResults;
+                let qi = index
+              "
+            >
+              <td class="idx-cell">{{ qi + 1 }}</td>
+              <td class="pg-cell__primary">{{ qr.questionText }}</td>
+              <td>
+                <span class="opt-chip" [class.opt-chip--selected]="true">
+                  {{ qr.selectedOption ?? "—" }}
+                </span>
+              </td>
+              <td>
+                <span class="opt-chip opt-chip--correct">
+                  {{ qr.correctOption ?? "—" }}
+                </span>
+              </td>
+              <td>
+                <span
+                  class="pg-badge"
+                  [ngClass]="qr.isCorrect ? 'pg-badge--green' : 'pg-badge--red'"
+                >
+                  <i
+                    class="fa-solid"
+                    [ngClass]="qr.isCorrect ? 'fa-check' : 'fa-xmark'"
+                  ></i>
+                  {{ qr.isCorrect ? "Correct" : "Wrong" }}
+                </span>
+              </td>
+              <td>
+                <span
+                  class="marks-awarded"
+                  [class.marks-awarded--zero]="!qr.marksAwarded"
+                >
+                  +{{ qr.marksAwarded ?? 0 }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </ng-container>
 
-  <!-- ------------------------------------------
+  <!-- ════════════════════════════════════════════════
        LEADERBOARD VIEW
-  ------------------------------------------ -->
+  ════════════════════════════════════════════════ -->
   <ng-container *ngIf="selectedQuizId && activeView === 'leaderboard'">
     <div class="pg-card">
       <div class="pg-card__head">
         <span class="pg-card__title">
-          <i class="fa-solid fa-trophy" style="color:#f59e0b"></i>
-          Leaderboard � {{ selectedQuizTitle }}
+          <i class="fa-solid fa-trophy" style="color: #f59e0b"></i>
+          Leaderboard — {{ selectedQuizTitle }}
         </span>
       </div>
 
-      <!-- Loading -->
       <div class="pg-loading" *ngIf="leaderboardLoading">
-        <i class="fa-solid fa-spinner fa-spin"></i> Loading leaderboard�
+        <i class="fa-solid fa-spinner fa-spin"></i> Loading leaderboard…
       </div>
 
       <div class="pg-table-wrap" *ngIf="!leaderboardLoading">
@@ -262,13 +352,15 @@
               [class.leader-row--silver]="entry.rank === 2"
               [class.leader-row--bronze]="entry.rank === 3"
             >
-              <!-- Rank -->
               <td>
-                <span class="rank-badge" [ngClass]="{
-                  'rank-badge--gold':   entry.rank === 1,
-                  'rank-badge--silver': entry.rank === 2,
-                  'rank-badge--bronze': entry.rank === 3
-                }">
+                <span
+                  class="rank-badge"
+                  [ngClass]="{
+                    'rank-badge--gold': entry.rank === 1,
+                    'rank-badge--silver': entry.rank === 2,
+                    'rank-badge--bronze': entry.rank === 3,
+                  }"
+                >
                   <i
                     class="fa-solid fa-trophy"
                     *ngIf="entry.rank && entry.rank <= 3"
@@ -276,44 +368,43 @@
                   #{{ entry.rank }}
                 </span>
               </td>
-
-              <!-- Student -->
               <td>
                 <div class="pg-with-avatar">
                   <div
                     class="pg-avatar"
                     [ngClass]="{
-                      'av-gold':   entry.rank === 1,
+                      'av-gold': entry.rank === 1,
                       'av-silver': entry.rank === 2,
                       'av-bronze': entry.rank === 3,
-                      'av-indigo': entry.rank && entry.rank > 3
+                      'av-indigo': entry.rank && entry.rank > 3,
                     }"
                   >
                     {{ getInitial(entry.studentName) }}
                   </div>
-                  <span class="pg-cell__primary">
-                    {{ entry.studentName ?? "�" }}
-                  </span>
+                  <span class="pg-cell__primary">{{
+                    entry.studentName ?? "—"
+                  }}</span>
                 </div>
               </td>
-
-              <!-- Score -->
               <td>
-                <strong>{{ entry.score ?? "�" }}</strong>
+                <strong>{{ entry.score ?? "—" }}</strong>
               </td>
-
-              <!-- Percentage -->
               <td>
-                <strong>{{ entry.percentage != null ? entry.percentage + "%" : "�" }}</strong>
+                <strong>{{
+                  entry.percentage != null ? entry.percentage + "%" : "—"
+                }}</strong>
               </td>
-
-              <!-- Time Taken -->
               <td>
                 <span *ngIf="entry.timeTakenMinutes != null">
-                  <i class="fa-solid fa-clock" style="color:var(--clr-sky)"></i>
+                  <i
+                    class="fa-solid fa-clock"
+                    style="color: var(--clr-sky)"
+                  ></i>
                   {{ entry.timeTakenMinutes }} min
                 </span>
-                <span class="no-val" *ngIf="entry.timeTakenMinutes == null">�</span>
+                <span class="no-val" *ngIf="entry.timeTakenMinutes == null"
+                  >—</span
+                >
               </td>
             </tr>
 

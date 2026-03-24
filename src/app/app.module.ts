@@ -49,6 +49,8 @@ import { RegistrationComponent } from './components/registration/registration.co
 import { VideoPlayerComponent } from './components/controls/video-player/video-player.component';
 import { RecordVideoComponent } from './components/learning/record-video/record-video.component';
 import { CommonDashboardComponent } from './components/common-dashboard/common-dashboard.component';
+import { TakeQuizComponent } from './components/assessment/take-quiz/take-quiz.component';
+import { StudentQuizzesComponent } from './components/assessment/student-quizzes/student-quizzes.component';
 
 @NgModule({
   declarations: [
@@ -92,7 +94,9 @@ import { CommonDashboardComponent } from './components/common-dashboard/common-d
     RegistrationComponent,
     VideoPlayerComponent,
     RecordVideoComponent,
-    CommonDashboardComponent
+    CommonDashboardComponent,
+    TakeQuizComponent,
+    StudentQuizzesComponent
   ],
   imports: [
     BrowserModule,

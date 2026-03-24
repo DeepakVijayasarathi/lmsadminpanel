@@ -1,32 +1,6 @@
-/* ═══════════════════════════════════════════════════════════════
-   results.component.css
-   Matches the shared-page.css design system used across the admin.
-   ═══════════════════════════════════════════════════════════════ */
+/* results.component.css — merges with the existing CSS you already have */
 
-/* ─── CSS Variables (mirrors shared-page.css tokens) ────────── */
-:host {
-  --clr-sky: #0ea5e9;
-  --clr-indigo: #6366f1;
-  --clr-purple: #a855f7;
-  --clr-emerald: #10b981;
-  --clr-amber: #f59e0b;
-  --clr-red: #ef4444;
-  --clr-slate: #64748b;
-
-  --gold:   #f59e0b;
-  --silver: #94a3b8;
-  --bronze: #b45309;
-
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-full: 9999px;
-
-  --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
-  --shadow-md: 0 4px 12px rgba(0,0,0,.10);
-}
-
-/* ─── Quiz Selector Card ─────────────────────────────────────── */
+/* ─── Selector card ──────────────────────────────────────────── */
 .pg-card--selector {
   padding: 14px 20px;
   margin-bottom: 0;
@@ -71,13 +45,15 @@
   color: #1e293b;
   appearance: none;
   cursor: pointer;
-  transition: border-color 0.18s, box-shadow 0.18s;
+  transition:
+    border-color 0.18s,
+    box-shadow 0.18s;
 }
 
 .quiz-select:focus {
   outline: none;
   border-color: var(--clr-indigo);
-  box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
   background: #fff;
 }
 
@@ -119,7 +95,10 @@
   font-weight: 600;
   color: var(--clr-slate);
   cursor: pointer;
-  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+  transition:
+    background 0.18s,
+    color 0.18s,
+    box-shadow 0.18s;
 }
 
 .view-toggle-btn:hover {
@@ -131,10 +110,6 @@
   background: #fff;
   color: var(--clr-indigo);
   box-shadow: var(--shadow-sm);
-}
-
-.view-toggle-btn.active i {
-  color: var(--clr-indigo);
 }
 
 /* ─── Empty State ────────────────────────────────────────────── */
@@ -153,7 +128,6 @@
   font-size: 40px;
   opacity: 0.3;
 }
-
 .pg-empty-state p {
   font-size: 14px;
   margin: 0;
@@ -172,12 +146,23 @@
   flex-shrink: 0;
 }
 
-.av-indigo { background: #e0e7ff; color: #4338ca; }
-.av-gold   { background: #fef3c7; color: #92400e; }
-.av-silver { background: #f1f5f9; color: #475569; }
-.av-bronze { background: #fde8d0; color: #92400e; }
+.av-indigo {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+.av-gold {
+  background: #fef3c7;
+  color: #92400e;
+}
+.av-silver {
+  background: #f1f5f9;
+  color: #475569;
+}
+.av-bronze {
+  background: #fde8d0;
+  color: #9a3412;
+}
 
-/* ─── pg-with-avatar ─────────────────────────────────────────── */
 .pg-with-avatar {
   display: flex;
   align-items: center;
@@ -201,47 +186,134 @@
 .rank-badge i {
   font-size: 10px;
 }
-
 .rank-badge--gold {
   background: #fef3c7;
   color: #92400e;
 }
-
 .rank-badge--silver {
   background: #f1f5f9;
   color: #334155;
 }
-
 .rank-badge--bronze {
   background: #fde8d0;
   color: #9a3412;
 }
 
-/* ─── Leaderboard Row Highlights ─────────────────────────────── */
+/* ─── Leaderboard row highlights ─────────────────────────────── */
 .leader-row--gold {
   background: linear-gradient(90deg, #fffbeb 0%, transparent 60%);
 }
-
 .leader-row--silver {
   background: linear-gradient(90deg, #f8fafc 0%, transparent 60%);
 }
-
 .leader-row--bronze {
   background: linear-gradient(90deg, #fff7ed 0%, transparent 60%);
 }
 
-/* ─── Extra badge colours referenced in HTML ─────────────────── */
-.pg-badge--sky    { background: #e0f2fe; color: #0369a1; }
-.pg-badge--gray   { background: #f1f5f9; color: #475569; }
-.pg-badge--blue   { background: #dbeafe; color: #1d4ed8; }
+/* ─── Extra badge colours ────────────────────────────────────── */
+.pg-badge--sky {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+.pg-badge--gray {
+  background: #f1f5f9;
+  color: #475569;
+}
+.pg-badge--indigo {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+.pg-badge--yellow {
+  background: #fef9c3;
+  color: #a16207;
+}
 
-/* ─── no-val helper ──────────────────────────────────────────── */
+/* ─── Score breakdown (Correct / Wrong) ──────────────────────── */
+.score-breakdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.score-correct {
+  color: #059669;
+}
+.score-wrong {
+  color: #dc2626;
+}
+.score-sep {
+  color: #cbd5e1;
+}
+
+/* ─── Percentage with mini progress bar ──────────────────────── */
+.pct-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 70px;
+}
+
+.mini-bar {
+  height: 5px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.mini-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.mini-bar-fill--pass {
+  background: #10b981;
+}
+.mini-bar-fill--fail {
+  background: #ef4444;
+}
+
+/* ─── Question breakdown extras ──────────────────────────────── */
+.opt-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.opt-chip--selected {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+.opt-chip--correct {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.marks-awarded {
+  font-size: 13px;
+  font-weight: 700;
+  color: #059669;
+}
+
+.marks-awarded--zero {
+  color: #94a3b8;
+}
+
+/* ─── Misc helpers ───────────────────────────────────────────── */
 .no-val {
   color: #94a3b8;
   font-size: 13px;
 }
 
-/* ─── idx-cell ───────────────────────────────────────────────── */
 .idx-cell {
   color: #94a3b8;
   font-size: 12px;
@@ -256,17 +328,14 @@
     flex-direction: column;
     align-items: stretch;
   }
-
   .quiz-selector-wrap {
     max-width: 100%;
   }
-
   .view-toggle {
     margin-left: 0;
     width: 100%;
     justify-content: center;
   }
-
   .view-toggle-btn {
     flex: 1;
     justify-content: center;

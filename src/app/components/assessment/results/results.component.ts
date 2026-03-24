@@ -3,7 +3,10 @@ import { Router } from '@angular/router';
 import { CommonService } from '../../../services/common.service';
 import { HttpGeneralService } from '../../../services/http.service';
 import { environment } from '../../../../environments/environment';
-import { Permission, PermissionService } from '../../../auth/permission.service';
+import {
+  Permission,
+  PermissionService,
+} from '../../../auth/permission.service';
 
 const BASE_URL = environment.apiUrl;
 
@@ -14,27 +17,33 @@ export interface Quiz {
   title: string;
 }
 
-/**
- * Shape returned by GET /api/quiz/{id}/result.
- * Adjust field names below if your API returns different keys.
- */
+/** Actual shape returned by GET /api/quiz/{id}/result */
 export interface QuizResult {
-  id?: string;
-  studentName?: string;        // student display name
+  quizId?: string;
   studentId?: string;
-  quizTitle?: string;
+  studentName?: string; // may not be returned; shown as '—' if absent
   score?: number;
   totalMarks?: number;
   passingMarks?: number;
-  percentage?: number;
-  isPassed?: boolean;
-  submittedAt?: string;
-  timeTakenMinutes?: number;
+  correctCount?: number;
+  wrongCount?: number;
+  passed?: boolean; // API field (not isPassed)
+  status?: string; // "Pass" | "Fail"
+  attemptDate?: string; // API field (not submittedAt)
+  timeTakenMinutes?: number; // may be absent
+  questionResults?: QuestionResult[];
 }
 
-/**
- * Shape returned by GET /api/quiz/{id}/leaderboard.
- */
+export interface QuestionResult {
+  questionId?: string;
+  questionText?: string;
+  selectedOption?: string;
+  correctOption?: string;
+  isCorrect?: boolean;
+  marksAwarded?: number;
+}
+
+/** Shape returned by GET /api/quiz/{id}/leaderboard */
 export interface LeaderboardEntry {
   rank?: number;
   studentId?: string;
@@ -92,17 +101,11 @@ export class ResultsComponent implements OnInit {
   //  API CALLS
   // ════════════════════════════════════════════════════════════════
 
-  /** GET /api/quiz  — populate quiz selector */
   loadQuizzes(): void {
     this.quizzesLoading = true;
     this.httpService.getData(BASE_URL, '/quiz').subscribe({
       next: (res: any) => {
         this.quizzes = Array.isArray(res) ? res : (res?.data ?? []);
-        // Auto-select the first quiz if available
-        if (this.quizzes.length > 0) {
-          this.selectedQuizId = this.quizzes[0].id;
-          this.onQuizChange();
-        }
         this.quizzesLoading = false;
       },
       error: () => {
@@ -112,7 +115,10 @@ export class ResultsComponent implements OnInit {
     });
   }
 
-  /** GET /api/quiz/{id}/result */
+  /**
+   * GET /api/quiz/{id}/result
+   * Response may be a single object OR an array — handled below.
+   */
   loadResults(): void {
     if (!this.selectedQuizId) return;
     this.resultsLoading = true;
@@ -121,7 +127,16 @@ export class ResultsComponent implements OnInit {
       .getData(BASE_URL, `/quiz/${this.selectedQuizId}/result`)
       .subscribe({
         next: (res: any) => {
-          this.results = Array.isArray(res) ? res : (res?.data ?? []);
+          // Normalise: wrap single object in array
+          if (Array.isArray(res)) {
+            this.results = res;
+          } else if (res?.data) {
+            this.results = Array.isArray(res.data) ? res.data : [res.data];
+          } else if (res && typeof res === 'object') {
+            this.results = [res];
+          } else {
+            this.results = [];
+          }
           this.resultsLoading = false;
         },
         error: () => {
@@ -131,16 +146,21 @@ export class ResultsComponent implements OnInit {
       });
   }
 
-  /** GET /api/quiz/{id}/leaderboard */
   loadLeaderboard(): void {
     if (!this.selectedQuizId) return;
     this.leaderboardLoading = true;
     this.leaderboard = [];
     this.httpService
-      .getData(BASE_URL, `/api/quiz/${this.selectedQuizId}/leaderboard`)
+      .getData(BASE_URL, `/quiz/${this.selectedQuizId}/leaderboard`)
       .subscribe({
         next: (res: any) => {
-          this.leaderboard = Array.isArray(res) ? res : (res?.data ?? []);
+          if (Array.isArray(res)) {
+            this.leaderboard = res;
+          } else if (res?.data) {
+            this.leaderboard = Array.isArray(res.data) ? res.data : [res.data];
+          } else {
+            this.leaderboard = [];
+          }
           this.leaderboardLoading = false;
         },
         error: () => {
@@ -154,10 +174,11 @@ export class ResultsComponent implements OnInit {
   //  EVENT HANDLERS
   // ════════════════════════════════════════════════════════════════
 
-  /** Called whenever the quiz selector changes */
   onQuizChange(): void {
     this.results = [];
     this.leaderboard = [];
+    this.searchQuery = '';
+    this.gradeFilter = '';
     if (this.activeView === 'results') {
       this.loadResults();
     } else {
@@ -165,7 +186,6 @@ export class ResultsComponent implements OnInit {
     }
   }
 
-  /** Switch between Results and Leaderboard tab */
   setView(view: ResultView): void {
     this.activeView = view;
     if (view === 'results' && this.results.length === 0) {
@@ -189,14 +209,14 @@ export class ResultsComponent implements OnInit {
 
   get passRate(): string {
     if (!this.results.length) return '—';
-    const passed = this.results.filter((r) => r.isPassed).length;
+    const passed = this.results.filter((r) => r.passed).length;
     return Math.round((passed / this.results.length) * 100) + '%';
   }
 
   get avgScore(): string {
     if (!this.results.length) return '—';
     const avg =
-      this.results.reduce((s, r) => s + (r.percentage ?? 0), 0) /
+      this.results.reduce((s, r) => s + this.getPercentage(r), 0) /
       this.results.length;
     return Math.round(avg) + '%';
   }
@@ -207,13 +227,22 @@ export class ResultsComponent implements OnInit {
     return String(top);
   }
 
-  /** Derive a letter grade from percentage */
-  getGrade(percentage?: number): string {
-    if (percentage == null) return '—';
-    if (percentage >= 90) return 'A+';
-    if (percentage >= 75) return 'A';
-    if (percentage >= 60) return 'B';
-    if (percentage >= 40) return 'C';
+  /**
+   * Compute percentage: prefer API field, fall back to score/totalMarks.
+   */
+  getPercentage(r: QuizResult): number {
+    if (r.score != null && r.totalMarks != null && r.totalMarks > 0) {
+      return Math.round((r.score / r.totalMarks) * 100);
+    }
+    return 0;
+  }
+
+  getGrade(r: QuizResult): string {
+    const pct = this.getPercentage(r);
+    if (pct >= 90) return 'A+';
+    if (pct >= 75) return 'A';
+    if (pct >= 60) return 'B';
+    if (pct >= 40) return 'C';
     return 'F';
   }
 
@@ -232,7 +261,9 @@ export class ResultsComponent implements OnInit {
     return (name || '?').charAt(0).toUpperCase();
   }
 
-  formatDate(dateStr?: string): string {
+  /** Use attemptDate (API field) for display */
+  formatDate(r: QuizResult): string {
+    const dateStr = r.attemptDate ?? (r as any).submittedAt;
     if (!dateStr) return '—';
     return new Date(dateStr).toLocaleDateString('en-IN', {
       day: '2-digit',
@@ -241,7 +272,6 @@ export class ResultsComponent implements OnInit {
     });
   }
 
-  /** Filtered results for the table */
   get filteredResults(): QuizResult[] {
     let list = [...this.results];
     const q = this.searchQuery.toLowerCase().trim();
@@ -249,13 +279,12 @@ export class ResultsComponent implements OnInit {
       list = list.filter(
         (r) =>
           r.studentName?.toLowerCase().includes(q) ||
-          r.quizTitle?.toLowerCase().includes(q),
+          r.studentId?.toLowerCase().includes(q) ||
+          r.status?.toLowerCase().includes(q),
       );
     }
     if (this.gradeFilter) {
-      list = list.filter(
-        (r) => this.getGrade(r.percentage) === this.gradeFilter,
-      );
+      list = list.filter((r) => this.getGrade(r) === this.gradeFilter);
     }
     return list;
   }
