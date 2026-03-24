@@ -146,7 +146,7 @@
 
                       <!-- live → End + Join Live -->
                       <ng-container *ngIf="slot.status === 'live'">
-                        <button class="tt-join-btn"
+                        <button *ngIf="p.canUpdate" class="tt-join-btn"
                           [disabled]="endingId === slot.id"
                           (click)="endSession(slot); $event.stopPropagation()" title="End session">
                           <i class="fa-solid"
@@ -200,9 +200,10 @@
                 </div>
               </ng-container>
               <ng-template #emptyCell>
-                <div class="tt-cell-empty" (click)="openCreate(day, session)" title="Schedule session">
+                <div *ngIf="p.canCreate; else readonlyCell" class="tt-cell-empty" (click)="openCreate(day, session)" title="Schedule session">
                   <i class="fa-solid fa-plus"></i>
                 </div>
+                <ng-template #readonlyCell><div class="tt-cell-empty tt-cell-empty--readonly"></div></ng-template>
               </ng-template>
             </td>
           </tr>

@@ -7,6 +7,7 @@ import { BoardsComponent } from './components/curriculum/boards/boards.component
 import { ClassesComponent } from './components/curriculum/classes/classes.component';
 import { ExamsComponent } from './components/assessment/exams/exams.component';
 import { ResultsComponent } from './components/assessment/results/results.component';
+import { HomeworksComponent } from './components/assessment/homeworks/homeworks.component';
 import { AnnouncementsComponent } from './components/communication/announcements/announcements.component';
 import { NotificationsComponent } from './components/communication/notifications/notifications.component';
 import { SubjectsComponent } from './components/curriculum/subjects/subjects.component';
@@ -70,8 +71,9 @@ const routes: Routes = [
   { path: 'record-video',  component: RecordVideoComponent,  canActivate: AG },
 
   // Assessment
-  { path: 'exams',    component: ExamsComponent,   canActivate: AG },
-  { path: 'results',  component: ResultsComponent, canActivate: AG },
+  { path: 'exams',       component: ExamsComponent,      canActivate: AG },
+  { path: 'results',     component: ResultsComponent,    canActivate: AG },
+  { path: 'homeworks',   component: HomeworksComponent,  canActivate: AG },
 
   // Communication
   { path: 'notifications', component: NotificationsComponent, canActivate: AG },

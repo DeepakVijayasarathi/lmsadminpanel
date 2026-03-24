@@ -78,6 +78,37 @@ export class TimetableComponent implements OnInit, OnDestroy {
     this.currentPage = page;
   }
 
+  // ── Current user ─────────────────────────────────────────────────────────
+  private currentUserName = 'User';
+  private currentUserRole: 'admin' | 'teacher' | 'student' = 'admin';
+
+  private loadCurrentUser(): void {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const userId  = payload.userId;
+      const roleName = (payload.roleName ?? '').toString().toLowerCase();
+      this.currentUserRole =
+        roleName === 'teacher' ? 'teacher' :
+        roleName === 'student' ? 'student' : 'admin';
+      if (userId) {
+        this.httpService.getData(BASE_URL, `/users/${userId}`).subscribe({
+          next: (res: any) => {
+            const first = res.firstName ?? '';
+            const last  = res.lastName  ?? '';
+            this.currentUserName = (`${first} ${last}`).trim() || res.userName || res.sub || 'User';
+          },
+          error: () => {
+            this.currentUserName =
+              payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ??
+              payload.sub ?? 'User';
+          }
+        });
+      }
+    } catch {}
+  }
+
   // ── Loading ───────────────────────────────────────────────────────────────
   isLoading = false;
   isSaving = false;
@@ -235,7 +266,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   // ── Join (BBB signed URL) ─────────────────────────────────────────────────
   joinSlot(slot: TimetableSlot, isModerator = false): void {
     this.joiningId = slot.id;
-    this.timetableService.getJoinUrl(slot.id, 'Admin', isModerator ? 'admin' : 'student').subscribe({
+    this.timetableService.getJoinUrl(slot.id, this.currentUserName, isModerator ? this.currentUserRole : 'student').subscribe({
       next: ({ joinUrl }) => {
         window.open(joinUrl, '_blank');
         this.joiningId = '';
@@ -596,6 +627,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
     this.loadSubjects();
     this.loadTopics();
     this.loadCourses();
+    this.loadCurrentUser();
     this.startAutoReminder();
   }
 

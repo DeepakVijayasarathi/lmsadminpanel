@@ -1,0 +1,131 @@
+/* homeworks.component.css */
+
+/* ── Overdue badge ────────────────────────────────────────── */
+.hw-overdue {
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+/* ── Marks pill ───────────────────────────────────────────── */
+.hw-marks {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* ── Attachment button ────────────────────────────────────── */
+.hw-attach-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6366f1;
+  background: #eef2ff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.hw-attach-btn:hover { background: #e0e7ff; }
+
+/* ── File upload zone ─────────────────────────────────────── */
+.hw-file-zone {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hw-file-label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 2px dashed #c7d2fe;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #64748b;
+  background: #f8faff;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.hw-file-label:hover {
+  border-color: #6366f1;
+  background: #eef2ff;
+  color: #6366f1;
+}
+
+.hw-file-label i { font-size: 18px; color: #6366f1; }
+
+.hw-file-input { display: none; }
+
+.hw-file-clear {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Detail grid (view modal) ─────────────────────────────── */
+.hw-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.hw-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hw-detail-item--full {
+  grid-column: 1 / -1;
+}
+
+.hw-detail-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.hw-detail-val {
+  font-size: 14px;
+  color: #1e293b;
+}
+
+/* ── Delete confirm text ──────────────────────────────────── */
+.hw-confirm-text {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.6;
+  text-align: center;
+  padding: 8px 0;
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .hw-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hw-detail-item--full {
+    grid-column: 1;
+  }
+}

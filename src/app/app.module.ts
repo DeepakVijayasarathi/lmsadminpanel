@@ -41,6 +41,7 @@ import { NotificationsComponent } from './components/communication/notifications
 import { AnnouncementsComponent } from './components/communication/announcements/announcements.component';
 import { ResultsComponent } from './components/assessment/results/results.component';
 import { ExamsComponent } from './components/assessment/exams/exams.component';
+import { HomeworksComponent } from './components/assessment/homeworks/homeworks.component';
 import { MenuComponent } from './components/system/menu/menu.component';
 import { TimetableComponent } from './components/learning/timetable/timetable.component';
 import { SessionSlotsComponent } from './components/learning/session-slots/session-slots.component';
@@ -80,6 +81,7 @@ import { CommonDashboardComponent } from './components/common-dashboard/common-d
     AnnouncementsComponent,
     ResultsComponent,
     ExamsComponent,
+    HomeworksComponent,
     MenuComponent,
     TimetableComponent,
     SessionSlotsComponent,

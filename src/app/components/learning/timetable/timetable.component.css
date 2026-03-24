@@ -104,6 +104,15 @@
   color: #6366f1;
   border-color: #a5b4fc;
 }
+.tt-cell-empty--readonly {
+  cursor: default;
+  pointer-events: none;
+}
+.tt-cell-empty--readonly:hover {
+  background: #fafbff;
+  color: #c7d2fe;
+  border-color: #dde3f5;
+}
 
 /* ── Slot card ──────────────────────────────────────────────────────── */
 .tt-slot {

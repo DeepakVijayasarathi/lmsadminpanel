@@ -2,169 +2,192 @@
 
 <div class="td">
 
-  <!-- Loading overlay -->
+  <!-- Loading -->
   <div class="td-loading-overlay" *ngIf="loading">
     <div class="td-spinner"></div>
-    <p>Loading dashboard...</p>
+    <p>Loading dashboard…</p>
   </div>
 
-  <!-- Error banner -->
-  <div class="td-error-banner" *ngIf="!loading && error">
-    <i class="fa-solid fa-circle-exclamation"></i>
-    <span>{{ error }}</span>
-    <button (click)="loadDashboard()">
-      <i class="fa-solid fa-rotate-right"></i> Retry
-    </button>
+  <!-- Error -->
+  <div class="td-error-box" *ngIf="!loading && error">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <p>{{ error }}</p>
+    <button class="td-retry-btn" (click)="loadDashboard()">Retry</button>
   </div>
 
-  <!-- Top Bar -->
-  <div class="td-topbar">
-    <div class="td-topbar__left">
-      <div class="td-topbar__avatar">{{ teacher.avatar }}</div>
-      <div>
-        <h1 class="td-topbar__name">Welcome back, {{ teacher.name }}</h1>
-        <span class="td-topbar__sub">
-          {{ teacher.subject }} Teacher &nbsp;·&nbsp;
-          {{ teacher.totalClasses | number }} classes conducted
-        </span>
-      </div>
-    </div>
-    <div class="td-topbar__right">
-      <button class="td-btn td-btn--outline">
-        <i class="fa-solid fa-upload"></i> Upload Content
-      </button>
-      <button class="td-btn td-btn--primary">
-        <i class="fa-solid fa-video"></i> Start Class
-      </button>
-    </div>
-  </div>
+  <!-- Content -->
+  <ng-container *ngIf="!loading && !error">
 
-  <!-- Stats -->
-  <div class="td-stats">
-    <div *ngFor="let s of stats" class="td-stat">
-      <div class="td-stat__top">
-        <div class="td-stat__icon" [style.background]="s.bg" [style.color]="s.color">
-          <i class="{{ s.icon }}"></i>
+    <!-- ── HERO ─────────────────────────────────────────────────── -->
+    <div class="td-hero">
+      <div class="td-hero__left">
+        <div class="td-avatar">{{ teacher.avatar }}</div>
+        <div class="td-hero__info">
+          <div class="td-hero__greeting">Welcome back 👋</div>
+          <div class="td-hero__name">{{ teacher.name }}</div>
+          <div class="td-hero__subject">{{ teacher.subject }}</div>
         </div>
-        <span *ngIf="s.trend" class="td-stat__trend"
-          [class.td-stat__trend--up]="s.trend.startsWith('+')"
-          [class.td-stat__trend--down]="s.trend.startsWith('-')">
-          {{ s.trend }}
-        </span>
       </div>
-      <div class="td-stat__val" [style.color]="s.color">{{ s.value }}</div>
-      <div class="td-stat__lbl">{{ s.label }}</div>
-    </div>
-  </div>
-
-  <!-- Main Grid -->
-  <div class="td-layout">
-
-    <!-- Left Column -->
-    <div class="td-layout__main">
-
-      <!-- Today's Timetable -->
-      <div class="td-card">
-        <div class="td-card__head">
+      <div class="td-hero__right">
+        <div class="td-hero__classes">
+          <i class="fa-solid fa-video"></i>
           <div>
-            <h3 class="td-card__title">Today's Timetable</h3>
-            <p class="td-card__sub">
-              {{ currentDate | date:'EEEE, MMMM d' }} &nbsp;·&nbsp; {{ currentTime }}
-            </p>
+            <div class="td-hero__cls-num">{{ teacher.totalClasses }}</div>
+            <div class="td-hero__cls-lbl">Total Classes</div>
           </div>
-          <button class="td-link" (click)="goToTimetable()">
-            Full schedule <i class="fa-solid fa-arrow-right"></i>
+        </div>
+        <div class="td-clock">
+          <div class="td-clock__time">{{ currentTime }}</div>
+          <div class="td-clock__date">{{ currentDate | date:'EEE, d MMM' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STAT STRIP ──────────────────────────────────────────── -->
+    <div class="td-stats">
+      <div class="td-stat" *ngFor="let s of stats">
+        <div class="td-stat__icon" [style.background]="s.bg" [style.color]="s.color">
+          <i [class]="s.icon"></i>
+        </div>
+        <div class="td-stat__body">
+          <div class="td-stat__val">{{ s.value }}</div>
+          <div class="td-stat__lbl">{{ s.label }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MAIN GRID ───────────────────────────────────────────── -->
+    <div class="td-grid">
+
+      <!-- ── TODAY'S TIMETABLE ──────────────────────────────────── -->
+      <div class="td-card td-timetable">
+        <div class="td-card__head">
+          <span class="td-card__title"><i class="fa-solid fa-calendar-day"></i> Today's Schedule</span>
+          <button class="td-view-all" (click)="goToTimetable()">
+            View Full <i class="fa-solid fa-arrow-right"></i>
           </button>
         </div>
-        <div class="td-timetable">
 
-          <!-- Empty state -->
-          <div *ngIf="!loading && timetable.length === 0" class="td-empty">
-            <i class="fa-solid fa-calendar-xmark"></i>
-            <span>No sessions scheduled for today</span>
-          </div>
+        <div class="td-empty" *ngIf="timetable.length === 0">
+          <i class="fa-regular fa-calendar-xmark"></i>
+          <span>No classes scheduled today</span>
+        </div>
 
-          <!-- Skeleton rows while loading -->
-          <div *ngIf="loading" class="td-skeleton-list">
-            <div class="td-skeleton-row" *ngFor="let i of [1,2,3]"></div>
-          </div>
+        <div class="td-tt-wrap" *ngIf="timetable.length > 0">
+          <table class="td-tt-table">
+            <thead>
+              <tr>
+                <th class="td-tt-th td-tt-th--num">#</th>
+                <th class="td-tt-th">Batch</th>
+                <th class="td-tt-th td-tt-th--hide-sm">Topic</th>
+                <th class="td-tt-th td-tt-th--hide-sm">Students</th>
+                <th class="td-tt-th">Time</th>
+                <th class="td-tt-th">Status</th>
+                <th class="td-tt-th"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="td-tt-row"
+                  *ngFor="let t of timetable; let i = index"
+                  [class.td-tt-row--live]="t.status === 'live'"
+                  [class.td-tt-row--done]="t.status === 'done'">
 
-          <!-- Real rows -->
-          <div *ngFor="let cls of timetable" class="td-tt-row td-tt-row--{{ cls.status }}">
-            <div class="td-tt-time">
-              <span>{{ cls.time }}</span>
-              <small>{{ cls.duration }}</small>
-            </div>
-            <div class="td-tt-divider">
-              <div class="td-tt-dot"></div>
-              <div class="td-tt-line"></div>
-            </div>
-            <div class="td-tt-body">
-              <div class="td-tt-top">
-                <span class="td-tt-batch">{{ cls.batch }}</span>
-                <span *ngIf="cls.status === 'live'" class="td-live">
-                  <span class="td-live-dot"></span> LIVE NOW
-                </span>
-                <span *ngIf="cls.status === 'done'" class="td-done-tag">
-                  <i class="fa-solid fa-circle-check"></i> Done
-                </span>
-              </div>
-              <div class="td-tt-topic">{{ cls.topic }}</div>
-              <div class="td-tt-meta">
-                <i class="fa-solid fa-user-graduate"></i> {{ cls.students }} students
-              </div>
-            </div>
-            <div class="td-tt-action">
-              <button *ngIf="cls.status === 'live'" class="td-btn-join" (click)="joinMeeting(cls.meetingLink)">
-                <i class="fa-solid fa-video"></i> Join
-              </button>
-              <button *ngIf="cls.status === 'upcoming'" class="td-btn-start" (click)="joinMeeting(cls.meetingLink)">
-                <i class="fa-solid fa-play"></i> Start
-              </button>
-            </div>
-          </div>
+                <!-- # -->
+                <td class="td-tt-td td-tt-td--num">
+                  <span class="td-tt-num"
+                        [class.live]="t.status === 'live'"
+                        [class.done]="t.status === 'done'">
+                    {{ i + 1 }}
+                  </span>
+                </td>
 
+                <!-- Batch -->
+                <td class="td-tt-td">
+                  <div class="td-tt-batch">{{ t.batch }}</div>
+                  <div class="td-tt-topic-sm">{{ t.topic }}</div>
+                </td>
+
+                <!-- Topic -->
+                <td class="td-tt-td td-tt-td--hide-sm">
+                  <span class="td-tt-topic">{{ t.topic }}</span>
+                </td>
+
+                <!-- Students -->
+                <td class="td-tt-td td-tt-td--hide-sm">
+                  <div class="td-tt-students">
+                    <i class="fa-solid fa-users"></i> {{ t.students }}
+                  </div>
+                </td>
+
+                <!-- Time -->
+                <td class="td-tt-td td-tt-td--time">
+                  <div class="td-tt-time">{{ t.time }}</div>
+                  <div class="td-tt-dur">{{ t.duration }}</div>
+                </td>
+
+                <!-- Status -->
+                <td class="td-tt-td">
+                  <span class="td-tt-badge"
+                        [class.live]="t.status === 'live'"
+                        [class.done]="t.status === 'done'"
+                        [class.upcoming]="t.status === 'upcoming'">
+                    <i *ngIf="t.status==='live'" class="fa-solid fa-circle td-blink" style="font-size:6px"></i>
+                    <i *ngIf="t.status==='done'" class="fa-solid fa-check" style="font-size:9px"></i>
+                    {{ t.status | titlecase }}
+                  </span>
+                </td>
+
+                <!-- Action -->
+                <td class="td-tt-td td-tt-td--action">
+                  <button class="td-tt-join td-tt-join--live"
+                          *ngIf="t.status === 'live'"
+                          (click)="joinMeeting(t.meetingLink)">
+                    <i class="fa-solid fa-video"></i> Join
+                  </button>
+                  <button class="td-tt-join"
+                          *ngIf="t.status === 'upcoming'"
+                          (click)="joinMeeting(t.meetingLink)">
+                    <i class="fa-solid fa-play"></i> Start
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <!-- Batch Overview -->
-      <div class="td-card">
+      <!-- ── MY BATCHES ──────────────────────────────────────────── -->
+      <div class="td-card td-batches">
         <div class="td-card__head">
-          <div>
-            <h3 class="td-card__title">Batch Overview</h3>
-            <p class="td-card__sub">Attendance &amp; pending reviews</p>
-          </div>
+          <span class="td-card__title"><i class="fa-solid fa-layer-group"></i> My Batches</span>
+          <span class="td-chip td-chip--indigo">{{ batches.length }} active</span>
         </div>
 
-        <!-- Empty state -->
-        <div *ngIf="!loading && batches.length === 0" class="td-empty">
-          <i class="fa-solid fa-layer-group"></i>
-          <span>No active batches found</span>
+        <div class="td-empty" *ngIf="batches.length === 0">
+          <i class="fa-regular fa-folder-open"></i>
+          <span>No batches assigned</span>
         </div>
 
-        <div class="td-batch-grid" *ngIf="batches.length > 0">
-          <div *ngFor="let b of batches" class="td-batch">
+        <div class="td-batch-list">
+          <div class="td-batch" *ngFor="let b of batches">
             <div class="td-batch__accent" [style.background]="b.color"></div>
             <div class="td-batch__body">
               <div class="td-batch__name">{{ b.name }}</div>
-              <div class="td-batch__stats">
-                <span>
-                  <i class="fa-solid fa-user-graduate"></i> {{ b.students }}
+              <div class="td-batch__meta">
+                <span><i class="fa-solid fa-user-graduate"></i> {{ b.students }}</span>
+                <span class="td-att" [style.color]="getAttColor(b.attendance)">
+                  <i class="fa-solid fa-chart-line"></i> {{ b.attendance }}% att.
                 </span>
-                <span [style.color]="getAttColor(b.attendance)">
-                  <i class="fa-solid fa-calendar-check"></i> {{ b.attendance }}%
-                </span>
-                <span *ngIf="b.pending > 0" style="color:#d97706">
-                  <i class="fa-solid fa-clock"></i> {{ b.pending }} pending
-                </span>
-                <span *ngIf="b.pending === 0" style="color:#059669">
-                  <i class="fa-solid fa-circle-check"></i> All reviewed
+                <span *ngIf="b.pending > 0" class="td-pending-badge">
+                  {{ b.pending }} pending
                 </span>
               </div>
-              <div class="td-batch__track">
-                <div class="td-batch__fill"
-                  [style.width.%]="b.attendance"
-                  [style.background]="b.color">
+            </div>
+            <div class="td-batch__prog-wrap">
+              <div class="td-batch__prog-bar">
+                <div class="td-batch__prog-fill"
+                     [style.width.%]="b.attendance"
+                     [style.background]="getAttColor(b.attendance)">
                 </div>
               </div>
             </div>
@@ -172,103 +195,74 @@
         </div>
       </div>
 
-    </div>
-
-    <!-- Right Column -->
-    <div class="td-layout__side">
-
-      <!-- Pending Submissions -->
-      <div class="td-card">
+      <!-- ── PENDING SUBMISSIONS ────────────────────────────────── -->
+      <div class="td-card td-submissions">
         <div class="td-card__head">
-          <div>
-            <h3 class="td-card__title">Pending Reviews</h3>
-            <p class="td-card__sub">Assignments to grade</p>
-          </div>
-          <span class="td-badge td-badge--orange">{{ pendingSubmissions.length }}</span>
+          <span class="td-card__title"><i class="fa-solid fa-clipboard-check"></i> Pending Reviews</span>
+          <span class="td-chip td-chip--red">{{ pendingSubmissions.length }}</span>
         </div>
 
-        <!-- Empty state -->
-        <div *ngIf="!loading && pendingSubmissions.length === 0" class="td-empty">
+        <div class="td-empty" *ngIf="pendingSubmissions.length === 0">
           <i class="fa-solid fa-circle-check" style="color:#059669"></i>
-          <span>All caught up — nothing to review!</span>
+          <span>All caught up!</span>
         </div>
 
-        <div class="td-subm-list" *ngIf="pendingSubmissions.length > 0">
-          <div *ngFor="let s of pendingSubmissions" class="td-subm">
-            <div class="td-subm__avatar">{{ s.avatar }}</div>
-            <div class="td-subm__body">
-              <span class="td-subm__name">{{ s.student }}</span>
-              <span class="td-subm__batch">{{ s.batch }}</span>
-              <p class="td-subm__assign">{{ s.assignment }}</p>
-              <span class="td-subm__time">
-                <i class="fa-regular fa-clock"></i> {{ s.submitted }}
-              </span>
+        <div class="td-sub-list">
+          <div class="td-sub-row" *ngFor="let s of pendingSubmissions">
+            <div class="td-sub-avatar">{{ s.avatar }}</div>
+            <div class="td-sub-body">
+              <div class="td-sub-student">{{ s.student }}</div>
+              <div class="td-sub-meta">
+                <span class="td-sub-assign">{{ s.assignment }}</span>
+                <span class="td-sub-batch">{{ s.batch }}</span>
+              </div>
+              <div class="td-sub-date"><i class="fa-regular fa-clock"></i> {{ s.submitted }}</div>
             </div>
-            <button class="td-btn-review">Review</button>
+            <div class="td-sub-dot"></div>
           </div>
         </div>
       </div>
 
-      <!-- Batch Performance -->
-      <div class="td-card">
-        <div class="td-card__head">
-          <div>
-            <h3 class="td-card__title">Avg. Scores</h3>
-            <p class="td-card__sub">Per batch — this month</p>
+      <!-- ── PERFORMANCE + ACTIVITY ─────────────────────────────── -->
+      <div class="td-card td-right-col">
+
+        <!-- Performance -->
+        <div class="td-section">
+          <div class="td-section__title"><i class="fa-solid fa-chart-bar"></i> Batch Performance</div>
+          <div class="td-perf-list">
+            <div class="td-perf-row" *ngFor="let p of performanceData">
+              <span class="td-perf-label">{{ p.label }}</span>
+              <div class="td-perf-track">
+                <div class="td-perf-fill"
+                     [style.width.%]="p.score"
+                     [style.background]="p.color">
+                </div>
+              </div>
+              <span class="td-perf-val" [style.color]="p.color">{{ p.score }}%</span>
+            </div>
           </div>
         </div>
 
-        <!-- Empty state -->
-        <div *ngIf="!loading && performanceData.length === 0" class="td-empty">
-          <i class="fa-solid fa-chart-bar"></i>
-          <span>No quiz data available yet</span>
-        </div>
+        <div class="td-divider"></div>
 
-        <div class="td-perf-list" *ngIf="performanceData.length > 0">
-          <div *ngFor="let p of performanceData" class="td-perf">
-            <span class="td-perf__lbl">{{ p.label }}</span>
-            <div class="td-perf__track">
-              <div class="td-perf__fill"
-                [style.width.%]="p.score"
-                [style.background]="p.color">
+        <!-- Recent Activity -->
+        <div class="td-section">
+          <div class="td-section__title"><i class="fa-solid fa-bolt"></i> Recent Activity</div>
+          <div class="td-activity-list">
+            <div class="td-act-row" *ngFor="let a of recentActivity">
+              <div class="td-act-icon" [style.background]="a.color + '22'" [style.color]="a.color">
+                <i [class]="a.icon"></i>
+              </div>
+              <div class="td-act-body">
+                <div class="td-act-msg">{{ a.msg }}</div>
+                <div class="td-act-time">{{ a.time }}</div>
               </div>
             </div>
-            <span class="td-perf__val" [style.color]="p.color">{{ p.score }}%</span>
           </div>
         </div>
+
       </div>
 
-      <!-- Recent Activity -->
-      <div class="td-card">
-        <div class="td-card__head">
-          <div>
-            <h3 class="td-card__title">Recent Activity</h3>
-          </div>
-        </div>
-
-        <!-- Empty state -->
-        <div *ngIf="!loading && recentActivity.length === 0" class="td-empty">
-          <i class="fa-solid fa-inbox"></i>
-          <span>No recent activity</span>
-        </div>
-
-        <div class="td-activity" *ngIf="recentActivity.length > 0">
-          <div *ngFor="let a of recentActivity" class="td-act-item">
-            <div class="td-act-icon"
-              [style.background]="a.color + '18'"
-              [style.color]="a.color">
-              <i class="{{ a.icon }}"></i>
-            </div>
-            <div class="td-act-body">
-              <p class="td-act-msg">{{ a.msg }}</p>
-              <span class="td-act-time">
-                <i class="fa-regular fa-clock"></i> {{ a.time }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
+    </div><!-- /td-grid -->
+  </ng-container>
 </div>

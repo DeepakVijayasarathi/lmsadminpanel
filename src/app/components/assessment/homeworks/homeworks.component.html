@@ -1,0 +1,375 @@
+<div class="pg">
+
+  <!-- ── PAGE HEADER ─────────────────────────────────────────────── -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-amber">
+        <i class="fa-solid fa-file-pen"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Assignments</div>
+        <div class="pg-head__sub">Create and manage homework assignments for batches</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary" (click)="openCreate()" *ngIf="p.canCreate && canAssign">
+        <i class="fa-solid fa-plus"></i> New Assignment
+      </button>
+    </div>
+  </div>
+
+  <!-- ── STATS ───────────────────────────────────────────────────── -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-amber"><i class="fa-solid fa-file-pen"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ totalAssignments }}</div>
+        <div class="pg-stat__lbl">Total</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-circle-check"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ activeAssignments }}</div>
+        <div class="pg-stat__lbl">Active</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-clock-rotate-left"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ pastDueCount }}</div>
+        <div class="pg-stat__lbl">Past Due</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-layer-group"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ batches.length }}</div>
+        <div class="pg-stat__lbl">Batches</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TABLE CARD ─────────────────────────────────────────────── -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <div class="pg-card__title">All Assignments</div>
+      <div class="pg-toolbar">
+        <input class="pg-search" type="text" placeholder="Search title or description…"
+               [(ngModel)]="searchQuery" (ngModelChange)="applyFilters()">
+        <select class="pg-filter" [(ngModel)]="batchFilter" (ngModelChange)="applyFilters()">
+          <option value="">All Batches</option>
+          <option *ngFor="let b of batches" [value]="b.id">{{ b.name }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="pg-loading" *ngIf="isLoading">
+      <i class="fa-solid fa-circle-notch fa-spin"></i> Loading…
+    </div>
+
+    <!-- Empty -->
+    <div class="pg-empty" *ngIf="!isLoading && filtered.length === 0">
+      <i class="fa-solid fa-file-circle-question"></i>
+      <p>No assignments found.</p>
+    </div>
+
+    <!-- Table -->
+    <div class="pg-table-wrap" *ngIf="!isLoading && filtered.length > 0">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Batch</th>
+            <th>Due Date</th>
+            <th>Max Marks</th>
+            <th>Attachment</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let hw of paged">
+            <td>
+              <div class="pg-cell__primary">{{ hw.title }}</div>
+              <div class="pg-cell__sub">{{ hw.description | slice:0:60 }}{{ hw.description.length > 60 ? '…' : '' }}</div>
+            </td>
+            <td>
+              <span class="pg-badge pg-badge--blue">{{ getBatchName(hw.batchId) }}</span>
+            </td>
+            <td>
+              <div class="pg-cell__primary">{{ hw.dueDate | date:'d MMM yyyy' }}</div>
+              <div class="pg-cell__sub hw-overdue" *ngIf="isPastDue(hw.dueDate)">
+                <i class="fa-solid fa-triangle-exclamation"></i> Overdue
+              </div>
+            </td>
+            <td>
+              <span class="hw-marks">{{ hw.maxMarks }}</span>
+            </td>
+            <td>
+              <a *ngIf="hw.attachmentUrl" [href]="hw.attachmentUrl" target="_blank" class="hw-attach-btn">
+                <i class="fa-solid fa-paperclip"></i> View
+              </a>
+              <span *ngIf="!hw.attachmentUrl" class="pg-cell__sub">—</span>
+            </td>
+            <td>
+              <span class="pg-badge" [class.pg-badge--green]="hw.isActive" [class.pg-badge--gray]="!hw.isActive">
+                {{ hw.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <div class="pg-actions">
+                <button class="pg-action-btn" title="View" (click)="openView(hw)" *ngIf="p.canRead">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button class="pg-action-btn pg-action-btn--blue" title="Submissions" (click)="openSubmissions(hw)">
+                  <i class="fa-solid fa-inbox"></i>
+                </button>
+                <button class="pg-action-btn pg-action-btn--red" title="Delete" (click)="openDelete(hw)" *ngIf="p.canDelete">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-common-pagination *ngIf="totalPages > 1"
+      [currentPage]="currentPage" [totalPages]="totalPages"
+      (pageChange)="onPageChange($event)">
+    </app-common-pagination>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     CREATE MODAL
+     ════════════════════════════════════════════════════════════ -->
+<div class="pg-modal-backdrop" *ngIf="modalMode === 'create' && canAssign" (click)="closeModal()">
+  <div class="pg-modal" (click)="$event.stopPropagation()">
+    <div class="pg-modal__head">
+      <span><i class="fa-solid fa-plus"></i> New Assignment</span>
+      <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="pg-modal__body">
+
+      <div class="pg-form-row">
+        <label class="pg-label">Title <span class="pg-req">*</span></label>
+        <input class="pg-input" [class.pg-input--err]="errTitle"
+               placeholder="e.g. Math Chapter 5" [(ngModel)]="formTitle">
+        <span class="pg-err" *ngIf="errTitle">{{ errTitle }}</span>
+      </div>
+
+      <div class="pg-form-row">
+        <label class="pg-label">Description</label>
+        <textarea class="pg-input pg-textarea" rows="3"
+                  placeholder="Assignment instructions…" [(ngModel)]="formDescription"></textarea>
+      </div>
+
+      <div class="pg-form-grid">
+        <div class="pg-form-row">
+          <label class="pg-label">Batch <span class="pg-req">*</span></label>
+          <select class="pg-input" [class.pg-input--err]="errBatchId" [(ngModel)]="formBatchId">
+            <option value="">— Select Batch —</option>
+            <option *ngFor="let b of batches" [value]="b.id">{{ b.name }}</option>
+          </select>
+          <span class="pg-err" *ngIf="errBatchId">{{ errBatchId }}</span>
+        </div>
+
+        <div class="pg-form-row">
+          <label class="pg-label">Max Marks <span class="pg-req">*</span></label>
+          <input class="pg-input" [class.pg-input--err]="errMaxMarks"
+                 type="number" min="1" [(ngModel)]="formMaxMarks">
+          <span class="pg-err" *ngIf="errMaxMarks">{{ errMaxMarks }}</span>
+        </div>
+      </div>
+
+      <div class="pg-form-grid">
+        <div class="pg-form-row">
+          <label class="pg-label">Due Date <span class="pg-req">*</span></label>
+          <input class="pg-input" [class.pg-input--err]="errDueDate"
+                 type="datetime-local" [(ngModel)]="formDueDate">
+          <span class="pg-err" *ngIf="errDueDate">{{ errDueDate }}</span>
+        </div>
+
+        <div class="pg-form-row">
+          <label class="pg-label">Teacher ID <span class="pg-req">*</span></label>
+          <input class="pg-input" [class.pg-input--err]="errTeacherId"
+                 placeholder="Teacher GUID" [(ngModel)]="formTeacherId">
+          <span class="pg-err" *ngIf="errTeacherId">{{ errTeacherId }}</span>
+        </div>
+      </div>
+
+      <div class="pg-form-row">
+        <label class="pg-label">Attachment <span class="pg-hint">(PDF / DOC / Image — optional)</span></label>
+        <div class="hw-file-zone">
+          <label class="hw-file-label">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>{{ fileName || 'Click to upload file' }}</span>
+            <input type="file" class="hw-file-input" (change)="onFileChange($event)"
+                   accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">
+          </label>
+          <button class="hw-file-clear" *ngIf="fileName" (click)="clearFile()" title="Remove file">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+    <div class="pg-modal__foot">
+      <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+      <button class="pg-btn pg-btn--primary" (click)="save()" [disabled]="isSaving">
+        <i class="fa-solid" [class.fa-circle-notch]="isSaving" [class.fa-spin]="isSaving"
+           [class.fa-floppy-disk]="!isSaving"></i>
+        {{ isSaving ? 'Saving…' : 'Create Assignment' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     VIEW MODAL
+     ════════════════════════════════════════════════════════════ -->
+<div class="pg-modal-backdrop" *ngIf="modalMode === 'view' && selected" (click)="closeModal()">
+  <div class="pg-modal" (click)="$event.stopPropagation()">
+    <div class="pg-modal__head">
+      <span><i class="fa-solid fa-eye"></i> Assignment Details</span>
+      <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="pg-modal__body">
+      <div class="hw-detail-grid">
+        <div class="hw-detail-item">
+          <span class="hw-detail-label">Title</span>
+          <span class="hw-detail-val">{{ selected.title }}</span>
+        </div>
+        <div class="hw-detail-item">
+          <span class="hw-detail-label">Batch</span>
+          <span class="hw-detail-val">{{ getBatchName(selected.batchId) }}</span>
+        </div>
+        <div class="hw-detail-item">
+          <span class="hw-detail-label">Due Date</span>
+          <span class="hw-detail-val">{{ selected.dueDate | date:'d MMM yyyy, h:mm a' }}</span>
+        </div>
+        <div class="hw-detail-item">
+          <span class="hw-detail-label">Max Marks</span>
+          <span class="hw-detail-val">{{ selected.maxMarks }}</span>
+        </div>
+        <div class="hw-detail-item">
+          <span class="hw-detail-label">Status</span>
+          <span class="pg-badge" [class.pg-badge--green]="selected.isActive" [class.pg-badge--gray]="!selected.isActive">
+            {{ selected.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <div class="hw-detail-item">
+          <span class="hw-detail-label">Created</span>
+          <span class="hw-detail-val">{{ selected.createdAt | date:'d MMM yyyy' }}</span>
+        </div>
+        <div class="hw-detail-item hw-detail-item--full">
+          <span class="hw-detail-label">Description</span>
+          <span class="hw-detail-val">{{ selected.description || '—' }}</span>
+        </div>
+        <div class="hw-detail-item hw-detail-item--full" *ngIf="selected.attachmentUrl">
+          <span class="hw-detail-label">Attachment</span>
+          <a [href]="selected.attachmentUrl" target="_blank" class="hw-attach-btn">
+            <i class="fa-solid fa-file-arrow-down"></i> Download / View
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="pg-modal__foot">
+      <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+      <button class="pg-btn pg-btn--primary" (click)="openSubmissions(selected!)">
+        <i class="fa-solid fa-inbox"></i> View Submissions
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     SUBMISSIONS MODAL
+     ════════════════════════════════════════════════════════════ -->
+<div class="pg-modal-backdrop" *ngIf="modalMode === 'submissions' && selected" (click)="closeModal()">
+  <div class="pg-modal pg-modal--lg" (click)="$event.stopPropagation()">
+    <div class="pg-modal__head">
+      <span><i class="fa-solid fa-inbox"></i> Submissions — {{ selected.title }}</span>
+      <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="pg-modal__body">
+
+      <div class="pg-loading" *ngIf="subLoading">
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Loading submissions…
+      </div>
+
+      <div class="pg-empty" *ngIf="!subLoading && submissions.length === 0">
+        <i class="fa-regular fa-folder-open"></i>
+        <p>No submissions yet.</p>
+      </div>
+
+      <div class="pg-table-wrap" *ngIf="!subLoading && submissions.length > 0">
+        <table class="pg-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Student ID</th>
+              <th>Submitted At</th>
+              <th>Marks</th>
+              <th>Feedback</th>
+              <th>File</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of submissions; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td>
+                <span class="pg-cell__sub">{{ s.studentId | slice:0:8 }}…</span>
+              </td>
+              <td>{{ s.submittedAt | date:'d MMM yyyy, h:mm a' }}</td>
+              <td>
+                <span *ngIf="s.marks !== null" class="hw-marks">{{ s.marks }} / {{ selected!.maxMarks }}</span>
+                <span *ngIf="s.marks === null" class="pg-cell__sub">Not graded</span>
+              </td>
+              <td>
+                <span *ngIf="s.feedback">{{ s.feedback }}</span>
+                <span *ngIf="!s.feedback" class="pg-cell__sub">—</span>
+              </td>
+              <td>
+                <a [href]="s.fileUrl" target="_blank" class="hw-attach-btn">
+                  <i class="fa-solid fa-file-arrow-down"></i> View
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="pg-modal__foot">
+      <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     DELETE CONFIRM MODAL
+     ════════════════════════════════════════════════════════════ -->
+<div class="pg-modal-backdrop" *ngIf="modalMode === 'delete' && selected" (click)="closeModal()">
+  <div class="pg-modal pg-modal--sm" (click)="$event.stopPropagation()">
+    <div class="pg-modal__head pg-modal__head--danger">
+      <span><i class="fa-solid fa-trash"></i> Delete Assignment</span>
+      <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="pg-modal__body">
+      <p class="hw-confirm-text">
+        Are you sure you want to delete <strong>{{ selected.title }}</strong>?
+        This action cannot be undone.
+      </p>
+    </div>
+    <div class="pg-modal__foot">
+      <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+      <button class="pg-btn pg-btn--danger" (click)="confirmDelete()">
+        <i class="fa-solid fa-trash"></i> Delete
+      </button>
+    </div>
+  </div>
+</div>
