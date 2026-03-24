@@ -96,9 +96,8 @@
           <i class="fa-solid fa-rotate-right"></i>
         </button>
 
-        <button class="al-header__btn al-header__btn--notif" title="Notifications">
-          <i class="fa-solid fa-bell"></i>
-          <span class="al-header__badge">5</span>
+        <button class="al-header__btn al-header__btn--notif" title="Logout" (click)="logout()">
+          <i class="fa-solid fa-right-from-bracket"></i>
         </button>
 
         <div class="al-header__avatar" [title]="userName || 'User'">{{ (userName | slice:0:1) || 'U' }}</div>
