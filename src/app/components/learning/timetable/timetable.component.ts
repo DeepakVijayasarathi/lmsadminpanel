@@ -722,7 +722,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
             category:    tt.category,
             startTime:   tt.startTime   ?? '',
             endTime:     tt.endTime     ?? '',
-            status:      (tt.status ?? r.status ?? 'scheduled').toLowerCase(),
+            status:      (r.status ?? tt.status ?? 'scheduled').toLowerCase(),
             meetingId:    tt.meetingId    ?? r.id,
             meetingLink:  tt.meetingLink  ?? r.meetingUrl ?? '',
             recordingUrl: tt.recordingUrl ?? tt.playbackUrl ?? r.recordingUrl ?? '',
