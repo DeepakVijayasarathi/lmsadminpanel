@@ -48,7 +48,7 @@ export interface TimetablePayload {
   status: 'scheduled' | 'live' | 'completed' | 'cancelled';
 }
 
-type ModalMode = 'create' | 'edit' | 'view' | 'delete' | null;
+type ModalMode = 'create' | 'edit' | 'view' | 'delete' | 'substitute' | null;
 
 @Component({
   selector: 'app-timetable',
@@ -479,7 +479,52 @@ export class TimetableComponent implements OnInit, OnDestroy {
   }
   openDelete(slot: TimetableSlot): void { this.selectedSlot = slot; this.modalMode = 'delete'; }
 
-  closeModal(): void { this.modalMode = null; this.selectedSlot = null; this.formErrors = {}; }
+  // ── Substitute ────────────────────────────────────────────────────────────
+  substituteDate        = '';
+  substituteTeacherId: string | null = null;
+  mergedIntoBatchId:   string | null = null;
+  isSavingSubstitute   = false;
+  substituteError      = '';
+
+  openSubstitute(slot: TimetableSlot): void {
+    this.selectedSlot         = slot;
+    this.substituteDate       = '';
+    this.substituteTeacherId  = null;
+    this.mergedIntoBatchId    = null;
+    this.substituteError      = '';
+    this.modalMode            = 'substitute';
+  }
+
+  saveSubstitute(): void {
+    if (!this.selectedSlot || !this.substituteDate) {
+      this.substituteError = 'Please select a date.';
+      return;
+    }
+    if (!this.substituteTeacherId && !this.mergedIntoBatchId) {
+      this.substituteError = 'Select a substitute teacher or a batch to merge into.';
+      return;
+    }
+    this.isSavingSubstitute = true;
+    this.substituteError    = '';
+    this.timetableService.assignSubstitute(this.selectedSlot.id, {
+      date: this.substituteDate,
+      substituteTeacherId: this.substituteTeacherId,
+      mergedIntoBatchId:   this.mergedIntoBatchId,
+    }).subscribe({
+      next: () => {
+        this.isSavingSubstitute = false;
+        this.commonService.success('Substitution saved. Students will be notified.');
+        this.closeModal();
+        this.loadSlots();
+      },
+      error: (err: any) => {
+        this.isSavingSubstitute = false;
+        this.substituteError = err?.error?.message || 'Failed to save substitution.';
+      },
+    });
+  }
+
+  closeModal(): void { this.modalMode = null; this.selectedSlot = null; this.formErrors = {}; this.substituteError = ''; }
 
   onSessionChange(): void {
     const sl = this.getSessionSlot(this.form.session);

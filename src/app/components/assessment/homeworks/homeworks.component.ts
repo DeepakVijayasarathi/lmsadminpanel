@@ -170,9 +170,7 @@ export class HomeworksComponent implements OnInit {
       this.homeworkService.getSubmissions(hw.id).subscribe({
         next: (res: any) => {
           const subs: SubmissionDto[] = Array.isArray(res) ? res : (res?.data ?? []);
-          const seed = { ...this.seedSubmission, homeworkId: hw.id };
-          const all  = subs.some(s => s.id === seed.id) ? subs : [seed, ...subs];
-          this.mySubmissionMap[hw.id] = all.find(s => s.studentId === this.currentUserId) ?? null;
+          this.mySubmissionMap[hw.id] = subs.find(s => s.studentId === this.currentUserId) ?? null;
         },
         error: () => { this.mySubmissionMap[hw.id] = null; },
       });
@@ -189,27 +187,12 @@ export class HomeworksComponent implements OnInit {
     });
   }
 
-  private get seedSubmission(): SubmissionDto {
-    return {
-      id:          '5e5d3964-c074-4d88-ae5b-932edd5be5b6',
-      homeworkId:  '',
-      studentId:   this.currentUserId,   // always matches current user
-      fileUrl:     '',
-      marks:       30,
-      feedback:    'need',
-      submittedAt: '2026-03-24T11:00:00Z',
-    };
-  }
-
   loadSubmissions(id: string): void {
     this.subLoading  = true;
     this.submissions = [];
     this.homeworkService.getSubmissions(id).subscribe({
       next: (res: any) => {
-        const fromApi: SubmissionDto[] = Array.isArray(res) ? res : (res?.data ?? []);
-        const seed = { ...this.seedSubmission, homeworkId: id };
-        const alreadyPresent = fromApi.some(s => s.id === seed.id);
-        this.submissions = alreadyPresent ? fromApi : [seed, ...fromApi];
+        this.submissions = Array.isArray(res) ? res : (res?.data ?? []);
         // Pre-fill grade form with existing marks/feedback
         this.gradeMarks    = {};
         this.gradeFeedback = {};

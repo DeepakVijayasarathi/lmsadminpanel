@@ -414,6 +414,20 @@
             <p>Tell us a bit about yourself.</p>
           </div>
           <div class="fields-grid">
+            <div class="field full">
+              <label>Board <span class="req">*</span></label>
+              <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <label *ngFor="let b of boards" class="radio-card" [class.selected]="selectedBoardId === b.id"
+                  style="display:flex;align-items:center;gap:8px;padding:10px 18px;border:2px solid #e2e8f0;border-radius:8px;cursor:pointer;transition:border-color .2s;"
+                  [style.border-color]="selectedBoardId === b.id ? '#6366f1' : '#e2e8f0'"
+                  [style.background]="selectedBoardId === b.id ? '#eef2ff' : '#fff'">
+                  <input type="radio" [value]="b.id" [(ngModel)]="selectedBoardId" style="accent-color:#6366f1;" />
+                  <span style="font-weight:600;font-size:14px;">{{ b.name }}</span>
+                </label>
+                <span *ngIf="boardsLoading" style="color:#94a3b8;font-size:13px;align-self:center;">Loading…</span>
+              </div>
+              <span class="err" *ngIf="errors['boardId']">{{ errors['boardId'] }}</span>
+            </div>
             <div class="field">
               <label>Date of Birth</label>
               <input type="date" [(ngModel)]="studentForm.dateOfBirth" [class.invalid]="errors['dateOfBirth']" />

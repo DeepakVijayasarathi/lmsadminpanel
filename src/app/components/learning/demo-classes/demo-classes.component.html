@@ -1,0 +1,339 @@
+<div class="pg">
+
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-emerald">
+        <i class="fa-solid fa-chalkboard"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Free Demo Classes</div>
+        <div class="pg-head__sub">Schedule and manage free trial sessions for prospective students</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary" (click)="openCreate()" *ngIf="p.canCreate">
+        <i class="fa-solid fa-plus"></i> New Demo Class
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-chalkboard"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ totalCount }}</div>
+        <div class="pg-stat__lbl">Total Demo Classes</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-clock"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ scheduledCount }}</div>
+        <div class="pg-stat__lbl">Scheduled</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-circle-dot"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ liveCount }}</div>
+        <div class="pg-stat__lbl">Live Now</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-users"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ totalRegistered }}</div>
+        <div class="pg-stat__lbl">Total Registered</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <div class="pg-card__title">Demo Class List</div>
+      <div class="pg-toolbar">
+        <input class="pg-search" type="text" placeholder="Search title, subject, teacher…"
+          [(ngModel)]="searchQuery" (ngModelChange)="applyFilters()" />
+        <select class="pg-filter" [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
+          <option value="">All Status</option>
+          <option value="Scheduled">Scheduled</option>
+          <option value="Live">Live</option>
+          <option value="Completed">Completed</option>
+          <option value="Canceled">Canceled</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="pg-table-wrap">
+      <div class="pg-loading" *ngIf="isLoading">
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Loading…
+      </div>
+
+      <table class="pg-table" *ngIf="!isLoading">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Board / Class</th>
+            <th>Subject</th>
+            <th>Teacher</th>
+            <th>Date &amp; Time</th>
+            <th>Capacity</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of paged">
+            <td>
+              <div class="pg-cell__primary">{{ d.title }}</div>
+              <div class="pg-cell__sub" *ngIf="d.topic">{{ d.topic }}</div>
+            </td>
+            <td>
+              <div class="pg-cell__primary">{{ d.boardName || d.boardId }}</div>
+              <div class="pg-cell__sub">{{ d.className || d.classId }}</div>
+            </td>
+            <td>
+              <div class="pg-cell__primary">{{ d.subject }}</div>
+            </td>
+            <td>
+              <div class="pg-with-avatar">
+                <div class="pg-avatar av-indigo">{{ d.teacherName.charAt(0) }}</div>
+                <span class="pg-cell__primary">{{ d.teacherName }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="pg-cell__primary">{{ d.scheduledDate | date:'dd MMM yyyy' }}</div>
+              <div class="pg-cell__sub">{{ d.startTime }} – {{ d.endTime }}</div>
+            </td>
+            <td>
+              <div class="pg-cell__primary">{{ d.registeredCount }} / {{ d.maxStudents }}</div>
+            </td>
+            <td>
+              <span [class]="getStatusClass(d.status)">{{ d.status }}</span>
+            </td>
+            <td>
+              <div style="display:flex;gap:5px;align-items:center;">
+                <button class="pg-action-btn" title="View" (click)="openView(d)"><i class="fa-solid fa-eye"></i></button>
+                <button class="pg-action-btn" title="Registrations" (click)="openRegistrations(d)" *ngIf="p.canRead">
+                  <i class="fa-solid fa-users"></i>
+                </button>
+                <button class="pg-action-btn" title="Edit" (click)="openEdit(d)" *ngIf="p.canUpdate"><i class="fa-solid fa-pen"></i></button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDelete(d)" *ngIf="p.canDelete"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filtered.length === 0">
+            <td colspan="8" style="text-align:center;padding:32px;color:#94a3b8;">
+              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+              No demo classes found
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <app-common-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [pageSize]="pageSize"
+        [totalRecords]="filtered.length"
+        (pageChange)="onPageChange($event)">
+      </app-common-pagination>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── CREATE / EDIT MODAL ─────────────────────────────────────────────── -->
+<div class="pg-modal-backdrop" *ngIf="modalMode === 'create' || modalMode === 'edit'" (click)="closeModal()"></div>
+<div class="pg-modal" *ngIf="modalMode === 'create' || modalMode === 'edit'">
+  <div class="pg-modal__head">
+    <h3>
+      <i class="fa-solid fa-chalkboard" style="color:#10b981;margin-right:8px;"></i>
+      {{ modalMode === 'create' ? 'Schedule Demo Class' : 'Edit Demo Class' }}
+    </h3>
+    <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="pg-modal__body">
+    <div class="pg-form-grid">
+
+      <div class="pg-form-group" style="grid-column:1/-1;" [class.has-error]="errTitle">
+        <label>Title <span class="req">*</span></label>
+        <input type="text" [(ngModel)]="formTitle" placeholder="e.g. Free Math Demo – Grade 10" />
+        <div class="field-error" *ngIf="errTitle"><i class="fa-solid fa-circle-exclamation"></i> {{ errTitle }}</div>
+      </div>
+
+      <div class="pg-form-group" style="grid-column:1/-1;">
+        <label>Description</label>
+        <textarea [(ngModel)]="formDescription" rows="2" placeholder="Brief description of the class…"></textarea>
+      </div>
+
+      <div class="pg-form-group" [class.has-error]="errBoardId">
+        <label>Board <span class="req">*</span></label>
+        <select [(ngModel)]="formBoardId">
+          <option value="">Select Board</option>
+          <option *ngFor="let b of apiBoards" [value]="b.id">{{ b.name }}</option>
+        </select>
+        <div class="field-error" *ngIf="errBoardId"><i class="fa-solid fa-circle-exclamation"></i> {{ errBoardId }}</div>
+      </div>
+
+      <div class="pg-form-group" [class.has-error]="errClassId">
+        <label>Class / Grade <span class="req">*</span></label>
+        <select [(ngModel)]="formClassId">
+          <option value="">Select Class</option>
+          <option *ngFor="let c of apiClasses" [value]="c.id">{{ c.name || c.className || c.id }}</option>
+        </select>
+        <div class="field-error" *ngIf="errClassId"><i class="fa-solid fa-circle-exclamation"></i> {{ errClassId }}</div>
+      </div>
+
+      <div class="pg-form-group" [class.has-error]="errSubject">
+        <label>Subject <span class="req">*</span></label>
+        <input type="text" [(ngModel)]="formSubject" placeholder="e.g. Mathematics" />
+        <div class="field-error" *ngIf="errSubject"><i class="fa-solid fa-circle-exclamation"></i> {{ errSubject }}</div>
+      </div>
+
+      <div class="pg-form-group">
+        <label>Topic</label>
+        <input type="text" [(ngModel)]="formTopic" placeholder="e.g. Quadratic Equations" />
+      </div>
+
+      <div class="pg-form-group" [class.has-error]="errTeacherId">
+        <label>Teacher <span class="req">*</span></label>
+        <select [(ngModel)]="formTeacherId" (ngModelChange)="onTeacherChange()">
+          <option value="">Select Teacher</option>
+          <option *ngFor="let t of apiTeachers" [value]="t.id">{{ t.firstName }} {{ t.lastName }}</option>
+        </select>
+        <div class="field-error" *ngIf="errTeacherId"><i class="fa-solid fa-circle-exclamation"></i> {{ errTeacherId }}</div>
+      </div>
+
+      <div class="pg-form-group" [class.has-error]="errScheduledDate">
+        <label>Scheduled Date <span class="req">*</span></label>
+        <input type="date" [(ngModel)]="formScheduledDate" />
+        <div class="field-error" *ngIf="errScheduledDate"><i class="fa-solid fa-circle-exclamation"></i> {{ errScheduledDate }}</div>
+      </div>
+
+      <div class="pg-form-group" [class.has-error]="errStartTime">
+        <label>Start Time <span class="req">*</span></label>
+        <input type="time" [(ngModel)]="formStartTime" />
+        <div class="field-error" *ngIf="errStartTime"><i class="fa-solid fa-circle-exclamation"></i> {{ errStartTime }}</div>
+      </div>
+
+      <div class="pg-form-group" [class.has-error]="errEndTime">
+        <label>End Time <span class="req">*</span></label>
+        <input type="time" [(ngModel)]="formEndTime" />
+        <div class="field-error" *ngIf="errEndTime"><i class="fa-solid fa-circle-exclamation"></i> {{ errEndTime }}</div>
+      </div>
+
+      <div class="pg-form-group">
+        <label>Max Students</label>
+        <input type="number" min="1" [(ngModel)]="formMaxStudents" />
+      </div>
+
+    </div>
+  </div>
+  <div class="pg-modal__foot">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--primary" [disabled]="isSaving" (click)="save()">
+      <i class="fa-solid" [class.fa-circle-notch]="isSaving" [class.fa-spin]="isSaving" [class.fa-check]="!isSaving"></i>
+      {{ isSaving ? 'Saving…' : (modalMode === 'create' ? 'Create Demo Class' : 'Save Changes') }}
+    </button>
+  </div>
+</div>
+
+<!-- ── VIEW MODAL ──────────────────────────────────────────────────────── -->
+<div class="pg-modal-backdrop" *ngIf="modalMode === 'view'" (click)="closeModal()"></div>
+<div class="pg-modal pg-modal--sm" *ngIf="modalMode === 'view' && selected">
+  <div class="pg-modal__head">
+    <h3><i class="fa-solid fa-chalkboard" style="color:#10b981;margin-right:8px;"></i> {{ selected.title }}</h3>
+    <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="pg-modal__body">
+    <div class="pg-detail-grid">
+      <div class="pg-detail-item"><span class="pg-detail-lbl">Board</span><span>{{ selected.boardName || selected.boardId }}</span></div>
+      <div class="pg-detail-item"><span class="pg-detail-lbl">Class</span><span>{{ selected.className || selected.classId }}</span></div>
+      <div class="pg-detail-item"><span class="pg-detail-lbl">Subject</span><span>{{ selected.subject }}</span></div>
+      <div class="pg-detail-item"><span class="pg-detail-lbl">Topic</span><span>{{ selected.topic || '—' }}</span></div>
+      <div class="pg-detail-item"><span class="pg-detail-lbl">Teacher</span><span>{{ selected.teacherName }}</span></div>
+      <div class="pg-detail-item"><span class="pg-detail-lbl">Date</span><span>{{ selected.scheduledDate | date:'dd MMM yyyy' }}</span></div>
+      <div class="pg-detail-item"><span class="pg-detail-lbl">Time</span><span>{{ selected.startTime }} – {{ selected.endTime }}</span></div>
+      <div class="pg-detail-item"><span class="pg-detail-lbl">Registered</span><span>{{ selected.registeredCount }} / {{ selected.maxStudents }}</span></div>
+      <div class="pg-detail-item"><span class="pg-detail-lbl">Status</span><span [class]="getStatusClass(selected.status)">{{ selected.status }}</span></div>
+      <div class="pg-detail-item" style="grid-column:1/-1;" *ngIf="selected.description">
+        <span class="pg-detail-lbl">Description</span><span>{{ selected.description }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="pg-modal__foot">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+    <button class="pg-btn pg-btn--primary" (click)="openRegistrations(selected!)" *ngIf="p.canRead">
+      <i class="fa-solid fa-users"></i> View Registrations
+    </button>
+  </div>
+</div>
+
+<!-- ── REGISTRATIONS MODAL ─────────────────────────────────────────────── -->
+<div class="pg-modal-backdrop" *ngIf="modalMode === 'registrations'" (click)="closeModal()"></div>
+<div class="pg-modal" *ngIf="modalMode === 'registrations' && selected">
+  <div class="pg-modal__head">
+    <h3><i class="fa-solid fa-users" style="color:#6366f1;margin-right:8px;"></i> Registrations — {{ selected.title }}</h3>
+    <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="pg-modal__body">
+    <div *ngIf="regsLoading" style="text-align:center;padding:24px;color:#94a3b8;">
+      <i class="fa-solid fa-circle-notch fa-spin"></i> Loading registrations…
+    </div>
+    <table class="pg-table" *ngIf="!regsLoading">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Registered At</th>
+          <th>Attended</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of registrations">
+          <td>{{ r.studentName }}</td>
+          <td>{{ r.studentEmail }}</td>
+          <td>{{ r.studentPhone }}</td>
+          <td>{{ r.registeredAt | date:'dd MMM yyyy, hh:mm a' }}</td>
+          <td>
+            <span [class]="r.hasAttended ? 'pg-badge pg-badge--green' : 'pg-badge pg-badge--gray'">
+              {{ r.hasAttended ? 'Yes' : 'No' }}
+            </span>
+          </td>
+        </tr>
+        <tr *ngIf="registrations.length === 0">
+          <td colspan="5" style="text-align:center;padding:24px;color:#94a3b8;">No registrations yet.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="pg-modal__foot">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+  </div>
+</div>
+
+<!-- ── DELETE MODAL ────────────────────────────────────────────────────── -->
+<div class="pg-modal-backdrop" *ngIf="modalMode === 'delete'" (click)="closeModal()"></div>
+<div class="pg-modal pg-modal--sm" *ngIf="modalMode === 'delete' && selected">
+  <div class="pg-modal__head">
+    <h3>Delete Demo Class</h3>
+    <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="pg-modal__body" style="text-align:center;padding:24px 32px;">
+    <div style="font-size:40px;color:#ef4444;margin-bottom:12px;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <p style="margin:0 0 8px;font-weight:600;font-size:15px;color:#1e293b;">Delete "{{ selected.title }}"?</p>
+    <p style="margin:0;color:#64748b;font-size:14px;">This action cannot be undone. All registrations will be lost.</p>
+  </div>
+  <div class="pg-modal__foot">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--danger" [disabled]="isDeleting" (click)="confirmDelete()">
+      <i class="fa-solid" [class.fa-circle-notch]="isDeleting" [class.fa-spin]="isDeleting" [class.fa-trash]="!isDeleting"></i>
+      {{ isDeleting ? 'Deleting…' : 'Delete' }}
+    </button>
+  </div>
+</div>

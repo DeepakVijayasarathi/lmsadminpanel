@@ -39,6 +39,7 @@ import { TakeQuizComponent } from './components/assessment/take-quiz/take-quiz.c
 import { StudentQuizzesComponent } from './components/assessment/student-quizzes/student-quizzes.component';
 import { StudentPerformanceComponent } from './components/reports/student-performance/student-performance.component';
 import { TeacherPerformanceComponent } from './components/reports/teacher-performance/teacher-performance.component';
+import { DemoClassesComponent } from './components/learning/demo-classes/demo-classes.component';
 
 const AG = [AuthGuard];
 
@@ -73,6 +74,7 @@ const routes: Routes = [
   { path: 'session-slots', component: SessionSlotsComponent, canActivate: AG },
   { path: 'my-meetings',   component: LiveClassesComponent,  canActivate: AG },
   { path: 'record-video',  component: RecordVideoComponent,  canActivate: AG },
+  { path: 'demo-classes',  component: DemoClassesComponent,  canActivate: AG },
 
   // Assessment
   { path: 'exams',    component: ExamsComponent,   canActivate: AG },

@@ -4,6 +4,13 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 const BASE = environment.apiUrl + '/livesession';
+const TIMETABLE_BASE = environment.apiUrl + '/timetable';
+
+export interface SubstitutePayload {
+  date: string;
+  substituteTeacherId: string | null;
+  mergedIntoBatchId?: string | null;
+}
 
 export interface TimetableSlotDto {
   id:           string;
@@ -107,5 +114,9 @@ export class TimetableService {
 
   getAnalytics(id: string): Observable<SessionAnalytic[]> {
     return this.http.get<SessionAnalytic[]>(`${BASE}/${id}/analytics`);
+  }
+
+  assignSubstitute(timetableId: string, payload: SubstitutePayload): Observable<any> {
+    return this.http.post<any>(`${TIMETABLE_BASE}/${timetableId}/substitute`, payload);
   }
 }

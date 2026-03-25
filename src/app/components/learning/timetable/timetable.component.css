@@ -364,8 +364,9 @@
   color: #fff;
   transition: background 0.15s;
 }
-.tt-action:hover      { background: rgba(255,255,255,0.35); }
-.tt-action--del:hover { background: rgba(239,68,68,0.6); }
+.tt-action:hover       { background: rgba(255,255,255,0.35); }
+.tt-action--del:hover  { background: rgba(239,68,68,0.6); }
+.tt-action--warn:hover { background: rgba(245,158,11,0.6); }
 
 /* ── Subject colours (list view dot only) ────────────────────────────── */
 .slot-physics  { background: #0ea5e9; }

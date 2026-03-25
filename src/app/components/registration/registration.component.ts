@@ -47,8 +47,10 @@ export class RegistrationComponent implements OnInit {
   selectedRole: 'teacher' | 'student' | null = null;
   courses: Course[] = [];
   batches: Batch[] = [];
+  boards: { id: string; name: string; order: number }[] = [];
   selectedCourse: Course | null = null;
   selectedBatch: Batch | null = null;
+  selectedBoardId = '';
   paymentType: 1 | 2 = 1;
   currentStep = 1;
 
@@ -59,6 +61,7 @@ export class RegistrationComponent implements OnInit {
   toastVisible = false;
   showSuccess = false;
   coursesLoading = false;
+  boardsLoading = false;
 
 
   // ── Shared account form fields ──
@@ -145,7 +148,20 @@ export class RegistrationComponent implements OnInit {
 
     if (role === 'student') {
       this.loadCourses();
+      this.loadBoards();
     }
+  }
+
+  async loadBoards() {
+    this.boardsLoading = true;
+    try {
+      const data: any = await firstValueFrom(this.http.get(`${this.API}/board`));
+      this.boards = Array.isArray(data) ? data : (data?.data ?? []);
+      this.boards.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    } catch {
+      // boards optional — fail silently
+    }
+    this.boardsLoading = false;
   }
 
   backToRole() {
@@ -293,6 +309,7 @@ export class RegistrationComponent implements OnInit {
   /** Student Step 2 */
   validateStudentStep2(): boolean {
     this.errors = {};
+    if (!this.selectedBoardId) this.errors['boardId'] = 'Please select a board (CBSE / State Board)';
     const s = this.studentForm;
     if (!s.gender) this.errors['gender'] = 'Gender is required';
     if (!s.currentGrade.trim()) this.errors['currentGrade'] = 'Current grade is required';
@@ -425,9 +442,9 @@ export class RegistrationComponent implements OnInit {
     try {
       // Step 1: Register student
       const payload = this.buildStudentPayload();
-      const user: any = await this.http
-        .post(`${this.API}/auth/student/register`, payload)
-        .toPromise();
+      const user: any = await firstValueFrom(
+        this.http.post(`${this.API}/auth/register-student`, payload)
+      );
       const userId = user?.data?.userId || user?.userId;
 
       this.loaderMsg = 'Creating subscription...';
@@ -475,10 +492,13 @@ export class RegistrationComponent implements OnInit {
   private buildStudentPayload() {
     const s = this.studentForm;
     return {
+      boardId: this.selectedBoardId || null,
+      isFreeDemoStudent: false,
+      batchId: this.selectedBatch?.id || null,
       register: {
         firstName: this.form.firstName.trim(),
         lastName: this.form.lastName.trim(),
-        userName: this.form.username.trim(),
+        username: this.form.username.trim(),
         email: this.form.email.trim(),
         password: this.form.password,
         phone: this.form.phone.trim(),
@@ -487,7 +507,6 @@ export class RegistrationComponent implements OnInit {
       gender: s.gender,
       address: s.address.trim(),
       currentGrade: s.currentGrade.trim(),
-      previousSchool: s.previousSchool?.trim() || null,
       parentName: s.parentName.trim(),
       relationship: s.relationship,
       parentEmail: s.parentEmail.trim(),
@@ -495,7 +514,6 @@ export class RegistrationComponent implements OnInit {
       favoriteSubjects: s.favoriteSubjects,
       hobbies: s.hobbies.trim(),
       learningGoals: s.learningGoals.trim(),
-      batchId: this.selectedBatch?.id || null,
     };
   }
 
@@ -601,6 +619,7 @@ export class RegistrationComponent implements OnInit {
     this.subjectInput = '';
     this.selectedCourse = null;
     this.selectedBatch = null;
+    this.selectedBoardId = '';
     this.paymentType = 1;
     this.errors = {};
   }

@@ -53,6 +53,7 @@ import { TakeQuizComponent } from './components/assessment/take-quiz/take-quiz.c
 import { StudentQuizzesComponent } from './components/assessment/student-quizzes/student-quizzes.component';
 import { StudentPerformanceComponent } from './components/reports/student-performance/student-performance.component';
 import { TeacherPerformanceComponent } from './components/reports/teacher-performance/teacher-performance.component';
+import { DemoClassesComponent } from './components/learning/demo-classes/demo-classes.component';
 
 @NgModule({
   declarations: [
@@ -101,6 +102,7 @@ import { TeacherPerformanceComponent } from './components/reports/teacher-perfor
     StudentQuizzesComponent,
     StudentPerformanceComponent,
     TeacherPerformanceComponent,
+    DemoClassesComponent,
   ],
   imports: [
     BrowserModule,
