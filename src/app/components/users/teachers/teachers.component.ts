@@ -14,6 +14,8 @@ type ModalMode =
   | 'delete'
   | 'block'
   | 'device-reset'
+  | 'approve'
+  | 'reject'
   | null;
 
 @Component({
@@ -357,5 +359,50 @@ export class TeachersComponent implements OnInit {
     if (!/^\d+$/.test(pastedData)) {
       event.preventDefault();
     }
+  }
+
+  // ─── Pending stat ────────────────────────────────────
+  get totalPending(): number {
+    return this.teachers.filter((u) => !u.isApproved).length;
+  }
+
+  // ─── Modal openers ───────────────────────────────────
+  openApproveModal(user: User): void {
+    this.modalMode = 'approve';
+    this.selectedUser = user;
+  }
+
+  openRejectModal(user: User): void {
+    this.modalMode = 'reject';
+    this.selectedUser = user;
+  }
+
+  // ─── Actions ─────────────────────────────────────────
+  approveTeacher(): void {
+    if (!this.selectedUser) return;
+    this.userService.approveTeacher(this.selectedUser.id).subscribe({
+      next: () => {
+        this.commonService.success('Teacher approved successfully.');
+        this.closeModal();
+        this.loadTeachers();
+      },
+      error: (err: any) => {
+        this.commonService.error(err?.error?.message || 'Failed to approve teacher.');
+      },
+    });
+  }
+
+  rejectTeacher(): void {
+    if (!this.selectedUser) return;
+    this.userService.rejectTeacher(this.selectedUser.id).subscribe({
+      next: () => {
+        this.commonService.success('Teacher rejected.');
+        this.closeModal();
+        this.loadTeachers();
+      },
+      error: (err: any) => {
+        this.commonService.error(err?.error?.message || 'Failed to reject teacher.');
+      },
+    });
   }
 }

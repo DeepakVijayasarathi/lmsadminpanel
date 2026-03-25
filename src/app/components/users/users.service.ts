@@ -13,6 +13,7 @@ export interface Role {
 }
 
 export interface User {
+  isApproved: boolean;
   id: string;
   username: string;
   firstName: string;
@@ -94,5 +95,13 @@ export class UserService {
 
   getParents(): Observable<any> {
     return this.http.getData(BASE_URL, '/batches/parents');
+  }
+
+  approveTeacher(teacherId: string): Observable<any> {
+    return this.http.postData(BASE_URL, `/users/approve-teacher/${teacherId}`, {});
+  }
+
+  rejectTeacher(teacherId: string): Observable<any> {
+    return this.http.postData(BASE_URL, `/users/reject-teacher/${teacherId}`, {});
   }
 }

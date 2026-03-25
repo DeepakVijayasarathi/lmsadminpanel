@@ -48,6 +48,15 @@
         <div class="pg-stat__lbl">Inactive</div>
       </div>
     </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-amber">
+        <i class="fas fa-clock"></i>
+      </div>
+      <div>
+        <div class="pg-stat__val">{{ totalPending }}</div>
+        <div class="pg-stat__lbl">Pending Approval</div>
+      </div>
+    </div>
   </div>
 
   <div class="pg-card">
@@ -69,6 +78,7 @@
           <option value="">All Status</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
+          <option value="approval">Approval</option>
         </select>
       </div>
     </div>
@@ -151,6 +161,22 @@
                   <i class="fas fa-mobile-screen-button"></i>
                 </button>
                 <button
+                  class="pg-action-btn pg-action-btn--success"
+                  title="Approve"
+                  (click)="openApproveModal(user)"
+                  *ngIf="!user.isApproved"
+                >
+                  <i class="fas fa-circle-check"></i>
+                </button>
+                <button
+                  class="pg-action-btn pg-action-btn--danger"
+                  title="Reject"
+                  (click)="openRejectModal(user)"
+                  *ngIf="!user.isApproved"
+                >
+                  <i class="fas fa-circle-xmark"></i>
+                </button>
+                <button
                   class="pg-action-btn pg-action-btn--danger"
                   title="Delete"
                   (click)="openDeleteModal(user)"
@@ -159,9 +185,18 @@
                 </button>
               </div>
             </td>
+            <td>
+              <span
+                class="pg-badge"
+                [ngClass]="user.isApproved ? 'pg-badge--green' : 'pg-badge--amber'"
+              >
+                <i class="fas" [ngClass]="user.isApproved ? 'fa-circle-check' : 'fa-clock'"></i>
+                {{ user.isApproved ? 'Approved' : 'Pending' }}
+              </span>
+            </td>
           </tr>
           <tr *ngIf="filteredTeachers.length === 0">
-            <td colspan="5" class="pg-empty">
+            <td colspan="6" class="pg-empty">
               <i class="fas fa-chalkboard-user pg-empty__icon"></i>No teachers
               found.
             </td>
@@ -467,6 +502,52 @@
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
     <button class="pg-btn pg-btn--danger" (click)="deleteUser()">
       <i class="fas fa-trash"></i> Delete
+    </button>
+  </div>
+</div>
+
+<!-- Approve -->
+<div class="modal modal--sm" *ngIf="modalMode === 'approve' && selectedUser">
+  <div class="modal__header modal__header--success">
+    <h3><i class="fas fa-circle-check"></i> Approve Teacher</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fas fa-xmark"></i>
+    </button>
+  </div>
+  <div class="modal__body modal__body--center">
+    <div class="approve-icon"><i class="fas fa-circle-check"></i></div>
+    <p class="delete-msg">
+      Approve <strong>{{ getFullName(selectedUser) }}</strong> as a teacher?
+    </p>
+    <p class="delete-sub">They will gain access to the platform.</p>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--success" (click)="approveTeacher()">
+      <i class="fas fa-circle-check"></i> Approve
+    </button>
+  </div>
+</div>
+
+<!-- Reject -->
+<div class="modal modal--sm" *ngIf="modalMode === 'reject' && selectedUser">
+  <div class="modal__header modal__header--danger">
+    <h3><i class="fas fa-circle-xmark"></i> Reject Teacher</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fas fa-xmark"></i>
+    </button>
+  </div>
+  <div class="modal__body modal__body--center">
+    <div class="delete-icon"><i class="fas fa-circle-xmark"></i></div>
+    <p class="delete-msg">
+      Reject <strong>{{ getFullName(selectedUser) }}</strong>'s application?
+    </p>
+    <p class="delete-sub">This will deny their access to the platform.</p>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--danger" (click)="rejectTeacher()">
+      <i class="fas fa-circle-xmark"></i> Reject
     </button>
   </div>
 </div>

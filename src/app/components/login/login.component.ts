@@ -125,9 +125,10 @@ export class LoginComponent implements OnInit {
         this.commonService.success('Login Successful', 'Success');
         this.router.navigate(['/dashboard']);
       },
-      error: () => {
+      error: (err) => {
         this.isLoading = false;
-        this.commonService.error('Invalid email or password', 'Login Failed');
+        const errorMessage = err?.error?.message || 'Invalid email or password';
+        this.commonService.error(errorMessage, 'Login Failed');
       },
     });
   }
