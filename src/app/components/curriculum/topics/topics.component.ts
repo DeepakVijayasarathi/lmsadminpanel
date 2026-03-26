@@ -59,6 +59,24 @@ export class TopicsComponent implements OnInit {
   nameError: string = '';
   subjectError: string = '';
 
+  pageSize = 10;
+  currentPage = 1;
+
+  get pagedTopics(): Topic[] {
+    return this.filteredTopics.slice(
+      (this.currentPage - 1) * this.pageSize,
+      this.currentPage * this.pageSize,
+    );
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredTopics.length / this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+  }
+
   constructor(
     private commonService: CommonService,
     private httpService: HttpGeneralService<any>,
@@ -265,5 +283,6 @@ export class TopicsComponent implements OnInit {
       );
     }
     this.filteredTopics = list;
+    this.currentPage = 1;
   }
 }
