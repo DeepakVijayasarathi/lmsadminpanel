@@ -4,6 +4,61 @@
   background: #f9fafb;
 }
 
+/* ── Board pills ─────────────────────────────── */
+.board-loading {
+  font-size: 13px;
+  color: #6366f1;
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.board-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+.board-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 50px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: border-color .18s, background .18s, color .18s, box-shadow .18s;
+  white-space: nowrap;
+}
+.board-pill:hover {
+  border-color: #6366f1;
+  background: #f5f3ff;
+  color: #4f46e5;
+}
+.board-pill.selected {
+  border-color: #6366f1;
+  background: #eef2ff;
+  color: #4338ca;
+  font-weight: 600;
+  box-shadow: 0 0 0 3px rgba(99,102,241,.15);
+}
+.board-pill .pill-icon {
+  font-size: 12px;
+  color: #6366f1;
+  opacity: .65;
+}
+.board-pill.selected .pill-icon { opacity: 1; }
+.board-pill .pill-check {
+  font-size: 11px;
+  color: #6366f1;
+  margin-left: 2px;
+}
+
+
 .left-panel {
   width: 360px;
   min-width: 320px;

@@ -1,1 +1,141 @@
 /* Demo Classes — component-specific overrides */
+
+/* ── Modal ───────────────────────────────────────────────────────────── */
+.pg-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+.pg-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1001;
+  background: #fff;
+  border-radius: 16px;
+  width: 680px;
+  max-width: 96vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  overflow: hidden;
+}
+.pg-modal--sm { width: 440px; }
+.pg-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.pg-modal__head h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+}
+.pg-modal__close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.pg-modal__close:hover { background: #f1f5f9; color: #475569; }
+.pg-modal__body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+.pg-modal__foot {
+  padding: 16px 24px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* ── Form ────────────────────────────────────────────────────────────── */
+.pg-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.pg-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.pg-form-group label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+}
+.pg-form-group input,
+.pg-form-group select,
+.pg-form-group textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 9px;
+  font-size: 13px;
+  color: #1e293b;
+  background: #fff;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.pg-form-group input:focus,
+.pg-form-group select:focus,
+.pg-form-group textarea:focus {
+  border-color: #a5b4fc;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
+.pg-form-group.has-error input,
+.pg-form-group.has-error select {
+  border-color: #f87171;
+}
+.field-error {
+  font-size: 11px;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.req { color: #ef4444; }
+
+/* ── Detail grid (view modal) ────────────────────────────────────────── */
+.pg-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.pg-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pg-detail-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 540px) {
+  .pg-modal { width: 100%; border-radius: 14px; }
+  .pg-form-grid { grid-template-columns: 1fr; }
+  .pg-detail-grid { grid-template-columns: 1fr; }
+}

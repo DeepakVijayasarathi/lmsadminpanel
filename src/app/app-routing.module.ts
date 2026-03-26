@@ -40,6 +40,7 @@ import { StudentQuizzesComponent } from './components/assessment/student-quizzes
 import { StudentPerformanceComponent } from './components/reports/student-performance/student-performance.component';
 import { TeacherPerformanceComponent } from './components/reports/teacher-performance/teacher-performance.component';
 import { DemoClassesComponent } from './components/learning/demo-classes/demo-classes.component';
+import { DemoRegisterComponent } from './components/learning/demo-classes/demo-register.component';
 
 const AG = [AuthGuard];
 
@@ -47,6 +48,7 @@ const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegistrationComponent },
+  { path: 'demo-register', component: DemoRegisterComponent },
 
   // dashboard
   { path: 'dashboard', component: CommonDashboardComponent, canActivate: AG },

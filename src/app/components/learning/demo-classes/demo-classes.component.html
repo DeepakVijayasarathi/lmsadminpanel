@@ -12,7 +12,7 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary" (click)="openCreate()" *ngIf="p.canCreate">
+      <button class="pg-btn pg-btn--primary" (click)="openCreate()">
         <i class="fa-solid fa-plus"></i> New Demo Class
       </button>
     </div>
@@ -117,11 +117,11 @@
             <td>
               <div style="display:flex;gap:5px;align-items:center;">
                 <button class="pg-action-btn" title="View" (click)="openView(d)"><i class="fa-solid fa-eye"></i></button>
-                <button class="pg-action-btn" title="Registrations" (click)="openRegistrations(d)" *ngIf="p.canRead">
+                <button class="pg-action-btn" title="Registrations" (click)="openRegistrations(d)">
                   <i class="fa-solid fa-users"></i>
                 </button>
-                <button class="pg-action-btn" title="Edit" (click)="openEdit(d)" *ngIf="p.canUpdate"><i class="fa-solid fa-pen"></i></button>
-                <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDelete(d)" *ngIf="p.canDelete"><i class="fa-solid fa-trash"></i></button>
+                <button class="pg-action-btn" title="Edit" (click)="openEdit(d)"><i class="fa-solid fa-pen"></i></button>
+                <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDelete(d)"><i class="fa-solid fa-trash"></i></button>
               </div>
             </td>
           </tr>
@@ -267,7 +267,7 @@
   </div>
   <div class="pg-modal__foot">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
-    <button class="pg-btn pg-btn--primary" (click)="openRegistrations(selected!)" *ngIf="p.canRead">
+    <button class="pg-btn pg-btn--primary" (click)="openRegistrations(selected!)">
       <i class="fa-solid fa-users"></i> View Registrations
     </button>
   </div>

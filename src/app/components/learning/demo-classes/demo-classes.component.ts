@@ -127,7 +127,7 @@ export class DemoClassesComponent implements OnInit {
   }
 
   private loadClasses(): void {
-    this.httpService.getData(BASE_URL, '/classes').subscribe({
+    this.httpService.getData(BASE_URL, '/class').subscribe({
       next: (res: any) => { this.apiClasses = Array.isArray(res) ? res : (res?.data ?? []); },
       error: () => {},
     });

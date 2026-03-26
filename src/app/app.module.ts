@@ -54,6 +54,7 @@ import { StudentQuizzesComponent } from './components/assessment/student-quizzes
 import { StudentPerformanceComponent } from './components/reports/student-performance/student-performance.component';
 import { TeacherPerformanceComponent } from './components/reports/teacher-performance/teacher-performance.component';
 import { DemoClassesComponent } from './components/learning/demo-classes/demo-classes.component';
+import { DemoRegisterComponent } from './components/learning/demo-classes/demo-register.component';
 
 @NgModule({
   declarations: [
@@ -103,6 +104,7 @@ import { DemoClassesComponent } from './components/learning/demo-classes/demo-cl
     StudentPerformanceComponent,
     TeacherPerformanceComponent,
     DemoClassesComponent,
+    DemoRegisterComponent,
   ],
   imports: [
     BrowserModule,

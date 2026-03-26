@@ -57,6 +57,8 @@ export interface DemoRegisterPayload {
   studentEmail: string;
   studentPhone: string;
   studentId?: string | null;
+  boardId?: string;
+  classId?: string;
 }
 
 @Injectable({ providedIn: 'root' })

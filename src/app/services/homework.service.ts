@@ -81,4 +81,19 @@ export class HomeworkService {
   grade(submissionId: string, marks: number, feedback: string): Observable<any> {
     return this.http.put(`${BASE}/submissions/${submissionId}/grade`, { marks, feedback });
   }
+
+  /** DELETE /api/Homeworks/{id} */
+  delete(id: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${BASE}/${id}`);
+  }
+
+  /** GET /api/Homeworks/student/{studentId} */
+  getByStudent(studentId: string): Observable<HomeworkDto[]> {
+    return this.http.get<HomeworkDto[]>(`${BASE}/student/${studentId}`);
+  }
+
+  /** GET /api/Homeworks/teacher/{teacherId} */
+  getByTeacher(teacherId: string): Observable<HomeworkDto[]> {
+    return this.http.get<HomeworkDto[]>(`${BASE}/teacher/${teacherId}`);
+  }
 }

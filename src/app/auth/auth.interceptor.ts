@@ -21,12 +21,19 @@ export class AuthInterceptor implements HttpInterceptor {
     req: HttpRequest<any>,
     next: HttpHandler,
   ): Observable<HttpEvent<any>> {
-    if (
-      req.url.includes('/auth/login') ||
-      req.url.includes('/auth/login/send-otp') ||
-      req.url.includes('/auth/login/verify-otp') ||
-      req.url.includes('/auth/refresh')
-    ) {
+    const publicEndpoints = [
+      '/auth/login',
+      '/auth/login/send-otp',
+      '/auth/login/verify-otp',
+      '/auth/refresh',
+      '/auth/register-student',
+      '/auth/teacher/register',
+      '/board',
+      '/class',
+      '/courses/get-course-register',
+      '/democlass',
+    ];
+    if (publicEndpoints.some((e) => req.url.includes(e))) {
       return next.handle(req);
     }
 

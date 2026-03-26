@@ -117,7 +117,9 @@ export class RegistrationComponent implements OnInit {
 
   constructor(private http: HttpClient, private router: Router) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.loadBoards();
+  }
 
   // ── Computed properties ──
 
@@ -152,14 +154,27 @@ export class RegistrationComponent implements OnInit {
     }
   }
 
+  private readonly FALLBACK_BOARDS = [
+    { id: '258c9777-7f4b-49bc-8bcd-ac479088a19f', name: 'IB',                     order: 1 },
+    { id: '2694b9bf-bf25-4941-9295-9428bcadebb4', name: 'Tamil Nadu State Board',  order: 2 },
+    { id: '3097e4ae-7fab-44a1-a960-12e961a35173', name: 'CBSE',                    order: 3 },
+    { id: '3dfd2184-28da-414f-9040-998182b73b34', name: 'ICSE',                    order: 4 },
+    { id: '9d70735b-479f-4468-96f8-1823e5b4ee7c', name: 'Cambridge',               order: 5 },
+  ];
+
   async loadBoards() {
     this.boardsLoading = true;
     try {
       const data: any = await firstValueFrom(this.http.get(`${this.API}/board`));
-      this.boards = Array.isArray(data) ? data : (data?.data ?? []);
-      this.boards.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      const loaded: any[] = Array.isArray(data) ? data : (data?.data ?? []);
+      if (loaded.length) {
+        this.boards = loaded;
+        this.boards.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      } else {
+        this.boards = this.FALLBACK_BOARDS;
+      }
     } catch {
-      // boards optional — fail silently
+      this.boards = this.FALLBACK_BOARDS;
     }
     this.boardsLoading = false;
   }

@@ -30,6 +30,7 @@ export class HomeworksComponent implements OnInit {
   // ── UI state ──────────────────────────────────────────────────────────────
   isLoading      = false;
   isSaving       = false;
+  isDeleting     = false;
   subLoading     = false;
   searchQuery    = '';
   batchFilter    = '';
@@ -260,9 +261,20 @@ export class HomeworksComponent implements OnInit {
 
   confirmDelete(): void {
     if (!this.selected) return;
-    // No DELETE endpoint in the API doc — handled via isActive flag / future endpoint
-    this.commonService.info('Delete not supported by the API yet.');
-    this.closeModal();
+    this.isDeleting = true;
+    this.homeworkService.delete(this.selected.id).subscribe({
+      next: () => {
+        this.isDeleting = false;
+        this.commonService.success('Assignment deleted.');
+        this.closeModal();
+        this.loadHomeworks();
+      },
+      error: (err: any) => {
+        this.isDeleting = false;
+        console.error('Delete homework failed:', err);
+        this.commonService.error(err?.error?.message || 'Failed to delete assignment.');
+      },
+    });
   }
 
   // ── Modal ─────────────────────────────────────────────────────────────────

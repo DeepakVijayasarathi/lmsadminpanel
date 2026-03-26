@@ -1,0 +1,271 @@
+﻿<div class="dr-page">
+
+  <nav class="dr-nav">
+    <div class="dr-nav-inner">
+      <div class="dr-brand">
+        <div class="dr-brand-logo" #logoWrap>
+          <img src="/logo.png" alt="B2P Logo"
+            class="dr-logo-img"
+            (error)="logoWrap.classList.add('dr-brand-logo--fallback')" />
+          <i class="fa-solid fa-graduation-cap dr-logo-fallback"></i>
+        </div>
+        <div class="dr-brand-text">
+          <div class="dr-brand-name">B2P Teachers</div>
+          <div class="dr-brand-tag">Learn. Grow. Succeed.</div>
+        </div>
+      </div>
+      <div class="dr-nav-links">
+        <a href="/login" class="dr-nav-btn">Sign In</a>
+        <a href="/register" class="dr-nav-btn dr-nav-btn--primary">Register Free</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="dr-hero">
+    <div class="dr-hero-inner">
+      <div class="dr-hero-badge">
+        <i class="fa-solid fa-bolt"></i> 100% Free &mdash; No Login Required
+      </div>
+      <h1 class="dr-hero-title">
+        Experience World-Class<br />
+        <span class="dr-hero-accent">Teaching for Free</span>
+      </h1>
+      <p class="dr-hero-sub">
+        Join a live demo class, meet your teacher, and decide if B2P is right for you.
+      </p>
+      <div class="dr-hero-stats">
+        <div class="dr-stat"><span class="dr-stat-num">500+</span><span class="dr-stat-label">Demo Classes</span></div>
+        <div class="dr-stat-div"></div>
+        <div class="dr-stat"><span class="dr-stat-num">12k+</span><span class="dr-stat-label">Students</span></div>
+        <div class="dr-stat-div"></div>
+        <div class="dr-stat"><span class="dr-stat-num">200+</span><span class="dr-stat-label">Teachers</span></div>
+      </div>
+    </div>
+    <div class="dr-hero-wave">
+      <svg viewBox="0 0 1440 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" fill="#f8fafc"/>
+      </svg>
+    </div>
+  </section>
+
+  <main class="dr-main">
+
+    <div class="dr-loading" *ngIf="isLoading">
+      <div class="dr-spinner"></div>
+      <p>Loading available classes&hellip;</p>
+    </div>
+
+    <ng-container *ngIf="!isLoading && !selectedClass && !showSuccess">
+      <div class="dr-section-title">
+        <i class="fa-solid fa-calendar-days"></i>
+        Upcoming Demo Classes
+        <span class="dr-count" *ngIf="demoClasses.length">{{ demoClasses.length }} available</span>
+      </div>
+
+      <div class="dr-grid" *ngIf="demoClasses.length > 0">
+        <div *ngFor="let d of demoClasses"
+          class="dr-card"
+          [class.dr-card--full]="d.registeredCount >= d.maxStudents"
+          (click)="d.registeredCount < d.maxStudents && selectClass(d)">
+
+          <div class="dr-card-ribbon" [class.dr-card-ribbon--full]="d.registeredCount >= d.maxStudents">
+            <i class="fa-solid" [class.fa-circle-dot]="d.registeredCount < d.maxStudents" [class.fa-lock]="d.registeredCount >= d.maxStudents"></i>
+            {{ d.registeredCount < d.maxStudents ? 'Open' : 'Full' }}
+          </div>
+          <div class="dr-card-icon-wrap"><i class="fa-solid fa-chalkboard"></i></div>
+          <div class="dr-card-title">{{ d.title }}</div>
+          <div class="dr-card-meta"><i class="fa-solid fa-book-open"></i> {{ d.subject }}<span *ngIf="d.topic"> &mdash; {{ d.topic }}</span></div>
+          <div class="dr-card-meta"><i class="fa-solid fa-chalkboard-user"></i> {{ d.teacherName }}</div>
+          <div class="dr-card-meta">
+            <i class="fa-regular fa-calendar"></i> {{ d.scheduledDate | date:'dd MMM yyyy' }}
+            &nbsp;&bull;&nbsp;
+            <i class="fa-regular fa-clock"></i> {{ d.startTime }} &ndash; {{ d.endTime }}
+          </div>
+          <div class="dr-card-tags" *ngIf="d.boardName || d.className">
+            <span class="dr-tag" *ngIf="d.boardName"><i class="fa-solid fa-graduation-cap"></i> {{ d.boardName }}</span>
+            <span class="dr-tag dr-tag--class" *ngIf="d.className"><i class="fa-solid fa-layer-group"></i> {{ d.className }}</span>
+          </div>
+          <div class="dr-card-capacity">
+            <div class="dr-capacity-label">{{ d.registeredCount }} / {{ d.maxStudents }} seats filled</div>
+            <div class="dr-capacity-bar">
+              <div class="dr-capacity-fill"
+                [style.width.%]="(d.registeredCount / d.maxStudents) * 100"
+                [class.dr-capacity-fill--warn]="(d.registeredCount / d.maxStudents) > 0.75"></div>
+            </div>
+          </div>
+          <button class="dr-card-cta" [disabled]="d.registeredCount >= d.maxStudents">
+            <span *ngIf="d.registeredCount < d.maxStudents">Register Free <i class="fa-solid fa-arrow-right"></i></span>
+            <span *ngIf="d.registeredCount >= d.maxStudents"><i class="fa-solid fa-lock"></i> Class Full</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="dr-empty" *ngIf="demoClasses.length === 0">
+        <div class="dr-empty-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
+        <h3>No Classes Scheduled</h3>
+        <p>No demo classes right now. Check back soon!</p>
+      </div>
+    </ng-container>
+
+    <div class="dr-form-wrap" *ngIf="selectedClass && !showSuccess">
+      <button class="dr-back" (click)="backToList()">
+        <i class="fa-solid fa-arrow-left"></i> Back to classes
+      </button>
+
+      <div class="dr-form-layout">
+
+        <div class="dr-info-panel">
+          <div class="dr-info-header">
+            <div class="dr-info-icon"><i class="fa-solid fa-chalkboard"></i></div>
+            <h3>{{ selectedClass.title }}</h3>
+          </div>
+          <div class="dr-info-item">
+            <div class="dr-info-item-icon"><i class="fa-solid fa-book-open"></i></div>
+            <span>{{ selectedClass.subject }}<span *ngIf="selectedClass.topic"> &mdash; {{ selectedClass.topic }}</span></span>
+          </div>
+          <div class="dr-info-item">
+            <div class="dr-info-item-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+            <span>{{ selectedClass.teacherName }}</span>
+          </div>
+          <div class="dr-info-item">
+            <div class="dr-info-item-icon"><i class="fa-regular fa-calendar"></i></div>
+            <span>{{ selectedClass.scheduledDate | date:'dd MMM yyyy' }}</span>
+          </div>
+          <div class="dr-info-item">
+            <div class="dr-info-item-icon"><i class="fa-regular fa-clock"></i></div>
+            <span>{{ selectedClass.startTime }} &ndash; {{ selectedClass.endTime }}</span>
+          </div>
+          <div class="dr-perks">
+            <div class="dr-perk"><i class="fa-solid fa-circle-check"></i> Completely free</div>
+            <div class="dr-perk"><i class="fa-solid fa-circle-check"></i> No account needed</div>
+            <div class="dr-perk"><i class="fa-solid fa-circle-check"></i> Email reminder sent</div>
+            <div class="dr-perk"><i class="fa-solid fa-circle-check"></i> Live interactive session</div>
+          </div>
+        </div>
+
+        <div class="dr-form-card">
+          <div class="dr-form-card-header">
+            <h2>Reserve Your Spot</h2>
+            <p>Fill in your details &mdash; takes less than a minute.</p>
+          </div>
+
+          <div class="dr-error-box" *ngIf="errorMsg">
+            <i class="fa-solid fa-circle-exclamation"></i> {{ errorMsg }}
+          </div>
+
+          <div class="dr-field">
+            <label>Board <span class="dr-req">*</span></label>
+            <div class="dr-pills-loading" *ngIf="boardsLoading">
+              <i class="fa-solid fa-circle-notch fa-spin"></i> Loading&hellip;
+            </div>
+            <div class="dr-pills" *ngIf="!boardsLoading">
+              <button type="button" *ngFor="let b of boards"
+                class="dr-pill" [class.dr-pill--active]="selectedBoardId === b.id"
+                (click)="selectBoard(b.id)">
+                <i class="fa-solid fa-graduation-cap"></i>
+                {{ b.name }}
+                <i class="fa-solid fa-check dr-pill-check" *ngIf="selectedBoardId === b.id"></i>
+              </button>
+            </div>
+            <div class="dr-err" *ngIf="errors['boardId']">{{ errors['boardId'] }}</div>
+          </div>
+
+          <div class="dr-field">
+            <label>Class <span class="dr-req">*</span></label>
+            <div class="dr-pills-loading" *ngIf="classesLoading">
+              <i class="fa-solid fa-circle-notch fa-spin"></i> Loading&hellip;
+            </div>
+            <ng-container *ngIf="!classesLoading">
+              <div class="dr-pills" *ngIf="filteredClasses.length > 0">
+                <button type="button" *ngFor="let c of filteredClasses"
+                  class="dr-pill" [class.dr-pill--active]="selectedClassId === c.id"
+                  (click)="selectedClassId = c.id; errors['classId'] = ''">
+                  <i class="fa-solid fa-layer-group"></i>
+                  {{ c.name }}
+                  <i class="fa-solid fa-check dr-pill-check" *ngIf="selectedClassId === c.id"></i>
+                </button>
+              </div>
+              <div class="dr-pill-hint" *ngIf="!selectedBoardId">
+                <i class="fa-solid fa-circle-info"></i> Select a board first
+              </div>
+              <div class="dr-pill-hint" *ngIf="selectedBoardId && filteredClasses.length === 0">
+                <i class="fa-solid fa-circle-info"></i> No classes found for this board
+              </div>
+            </ng-container>
+            <div class="dr-err" *ngIf="errors['classId']">{{ errors['classId'] }}</div>
+          </div>
+
+          <div class="dr-row">
+            <div class="dr-field">
+              <label>Full Name <span class="dr-req">*</span></label>
+              <div class="dr-input-wrap">
+                <i class="fa-solid fa-user dr-input-icon"></i>
+                <input type="text" [(ngModel)]="studentName" placeholder="Priya Suresh" [class.invalid]="errors['name']" />
+              </div>
+              <div class="dr-err" *ngIf="errors['name']">{{ errors['name'] }}</div>
+            </div>
+            <div class="dr-field">
+              <label>Phone <span class="dr-req">*</span></label>
+              <div class="dr-input-wrap">
+                <i class="fa-solid fa-phone dr-input-icon"></i>
+                <input type="tel" [(ngModel)]="studentPhone" placeholder="9876540001" [class.invalid]="errors['phone']" />
+              </div>
+              <div class="dr-err" *ngIf="errors['phone']">{{ errors['phone'] }}</div>
+            </div>
+          </div>
+
+          <div class="dr-field">
+            <label>Email Address <span class="dr-req">*</span></label>
+            <div class="dr-input-wrap">
+              <i class="fa-solid fa-envelope dr-input-icon"></i>
+              <input type="email" [(ngModel)]="studentEmail" placeholder="priya@gmail.com" [class.invalid]="errors['email']" />
+            </div>
+            <div class="dr-err" *ngIf="errors['email']">{{ errors['email'] }}</div>
+          </div>
+
+          <button class="dr-submit" [disabled]="isSubmitting" (click)="submit()">
+            <span *ngIf="!isSubmitting"><i class="fa-solid fa-paper-plane"></i> Register for Free Demo</span>
+            <span *ngIf="isSubmitting"><i class="fa-solid fa-circle-notch fa-spin"></i> Registering&hellip;</span>
+          </button>
+
+          <p class="dr-login-hint">Already a member? <a href="/login">Sign in</a></p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="dr-success" *ngIf="showSuccess">
+      <div class="dr-success-ring">
+        <div class="dr-success-icon"><i class="fa-solid fa-circle-check"></i></div>
+      </div>
+      <h2>You're In!</h2>
+      <p>
+        Registered for <strong>{{ selectedClass?.title }}</strong>.<br />
+        A reminder will be sent to <strong>{{ studentEmail }}</strong>.
+      </p>
+      <div class="dr-success-details">
+        <div class="dr-success-detail"><i class="fa-regular fa-calendar"></i> {{ selectedClass?.scheduledDate | date:'dd MMM yyyy' }}</div>
+        <div class="dr-success-detail"><i class="fa-regular fa-clock"></i> {{ selectedClass?.startTime }} &ndash; {{ selectedClass?.endTime }}</div>
+        <div class="dr-success-detail"><i class="fa-solid fa-chalkboard-user"></i> {{ selectedClass?.teacherName }}</div>
+      </div>
+      <div class="dr-success-actions">
+        <button class="dr-submit dr-submit--ghost" (click)="backToList()">
+          <i class="fa-solid fa-arrow-left"></i> Browse More
+        </button>
+        <a href="/register" class="dr-submit">
+          <i class="fa-solid fa-user-plus"></i> Create Full Account
+        </a>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="dr-footer">
+    <span>&copy; 2026 B2P Teachers. All rights reserved.</span>
+    <div class="dr-footer-links">
+      <a href="/login">Sign In</a>
+      <a href="/register">Register</a>
+    </div>
+  </footer>
+
+</div>

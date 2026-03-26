@@ -12,7 +12,7 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary" (click)="openCreate()" *ngIf="p.canCreate && canAssign">
+      <button class="pg-btn pg-btn--primary" (click)="openCreate()" *ngIf="canAssign">
         <i class="fa-solid fa-plus"></i> New Assignment
       </button>
     </div>
@@ -151,7 +151,7 @@
             </td>
             <td>
               <div class="pg-actions">
-                <button class="pg-action-btn" title="View" (click)="openView(hw)" *ngIf="p.canRead">
+                <button class="pg-action-btn" title="View" (click)="openView(hw)">
                   <i class="fa-solid fa-eye"></i>
                 </button>
                 <!-- Student: submit button — hidden once submitted -->
@@ -171,7 +171,7 @@
                         *ngIf="canAssign" (click)="openSubmissions(hw)">
                   <i class="fa-solid fa-inbox"></i>
                 </button>
-                <button class="pg-action-btn pg-action-btn--red" title="Delete" (click)="openDelete(hw)" *ngIf="p.canDelete && canAssign">
+                <button class="pg-action-btn pg-action-btn--red" title="Delete" (click)="openDelete(hw)" *ngIf="canAssign">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
@@ -494,9 +494,10 @@
       </p>
     </div>
     <div class="pg-modal__foot">
-      <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
-      <button class="pg-btn pg-btn--danger" (click)="confirmDelete()">
-        <i class="fa-solid fa-trash"></i> Delete
+      <button class="pg-btn pg-btn--ghost" (click)="closeModal()" [disabled]="isDeleting">Cancel</button>
+      <button class="pg-btn pg-btn--danger" (click)="confirmDelete()" [disabled]="isDeleting">
+        <i class="fa-solid" [class.fa-circle-notch]="isDeleting" [class.fa-spin]="isDeleting" [class.fa-trash]="!isDeleting"></i>
+        {{ isDeleting ? 'Deleting…' : 'Delete' }}
       </button>
     </div>
   </div>
