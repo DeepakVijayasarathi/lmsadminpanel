@@ -111,15 +111,15 @@
             <td>
               <span
                 class="pg-badge"
-                [ngClass]="user.isActive ? 'pg-badge--green' : 'pg-badge--red'"
+                [ngClass]="user.isBlocked ? 'pg-badge--red' : 'pg-badge--green'"
               >
                 <i
                   class="fas"
                   [ngClass]="
-                    user.isActive ? 'fa-circle-check' : 'fa-circle-xmark'
+                    user.isBlocked ? 'fa-circle-check' : 'fa-circle-xmark'
                   "
                 ></i>
-                {{ user.isActive ? "Active" : "Inactive" }}
+                {{ user.isBlocked ? "Yes" : "No" }}
               </span>
             </td>
             <td>
@@ -142,7 +142,7 @@
                   class="pg-action-btn pg-action-btn--warn"
                   title="Block"
                   (click)="openBlockModal(user)"
-                  *ngIf="user.isActive"
+                  *ngIf="!user.isBlocked"
                 >
                   <i class="fas fa-ban"></i>
                 </button>
@@ -150,7 +150,7 @@
                   class="pg-action-btn pg-action-btn--success"
                   title="Unblock"
                   (click)="openUnblockModal(user)"
-                  *ngIf="!user.isActive"
+                  *ngIf="user.isBlocked"
                 >
                   <i class="fas fa-lock-open"></i>
                 </button>
@@ -358,16 +358,16 @@
         <span
           class="pg-badge"
           [ngClass]="
-            selectedUser.isActive ? 'pg-badge--green' : 'pg-badge--red'
+            selectedUser.isBlocked ? 'pg-badge--red' : 'pg-badge--green'
           "
         >
           <i
             class="fas"
             [ngClass]="
-              selectedUser.isActive ? 'fa-circle-check' : 'fa-circle-xmark'
+              selectedUser.isBlocked ? 'fa-circle-check' : 'fa-circle-xmark'
             "
           ></i>
-          {{ selectedUser.isActive ? "Active" : "Inactive" }}
+          {{ selectedUser.isBlocked ? "Yes" : "No" }}
         </span>
       </div>
     </div>

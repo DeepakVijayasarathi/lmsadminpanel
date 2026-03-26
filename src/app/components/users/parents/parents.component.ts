@@ -24,6 +24,7 @@ export interface Parent {
   email: string;
   phone: string;
   isActive: boolean;
+  isBlocked: boolean;
   createdAt?: string;
   students: ParentStudent[]; // API returns "students", not "children"
 }

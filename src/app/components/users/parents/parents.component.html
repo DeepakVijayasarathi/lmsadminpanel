@@ -144,16 +144,16 @@
               <span
                 class="pg-badge"
                 [ngClass]="
-                  parent.isActive ? 'pg-badge--green' : 'pg-badge--red'
+                  parent.isBlocked ? 'pg-badge--red' : 'pg-badge--green'
                 "
               >
                 <i
                   class="fas"
                   [ngClass]="
-                    parent.isActive ? 'fa-circle-check' : 'fa-circle-xmark'
+                    parent.isBlocked ? 'fa-circle-check' : 'fa-circle-xmark'
                   "
                 ></i>
-                {{ parent.isActive ? "Active" : "Inactive" }}
+                {{ parent.isBlocked ? "Yes" : "No" }}
               </span>
             </td>
 
@@ -171,15 +171,15 @@
                   class="pg-action-btn pg-action-btn--warn"
                   title="Block"
                   (click)="openBlockModal(parent)"
-                  *ngIf="parent.isActive"
+                  *ngIf="!parent.isBlocked"
                 >
                   <i class="fas fa-ban"></i>
                 </button>
                 <button
                   class="pg-action-btn pg-action-btn--success"
                   title="Unblock"
-                  (click)="openUnblockModal(user)"
-                  *ngIf="!user.isActive"
+                  (click)="openUnblockModal(parent)"
+                  *ngIf="parent.isBlocked"
                 >
                   <i class="fas fa-lock-open"></i>
                 </button>
@@ -243,16 +243,16 @@
         <span
           class="pg-badge"
           [ngClass]="
-            selectedParent.isActive ? 'pg-badge--green' : 'pg-badge--red'
+            selectedParent.isBlocked ? 'pg-badge--red' : 'pg-badge--green'
           "
         >
           <i
             class="fas"
             [ngClass]="
-              selectedParent.isActive ? 'fa-circle-check' : 'fa-circle-xmark'
+              selectedParent.isBlocked ? 'fa-circle-check' : 'fa-circle-xmark'
             "
           ></i>
-          {{ selectedParent.isActive ? "Active" : "Inactive" }}
+          {{ selectedParent.isBlocked ? "Yes" : "No" }}
         </span>
       </div>
     </div>
