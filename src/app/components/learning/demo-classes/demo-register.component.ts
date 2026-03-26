@@ -69,7 +69,7 @@ export class DemoRegisterComponent implements OnInit {
 
   private loadAllClasses(): void {
     this.classesLoading = true;
-    this.http.get<any[]>(`${environment.apiUrl}/class`).subscribe({
+    this.http.get<any[]>(`${environment.apiUrl}/class/get-classes`).subscribe({
       next: (data) => {
         const loaded = Array.isArray(data) ? data : [];
         this.allClasses = loaded.length ? loaded : this.FALLBACK_CLASSES;
@@ -99,7 +99,7 @@ export class DemoRegisterComponent implements OnInit {
 
   private loadBoards(): void {
     this.boardsLoading = true;
-    this.http.get<any[]>(`${environment.apiUrl}/board`).subscribe({
+    this.http.get<any[]>(`${environment.apiUrl}/board/get-boards`).subscribe({
       next: (data) => {
         const loaded = Array.isArray(data) ? data : [];
         this.boards = loaded.length ? loaded : this.FALLBACK_BOARDS;
