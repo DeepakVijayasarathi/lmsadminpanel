@@ -28,7 +28,13 @@ export interface Parent {
   students: ParentStudent[]; // API returns "students", not "children"
 }
 
-type ModalMode = 'view' | 'delete' | 'block' | 'device-reset' | null;
+type ModalMode =
+  | 'view'
+  | 'delete'
+  | 'block'
+  | 'device-reset'
+  | 'unblock'
+  | null;
 
 @Component({
   selector: 'app-parents',
@@ -384,5 +390,32 @@ export class ParentsComponent implements OnInit {
 
     const fileName = `parents_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}.pdf`;
     doc.save(fileName);
+  }
+
+  unblockParent(): void {
+    if (!this.selectedParent) return;
+    this.httpService
+      .putData(BASE_URL, `/batches/parents/${this.selectedParent.id}/block`, {
+        reason: '',
+      })
+      .subscribe({
+        next: () => {
+          this.commonService.success(
+            `"${this.selectedParent!.name}" unblocked.`,
+          );
+          this.closeModal();
+          this.loadParents();
+        },
+        error: (err: any) => {
+          this.commonService.error(
+            err?.error?.message || 'Failed to unblock parent.',
+          );
+        },
+      });
+  }
+
+  openUnblockModal(parent: Parent): void {
+    this.modalMode = 'unblock';
+    this.selectedParent = parent;
   }
 }

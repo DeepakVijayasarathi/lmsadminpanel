@@ -16,6 +16,7 @@ type ModalMode =
   | 'delete'
   | 'block'
   | 'device-reset'
+  | 'unblock'
   | null;
 
 @Component({
@@ -519,5 +520,30 @@ export class StudentsComponent implements OnInit {
     // ── Save ─────────────────────────────────────────────────────────────────────
     const fileName = `students_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}.pdf`;
     doc.save(fileName);
+  }
+
+  unblockUser(): void {
+    if (!this.selectedUser) return;
+    this.userService
+      .blockUser(this.selectedUser.id, { reason: '' })
+      .subscribe({
+        next: () => {
+          this.commonService.success(
+            `Student "${this.userService.getFullName(this.selectedUser!)}" unblocked.`,
+          );
+          this.closeModal();
+          this.loadStudents();
+        },
+        error: (err: any) => {
+          this.commonService.error(
+            err?.error?.message || 'Failed to unblock student.',
+          );
+        },
+      });
+  }
+
+  openUnblockModal(user: User): void {
+    this.modalMode = 'unblock';
+    this.selectedUser = user;
   }
 }

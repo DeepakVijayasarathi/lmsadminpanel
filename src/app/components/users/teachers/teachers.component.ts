@@ -18,6 +18,7 @@ type ModalMode =
   | 'device-reset'
   | 'approve'
   | 'reject'
+  | 'unblock'
   | null;
 
 @Component({
@@ -592,5 +593,28 @@ export class TeachersComponent implements OnInit {
 
     const fileName = `teachers_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}.pdf`;
     doc.save(fileName);
+  }
+
+  unblockUser(): void {
+    if (!this.selectedUser) return;
+    this.userService.blockUser(this.selectedUser.id, { reason: '' }).subscribe({
+      next: () => {
+        this.commonService.success(
+          `Teacher "${this.userService.getFullName(this.selectedUser!)}" unblocked.`,
+        );
+        this.closeModal();
+        this.loadTeachers();
+      },
+      error: (err: any) => {
+        this.commonService.error(
+          err?.error?.message || 'Failed to unblock teacher.',
+        );
+      },
+    });
+  }
+
+  openUnblockModal(user: User): void {
+    this.modalMode = 'unblock';
+    this.selectedUser = user;
   }
 }
