@@ -458,7 +458,7 @@ export class RegistrationComponent implements OnInit {
       // Step 1: Register student
       const payload = this.buildStudentPayload();
       const user: any = await firstValueFrom(
-        this.http.post(`${this.API}/auth/register-student`, payload)
+        this.http.post(`${this.API}/auth/student/register`, payload)
       );
       const userId = user?.data?.userId || user?.userId;
 
