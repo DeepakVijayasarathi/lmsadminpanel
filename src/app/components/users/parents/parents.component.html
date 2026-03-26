@@ -11,9 +11,9 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--outline">
+      <!-- <button class="pg-btn pg-btn--outline" (click)="exportToPdf()">
         <i class="fas fa-download"></i> Export
-      </button>
+      </button> -->
     </div>
   </div>
 
@@ -91,7 +91,9 @@
             <!-- Parent -->
             <td>
               <div class="pg-with-avatar">
-                <div class="pg-avatar av-purple">{{ getInitials(parent.name) }}</div>
+                <div class="pg-avatar av-purple">
+                  {{ getInitials(parent.name) }}
+                </div>
                 <div>
                   <span class="pg-cell__primary">{{ parent.name }}</span>
                   <span class="pg-cell__sub">{{ parent.email }}</span>
@@ -101,7 +103,10 @@
 
             <!-- Relationship -->
             <td>
-              <span class="meta-chip meta-chip--purple" *ngIf="parent.relationship">
+              <span
+                class="meta-chip meta-chip--purple"
+                *ngIf="parent.relationship"
+              >
                 <i class="fas fa-heart"></i> {{ parent.relationship }}
               </span>
               <span class="no-val" *ngIf="!parent.relationship">—</span>
@@ -126,7 +131,9 @@
                   >
                     {{ getStudentInitials(student) }}
                   </span>
-                  <span class="student-name">{{ getStudentFullName(student) }}</span>
+                  <span class="student-name">{{
+                    getStudentFullName(student)
+                  }}</span>
                 </div>
               </div>
               <span class="no-val" *ngIf="!parent.students?.length">—</span>
@@ -136,11 +143,15 @@
             <td>
               <span
                 class="pg-badge"
-                [ngClass]="parent.isActive ? 'pg-badge--green' : 'pg-badge--red'"
+                [ngClass]="
+                  parent.isActive ? 'pg-badge--green' : 'pg-badge--red'
+                "
               >
                 <i
                   class="fas"
-                  [ngClass]="parent.isActive ? 'fa-circle-check' : 'fa-circle-xmark'"
+                  [ngClass]="
+                    parent.isActive ? 'fa-circle-check' : 'fa-circle-xmark'
+                  "
                 ></i>
                 {{ parent.isActive ? "Active" : "Inactive" }}
               </span>
@@ -214,17 +225,24 @@
       <div>
         <div class="view-showcase__title">{{ selectedParent.name }}</div>
         <div class="view-showcase__meta">
-          <span class="meta-chip meta-chip--purple" *ngIf="selectedParent.relationship">
+          <span
+            class="meta-chip meta-chip--purple"
+            *ngIf="selectedParent.relationship"
+          >
             <i class="fas fa-heart"></i> {{ selectedParent.relationship }}
           </span>
         </div>
         <span
           class="pg-badge"
-          [ngClass]="selectedParent.isActive ? 'pg-badge--green' : 'pg-badge--red'"
+          [ngClass]="
+            selectedParent.isActive ? 'pg-badge--green' : 'pg-badge--red'
+          "
         >
           <i
             class="fas"
-            [ngClass]="selectedParent.isActive ? 'fa-circle-check' : 'fa-circle-xmark'"
+            [ngClass]="
+              selectedParent.isActive ? 'fa-circle-check' : 'fa-circle-xmark'
+            "
           ></i>
           {{ selectedParent.isActive ? "Active" : "Inactive" }}
         </span>
@@ -247,7 +265,9 @@
     <div class="view-students-section">
       <div class="view-section-title">
         <i class="fas fa-user-graduate"></i> Students
-        <span class="view-section-count">{{ selectedParent.students.length || 0 }}</span>
+        <span class="view-section-count">{{
+          selectedParent.students.length || 0
+        }}</span>
       </div>
 
       <div
@@ -262,7 +282,9 @@
             {{ getStudentInitials(student) }}
           </div>
           <div>
-            <div class="view-student-name">{{ getStudentFullName(student) }}</div>
+            <div class="view-student-name">
+              {{ getStudentFullName(student) }}
+            </div>
             <div class="view-student-email">{{ student.email }}</div>
           </div>
         </div>
@@ -299,7 +321,9 @@
   </div>
   <div class="modal__body">
     <div class="block-user-info">
-      <div class="pg-avatar av-purple">{{ getInitials(selectedParent.name) }}</div>
+      <div class="pg-avatar av-purple">
+        {{ getInitials(selectedParent.name) }}
+      </div>
       <div>
         <div class="block-name">{{ selectedParent.name }}</div>
         <div class="block-email">{{ selectedParent.email }}</div>
@@ -328,7 +352,10 @@
 </div>
 
 <!-- ─── Device Reset Modal ──────────────────────────────────────────────────── -->
-<div class="modal modal--sm" *ngIf="modalMode === 'device-reset' && selectedParent">
+<div
+  class="modal modal--sm"
+  *ngIf="modalMode === 'device-reset' && selectedParent"
+>
   <div class="modal__header modal__header--sky">
     <h3><i class="fas fa-mobile-screen-button"></i> Device Reset</h3>
     <button class="modal__close" (click)="closeModal()">
@@ -340,7 +367,8 @@
       <i class="fas fa-mobile-screen-button"></i>
     </div>
     <p class="delete-msg">
-      Reset device for <strong>{{ selectedParent.name }}</strong>?
+      Reset device for <strong>{{ selectedParent.name }}</strong
+      >?
     </p>
     <p class="delete-sub">This will log them out of all devices.</p>
   </div>
@@ -364,7 +392,8 @@
     <div class="delete-icon"><i class="fas fa-trash-can"></i></div>
     <p class="delete-msg">
       Are you sure you want to delete<br />
-      <strong>{{ selectedParent.name }}</strong>?
+      <strong>{{ selectedParent.name }}</strong
+      >?
     </p>
     <p class="delete-sub">This action cannot be undone.</p>
   </div>

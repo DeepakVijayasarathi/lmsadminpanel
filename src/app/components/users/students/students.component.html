@@ -12,9 +12,9 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--outline">
+      <!-- <button class="pg-btn pg-btn--outline" (click)="exportToPdf()">
         <i class="fas fa-download"></i> Export
-      </button>
+      </button> -->
       <!-- <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
         <i class="fas fa-plus"></i> Add Student
       </button> -->
@@ -176,7 +176,8 @@
         [totalPages]="totalPages"
         [pageSize]="pageSize"
         [totalRecords]="filteredStudents.length"
-        (pageChange)="onPageChange($event)">
+        (pageChange)="onPageChange($event)"
+      >
       </app-common-pagination>
     </div>
   </div>

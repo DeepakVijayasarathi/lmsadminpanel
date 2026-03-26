@@ -11,9 +11,9 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--outline">
+      <!-- <button class="pg-btn pg-btn--outline" (click)="exportToPdf()">
         <i class="fas fa-download"></i> Export
-      </button>
+      </button> -->
       <!-- <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
         <i class="fas fa-plus"></i> Add Teacher
       </button> -->
@@ -188,10 +188,15 @@
             <td>
               <span
                 class="pg-badge"
-                [ngClass]="user.isApproved ? 'pg-badge--green' : 'pg-badge--amber'"
+                [ngClass]="
+                  user.isApproved ? 'pg-badge--green' : 'pg-badge--amber'
+                "
               >
-                <i class="fas" [ngClass]="user.isApproved ? 'fa-circle-check' : 'fa-clock'"></i>
-                {{ user.isApproved ? 'Approved' : 'Pending' }}
+                <i
+                  class="fas"
+                  [ngClass]="user.isApproved ? 'fa-circle-check' : 'fa-clock'"
+                ></i>
+                {{ user.isApproved ? "Approved" : "Pending" }}
               </span>
             </td>
           </tr>
@@ -208,7 +213,8 @@
         [totalPages]="totalPages"
         [pageSize]="pageSize"
         [totalRecords]="filteredTeachers.length"
-        (pageChange)="onPageChange($event)">
+        (pageChange)="onPageChange($event)"
+      >
       </app-common-pagination>
     </div>
   </div>
@@ -540,7 +546,8 @@
   <div class="modal__body modal__body--center">
     <div class="delete-icon"><i class="fas fa-circle-xmark"></i></div>
     <p class="delete-msg">
-      Reject <strong>{{ getFullName(selectedUser) }}</strong>'s application?
+      Reject <strong>{{ getFullName(selectedUser) }}</strong
+      >'s application?
     </p>
     <p class="delete-sub">This will deny their access to the platform.</p>
   </div>
