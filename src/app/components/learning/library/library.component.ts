@@ -71,6 +71,24 @@ export class LibraryComponent implements OnInit {
   uploadJobId: string | null = null;
   uploadPollInterval: any = null;
 
+  pageSize = 10;
+  currentPage = 1;
+
+  get pagedBooks(): Book[] {
+    return this.filteredBooks.slice(
+      (this.currentPage - 1) * this.pageSize,
+      this.currentPage * this.pageSize,
+    );
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredBooks.length / this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+  }
+
   constructor(
     private commonService: CommonService,
     private httpService: HttpGeneralService<any>,
@@ -351,6 +369,7 @@ export class LibraryComponent implements OnInit {
     }
 
     this.filteredBooks = list;
+    this.currentPage = 1;
   }
 
   getInitials(title: string): string {

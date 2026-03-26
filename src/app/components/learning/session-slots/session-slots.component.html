@@ -63,7 +63,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let slot of filteredSlots; let i = index">
+          <tr *ngFor="let slot of pagedSlots; let i = index">
             <td class="idx-cell">{{ i + 1 }}</td>
             <td>
               <span class="slot-number-chip">{{ slot.slotNumber }}</span>
@@ -99,6 +99,14 @@
           </tr>
         </tbody>
       </table>
+      <app-common-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [pageSize]="pageSize"
+        [totalRecords]="filteredSlots.length"
+        (pageChange)="onPageChange($event)"
+      >
+      </app-common-pagination>
     </div>
   </div>
 </div>

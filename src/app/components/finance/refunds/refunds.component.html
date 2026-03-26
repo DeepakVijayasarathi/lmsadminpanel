@@ -91,7 +91,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let refund of filteredRefunds">
+          <tr *ngFor="let refund of pagedRefunds">
 
             <!-- Student (First + Last name) -->
             <td>
@@ -190,6 +190,14 @@
           </tr>
         </tbody>
       </table>
+      <app-common-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [pageSize]="pageSize"
+        [totalRecords]="filteredRefunds.length"
+        (pageChange)="onPageChange($event)"
+      >
+      </app-common-pagination>
     </div>
   </div>
 </div>

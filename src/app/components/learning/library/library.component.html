@@ -89,7 +89,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let book of filteredBooks">
+          <tr *ngFor="let book of pagedBooks">
 
             <!-- Book title + cover -->
             <td>
@@ -186,6 +186,14 @@
           </tr>
         </tbody>
       </table>
+      <app-common-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [pageSize]="pageSize"
+        [totalRecords]="filteredBooks.length"
+        (pageChange)="onPageChange($event)"
+      >
+      </app-common-pagination>
     </div>
   </div>
 </div>
