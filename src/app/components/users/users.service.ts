@@ -22,6 +22,7 @@ export interface User {
   phone: string;
   roleId: string;
   isActive: boolean;
+  isBlocked: boolean;
   roleDto: Role;
   createdAt?: string;
 }

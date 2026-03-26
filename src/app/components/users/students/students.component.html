@@ -12,9 +12,9 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--outline">
+      <!-- <button class="pg-btn pg-btn--outline" (click)="exportToPdf()">
         <i class="fas fa-download"></i> Export
-      </button>
+      </button> -->
       <!-- <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
         <i class="fas fa-plus"></i> Add Student
       </button> -->
@@ -111,15 +111,15 @@
             <td>
               <span
                 class="pg-badge"
-                [ngClass]="user.isActive ? 'pg-badge--green' : 'pg-badge--red'"
+                [ngClass]="user.isBlocked ? 'pg-badge--red' : 'pg-badge--green'"
               >
                 <i
                   class="fas"
                   [ngClass]="
-                    user.isActive ? 'fa-circle-check' : 'fa-circle-xmark'
+                    user.isBlocked ? 'fa-circle-check' : 'fa-circle-xmark'
                   "
                 ></i>
-                {{ user.isActive ? "Active" : "Inactive" }}
+                {{ user.isBlocked ? "Yes" : "No" }}
               </span>
             </td>
             <td>
@@ -142,9 +142,17 @@
                   class="pg-action-btn pg-action-btn--warn"
                   title="Block"
                   (click)="openBlockModal(user)"
-                  *ngIf="user.isActive"
+                  *ngIf="!user.isBlocked"
                 >
                   <i class="fas fa-ban"></i>
+                </button>
+                <button
+                  class="pg-action-btn pg-action-btn--success"
+                  title="Unblock"
+                  (click)="openUnblockModal(user)"
+                  *ngIf="user.isBlocked"
+                >
+                  <i class="fas fa-lock-open"></i>
                 </button>
                 <button
                   class="pg-action-btn pg-action-btn--sky"
@@ -176,7 +184,8 @@
         [totalPages]="totalPages"
         [pageSize]="pageSize"
         [totalRecords]="filteredStudents.length"
-        (pageChange)="onPageChange($event)">
+        (pageChange)="onPageChange($event)"
+      >
       </app-common-pagination>
     </div>
   </div>
@@ -349,16 +358,16 @@
         <span
           class="pg-badge"
           [ngClass]="
-            selectedUser.isActive ? 'pg-badge--green' : 'pg-badge--red'
+            selectedUser.isBlocked ? 'pg-badge--red' : 'pg-badge--green'
           "
         >
           <i
             class="fas"
             [ngClass]="
-              selectedUser.isActive ? 'fa-circle-check' : 'fa-circle-xmark'
+              selectedUser.isBlocked ? 'fa-circle-check' : 'fa-circle-xmark'
             "
           ></i>
-          {{ selectedUser.isActive ? "Active" : "Inactive" }}
+          {{ selectedUser.isBlocked ? "Yes" : "No" }}
         </span>
       </div>
     </div>
@@ -477,6 +486,29 @@
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
     <button class="pg-btn pg-btn--danger" (click)="deleteUser()">
       <i class="fas fa-trash"></i> Delete
+    </button>
+  </div>
+</div>
+
+<!-- ─── Unblock Modal ──────────────────────────────── -->
+<div class="modal modal--sm" *ngIf="modalMode === 'unblock' && selectedUser">
+  <div class="modal__header modal__header--success">
+    <h3><i class="fas fa-lock-open"></i> Unblock User</h3>
+    <button class="modal__close" (click)="closeModal()">
+      <i class="fas fa-xmark"></i>
+    </button>
+  </div>
+  <div class="modal__body modal__body--center">
+    <div class="approve-icon"><i class="fas fa-lock-open"></i></div>
+    <p class="delete-msg">
+      Unblock <strong>{{ getFullName(selectedUser) }}</strong>?
+    </p>
+    <p class="delete-sub">They will regain access to the platform.</p>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--success" (click)="unblockUser()">
+      <i class="fas fa-lock-open"></i> Unblock
     </button>
   </div>
 </div>

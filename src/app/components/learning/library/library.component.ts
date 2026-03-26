@@ -21,6 +21,13 @@ export interface Book {
   createdAt?: string;
 }
 
+export interface Subject {
+  id: string;
+  name: string;
+  description: string;
+  classId: string;
+}
+
 type ModalMode = 'create' | 'view' | 'delete' | null;
 
 @Component({
@@ -37,6 +44,9 @@ export class LibraryComponent implements OnInit {
   downloadableFilter = '';
   isLoading = false;
   isSubmitting = false;
+  subjects: Subject[] = [];
+  formSubjectId = '';
+  subjectError = '';
 
   modalMode: ModalMode = null;
   selectedBook: Book | null = null;
@@ -57,6 +67,10 @@ export class LibraryComponent implements OnInit {
   descriptionError = '';
   fileError = '';
 
+  // ─── Job ─────────────────────────────────────────────────────
+  uploadJobId: string | null = null;
+  uploadPollInterval: any = null;
+
   constructor(
     private commonService: CommonService,
     private httpService: HttpGeneralService<any>,
@@ -66,6 +80,7 @@ export class LibraryComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadBooks();
+    this.loadSubjects();
   }
 
   get p(): Permission {
@@ -92,6 +107,17 @@ export class LibraryComponent implements OnInit {
     });
   }
 
+  loadSubjects(): void {
+    this.httpService.getData(BASE_URL, '/subject').subscribe({
+      next: (res: any) => {
+        this.subjects = Array.isArray(res) ? res : (res?.data ?? []);
+      },
+      error: () => {
+        this.commonService.error('Failed to load subjects.');
+      },
+    });
+  }
+
   /** POST /api/books  (multipart/form-data) */
   createBook(): void {
     if (!this.validateForm()) return;
@@ -103,6 +129,7 @@ export class LibraryComponent implements OnInit {
     formData.append('Description', this.formDescription.trim());
     formData.append('IsDownloadable', String(this.formIsDownloadable));
     formData.append('IsWatermarkRequired', String(this.formIsWatermarkRequired));
+    formData.append('SubjectId', this.formSubjectId);
     if (this.formCoverImageFile) {
       formData.append('CoverImage', this.formCoverImageFile, this.formCoverImageFile.name);
     }
@@ -111,17 +138,55 @@ export class LibraryComponent implements OnInit {
     }
 
     this.httpService.postData(BASE_URL, '/books', formData).subscribe({
-      next: () => {
-        this.commonService.success(`"${this.formTitle.trim()}" uploaded successfully.`);
-        this.closeModal();
-        this.loadBooks();
+      next: (res: any) => {
+        // this.commonService.success(`"${this.formTitle.trim()}" uploaded successfully.`);
+        // this.closeModal();
+        // this.loadBooks();
+        // this.isSubmitting = false;
+        this.uploadJobId = res.jobId;
         this.isSubmitting = false;
+        this.closeModal();
+        this.commonService.success('Upload started! We\'ll notify you when it\'s ready.');
+        this.startPolling(res.jobId);
       },
       error: (err: any) => {
         this.commonService.error(err?.error?.message || 'Failed to upload book.');
         this.isSubmitting = false;
       },
     });
+  }
+
+  startPolling(jobId: string): void {
+    this.uploadPollInterval = setInterval(() => {
+      this.httpService.getData(BASE_URL, `/books/job/${jobId}`).subscribe({
+        next: (res: any) => {
+          if (res.status === 'done') {
+            this.stopPolling();
+            this.commonService.success(res.message || 'Book uploaded successfully!');
+            this.loadBooks();
+          } else if (res.status === 'failed') {
+            this.stopPolling();
+            this.commonService.error(res.message || 'Upload failed. Please try again.');
+          }
+        },
+        error: () => {
+          this.stopPolling();
+          this.commonService.error('Could not check upload status.');
+        },
+      });
+    }, 3000);
+    setTimeout(() => this.stopPolling(), 10 * 60 * 1000);
+  }
+
+  stopPolling(): void {
+    if (this.uploadPollInterval) {
+      clearInterval(this.uploadPollInterval);
+      this.uploadPollInterval = null;
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.stopPolling();
   }
 
   /** DELETE /api/books/{id} */
@@ -226,6 +291,10 @@ export class LibraryComponent implements OnInit {
       this.fileError = 'Please select a file to upload.';
       valid = false;
     }
+    if (!this.formSubjectId) {
+      this.subjectError = 'Please select a subject.';
+      valid = false;
+    }
     return valid;
   }
 
@@ -234,6 +303,7 @@ export class LibraryComponent implements OnInit {
     this.authorError = '';
     this.descriptionError = '';
     this.fileError = '';
+    this.subjectError = '';
   }
 
   resetForm(): void {
@@ -245,6 +315,7 @@ export class LibraryComponent implements OnInit {
     this.formCoverImageFile = null;
     this.formFile = null;
     this.formCoverImagePreview = '';
+    this.formSubjectId = '';
     this.clearErrors();
   }
 

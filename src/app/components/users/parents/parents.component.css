@@ -114,6 +114,19 @@
 .modal__header--sky h3 { color: #0369a1; }
 .modal__header--sky h3 i { color: #0284c7; }
 
+.modal__header--success { 
+  background: #f0fdf4; 
+  border-color: #bbf7d0; 
+}
+
+.modal__header--success h3 { 
+  color: #15803d; 
+}
+
+.modal__header--success h3 i { 
+  color: #16a34a; 
+}
+
 .modal__close {
   background: none;
   border: none;
@@ -419,6 +432,25 @@
   transition: background 0.15s;
 }
 .pg-btn--sky:hover { background: #0369a1; }
+
+.pg-btn--success {
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background 0.15s;
+}
+
+.pg-btn--success:hover {
+  background: #16a34a;
+}
 
 /* ── Action button variants ──────────────────────────────────── */
 .pg-action-btn--warn {
