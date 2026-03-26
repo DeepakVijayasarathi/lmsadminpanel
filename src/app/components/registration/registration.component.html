@@ -194,10 +194,18 @@
               <input type="tel" [(ngModel)]="form.phone" placeholder="+91 98765 43210" [class.invalid]="errors['phone']" />
               <span class="err" *ngIf="errors['phone']">{{ errors["phone"] }}</span>
             </div>
-            <div class="field full">
+            <div class="field">
               <label>Email Address <span class="req">*</span></label>
               <input type="email" [(ngModel)]="form.email" placeholder="john@example.com" [class.invalid]="errors['email']" />
               <span class="err" *ngIf="errors['email']">{{ errors["email"] }}</span>
+            </div>
+            <div class="field">
+              <label>Zone <span class="req">*</span></label>
+              <select [(ngModel)]="form.zonalId" [class.invalid]="errors['zonalId']">
+                <option value="">Select zone</option>
+                <option *ngFor="let z of zonals" [value]="z.id">{{ z.name }}</option>
+              </select>
+              <span class="err" *ngIf="errors['zonalId']">{{ errors["zonalId"] }}</span>
             </div>
             <div class="field full">
               <label>Password <span class="req">*</span></label>
@@ -385,10 +393,18 @@
               <input type="tel" [(ngModel)]="form.phone" placeholder="+91 98765 43210" [class.invalid]="errors['phone']" />
               <span class="err" *ngIf="errors['phone']">{{ errors["phone"] }}</span>
             </div>
-            <div class="field full">
+            <div class="field">
               <label>Email Address <span class="req">*</span></label>
               <input type="email" [(ngModel)]="form.email" placeholder="john@example.com" [class.invalid]="errors['email']" />
               <span class="err" *ngIf="errors['email']">{{ errors["email"] }}</span>
+            </div>
+            <div class="field">
+              <label>Zone <span class="req">*</span></label>
+              <select [(ngModel)]="form.zonalId" [class.invalid]="errors['zonalId']">
+                <option value="">Select zone</option>
+                <option *ngFor="let z of zonals" [value]="z.id">{{ z.name }}</option>
+              </select>
+              <span class="err" *ngIf="errors['zonalId']">{{ errors["zonalId"] }}</span>
             </div>
             <div class="field full">
               <label>Password <span class="req">*</span></label>

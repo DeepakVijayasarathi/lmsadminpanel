@@ -47,6 +47,7 @@ export class RegistrationComponent implements OnInit {
   selectedRole: 'teacher' | 'student' | null = null;
   courses: Course[] = [];
   batches: Batch[] = [];
+  zonals: any[] = [];
   boards: { id: string; name: string; order: number }[] = [];
   selectedCourse: Course | null = null;
   selectedBatch: Batch | null = null;
@@ -72,6 +73,7 @@ export class RegistrationComponent implements OnInit {
     phone: '',
     email: '',
     password: '',
+    zonalId: '',
   };
 
   // ── Teacher-specific fields ──
@@ -119,6 +121,7 @@ export class RegistrationComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadBoards();
+    this.loadZonals();
   }
 
   // ── Computed properties ──
@@ -196,6 +199,15 @@ export class RegistrationComponent implements OnInit {
       this.toast('Failed to load courses: ' + (e.message || 'Unknown error'));
     }
     this.coursesLoading = false;
+  }
+
+  async loadZonals() {
+    try {
+      const data: any = await this.http.get(`${this.API}/zonal`).toPromise();
+      this.zonals = Array.isArray(data) ? data : data?.data || [];
+    } catch (e: any) {
+      this.toast('Failed to load zonals: ' + (e.message || 'Unknown error'));
+    }
   }
 
   // async selectCourse(course: Course) {
@@ -284,11 +296,12 @@ export class RegistrationComponent implements OnInit {
   // }
   validateStep1(): boolean {
     this.errors = {};
-    const { firstName, lastName, username, phone, email, password } = this.form;
+    const { firstName, lastName, username, phone, email, password, zonalId } = this.form;
     if (!firstName.trim()) this.errors['firstName'] = 'First name is required';
     if (!lastName.trim()) this.errors['lastName'] = 'Last name is required';
     if (!username.trim()) this.errors['username'] = 'Username is required';
     if (!phone.trim()) this.errors['phone'] = 'Phone is required';
+    if (!zonalId.trim()) this.errors['zonalId'] = 'Zonal ID is required';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       this.errors['email'] = 'Valid email is required';
     if (password.length < 8)
@@ -428,6 +441,7 @@ export class RegistrationComponent implements OnInit {
         lastName: this.form.lastName.trim(),
         userName: this.form.username.trim(),
         email: this.form.email.trim(),
+        zonalId: this.form.zonalId.trim(),
         password: this.form.password,
         phone: this.form.phone.trim(),
       },
@@ -515,6 +529,7 @@ export class RegistrationComponent implements OnInit {
         lastName: this.form.lastName.trim(),
         username: this.form.username.trim(),
         email: this.form.email.trim(),
+        zonalId: this.form.zonalId.trim(),
         password: this.form.password,
         phone: this.form.phone.trim(),
       },
@@ -618,7 +633,7 @@ export class RegistrationComponent implements OnInit {
     this.currentStep = 1;
     this.showSuccess = false;
     this.successData = null;
-    this.form = { firstName: '', lastName: '', username: '', phone: '', email: '', password: '' };
+    this.form = { firstName: '', lastName: '', username: '', phone: '', email: '', password: '', zonalId: '' };
     this.teacherForm = {
       fullName: '', qualification: '', major: '', experience: 0,
       address: '', whatsAppNumber: '', hasHighSpeedInternet: false,
