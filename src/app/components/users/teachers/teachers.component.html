@@ -95,6 +95,7 @@
             <th>Username</th>
             <th>Phone</th>
             <th>Status</th>
+            <th>Approval</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -127,6 +128,20 @@
                   "
                 ></i>
                 {{ user.isActive ? "Active" : "Inactive" }}
+              </span>
+            </td>
+            <td>
+              <span
+                class="pg-badge"
+                [ngClass]="
+                  user.isApproved ? 'pg-badge--green' : 'pg-badge--amber'
+                "
+              >
+                <i
+                  class="fas"
+                  [ngClass]="user.isApproved ? 'fa-circle-check' : 'fa-clock'"
+                ></i>
+                {{ user.isApproved ? "Approved" : "Pending" }}
               </span>
             </td>
             <td>
@@ -184,20 +199,6 @@
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
-            </td>
-            <td>
-              <span
-                class="pg-badge"
-                [ngClass]="
-                  user.isApproved ? 'pg-badge--green' : 'pg-badge--amber'
-                "
-              >
-                <i
-                  class="fas"
-                  [ngClass]="user.isApproved ? 'fa-circle-check' : 'fa-clock'"
-                ></i>
-                {{ user.isApproved ? "Approved" : "Pending" }}
-              </span>
             </td>
           </tr>
           <tr *ngIf="filteredTeachers.length === 0">
