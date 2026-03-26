@@ -119,10 +119,10 @@
 
             <!-- Students -->
             <td>
-              <div class="students-cell" *ngIf="parent.students?.length">
+              <div class="students-cell" *ngIf="parent.children?.length">
                 <div
                   class="student-pill"
-                  *ngFor="let student of parent.students"
+                  *ngFor="let student of parent.children"
                   [title]="student.email"
                 >
                   <span
@@ -136,7 +136,7 @@
                   }}</span>
                 </div>
               </div>
-              <span class="no-val" *ngIf="!parent.students?.length">—</span>
+              <span class="no-val" *ngIf="!parent.children?.length">—</span>
             </td>
 
             <!-- Status -->
@@ -274,13 +274,13 @@
       <div class="view-section-title">
         <i class="fas fa-user-graduate"></i> Students
         <span class="view-section-count">{{
-          selectedParent.students.length || 0
+          selectedParent.children.length || 0
         }}</span>
       </div>
 
       <div
         class="view-student-card"
-        *ngFor="let student of selectedParent.students"
+        *ngFor="let student of selectedParent.children"
       >
         <div class="view-student-left">
           <div
@@ -308,7 +308,7 @@
         </span>
       </div>
 
-      <div class="view-no-students" *ngIf="!selectedParent.students?.length">
+      <div class="view-no-students" *ngIf="!selectedParent.children?.length">
         <i class="fas fa-user-graduate"></i> No students linked.
       </div>
     </div>

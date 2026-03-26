@@ -26,7 +26,7 @@ export interface Parent {
   isActive: boolean;
   isBlocked: boolean;
   createdAt?: string;
-  students: ParentStudent[]; // API returns "students", not "children"
+  children: ParentStudent[]; // API returns "students", not "children"
 }
 
 type ModalMode =
@@ -204,7 +204,7 @@ export class ParentsComponent implements OnInit {
           p.email?.toLowerCase().includes(q) ||
           p.phone?.includes(q) ||
           p.relationship?.toLowerCase().includes(q) ||
-          p.students?.some(
+          p.children?.some(
             (s) =>
               s.firstName?.toLowerCase().includes(q) ||
               s.lastName?.toLowerCase().includes(q) ||
@@ -302,8 +302,8 @@ export class ParentsComponent implements OnInit {
     // ── Table ────────────────────────────────────────────────────────────────────
     // Parents table — one row per parent, students listed as comma-separated names
     const rows = this.filteredParents.map((p, i) => {
-      const studentNames = p.students?.length
-        ? p.students.map((s) => this.getStudentFullName(s)).join(', ')
+      const studentNames = p.children?.length
+        ? p.children.map((s) => this.getStudentFullName(s)).join(', ')
         : '—';
       return [
         i + 1,
