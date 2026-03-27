@@ -6,6 +6,7 @@ import { StudentDashboardComponent } from '../student-dashboard/student-dashboar
 export const ROLE_IDS = {
   ADMIN: 'Admin',
   ITADMIN: 'ItAdmin',
+  ZONALADMIN: 'ZonalAdmin',
   TEACHER: 'Teacher',
   STUDENT: 'Student'
 };
