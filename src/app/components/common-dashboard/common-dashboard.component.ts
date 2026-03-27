@@ -7,6 +7,7 @@ export const ROLE_IDS = {
   ADMIN: 'Admin',
   ITADMIN: 'ItAdmin',
   TEACHER: 'Teacher',
+  ZONALADMIN: 'ZonalAdmin',
   STUDENT: 'Student'
 };
 

@@ -1,4 +1,4 @@
-<app-dashboard *ngIf="roleName === ROLE_IDS.ADMIN || roleName === ROLE_IDS.ITADMIN"></app-dashboard>
+<app-dashboard *ngIf="roleName === ROLE_IDS.ADMIN || roleName === ROLE_IDS.ITADMIN || roleName === ROLE_IDS.ZONALADMIN"></app-dashboard>
 
 <!-- Teacher -->
 <app-teacher-dashboard *ngIf="roleName === ROLE_IDS.TEACHER"></app-teacher-dashboard>
