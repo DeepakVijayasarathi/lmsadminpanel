@@ -467,7 +467,7 @@ export class StudentsComponent implements OnInit {
         0: { cellWidth: 10, halign: 'center' },
         5: { halign: 'center' },
       },
-      didDrawCell: (data) => {
+      didDrawCell: (data: any) => {
         // Color-code the Status column cells
         if (data.section === 'body' && data.column.index === 5) {
           const isActive = data.cell.raw === 'Active';
@@ -502,7 +502,7 @@ export class StudentsComponent implements OnInit {
         }
       },
       // Footer on each page
-      didDrawPage: (data) => {
+      didDrawPage: (data: any) => {
         const pageCount = (doc as any).internal.getNumberOfPages();
         const pageNum = (doc as any).internal.getCurrentPageInfo().pageNumber;
         doc.setFontSize(7.5);
