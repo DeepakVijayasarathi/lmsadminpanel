@@ -61,6 +61,24 @@ export class RefundsComponent implements OnInit {
   userIdError = '';
   reasonError = '';
 
+  pageSize = 10;
+  currentPage = 1;
+
+  get pagedRefunds(): Refund[] {
+    return this.filteredRefunds.slice(
+      (this.currentPage - 1) * this.pageSize,
+      this.currentPage * this.pageSize,
+    );
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredRefunds.length / this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+  }
+
   constructor(
     private commonService: CommonService,
     private httpService: HttpGeneralService<any>,
@@ -277,6 +295,7 @@ export class RefundsComponent implements OnInit {
     }
 
     this.filteredRefunds = list;
+    this.currentPage = 1;
   }
 
   // ════════════════════════════════════════════════════════════════

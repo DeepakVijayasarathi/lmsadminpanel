@@ -41,6 +41,7 @@ import { StudentPerformanceComponent } from './components/reports/student-perfor
 import { TeacherPerformanceComponent } from './components/reports/teacher-performance/teacher-performance.component';
 import { DemoClassesComponent } from './components/learning/demo-classes/demo-classes.component';
 import { DemoRegisterComponent } from './components/learning/demo-classes/demo-register.component';
+import { ZonalComponent } from './components/zonal/zonal.component';
 
 const AG = [AuthGuard];
 
@@ -108,6 +109,8 @@ const routes: Routes = [
 
   // Dashboard (keep existing)
   { path: 'dashboard', component: DashboardComponent, canActivate: AG },
+
+  { path: 'zonal', component: ZonalComponent, canActivate: AG },
 
   { path: '**', redirectTo: 'login' },
 ];

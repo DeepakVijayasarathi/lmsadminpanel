@@ -93,7 +93,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let board of filteredBoards; let i = index">
+          <tr *ngFor="let board of pagedBoards; let i = index">
             <td class="idx-cell">{{ i + 1 }}</td>
             <td>
               <span class="pg-cell__primary">{{ board.name }}</span>
@@ -138,6 +138,14 @@
           </tr>
         </tbody>
       </table>
+      <app-common-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [pageSize]="pageSize"
+        [totalRecords]="filteredBoards.length"
+        (pageChange)="onPageChange($event)"
+      >
+      </app-common-pagination>
     </div>
   </div>
 </div>

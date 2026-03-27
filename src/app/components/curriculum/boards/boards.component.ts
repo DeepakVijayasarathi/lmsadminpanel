@@ -43,6 +43,24 @@ export class BoardsComponent implements OnInit {
   // Validation
   nameError: string = '';
 
+  pageSize = 10;
+  currentPage = 1;
+  
+  get pagedBoards(): Board[] {
+    return this.filteredBoards.slice(
+      (this.currentPage - 1) * this.pageSize,
+      this.currentPage * this.pageSize,
+    );
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredBoards.length / this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+  }
+
   constructor(
     private commonService: CommonService,
     private httpService: HttpGeneralService<any>,
@@ -219,5 +237,6 @@ export class BoardsComponent implements OnInit {
             b.description?.toLowerCase().includes(q),
         )
       : [...this.boards];
+    this.currentPage = 1;
   }
 }

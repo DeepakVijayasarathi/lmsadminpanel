@@ -58,6 +58,24 @@ export class SubjectsComponent implements OnInit {
   nameError: string = '';
   classError: string = '';
 
+  pageSize = 10;
+  currentPage = 1;
+
+  get pagedSubjects(): Subject[] {
+    return this.filteredSubjects.slice(
+      (this.currentPage - 1) * this.pageSize,
+      this.currentPage * this.pageSize,
+    );
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredSubjects.length / this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+  }
+
   constructor(
     private commonService: CommonService,
     private httpService: HttpGeneralService<any>,
@@ -282,5 +300,6 @@ export class SubjectsComponent implements OnInit {
       );
     }
     this.filteredSubjects = list;
+    this.currentPage = 1;
   }
 }

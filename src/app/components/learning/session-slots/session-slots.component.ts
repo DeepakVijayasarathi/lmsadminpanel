@@ -32,6 +32,24 @@ export class SessionSlotsComponent implements OnInit {
   // Validation
   formErrors: Record<string, string> = {};
 
+  pageSize = 10;
+  currentPage = 1;
+
+  get pagedSlots(): SessionSlot[] {
+    return this.filteredSlots.slice(
+      (this.currentPage - 1) * this.pageSize,
+      this.currentPage * this.pageSize,
+    );
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredSlots.length / this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+  }
+
   constructor(
     private sessionSlotService: SessionSlotService,
     private commonService: CommonService,
@@ -193,6 +211,7 @@ export class SessionSlotsComponent implements OnInit {
           String(s.slotNumber).includes(q)
         )
       : [...this.slots];
+    this.currentPage = 1;
   }
 
   // ─── Display helpers ─────────────────────────────────────
