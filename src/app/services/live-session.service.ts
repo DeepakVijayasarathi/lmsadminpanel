@@ -74,4 +74,17 @@ export class LiveSessionService {
     const params = new HttpParams().set('status', String(status));
     return this.http.put<any>(`${BASE}/${id}/status`, null, { params });
   }
+
+  /** GET /livesession/{id}/recording-status — returns state + progress info */
+  getRecordingStatus(id: string): Observable<RecordingStatusDto> {
+    return this.http.get<RecordingStatusDto>(`${BASE}/${id}/recording-status`);
+  }
+}
+
+export interface RecordingStatusDto {
+  isReady: boolean;
+  state: string | null;   // pending | processing | processed | published | completed | not_recorded
+  playbackUrl?: string | null;
+  bucketUrl?: string | null;
+  deskshareUrl?: string | null;
 }

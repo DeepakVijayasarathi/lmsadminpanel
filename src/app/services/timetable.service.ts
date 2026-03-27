@@ -48,6 +48,7 @@ export interface TimetablePayload {
 
 export interface RecordingResult {
   isReady:      boolean;
+  state:        string | null;   // pending | processing | processed | published | completed | not_recorded
   playbackUrl:  string | null;
   bucketUrl:    string | null;
   mp4Url:       string | null;
@@ -106,6 +107,11 @@ export class TimetableService {
 
   checkRecordingReady(id: string): Observable<RecordingResult> {
     return this.http.get<RecordingResult>(`${BASE}/${id}/recording-ready`);
+  }
+
+  /** GET /livesession/{id}/recording-status — returns state + progress info */
+  getRecordingStatus(id: string): Observable<RecordingResult> {
+    return this.http.get<RecordingResult>(`${BASE}/${id}/recording-status`);
   }
 
   triggerRecording(id: string): Observable<RecordingResult> {

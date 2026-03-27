@@ -74,13 +74,14 @@
             <th>Teacher</th>
             <th>Date &amp; Time</th>
             <th>Status</th>
+            <th>Recording</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           <!-- Loading -->
           <tr *ngIf="isLoading">
-            <td colspan="6" style="text-align:center;padding:32px;color:#94a3b8;">
+            <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">
               <i class="fa-solid fa-circle-notch fa-spin" style="font-size:20px;display:block;margin-bottom:8px;"></i>
               Loading sessions…
             </td>
@@ -111,6 +112,38 @@
                   {{ cls.status | titlecase }}
                 </span>
               </td>
+              <!-- Recording -->
+              <td>
+                <ng-container *ngIf="cls.status === 'completed'">
+                  <!-- Has recording URL -->
+                  <a *ngIf="cls.bucketUrl"
+                     [href]="cls.bucketUrl" target="_blank"
+                     class="pg-btn pg-btn--primary"
+                     style="font-size:11px;padding:4px 10px;text-decoration:none;background:#10b981;">
+                    <i class="fa-solid fa-play"></i> Watch
+                  </a>
+                  <!-- Polling in progress -->
+                  <span *ngIf="!cls.bucketUrl && recordingProcessing[cls.id]"
+                        style="font-size:11px;color:#f59e0b;display:flex;align-items:center;gap:4px;">
+                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size:10px;"></i>
+                    {{ getRecordingStateLabel(cls.id) }}
+                  </span>
+                  <!-- Error -->
+                  <span *ngIf="!cls.bucketUrl && recordingError[cls.id]"
+                        style="font-size:11px;color:#ef4444;">
+                    {{ recordingError[cls.id] }}
+                  </span>
+                  <!-- Not yet polled & no URL -->
+                  <button *ngIf="!cls.bucketUrl && !recordingProcessing[cls.id] && !recordingError[cls.id] && !recordingPolling[cls.id]"
+                          class="pg-btn pg-btn--primary"
+                          style="font-size:11px;padding:4px 10px;background:#6366f1;"
+                          (click)="pollRecording(cls)">
+                    <i class="fa-solid fa-video"></i> Check Recording
+                  </button>
+                </ng-container>
+                <span *ngIf="cls.status !== 'completed'" style="color:#cbd5e1;">—</span>
+              </td>
+
               <td>
                 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
                   <!-- Live: Join button -->
@@ -146,7 +179,7 @@
             </tr>
 
             <tr *ngIf="filteredClasses.length === 0">
-              <td colspan="6" style="text-align:center;padding:32px;color:#94a3b8;">
+              <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">
                 <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
                 No sessions found
               </td>
@@ -313,6 +346,32 @@
       <div class="view-detail-label">Meeting URL</div>
       <div class="view-detail-val" style="font-size:12px;word-break:break-all;color:#4f46e5;">
         {{ selectedClass.meetingLink || '—' }}
+      </div>
+    </div>
+
+    <!-- Recording section (completed sessions only) -->
+    <div class="view-detail-block" *ngIf="selectedClass.status === 'completed'">
+      <div class="view-detail-label">Recording</div>
+      <div class="view-detail-val">
+        <a *ngIf="selectedClass.bucketUrl" [href]="selectedClass.bucketUrl" target="_blank"
+           style="color:#10b981;font-weight:600;text-decoration:none;font-size:13px;">
+          <i class="fa-solid fa-play"></i> Watch Recording
+        </a>
+        <span *ngIf="!selectedClass.bucketUrl && recordingProcessing[selectedClass.id]"
+              style="font-size:12px;color:#f59e0b;">
+          <i class="fa-solid fa-circle-notch fa-spin"></i>
+          {{ getRecordingStateLabel(selectedClass.id) }}
+        </span>
+        <span *ngIf="!selectedClass.bucketUrl && recordingError[selectedClass.id]"
+              style="font-size:12px;color:#ef4444;">
+          {{ recordingError[selectedClass.id] }}
+        </span>
+        <button *ngIf="!selectedClass.bucketUrl && !recordingProcessing[selectedClass.id] && !recordingError[selectedClass.id] && !recordingPolling[selectedClass.id]"
+                class="pg-btn pg-btn--primary"
+                style="font-size:12px;padding:5px 12px;background:#6366f1;"
+                (click)="pollRecording(selectedClass)">
+          <i class="fa-solid fa-video"></i> Check Recording
+        </button>
       </div>
     </div>
   </div>

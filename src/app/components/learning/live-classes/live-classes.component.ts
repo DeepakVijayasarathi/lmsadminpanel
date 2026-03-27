@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonService } from '../../../services/common.service';
-import { LiveSessionService, LiveSessionDto } from '../../../services/live-session.service';
+import { LiveSessionService, LiveSessionDto, RecordingStatusDto } from '../../../services/live-session.service';
 import { HttpGeneralService } from '../../../services/http.service';
 import { environment } from '../../../../environments/environment';
 
@@ -22,6 +22,9 @@ export interface LiveClass {
   students: number;
   status: 'live' | 'upcoming' | 'completed' | 'cancelled';
   meetingLink: string;
+  bucketUrl: string;
+  playbackUrl: string;
+  deskshareUrl: string;
 }
 
 type ModalMode = 'create' | 'edit' | 'view' | 'cancel' | null;
@@ -32,11 +35,18 @@ type ModalMode = 'create' | 'edit' | 'view' | 'cancel' | null;
   templateUrl: './live-classes.component.html',
   styleUrls: ['../../../shared-page.css', './live-classes.component.css']
 })
-export class LiveClassesComponent implements OnInit {
+export class LiveClassesComponent implements OnInit, OnDestroy {
   searchQuery = '';
   statusFilter = '';
   isLoading = false;
   joiningId = '';
+
+  // Recording status tracking
+  recordingPolling:    Record<string, boolean> = {};
+  recordingProcessing: Record<string, boolean> = {};
+  recordingState:      Record<string, string>  = {};
+  recordingError:      Record<string, string>  = {};
+  private pollingIntervals: Record<string, ReturnType<typeof setInterval>> = {};
 
   pageSize = 10;
   currentPage = 1;
@@ -92,6 +102,10 @@ export class LiveClassesComponent implements OnInit {
     this.loadSessions();
     this.loadDropdownData();
     this.loadCurrentUser();
+  }
+
+  ngOnDestroy(): void {
+    Object.keys(this.pollingIntervals).forEach(id => clearInterval(this.pollingIntervals[id]));
   }
 
   // ─── API ────────────────────────────────────────────────────
@@ -167,6 +181,7 @@ export class LiveClassesComponent implements OnInit {
       next: (dtos) => {
         this.liveClasses = (Array.isArray(dtos) ? dtos : []).map(d => this.mapDto(d));
         this.isLoading = false;
+        this.autoStartRecordingPolling();
       },
       error: () => {
         this.commonService.error('Failed to load sessions.');
@@ -325,6 +340,72 @@ export class LiveClassesComponent implements OnInit {
     });
   }
 
+  // ─── Recording Status ───────────────────────────────────────
+
+  /** Start polling recording status for a completed session */
+  pollRecording(cls: LiveClass): void {
+    if (this.pollingIntervals[cls.id]) return;
+    this.recordingError[cls.id] = '';
+    this.recordingPolling[cls.id] = true;
+    this.checkRecordingStatus(cls);
+    this.pollingIntervals[cls.id] = setInterval(() => this.checkRecordingStatus(cls), 30_000);
+  }
+
+  private checkRecordingStatus(cls: LiveClass): void {
+    this.liveSessionService.getRecordingStatus(cls.id).subscribe({
+      next: (res: RecordingStatusDto) => {
+        this.recordingState[cls.id] = res.state ?? 'pending';
+
+        if (res.state === 'not_recorded') {
+          this.stopPolling(cls.id);
+          this.recordingError[cls.id] = 'Recording not available.';
+          return;
+        }
+
+        if (res.isReady || res.state === 'completed') {
+          this.stopPolling(cls.id);
+          const found = this.liveClasses.find(c => c.id === cls.id);
+          if (found) {
+            found.bucketUrl    = res.bucketUrl    ?? '';
+            found.playbackUrl  = res.playbackUrl  ?? '';
+            found.deskshareUrl = res.deskshareUrl ?? '';
+          }
+        } else {
+          this.recordingProcessing[cls.id] = true;
+        }
+      },
+      error: () => {
+        this.stopPolling(cls.id);
+        this.recordingError[cls.id] = 'Failed to check recording status.';
+      }
+    });
+  }
+
+  private stopPolling(id: string): void {
+    clearInterval(this.pollingIntervals[id]);
+    delete this.pollingIntervals[id];
+    delete this.recordingPolling[id];
+    delete this.recordingProcessing[id];
+    delete this.recordingState[id];
+  }
+
+  getRecordingStateLabel(id: string): string {
+    switch (this.recordingState[id]) {
+      case 'pending':    return 'Waiting for BBB...';
+      case 'processing': return 'BBB processing...';
+      case 'processed':  return 'Preparing upload...';
+      case 'published':  return 'Capturing video...';
+      default:           return 'Processing...';
+    }
+  }
+
+  /** Auto-start polling for completed sessions without recordings */
+  private autoStartRecordingPolling(): void {
+    this.liveClasses
+      .filter(c => c.status === 'completed' && !c.bucketUrl && !c.playbackUrl && !this.pollingIntervals[c.id])
+      .forEach(c => this.pollRecording(c));
+  }
+
   // ─── Helpers ────────────────────────────────────────────────
 
   private mapDto(dto: LiveSessionDto): LiveClass {
@@ -356,7 +437,10 @@ export class LiveClassesComponent implements OnInit {
       endTime: dto.endTime ? this.formatTimeFromIso(dto.endTime) : '',
       students: 0,
       status: this.mapApiStatus(dto.status),
-      meetingLink: dto.meetingUrl ?? ''
+      meetingLink: dto.meetingUrl ?? '',
+      bucketUrl: '',
+      playbackUrl: '',
+      deskshareUrl: ''
     };
   }
 

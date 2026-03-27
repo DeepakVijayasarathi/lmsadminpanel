@@ -179,8 +179,8 @@
                             <i class="fa-solid fa-circle-play"></i> Play
                           </a>
                         </ng-container>
-                        <span *ngIf="recordingPolling[slot.id]" class="tt-rec-btn" style="cursor:default;" title="Processing recording…">
-                          <i class="fa-solid fa-circle-notch fa-spin"></i> Processing…
+                        <span *ngIf="recordingPolling[slot.id]" class="tt-rec-btn" style="cursor:default;" [title]="getRecordingStateLabel(slot.id)">
+                          <i class="fa-solid fa-circle-notch fa-spin"></i> {{ getRecordingStateLabel(slot.id) }}
                         </span>
                         <span *ngIf="!slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id]"
                           class="tt-rec-btn tt-rec-btn--pending" title="Recording link being prepared">
@@ -279,7 +279,7 @@
                 </a>
               </ng-container>
               <span *ngIf="recordingPolling[slot.id]" style="font-size:12px;color:#6366f1;">
-                <i class="fa-solid fa-circle-notch fa-spin"></i> Processing…
+                <i class="fa-solid fa-circle-notch fa-spin"></i> {{ getRecordingStateLabel(slot.id) }}
               </span>
               <span *ngIf="!slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id] && slot.status === 'completed'"
                 style="font-size:12px;color:#f59e0b;font-weight:600;display:flex;align-items:center;gap:4px;">
@@ -578,8 +578,14 @@
           <i class="fa-solid fa-film fa-beat-fade"></i>
         </div>
         <div>
-          <div class="sd-processing-card__title">Video is Processing</div>
-          <div class="sd-processing-card__sub">BigBlueButton is still encoding the recording. This may take a few minutes. We'll keep checking automatically.</div>
+          <div class="sd-processing-card__title">{{ getRecordingStateLabel(selectedSlot.id) }}</div>
+          <div class="sd-processing-card__sub" [ngSwitch]="recordingState[selectedSlot.id]">
+            <span *ngSwitchCase="'pending'">BBB has not started processing the recording yet. This usually begins shortly after the session ends.</span>
+            <span *ngSwitchCase="'processing'">BigBlueButton is actively converting the recording. This may take a few minutes depending on session length.</span>
+            <span *ngSwitchCase="'processed'">Recording has been processed. Preparing for upload...</span>
+            <span *ngSwitchCase="'published'">Recording is published. Capturing and uploading the video now...</span>
+            <span *ngSwitchDefault>BigBlueButton is still encoding the recording. We'll keep checking automatically.</span>
+          </div>
         </div>
       </div>
 

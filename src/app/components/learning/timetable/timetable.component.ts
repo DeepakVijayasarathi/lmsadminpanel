@@ -119,6 +119,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   recordingPolling:   Record<string, boolean> = {};
   recordingError:     Record<string, string>  = {};
   recordingProcessing: Record<string, boolean> = {};
+  recordingState:     Record<string, string>  = {};   // actual BBB state per slot
   private pollingIntervals: Record<string, ReturnType<typeof setInterval>> = {};
   private livePollingIntervals: Record<string, ReturnType<typeof setInterval>> = {};
 
@@ -345,16 +346,27 @@ export class TimetableComponent implements OnInit, OnDestroy {
   }
 
   private checkReadyAndFetch(slot: TimetableSlot): void {
-    this.timetableService.checkRecordingReady(slot.id).subscribe({
+    this.timetableService.getRecordingStatus(slot.id).subscribe({
       next: (res) => {
-        if (res.isReady) {
+        // Track the actual state for display
+        this.recordingState[slot.id] = res.state ?? 'pending';
+
+        if (res.state === 'not_recorded') {
+          this.stopPolling(slot.id);
+          this.recordingId = '';
+          this.recordingError[slot.id] = 'Recording not available.';
+          return;
+        }
+
+        if (res.isReady || res.state === 'completed') {
           this.stopPolling(slot.id);
           delete this.recordingProcessing[slot.id];
-          // If the ready response already includes URLs, use them directly
-          if (res.bucketUrl || res.playbackUrl || res.mp4Url) {
+          delete this.recordingState[slot.id];
+          if (res.bucketUrl || res.playbackUrl) {
             this.recordingId = '';
-            this.applyRecordingUrls(slot.id, res.playbackUrl, res.mp4Url, res.bucketUrl);
+            this.applyRecordingUrls(slot.id, res.playbackUrl ?? null, res.bucketUrl ?? null, res.bucketUrl ?? null);
           } else {
+            // Fallback: trigger recording processing if status says ready but no URLs
             this.timetableService.triggerRecording(slot.id).subscribe({
               next: (rec) => {
                 this.recordingId = '';
@@ -367,7 +379,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
             });
           }
         } else {
-          // isReady: false → still processing, keep polling
+          // Still processing — keep polling, show state
           this.recordingProcessing[slot.id] = true;
         }
       },
@@ -384,6 +396,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
     delete this.pollingIntervals[id];
     delete this.recordingPolling[id];
     delete this.recordingProcessing[id];
+    delete this.recordingState[id];
   }
 
   private applyRecordingUrls(id: string, playbackUrl: string | null, mp4Url: string | null, bucketUrl?: string | null): void {
@@ -397,6 +410,17 @@ export class TimetableComponent implements OnInit, OnDestroy {
   }
 
   // ── Recording helpers ─────────────────────────────────────────────────────
+  getRecordingStateLabel(slotId: string): string {
+    const state = this.recordingState[slotId];
+    switch (state) {
+      case 'pending':    return 'Waiting for BBB...';
+      case 'processing': return 'BBB processing...';
+      case 'processed':  return 'Preparing upload...';
+      case 'published':  return 'Capturing video...';
+      default:           return 'Processing...';
+    }
+  }
+
   isVideo(url: string): boolean {
     return !!(url?.includes('.mp4') || url?.includes('video'));
   }
@@ -782,6 +806,10 @@ export class TimetableComponent implements OnInit, OnDestroy {
         });
         // Auto-start live polling for any live slots not already being polled
         this.slots.filter(s => s.status === 'live').forEach(s => this.startLivePolling(s.id));
+        // Auto-start recording polling for completed sessions without a recording
+        this.slots
+          .filter(s => s.status === 'completed' && !s.bucketUrl && !s.mp4Url && !s.playbackUrl && !this.pollingIntervals[s.id])
+          .forEach(s => this.triggerRecording(s));
         this.isLoading = false;
       },
       error: () => {
