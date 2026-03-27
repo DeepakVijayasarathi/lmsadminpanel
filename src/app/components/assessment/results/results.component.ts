@@ -137,6 +137,7 @@ export class ResultsComponent implements OnInit {
           } else {
             this.results = [];
           }
+          this.results = this.results.filter((r) => r.quizId !== '00000000-0000-0000-0000-000000000000'); // filter out invalid entries
           this.resultsLoading = false;
         },
         error: () => {
