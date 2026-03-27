@@ -7,47 +7,45 @@ const BASE = environment.apiUrl + '/livesession';
 const TIMETABLE_BASE = environment.apiUrl + '/timetable';
 
 export interface SubstitutePayload {
-  date: string;
-  substituteTeacherId: string | null;
-  mergedIntoBatchId?: string | null;
+  batchId:              string;
+  teacherId:            string;
+  courseId:              string;
+  sessionSlotId:        string;
+  dayOfWeek:            number;
+  date:                 string;
+  substituteTeacherId:  string | null;
+  mergedIntoBatchId:    string | null;
 }
 
 export interface TimetableSlotDto {
-  id:           string;
-  day:          string;
-  session:      number;
-  subject:      string;
-  topic:        string;
-  teacher:      string;
-  batch:        string;
-  category:     string;
-  startTime:    string;
-  endTime:      string;
-  status:       string;
-  meetingId:    string;
-  meetingLink:  string;
-  recordingUrl: string;
-  playbackUrl:  string;
-  mp4Url:       string;
+  id:                   string;
+  batchId:              string;
+  teacherId:            string;
+  courseId:              string;
+  sessionSlotId:        string;
+  dayOfWeek:            number;       // 0=Sun … 6=Sat
+  slotNumber:           number;
+  slotName:             string;       // e.g. "Session 1"
+  startTime:            string;       // "09:00:00" (read-only, from SessionSlot)
+  endTime:              string;       // "10:30:00"
+  meetingUrl:           string;
+  substituteTeacherId:  string | null;
+  substitutionDate:     string | null;
+  isMergedClass:        boolean;
+  mergedIntoBatchId:    string | null;
 }
 
-export interface TimetablePayload {
-  batchId:   string | null;
-  teacherId: string | null;
-  courseId:  string | null;
-  sessionId: string | null;
-  day:       string | null;
-  session:   number;
-  subject:   string;
-  topic:     string;
-  teacher:   string;
-  batch:     string;
-  category:  string;
-  status:    string;
+export interface TimetableCreatePayload {
+  batchId:        string;
+  teacherId:      string;
+  courseId:        string;
+  sessionSlotId:  string;
+  dayOfWeek:      number;
 }
 
 export interface RecordingResult {
   isReady:      boolean;
+  state:        string | null;   // pending | processing | processed | published | completed | not_recorded
   playbackUrl:  string | null;
   bucketUrl:    string | null;
   mp4Url:       string | null;
@@ -75,19 +73,31 @@ export class TimetableService {
   constructor(private http: HttpClient) {}
 
   getAll(): Observable<TimetableSlotDto[]> {
-    return this.http.get<TimetableSlotDto[]>(`${BASE}`);
+    return this.http.get<TimetableSlotDto[]>(TIMETABLE_BASE);
   }
 
-  getById(id: string): Observable<any> {
-    return this.http.get<any>(`${BASE}/${id}`);
+  getById(id: string): Observable<TimetableSlotDto> {
+    return this.http.get<TimetableSlotDto>(`${TIMETABLE_BASE}/${id}`);
   }
 
-  createSlot(payload: TimetablePayload): Observable<TimetableSlotDto> {
-    return this.http.post<TimetableSlotDto>(`${BASE}/timetable`, payload);
+  getByBatch(batchId: string): Observable<TimetableSlotDto[]> {
+    return this.http.get<TimetableSlotDto[]>(`${TIMETABLE_BASE}/by-batch/${batchId}`);
   }
 
-  updateSlot(id: string, payload: TimetablePayload): Observable<TimetableSlotDto> {
-    return this.http.put<TimetableSlotDto>(`${BASE}/timetable/${id}`, payload);
+  getByTeacher(teacherId: string): Observable<TimetableSlotDto[]> {
+    return this.http.get<TimetableSlotDto[]>(`${TIMETABLE_BASE}/by-teacher/${teacherId}`);
+  }
+
+  createSlot(payload: TimetableCreatePayload): Observable<TimetableSlotDto> {
+    return this.http.post<TimetableSlotDto>(TIMETABLE_BASE, payload);
+  }
+
+  updateSlot(id: string, payload: TimetableCreatePayload): Observable<TimetableSlotDto> {
+    return this.http.put<TimetableSlotDto>(`${TIMETABLE_BASE}/${id}`, payload);
+  }
+
+  deleteSlot(id: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${TIMETABLE_BASE}/${id}`);
   }
 
   getJoinUrl(id: string, fullName: string, role: 'admin' | 'teacher' | 'student' = 'admin'): Observable<{ joinUrl: string }> {
@@ -106,6 +116,11 @@ export class TimetableService {
 
   checkRecordingReady(id: string): Observable<RecordingResult> {
     return this.http.get<RecordingResult>(`${BASE}/${id}/recording-ready`);
+  }
+
+  /** GET /livesession/{id}/recording-status — returns state + progress info */
+  getRecordingStatus(id: string): Observable<RecordingResult> {
+    return this.http.get<RecordingResult>(`${BASE}/${id}/recording-status`);
   }
 
   triggerRecording(id: string): Observable<RecordingResult> {

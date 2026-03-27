@@ -510,7 +510,7 @@ export class TeachersComponent implements OnInit {
         5: { halign: 'center' },
         6: { halign: 'center' },
       },
-      didDrawCell: (data) => {
+      didDrawCell: (data: any) => {
         // Status column (index 5)
         if (data.section === 'body' && data.column.index === 5) {
           const isActive = data.cell.raw === 'Active';
@@ -576,7 +576,7 @@ export class TeachersComponent implements OnInit {
           );
         }
       },
-      didDrawPage: (data) => {
+      didDrawPage: (data: any) => {
         const pageCount = (doc as any).internal.getNumberOfPages();
         const pageNum = (doc as any).internal.getCurrentPageInfo().pageNumber;
         doc.setFontSize(7.5);

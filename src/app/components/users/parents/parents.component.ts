@@ -340,7 +340,7 @@ export class ParentsComponent implements OnInit {
         5: { cellWidth: 45 }, // Students column — needs more room
         6: { halign: 'center' },
       },
-      didDrawCell: (data) => {
+      didDrawCell: (data: any) => {
         // Status column (index 6)
         if (data.section === 'body' && data.column.index === 6) {
           const isActive = data.cell.raw === 'Active';
@@ -374,7 +374,7 @@ export class ParentsComponent implements OnInit {
           );
         }
       },
-      didDrawPage: (data) => {
+      didDrawPage: (data: any) => {
         const pageCount = (doc as any).internal.getNumberOfPages();
         const pageNum = (doc as any).internal.getCurrentPageInfo().pageNumber;
         doc.setFontSize(7.5);

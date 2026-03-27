@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { TimetableService, SessionAnalytic } from '../../../services/timetable.service';
+import { TimetableService, TimetableSlotDto, TimetableCreatePayload, SessionAnalytic } from '../../../services/timetable.service';
 import { WhatsappService } from '../../../services/whatsapp.service';
 import { CommonService } from '../../../services/common.service';
 import { HttpGeneralService } from '../../../services/http.service';
@@ -11,41 +11,52 @@ import { Permission, PermissionService } from '../../../auth/permission.service'
 const BASE_URL = environment.apiUrl;
 
 export interface TimetableSlot {
-  id:             string;
-  day:            string;
-  session:        number;
-  sessionId:      string | null;
-  batchId:        string | null;
-  subject:        string;
-  topic:          string;
-  teacher:        string;
-  batch:          string;
-  category:       'Foundation' | 'Standard' | 'Advanced';
-  startTime:      string;
-  endTime:        string;
-  scheduledStart: string;   // ISO datetime from r.startTime (used for auto-reminder)
-  meetingId:      string;
-  meetingLink:    string;
-  recordingUrl:   string;
-  playbackUrl:    string;
-  mp4Url:         string;
-  bucketUrl:      string;
-  status:         'scheduled' | 'live' | 'completed' | 'cancelled';
+  id:                   string;
+  batchId:              string;
+  teacherId:            string;
+  courseId:              string;
+  sessionSlotId:        string;
+  dayOfWeek:            number;       // 0=Sun … 6=Sat
+  day:                  string;       // derived: "Monday", "Tuesday", …
+  session:              number;       // slotNumber
+  slotName:             string;       // e.g. "Session 1"
+  subject:              string;
+  topic:                string;
+  teacher:              string;       // resolved display name
+  batch:                string;       // resolved display name
+  category:             string;
+  startTime:            string;       // read-only from SessionSlot
+  endTime:              string;
+  scheduledStart:       string;       // ISO datetime (used for auto-reminder)
+  meetingId:            string;
+  meetingLink:          string;
+  recordingUrl:         string;
+  playbackUrl:          string;
+  mp4Url:               string;
+  bucketUrl:            string;
+  status:               'scheduled' | 'live' | 'completed' | 'cancelled';
+  substituteTeacherId:  string | null;
+  substitutionDate:     string | null;
+  isMergedClass:        boolean;
+  mergedIntoBatchId:    string | null;
 }
 
-export interface TimetablePayload {
-  batchId:   string | null;
-  teacherId: string | null;
-  courseId:  string | null;
-  sessionId: string | null;
-  day: string;
-  session: number;
-  subject: string;
-  topic: string;
-  teacher: string;
-  batch: string;
-  category: 'Foundation' | 'Standard' | 'Advanced';
-  status: 'scheduled' | 'live' | 'completed' | 'cancelled';
+/** Local form state — UI fields + IDs needed to build TimetableCreatePayload */
+interface TimetableFormData {
+  batchId:       string | null;
+  teacherId:     string | null;
+  courseId:       string | null;
+  sessionSlotId: string | null;
+  dayOfWeek:     number;
+  // UI-only fields for display / selection
+  day:       string;
+  session:   number;
+  subject:   string;
+  topic:     string;
+  teacher:   string;
+  batch:     string;
+  category:  string;
+  status:    string;
 }
 
 type ModalMode = 'create' | 'edit' | 'view' | 'delete' | 'substitute' | null;
@@ -119,6 +130,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   recordingPolling:   Record<string, boolean> = {};
   recordingError:     Record<string, string>  = {};
   recordingProcessing: Record<string, boolean> = {};
+  recordingState:     Record<string, string>  = {};   // actual BBB state per slot
   private pollingIntervals: Record<string, ReturnType<typeof setInterval>> = {};
   private livePollingIntervals: Record<string, ReturnType<typeof setInterval>> = {};
 
@@ -156,6 +168,10 @@ export class TimetableComponent implements OnInit, OnDestroy {
 
   // ── Static reference data ─────────────────────────────────────────────────
   readonly days       = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  private readonly dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  dayOfWeekToName(dow: number): string { return this.dayNames[dow] ?? ''; }
+  nameToDayOfWeek(name: string): number { return this.dayNames.indexOf(name); }
   readonly categories: Array<'Foundation' | 'Standard' | 'Advanced'> = ['Foundation', 'Standard', 'Advanced'];
   readonly statuses:   Array<'scheduled' | 'live' | 'completed' | 'cancelled'> = ['scheduled', 'live', 'completed', 'cancelled'];
 
@@ -345,16 +361,27 @@ export class TimetableComponent implements OnInit, OnDestroy {
   }
 
   private checkReadyAndFetch(slot: TimetableSlot): void {
-    this.timetableService.checkRecordingReady(slot.id).subscribe({
+    this.timetableService.getRecordingStatus(slot.id).subscribe({
       next: (res) => {
-        if (res.isReady) {
+        // Track the actual state for display
+        this.recordingState[slot.id] = res.state ?? 'pending';
+
+        if (res.state === 'not_recorded') {
+          this.stopPolling(slot.id);
+          this.recordingId = '';
+          this.recordingError[slot.id] = 'Recording not available.';
+          return;
+        }
+
+        if (res.isReady || res.state === 'completed') {
           this.stopPolling(slot.id);
           delete this.recordingProcessing[slot.id];
-          // If the ready response already includes URLs, use them directly
-          if (res.bucketUrl || res.playbackUrl || res.mp4Url) {
+          delete this.recordingState[slot.id];
+          if (res.bucketUrl || res.playbackUrl) {
             this.recordingId = '';
-            this.applyRecordingUrls(slot.id, res.playbackUrl, res.mp4Url, res.bucketUrl);
+            this.applyRecordingUrls(slot.id, res.playbackUrl ?? null, res.bucketUrl ?? null, res.bucketUrl ?? null);
           } else {
+            // Fallback: trigger recording processing if status says ready but no URLs
             this.timetableService.triggerRecording(slot.id).subscribe({
               next: (rec) => {
                 this.recordingId = '';
@@ -367,7 +394,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
             });
           }
         } else {
-          // isReady: false → still processing, keep polling
+          // Still processing — keep polling, show state
           this.recordingProcessing[slot.id] = true;
         }
       },
@@ -384,6 +411,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
     delete this.pollingIntervals[id];
     delete this.recordingPolling[id];
     delete this.recordingProcessing[id];
+    delete this.recordingState[id];
   }
 
   private applyRecordingUrls(id: string, playbackUrl: string | null, mp4Url: string | null, bucketUrl?: string | null): void {
@@ -397,6 +425,17 @@ export class TimetableComponent implements OnInit, OnDestroy {
   }
 
   // ── Recording helpers ─────────────────────────────────────────────────────
+  getRecordingStateLabel(slotId: string): string {
+    const state = this.recordingState[slotId];
+    switch (state) {
+      case 'pending':    return 'Waiting for BBB...';
+      case 'processing': return 'BBB processing...';
+      case 'processed':  return 'Preparing upload...';
+      case 'published':  return 'Capturing video...';
+      default:           return 'Processing...';
+    }
+  }
+
   isVideo(url: string): boolean {
     return !!(url?.includes('.mp4') || url?.includes('video'));
   }
@@ -409,11 +448,12 @@ export class TimetableComponent implements OnInit, OnDestroy {
   modalMode: ModalMode = null;
   selectedSlot: TimetableSlot | null = null;
 
-  form: TimetablePayload = this.emptyForm();
+  form: TimetableFormData = this.emptyForm();
 
-  emptyForm(): TimetablePayload {
+  emptyForm(): TimetableFormData {
     return {
-      batchId: null, teacherId: null, courseId: null, sessionId: null,
+      batchId: null, teacherId: null, courseId: null, sessionSlotId: null,
+      dayOfWeek: 1,
       day: '', session: 1, subject: '', topic: '', teacher: '',
       batch: '', category: 'Foundation',
       status: 'scheduled'
@@ -423,11 +463,14 @@ export class TimetableComponent implements OnInit, OnDestroy {
   openCreate(day?: string, session?: number): void {
     this.form = this.emptyForm();
     this.filteredTopicsList = [];
-    if (day) this.form.day = day;
+    if (day) {
+      this.form.day = day;
+      this.form.dayOfWeek = this.nameToDayOfWeek(day);
+    }
     if (session) this.form.session = session;
-    // Always resolve sessionId from the current session number
+    // Always resolve sessionSlotId from the current session number
     const sl = this.getSessionSlot(this.form.session);
-    if (sl) this.form.sessionId = sl.id;
+    if (sl) this.form.sessionSlotId = sl.id;
     if (this.batchFilter)    this.form.batch    = this.batchFilter;
     if (this.categoryFilter) this.form.category = this.categoryFilter as any;
     this.modalMode = 'create';
@@ -440,19 +483,20 @@ export class TimetableComponent implements OnInit, OnDestroy {
     // Resolve courseId from batch object (same as onBatchChange)
     const courseId =
       b?.courseId ?? b?.course?.id ?? b?.courseDto?.id ??
-      (slot as any).courseId ?? null;
-    // Resolve sessionId from apiSessionSlots by slot number
+      slot.courseId ?? null;
+    // Resolve sessionSlotId from apiSessionSlots by slot number
     const sessionSlot = this.getSessionSlot(slot.session);
-    const sessionId = sessionSlot?.id ?? slot.sessionId ?? null;
+    const sessionSlotId = sessionSlot?.id ?? slot.sessionSlotId ?? null;
     // Resolve teacherId from batch or teacher list
     const teacherId =
       b?.teacherId ?? b?.teacher?.id ?? b?.teacherDto?.id ?? b?.assignedTeacherId ??
-      t?.id ?? null;
+      t?.id ?? slot.teacherId ?? null;
     this.form = {
-      batchId:   b?.id   ?? null,
+      batchId:   b?.id   ?? slot.batchId ?? null,
       teacherId,
       courseId,
-      sessionId,
+      sessionSlotId,
+      dayOfWeek: slot.dayOfWeek,
       day: slot.day, session: slot.session, subject: slot.subject,
       topic: slot.topic, teacher: slot.teacher, batch: slot.batch,
       category: slot.category, status: slot.status
@@ -506,8 +550,14 @@ export class TimetableComponent implements OnInit, OnDestroy {
     }
     this.isSavingSubstitute = true;
     this.substituteError    = '';
-    this.timetableService.assignSubstitute(this.selectedSlot.id, {
-      date: this.substituteDate,
+    const slot = this.selectedSlot;
+    this.timetableService.assignSubstitute(slot.id, {
+      batchId:             slot.batchId,
+      teacherId:           slot.teacherId,
+      courseId:             slot.courseId,
+      sessionSlotId:       slot.sessionSlotId,
+      dayOfWeek:           slot.dayOfWeek,
+      date:                this.substituteDate,
       substituteTeacherId: this.substituteTeacherId,
       mergedIntoBatchId:   this.mergedIntoBatchId,
     }).subscribe({
@@ -526,9 +576,13 @@ export class TimetableComponent implements OnInit, OnDestroy {
 
   closeModal(): void { this.modalMode = null; this.selectedSlot = null; this.formErrors = {}; this.substituteError = ''; }
 
+  onDayChange(): void {
+    this.form.dayOfWeek = this.nameToDayOfWeek(this.form.day);
+  }
+
   onSessionChange(): void {
     const sl = this.getSessionSlot(this.form.session);
-    if (sl) { this.form.sessionId = sl.id; }
+    if (sl) { this.form.sessionSlotId = sl.id; }
   }
 
   onBatchChange(): void {
@@ -613,37 +667,59 @@ export class TimetableComponent implements OnInit, OnDestroy {
 
     this.isSaving = true;
 
+    // Build API payload from form
+    const payload: TimetableCreatePayload = {
+      batchId:       this.form.batchId!,
+      teacherId:     this.form.teacherId!,
+      courseId:       this.form.courseId!,
+      sessionSlotId: this.form.sessionSlotId!,
+      dayOfWeek:     this.form.dayOfWeek
+    };
+
     if (this.modalMode === 'create') {
-      this.timetableService.createSlot(this.form).subscribe({
+      this.timetableService.createSlot(payload).subscribe({
         next: () => {
           this.isSaving = false;
           this.closeModal();
           this.loadSlots();
         },
-        error: () => {
+        error: (err: any) => {
           this.isSaving = false;
+          this.formErrors['api'] = err?.error?.message || 'Failed to create slot.';
         }
       });
 
     } else if (this.modalMode === 'edit' && this.selectedSlot) {
-      this.timetableService.updateSlot(this.selectedSlot.id, this.form).subscribe({
+      this.timetableService.updateSlot(this.selectedSlot.id, payload).subscribe({
         next: () => {
           this.isSaving = false;
           this.closeModal();
           this.loadSlots();
         },
-        error: () => {
+        error: (err: any) => {
           this.isSaving = false;
+          this.formErrors['api'] = err?.error?.message || 'Failed to update slot.';
         }
       });
     }
   }
 
   confirmDelete(): void {
-    if (this.selectedSlot) {
-      this.slots = this.slots.filter(s => s.id !== this.selectedSlot!.id);
-    }
-    this.closeModal();
+    if (!this.selectedSlot) return;
+    this.isSaving = true;
+    this.timetableService.deleteSlot(this.selectedSlot.id).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.commonService.success('Slot deleted.');
+        this.closeModal();
+        this.loadSlots();
+      },
+      error: (err: any) => {
+        this.isSaving = false;
+        this.commonService.error(err?.error?.message || 'Failed to delete slot.');
+        this.closeModal();
+      }
+    });
   }
 
   formatSessionTime(session: number): string {
@@ -754,34 +830,48 @@ export class TimetableComponent implements OnInit, OnDestroy {
             this.stopLivePolling(id);
           }
         });
-        this.slots = list.map((r: any) => {
-          const tt = r.timetable ?? r;
+        this.slots = list.map((r: TimetableSlotDto) => {
+          // Resolve display names from loaded reference data
+          const batchObj  = this.apiBatches.find(b => b.id === r.batchId);
+          const teachObj  = this.apiTeachers.find(t => t.id === r.teacherId);
+          const courseObj  = this.apiCourses.find(c => c.id === r.courseId);
           return {
-            id:          r.id,
-            day:         tt.day,
-            session:     Number(tt.session),
-            subject:     tt.subject,
-            topic:       tt.topic,
-            teacher:     tt.teacher,
-            batch:       tt.batch,
-            category:    tt.category,
-            startTime:   tt.startTime   ?? '',
-            endTime:     tt.endTime     ?? '',
-            status:      (r.status ?? tt.status ?? 'scheduled').toLowerCase(),
-            meetingId:    tt.meetingId    ?? r.id,
-            meetingLink:  tt.meetingLink  ?? r.meetingUrl ?? '',
-            recordingUrl: tt.recordingUrl ?? tt.playbackUrl ?? r.recordingUrl ?? '',
-            playbackUrl:  tt.playbackUrl  ?? r.playbackUrl ?? '',
-            bucketUrl:      r.bucketUrl     ?? tt.bucketUrl  ?? '',
-            mp4Url:         tt.mp4Url       ?? r.mp4Url      ?? r.bucketUrl ?? '',
-            courseId:       r.courseId      ?? null,
-            sessionId:      r.sessionId     ?? null,
-            batchId:        r.batchId       ?? null,
-            scheduledStart: r.startTime     ?? '',
+            id:                  r.id,
+            batchId:             r.batchId,
+            teacherId:           r.teacherId,
+            courseId:             r.courseId,
+            sessionSlotId:       r.sessionSlotId,
+            dayOfWeek:           r.dayOfWeek,
+            day:                 this.dayOfWeekToName(r.dayOfWeek),
+            session:             r.slotNumber,
+            slotName:            r.slotName ?? `Session ${r.slotNumber}`,
+            subject:             courseObj ? this.getCourseName(courseObj) : '',
+            topic:               '',
+            teacher:             teachObj ? this.getTeacherName(teachObj) : '',
+            batch:               batchObj ? this.getBatchName(batchObj) : '',
+            category:            batchObj?.category ?? '',
+            startTime:           r.startTime ?? '',
+            endTime:             r.endTime   ?? '',
+            status:              'scheduled' as const,
+            meetingId:           r.id,
+            meetingLink:         r.meetingUrl ?? '',
+            recordingUrl:        '',
+            playbackUrl:         '',
+            mp4Url:              '',
+            bucketUrl:           '',
+            scheduledStart:      r.startTime ?? '',
+            substituteTeacherId: r.substituteTeacherId,
+            substitutionDate:    r.substitutionDate,
+            isMergedClass:       r.isMergedClass,
+            mergedIntoBatchId:   r.mergedIntoBatchId,
           };
         });
         // Auto-start live polling for any live slots not already being polled
         this.slots.filter(s => s.status === 'live').forEach(s => this.startLivePolling(s.id));
+        // Auto-start recording polling for completed sessions without a recording
+        this.slots
+          .filter(s => s.status === 'completed' && !s.bucketUrl && !s.mp4Url && !s.playbackUrl && !this.pollingIntervals[s.id])
+          .forEach(s => this.triggerRecording(s));
         this.isLoading = false;
       },
       error: () => {
@@ -798,8 +888,8 @@ export class TimetableComponent implements OnInit, OnDestroy {
         // Set default session from first slot
         if (this.apiSessionSlots.length > 0) {
           const first = this.apiSessionSlots.find(s => s.slotNumber === 1) ?? this.apiSessionSlots[0];
-          this.form.session   = first.slotNumber;
-          this.form.sessionId = first.id;
+          this.form.session      = first.slotNumber;
+          this.form.sessionSlotId = first.id;
         }
       },
       error: () => {}
