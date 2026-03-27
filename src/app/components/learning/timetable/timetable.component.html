@@ -394,7 +394,7 @@
 
       <div class="pg-form-group" [class.has-error]="formErrors['day']">
         <label>Day <span class="req">*</span></label>
-        <select [(ngModel)]="form.day" (ngModelChange)="formErrors['day']=''">
+        <select [(ngModel)]="form.day" (ngModelChange)="onDayChange(); formErrors['day']=''">
           <option value="">Select Day</option>
           <option *ngFor="let d of days" [value]="d">{{ d }}</option>
         </select>
