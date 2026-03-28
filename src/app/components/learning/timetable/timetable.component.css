@@ -1393,3 +1393,646 @@
 }
 .tt-rec-url-link:hover { text-decoration: underline; }
 
+/* ══════════════════════════════════════════════════════════════════════
+   MERGE MODAL — add these rules to timetable.component.css
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Large modal variant */
+.pg-modal--lg {
+  width: min(720px, 95vw);
+  max-height: 90vh;
+}
+
+/* Subtitle line in modal header */
+.pg-modal__sub {
+  font-size: 12px;
+  color: #64748b;
+  margin: 2px 0 0;
+  font-weight: 400;
+}
+
+/* Day chip inside modal header */
+.merge-modal__day-chip {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  background: #ede9fe;
+  color: #6366f1;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Error / success banners */
+.merge-modal__banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.merge-modal__banner--error {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+}
+.merge-modal__banner--success {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #166534;
+}
+
+/* Section layout */
+.merge-section {
+  margin-bottom: 20px;
+}
+
+.merge-section__heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.merge-section__heading h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.merge-section__hint {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.merge-optional {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+/* Step badge */
+.merge-step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #6366f1;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Count chip */
+.merge-count-chip {
+  margin-left: auto;
+  padding: 2px 10px;
+  background: #ede9fe;
+  color: #6366f1;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Search wrapper */
+.merge-search-wrap {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.merge-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.merge-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 32px 8px 32px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1e293b;
+  background: #f8fafc;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.merge-search:focus {
+  border-color: #6366f1;
+  background: #fff;
+}
+
+.merge-search__clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 2px 4px;
+  font-size: 12px;
+}
+
+/* Loading skeleton */
+.merge-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.merge-skeleton__row {
+  height: 60px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 10px;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Empty state */
+.merge-empty {
+  text-align: center;
+  padding: 24px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.merge-empty p { margin: 0; }
+
+/* Session card list */
+.merge-session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.merge-session-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+
+.merge-session-card:hover {
+  border-color: #a5b4fc;
+  background: #fafafe;
+}
+
+.merge-session-card--selected {
+  border-color: #6366f1;
+  background: #f5f3ff;
+}
+
+.merge-session-card__check {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.merge-session-card__check--active {
+  background: #6366f1;
+  border-color: #6366f1;
+  color: #fff;
+}
+
+.merge-session-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.merge-session-card__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.merge-session-card__batch {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.merge-session-card__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.merge-session-card__subject {
+  color: #6366f1;
+  font-weight: 500;
+}
+
+.merge-session-card__sep {
+  color: #cbd5e1;
+}
+
+.merge-session-card__teacher {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Preview card */
+.merge-preview {
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border: 1px solid #c4b5fd;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 4px;
+}
+
+.merge-preview__label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #7c3aed;
+  margin-bottom: 6px;
+}
+
+.merge-preview__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #3730a3;
+  margin-bottom: 8px;
+}
+
+.merge-preview__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: #6366f1;
+}
+
+.merge-preview__dissolve-note {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+/* Merged badge on slot cards */
+.merge-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 7px;
+  background: #ede9fe;
+  color: #6366f1;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.merge-badge--inline {
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* ── Extra classes for the corrected merge modal ── */
+
+.merge-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #f5f3ff;
+  border: 1px solid #c4b5fd;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #3730a3;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.merge-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+.merge-slot-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* API preview inside the preview card */
+.merge-preview__api {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #c4b5fd;
+}
+
+.merge-preview__api-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #7c3aed;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.merge-preview__api-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.merge-preview__api-step code {
+  background: #ede9fe;
+  color: #4c1d95;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: monospace;
+}
+
+.merge-preview__api-note {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.merge-preview__method {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.merge-preview__method--post { background: #dcfce7; color: #15803d; }
+.merge-preview__method--put  { background: #fef3c7; color: #92400e; }
+
+/* ══════════════════════════════════════════════════════════════
+   MERGED SESSION — add these to timetable.component.css
+   ══════════════════════════════════════════════════════════════ */
+
+/* Grid slot: purple left border for merged sessions */
+.tt-slot--merged {
+  border-left: 3px solid #6366f1 !important;
+}
+
+/* Merged banner inside grid slot card */
+.tt-merged-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  background: #f5f3ff;
+  border: 1px solid #c4b5fd;
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6366f1;
+  flex-wrap: wrap;
+}
+
+.tt-merged-batches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  width: 100%;
+}
+
+.tt-merged-batch-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  background: #ede9fe;
+  color: #4c1d95;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* List view: merged batch chips (smaller variant) */
+.tt-merged-batch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 3px;
+}
+
+.tt-merged-batch-chip-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  background: #ede9fe;
+  color: #6366f1;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* List view row highlight */
+.tt-row--merged {
+  background: #fdfcff;
+}
+
+.tt-row--merged:hover {
+  background: #f5f3ff;
+}
+
+/* Merged tag in status column */
+.tt-merged-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 2px 8px;
+  background: #ede9fe;
+  color: #6366f1;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* View modal: merged info card */
+.sd-merged-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f5f3ff;
+  border: 1px solid #c4b5fd;
+  border-radius: 10px;
+}
+
+/* ══ Merge modal styles (copy from timetable-merge.css if not already) ══ */
+.pg-modal--lg { width: min(720px, 95vw); max-height: 90vh; }
+.pg-modal__sub { font-size: 12px; color: #64748b; margin: 2px 0 0; font-weight: 400; }
+.merge-modal__day-chip { display: inline-block; margin-left: 6px; padding: 1px 8px; background: #ede9fe; color: #6366f1; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.merge-modal__banner { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; }
+.merge-modal__banner--error { background: #fef2f2; border: 1px solid #fca5a5; color: #dc2626; }
+.merge-modal__banner--success { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
+.merge-section { margin-bottom: 20px; }
+.merge-section__heading { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.merge-section__heading h3 { font-size: 14px; font-weight: 600; color: #1e293b; margin: 0; }
+.merge-section__hint { font-size: 12px; color: #94a3b8; margin-bottom: 10px; display: block; }
+.merge-optional { font-size: 12px; color: #94a3b8; font-weight: 400; }
+.merge-step-badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #6366f1; color: #fff; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.merge-count-chip { margin-left: auto; padding: 2px 10px; background: #ede9fe; color: #6366f1; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.merge-search-wrap { position: relative; margin-bottom: 12px; }
+.merge-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 13px; pointer-events: none; }
+.merge-search { width: 100%; box-sizing: border-box; padding: 8px 32px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; color: #1e293b; background: #f8fafc; outline: none; transition: border-color 0.15s; }
+.merge-search:focus { border-color: #6366f1; background: #fff; }
+.merge-search__clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #94a3b8; padding: 2px 4px; font-size: 12px; }
+.merge-skeleton { display: flex; flex-direction: column; gap: 8px; }
+.merge-skeleton__row { height: 60px; background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 10px; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.merge-empty { text-align: center; padding: 24px; color: #94a3b8; font-size: 13px; }
+.merge-empty p { margin: 0; }
+.merge-session-list { display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; padding-right: 4px; }
+.merge-session-card { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: border-color 0.15s, background 0.15s; user-select: none; }
+.merge-session-card:hover { border-color: #a5b4fc; background: #fafafe; }
+.merge-session-card--selected { border-color: #6366f1; background: #f5f3ff; }
+.merge-session-card__check { width: 18px; height: 18px; border-radius: 4px; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s, border-color 0.15s; }
+.merge-session-card__check--active { background: #6366f1; border-color: #6366f1; color: #fff; }
+.merge-session-card__info { flex: 1; min-width: 0; }
+.merge-session-card__row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+.merge-session-card__batch { font-weight: 600; font-size: 13px; color: #1e293b; }
+.merge-session-card__meta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; font-size: 12px; color: #64748b; }
+.merge-session-card__subject { color: #6366f1; font-weight: 500; }
+.merge-session-card__sep { color: #cbd5e1; }
+.merge-session-card__teacher { display: flex; align-items: center; gap: 3px; }
+.merge-preview { background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border: 1px solid #c4b5fd; border-radius: 12px; padding: 14px 16px; margin-top: 4px; }
+.merge-preview__label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #7c3aed; margin-bottom: 6px; }
+.merge-preview__title { font-size: 15px; font-weight: 700; color: #3730a3; margin-bottom: 8px; }
+.merge-preview__meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: #6366f1; }
+.merge-preview__dissolve-note { color: #f59e0b; font-weight: 600; }
+
+/* Merged session slot variant */
+.tt-slot--merged {
+  background: linear-gradient(140deg, #4338ca 0%, #6366f1 50%, #a78bfa 100%);
+}
+.tt-slot--merged .tt-slot__subject::after {
+  content: ' ⟵⟶';
+  font-size: 9px;
+  opacity: 0.7;
+}
+
+/* Merged banner inside grid slot */
+.tt-merged-banner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  color: rgba(255,255,255,0.9);
+  font-weight: 600;
+  flex-wrap: wrap;
+  margin: 1px 0;
+}
+.tt-merged-batches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.tt-merged-batch-chip {
+  background: rgba(255,255,255,0.22);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 8.5px;
+  color: #fff;
+  white-space: nowrap;
+}
+
+/* List view merged chips */
+.tt-merged-batch-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.tt-merged-batch-chip-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #ede9fe;
+  color: #4338ca;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* List row highlight for merged */
+.tt-row--merged td { background: #faf8ff; }
+
+/* Merged tag in status column */
+.tt-merged-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #6366f1;
+}
+
+/* Merged info card in view modal */
+.sd-merged-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #f5f3ff;
+  border: 1px solid #c4b5fd;
+  border-radius: 10px;
+  padding: 12px 16px;
+}
