@@ -12,13 +12,6 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button *ngIf="p.canUpdate" class="pg-btn" [class.pg-btn--success]="isRecordingEnabled" [class.pg-btn--secondary]="!isRecordingEnabled"
-        [disabled]="togglingRecording" (click)="toggleRecording()" [title]="isRecordingEnabled ? 'Recording ON – click to disable' : 'Recording OFF – click to enable'">
-        <i class="fa-solid" [class.fa-circle-notch]="togglingRecording" [class.fa-spin]="togglingRecording"
-           [class.fa-video]="!togglingRecording && isRecordingEnabled"
-           [class.fa-video-slash]="!togglingRecording && !isRecordingEnabled"></i>
-        {{ isRecordingEnabled ? 'Recording ON' : 'Recording OFF' }}
-      </button>
       <button class="pg-btn pg-btn--primary" (click)="openCreate()" *ngIf="p.canCreate">
         <i class="fa-solid fa-plus"></i> Schedule Session
       </button>

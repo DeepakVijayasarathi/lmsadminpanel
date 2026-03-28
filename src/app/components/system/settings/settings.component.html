@@ -71,6 +71,19 @@
           </div>
           <input type="checkbox" [(ngModel)]="allowRegistration" style="width:18px;height:18px;accent-color:#4f46e5;cursor:pointer;" />
         </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Session Recording</div>
+            <div class="toggle-sub">Enable or disable BBB session recording for all live classes</div>
+          </div>
+          <button class="pg-btn" [class.pg-btn--primary]="isRecordingEnabled" [class.pg-btn--ghost]="!isRecordingEnabled"
+            [disabled]="togglingRecording" (click)="toggleRecording()" style="min-width:110px;">
+            <i class="fa-solid" [class.fa-circle-notch]="togglingRecording" [class.fa-spin]="togglingRecording"
+               [class.fa-video]="!togglingRecording && isRecordingEnabled"
+               [class.fa-video-slash]="!togglingRecording && !isRecordingEnabled"></i>
+            {{ togglingRecording ? '…' : (isRecordingEnabled ? 'Enabled' : 'Disabled') }}
+          </button>
+        </div>
         <div class="form-field" style="margin-top:20px;">
           <label class="form-label">Max Students Per Batch</label>
           <input class="form-input" type="number" [(ngModel)]="maxStudentsPerBatch" min="1" max="200" placeholder="50" />

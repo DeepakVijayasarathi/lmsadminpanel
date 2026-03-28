@@ -117,7 +117,7 @@ export class DemoRegisterComponent implements OnInit {
     this.demoClassService.getAll().subscribe({
       next: (res: any) => {
         const all: DemoClassDto[] = Array.isArray(res) ? res : (res?.data ?? []);
-        this.demoClasses = all.filter(d => d.status === 'Scheduled');
+        this.demoClasses = all.filter(d => d.status === 0);
         this.isLoading = false;
       },
       error: () => { this.isLoading = false; },
