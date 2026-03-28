@@ -12,6 +12,7 @@ const BASE_URL = environment.apiUrl;
 export interface Class {
   id: string;
   name: string;
+  boardId: string;
 }
 
 export interface Course {
@@ -45,6 +46,12 @@ export interface CoursePayload {
   installmentCount: number | null;
 }
 
+export interface Board {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
 type ModalMode = 'create' | 'edit' | 'view' | 'delete' | 'publish' | null;
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -59,6 +66,7 @@ export class CoursesComponent implements OnInit {
   courses: Course[] = [];
   filteredCourses: Course[] = [];
   classes: Class[] = [];
+  boards: Board[] = [];
 
   searchQuery: string = '';
   statusFilter: string = '';
@@ -123,6 +131,7 @@ export class CoursesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loadBoards();
     this.loadClasses();
     this.loadCourses();
   }
@@ -136,6 +145,17 @@ export class CoursesComponent implements OnInit {
   // ════════════════════════════════════════════════════════════════
 
   /** GET /class */
+  loadBoards(): void {
+    this.httpService.getData(BASE_URL, '/board').subscribe({
+      next: (res: any) => {
+        this.boards = Array.isArray(res) ? res : (res?.data ?? []);
+      },
+      error: () => {
+        this.commonService.error('Failed to load boards.');
+      },
+    });
+  }
+
   loadClasses(): void {
     this.httpService.getData(BASE_URL, '/class').subscribe({
       next: (res: any) => {
@@ -445,7 +465,18 @@ export class CoursesComponent implements OnInit {
 
   getClassName(classId?: string): string {
     if (!classId) return '—';
-    return this.classes.find((c) => c.id === classId)?.name ?? '—';
+
+    const cls = this.classes.find((c) => c.id === classId);
+    if (!cls) return '—';
+
+    const board = this.boards.find((b) => b.id === cls.boardId);
+
+    return board ? `${board.name} - ${cls.name}` : cls.name;
+  }
+
+  getBoardClassName(cls: Class): string {
+    const board = this.boards.find((b) => b.id === cls.boardId);
+    return board ? `${board.name} - ${cls.name}` : cls.name;
   }
 
   getStatusBadge(course: Course): string {

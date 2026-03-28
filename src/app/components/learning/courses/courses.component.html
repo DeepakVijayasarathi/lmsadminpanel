@@ -304,7 +304,7 @@
       >
         <option value="">Select class...</option>
         <option *ngFor="let class of classes" [value]="class.id">
-          {{ class.name }}
+          {{ getBoardClassName(class) }}
         </option>
       </select>
       <div class="field-error" *ngIf="classError">

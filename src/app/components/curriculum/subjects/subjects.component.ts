@@ -28,6 +28,12 @@ export interface SubjectPayload {
   classId: string;
 }
 
+export interface Board {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
 type ModalMode = 'create' | 'edit' | 'view' | 'delete' | null;
 
 @Component({
@@ -40,6 +46,7 @@ export class SubjectsComponent implements OnInit {
   subjects: Subject[] = [];
   filteredSubjects: Subject[] = [];
   classes: ClassEntry[] = [];
+  boards: Board[] = [];
 
   searchQuery: string = '';
   selectedClassFilter: string = '';
@@ -84,6 +91,7 @@ export class SubjectsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loadBoards();
     this.loadClasses();
     this.loadSubjects();
   }
@@ -93,6 +101,17 @@ export class SubjectsComponent implements OnInit {
   }
 
   // ─── API Calls ──────────────────────────────────────────────
+
+  loadBoards(): void {
+    this.httpService.getData(BASE_URL, '/board').subscribe({
+      next: (res: any) => {
+        this.boards = Array.isArray(res) ? res : (res?.data ?? []);
+      },
+      error: () => {
+        this.commonService.error('Failed to load boards.');
+      },
+    });
+  }
 
   loadClasses(): void {
     this.httpService.getData(BASE_URL, '/class').subscribe({
@@ -269,7 +288,17 @@ export class SubjectsComponent implements OnInit {
   // ─── Helpers ─────────────────────────────────────────────────
 
   getClassName(classId: string): string {
-    return this.classes.find((c) => c.id === classId)?.name ?? '—';
+    const cls = this.classes.find((c) => c.id === classId);
+    if (!cls) return '—';
+
+    const board = this.boards.find((b) => b.id === cls.boardId);
+
+    return board ? `${board.name} - ${cls.name}` : cls.name;
+  }
+
+  getBoardClassName(cls: ClassEntry): string {
+    const board = this.boards.find((b) => b.id === cls.boardId);
+    return board ? `${board.name} - ${cls.name}` : cls.name;
   }
 
   // Classes that actually appear in loaded subjects (for filter dropdown)
