@@ -4,6 +4,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { TimetableService, TimetableSlotDto, TimetableCreatePayload, SessionAnalytic } from '../../../services/timetable.service';
 import { WhatsappService } from '../../../services/whatsapp.service';
 import { CommonService } from '../../../services/common.service';
+import { AppSettingService } from '../../../services/app-setting.service';
 import { HttpGeneralService } from '../../../services/http.service';
 import { environment } from '../../../../environments/environment';
 import { Permission, PermissionService } from '../../../auth/permission.service';
@@ -118,6 +119,32 @@ export class TimetableComponent implements OnInit, OnDestroy {
         });
       }
     } catch {}
+  }
+
+  // ── Recording toggle (AppSetting) ─────────────────────────────────────────
+  isRecordingEnabled = false;
+  togglingRecording  = false;
+
+  private loadRecordingSetting(): void {
+    this.appSettingService.getByKey('IsRecordingEnabled').subscribe({
+      next: (s) => { this.isRecordingEnabled = s.value === 'true'; },
+      error: ()  => { this.isRecordingEnabled = false; }
+    });
+  }
+
+  toggleRecording(): void {
+    this.togglingRecording = true;
+    this.appSettingService.toggleRecording().subscribe({
+      next: () => {
+        this.togglingRecording = false;
+        this.isRecordingEnabled = !this.isRecordingEnabled;
+        this.commonService.success(`Recording ${this.isRecordingEnabled ? 'enabled' : 'disabled'}.`);
+      },
+      error: () => {
+        this.togglingRecording = false;
+        this.commonService.error('Failed to toggle recording setting.');
+      }
+    });
   }
 
   // ── Loading ───────────────────────────────────────────────────────────────
@@ -750,6 +777,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
     this.loadCourses();
     this.loadCurrentUser();
     this.startAutoReminder();
+    this.loadRecordingSetting();
   }
 
   get p(): Permission {
@@ -981,6 +1009,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
     private sanitizer: DomSanitizer,
     private whatsappService: WhatsappService,
     private permissionService: PermissionService,
-    private router: Router
+    private router: Router,
+    private appSettingService: AppSettingService
   ) {}
 }

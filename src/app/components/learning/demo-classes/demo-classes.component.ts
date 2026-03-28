@@ -33,6 +33,8 @@ export class DemoClassesComponent implements OnInit {
   isSaving         = false;
   isDeleting       = false;
   regsLoading      = false;
+  joiningId        = '';
+  moderatorJoiningId = '';
   searchQuery      = '';
   statusFilter     = '';
 
@@ -98,8 +100,8 @@ export class DemoClassesComponent implements OnInit {
 
   // ── Stats ──────────────────────────────────────────────────────────────────
   get totalCount():     number { return this.demoClasses.length; }
-  get scheduledCount(): number { return this.demoClasses.filter(d => d.status === 'Scheduled').length; }
-  get liveCount():      number { return this.demoClasses.filter(d => d.status === 'Live').length; }
+  get scheduledCount(): number { return this.demoClasses.filter(d => d.status === 0).length; }
+  get liveCount():      number { return this.demoClasses.filter(d => d.status === 1).length; }
   get totalRegistered():number { return this.demoClasses.reduce((s, d) => s + (d.registeredCount ?? 0), 0); }
 
   // ── API ───────────────────────────────────────────────────────────────────
@@ -259,7 +261,7 @@ export class DemoClassesComponent implements OnInit {
         d.title.toLowerCase().includes(q) ||
         d.subject.toLowerCase().includes(q) ||
         d.teacherName.toLowerCase().includes(q);
-      const matchStatus = !this.statusFilter || d.status === this.statusFilter;
+      const matchStatus = this.statusFilter === '' || d.status === +this.statusFilter;
       return matchSearch && matchStatus;
     });
     this.currentPage = 1;
@@ -267,14 +269,38 @@ export class DemoClassesComponent implements OnInit {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
-  getStatusClass(status: string): string {
-    const map: Record<string, string> = {
-      Scheduled: 'pg-badge pg-badge--blue',
-      Live:      'pg-badge pg-badge--red',
-      Completed: 'pg-badge pg-badge--green',
-      Canceled:  'pg-badge pg-badge--gray',
+  readonly STATUS_LABELS: Record<number, string> = {
+    0: 'Scheduled', 1: 'Live', 2: 'Completed', 3: 'Canceled',
+  };
+
+  getStatusLabel(status: number): string {
+    return this.STATUS_LABELS[status] ?? 'Unknown';
+  }
+
+  getStatusClass(status: number): string {
+    const map: Record<number, string> = {
+      0: 'pg-badge pg-badge--blue',
+      1: 'pg-badge pg-badge--red',
+      2: 'pg-badge pg-badge--green',
+      3: 'pg-badge pg-badge--gray',
     };
-    return map[status] || 'pg-badge';
+    return map[status] ?? 'pg-badge';
+  }
+
+  joinAsStudent(d: DemoClassDto): void {
+    this.joiningId = d.id;
+    this.demoClassService.getJoinUrl(d.id, 'Student').subscribe({
+      next: ({ joinUrl }) => { window.open(joinUrl, '_blank'); this.joiningId = ''; },
+      error: ()           => { this.commonService.error('Failed to get join link.'); this.joiningId = ''; },
+    });
+  }
+
+  joinAsModerator(d: DemoClassDto): void {
+    this.moderatorJoiningId = d.id;
+    this.demoClassService.getModeratorJoinUrl(d.id, d.teacherName).subscribe({
+      next: ({ joinUrl }) => { window.open(joinUrl, '_blank'); this.moderatorJoiningId = ''; },
+      error: ()           => { this.commonService.error('Failed to get moderator link.'); this.moderatorJoiningId = ''; },
+    });
   }
 
   onTeacherChange(): void {

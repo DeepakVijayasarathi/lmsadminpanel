@@ -59,10 +59,10 @@
           [(ngModel)]="searchQuery" (ngModelChange)="applyFilters()" />
         <select class="pg-filter" [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
           <option value="">All Status</option>
-          <option value="Scheduled">Scheduled</option>
-          <option value="Live">Live</option>
-          <option value="Completed">Completed</option>
-          <option value="Canceled">Canceled</option>
+          <option value="0">Scheduled</option>
+          <option value="1">Live</option>
+          <option value="2">Completed</option>
+          <option value="3">Canceled</option>
         </select>
       </div>
     </div>
@@ -112,13 +112,25 @@
               <div class="pg-cell__primary">{{ d.registeredCount }} / {{ d.maxStudents }}</div>
             </td>
             <td>
-              <span [class]="getStatusClass(d.status)">{{ d.status }}</span>
+              <span [class]="getStatusClass(d.status)">{{ getStatusLabel(d.status) }}</span>
             </td>
             <td>
-              <div style="display:flex;gap:5px;align-items:center;">
+              <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
                 <button class="pg-action-btn" title="View" (click)="openView(d)"><i class="fa-solid fa-eye"></i></button>
                 <button class="pg-action-btn" title="Registrations" (click)="openRegistrations(d)">
                   <i class="fa-solid fa-users"></i>
+                </button>
+                <button *ngIf="d.status === 0 || d.status === 1" class="pg-action-btn" title="Join as Student"
+                  [disabled]="joiningId === d.id"
+                  (click)="joinAsStudent(d)">
+                  <i class="fa-solid" [class.fa-circle-notch]="joiningId === d.id" [class.fa-spin]="joiningId === d.id"
+                     [class.fa-video]="joiningId !== d.id"></i>
+                </button>
+                <button *ngIf="d.status === 0 || d.status === 1" class="pg-action-btn" title="Join as Moderator"
+                  [disabled]="moderatorJoiningId === d.id"
+                  (click)="joinAsModerator(d)">
+                  <i class="fa-solid" [class.fa-circle-notch]="moderatorJoiningId === d.id" [class.fa-spin]="moderatorJoiningId === d.id"
+                     [class.fa-chalkboard-user]="moderatorJoiningId !== d.id"></i>
                 </button>
                 <button class="pg-action-btn" title="Edit" (click)="openEdit(d)"><i class="fa-solid fa-pen"></i></button>
                 <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDelete(d)"><i class="fa-solid fa-trash"></i></button>
@@ -259,7 +271,11 @@
       <div class="pg-detail-item"><span class="pg-detail-lbl">Date</span><span>{{ selected.scheduledDate | date:'dd MMM yyyy' }}</span></div>
       <div class="pg-detail-item"><span class="pg-detail-lbl">Time</span><span>{{ selected.startTime }} – {{ selected.endTime }}</span></div>
       <div class="pg-detail-item"><span class="pg-detail-lbl">Registered</span><span>{{ selected.registeredCount }} / {{ selected.maxStudents }}</span></div>
-      <div class="pg-detail-item"><span class="pg-detail-lbl">Status</span><span [class]="getStatusClass(selected.status)">{{ selected.status }}</span></div>
+      <div class="pg-detail-item"><span class="pg-detail-lbl">Status</span><span [class]="getStatusClass(selected.status)">{{ getStatusLabel(selected.status) }}</span></div>
+      <div class="pg-detail-item" style="grid-column:1/-1;" *ngIf="selected.meetingUrl">
+        <span class="pg-detail-lbl">Meeting URL</span>
+        <a [href]="selected.meetingUrl" target="_blank" style="word-break:break-all;">{{ selected.meetingUrl }}</a>
+      </div>
       <div class="pg-detail-item" style="grid-column:1/-1;" *ngIf="selected.description">
         <span class="pg-detail-lbl">Description</span><span>{{ selected.description }}</span>
       </div>
@@ -267,6 +283,18 @@
   </div>
   <div class="pg-modal__foot">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+    <button *ngIf="selected.status === 0 || selected.status === 1"
+      class="pg-btn pg-btn--secondary" [disabled]="joiningId === selected.id" (click)="joinAsStudent(selected!)">
+      <i class="fa-solid" [class.fa-circle-notch]="joiningId === selected!.id" [class.fa-spin]="joiningId === selected!.id"
+         [class.fa-video]="joiningId !== selected!.id"></i>
+      Join as Student
+    </button>
+    <button *ngIf="selected.status === 0 || selected.status === 1"
+      class="pg-btn pg-btn--primary" [disabled]="moderatorJoiningId === selected.id" (click)="joinAsModerator(selected!)">
+      <i class="fa-solid" [class.fa-circle-notch]="moderatorJoiningId === selected!.id" [class.fa-spin]="moderatorJoiningId === selected!.id"
+         [class.fa-chalkboard-user]="moderatorJoiningId !== selected!.id"></i>
+      Join as Moderator
+    </button>
     <button class="pg-btn pg-btn--primary" (click)="openRegistrations(selected!)">
       <i class="fa-solid fa-users"></i> View Registrations
     </button>

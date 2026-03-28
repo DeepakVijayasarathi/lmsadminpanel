@@ -5,6 +5,9 @@ import { environment } from '../../environments/environment';
 
 const BASE = environment.apiUrl + '/democlass';
 
+/** 0=Scheduled, 1=Live, 2=Completed, 3=Canceled */
+export type DemoClassStatus = 0 | 1 | 2 | 3;
+
 export interface DemoClassDto {
   id: string;
   title: string;
@@ -22,7 +25,9 @@ export interface DemoClassDto {
   endTime: string;
   maxStudents: number;
   registeredCount: number;
-  status: 'Scheduled' | 'Live' | 'Completed' | 'Canceled';
+  meetingUrl?: string;
+  liveSessionId?: string;
+  status: DemoClassStatus;
 }
 
 export interface DemoClassPayload {
@@ -91,5 +96,13 @@ export class DemoClassService {
 
   register(payload: DemoRegisterPayload): Observable<DemoRegistrationDto> {
     return this.http.post<DemoRegistrationDto>(`${BASE}/register`, payload);
+  }
+
+  getJoinUrl(id: string, name: string): Observable<{ joinUrl: string }> {
+    return this.http.get<{ joinUrl: string }>(`${BASE}/${id}/join`, { params: { name } });
+  }
+
+  getModeratorJoinUrl(id: string, name: string): Observable<{ joinUrl: string }> {
+    return this.http.get<{ joinUrl: string }>(`${BASE}/${id}/join-moderator`, { params: { name } });
   }
 }
