@@ -42,6 +42,7 @@ import { TeacherPerformanceComponent } from './components/reports/teacher-perfor
 import { DemoClassesComponent } from './components/learning/demo-classes/demo-classes.component';
 import { DemoRegisterComponent } from './components/learning/demo-classes/demo-register.component';
 import { ZonalComponent } from './components/zonal/zonal.component';
+import { StudentImportComponent } from './components/student-import/student-import.component';
 
 const AG = [AuthGuard];
 
@@ -58,6 +59,7 @@ const routes: Routes = [
   // { path: 'teacher-dashboard', component: TeacherDashboardComponent, canActivate: AG },
 
   // User
+  { path: 'student-upload', component: StudentImportComponent, canActivate: AG },
   { path: 'students',    component: StudentsComponent,    canActivate: AG },
   { path: 'teachers',   component: TeachersComponent,   canActivate: AG },
   { path: 'parents',  component: ParentsComponent,  canActivate: AG },

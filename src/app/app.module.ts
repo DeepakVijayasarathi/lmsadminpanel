@@ -56,6 +56,7 @@ import { TeacherPerformanceComponent } from './components/reports/teacher-perfor
 import { DemoClassesComponent } from './components/learning/demo-classes/demo-classes.component';
 import { DemoRegisterComponent } from './components/learning/demo-classes/demo-register.component';
 import { ZonalComponent } from './components/zonal/zonal.component';
+import { StudentImportComponent } from './components/student-import/student-import.component';
 
 @NgModule({
   declarations: [
@@ -107,6 +108,7 @@ import { ZonalComponent } from './components/zonal/zonal.component';
     DemoClassesComponent,
     DemoRegisterComponent,
     ZonalComponent,
+    StudentImportComponent
   ],
   imports: [
     BrowserModule,

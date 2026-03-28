@@ -1,0 +1,246 @@
+<div class="import-page">
+  <div class="page-header">
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1>Student Data Import</h1>
+      <p>Upload an Excel file to bulk import student records into the system</p>
+    </div>
+  </div>
+
+  <div class="content-grid">
+    <!-- Upload Card -->
+    <div class="card upload-card">
+      <div class="card-header">
+        <span class="card-tag">Step 1</span>
+        <h2>Upload Excel File</h2>
+        <p>Select a <code>.xlsx</code> or <code>.xls</code> file containing student data</p>
+      </div>
+
+      <div
+        class="drop-zone"
+        [class.drag-over]="isDragOver"
+        [class.has-file]="selectedFile"
+        [class.uploading]="isUploading"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+        (click)="fileInput.click()"
+      >
+        <input
+          #fileInput
+          type="file"
+          accept=".xlsx,.xls"
+          (change)="onFileSelected($event)"
+          hidden
+        />
+
+        <div class="drop-zone-inner" *ngIf="!selectedFile && !isUploading">
+          <div class="drop-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+          </div>
+          <p class="drop-title">Drag & drop your file here</p>
+          <p class="drop-subtitle">or click to browse</p>
+          <span class="drop-hint">Supports .xlsx and .xls formats only</span>
+        </div>
+
+        <div class="file-preview" *ngIf="selectedFile && !isUploading">
+          <div class="file-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <div class="file-info">
+            <span class="file-name">{{ selectedFile.name }}</span>
+            <span class="file-size">{{ formatFileSize(selectedFile.size) }}</span>
+          </div>
+          <button class="remove-file" (click)="removeFile($event)" title="Remove file">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="upload-progress" *ngIf="isUploading">
+          <div class="spinner"></div>
+          <p>Uploading and processing...</p>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button
+          class="btn btn-primary"
+          [disabled]="!selectedFile || isUploading"
+          (click)="uploadFile()"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          {{ isUploading ? 'Uploading...' : 'Import Students' }}
+        </button>
+      </div>
+
+      <!-- Import Result -->
+      <div class="import-result" *ngIf="importResult">
+
+        <!-- Stats Row -->
+        <div class="result-stats">
+          <div class="stat stat-success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div>
+              <span class="stat-value">{{ importResult.successCount }}</span>
+              <span class="stat-label">Imported</span>
+            </div>
+          </div>
+
+          <div class="stat stat-failed" [class.stat-zero]="importResult.failedCount === 0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div>
+              <span class="stat-value">{{ importResult.failedCount }}</span>
+              <span class="stat-label">Failed</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Failed List -->
+        <div class="failed-list" *ngIf="importResult.failedCount > 0">
+          <div class="failed-list-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <strong>Failed Records ({{ importResult.failedList.length }})</strong>
+          </div>
+          <ul>
+            <li *ngFor="let item of importResult.failedList">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              <span>{{ item }}</span>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="alert alert-error" *ngIf="errorMessage">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <div>
+          <strong>Import Failed</strong>
+          <p>{{ errorMessage }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sample Template Card -->
+    <div class="card template-card">
+      <div class="card-header">
+        <span class="card-tag">Step 2</span>
+        <h2>Download Template</h2>
+        <p>Get the official Excel template with the required column structure</p>
+      </div>
+
+      <div class="template-preview">
+        <div class="template-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <div class="template-info">
+          <h3>Student_Template.xlsx</h3>
+          <p>Pre-formatted Excel file with all required fields and sample data rows</p>
+          <ul class="template-features">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>
+              Required column headers
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>
+              Sample student records
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>
+              Data format guidelines
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button
+          class="btn btn-secondary"
+          [disabled]="isDownloading"
+          (click)="downloadSampleExcel()"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          {{ isDownloading ? 'Downloading...' : 'Download Sample Template' }}
+        </button>
+      </div>
+
+      <div class="alert alert-error" *ngIf="downloadError">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <div>
+          <strong>Download Failed</strong>
+          <p>{{ downloadError }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Instructions -->
+  <div class="instructions-card">
+    <h3>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      How to Import Students
+    </h3>
+    <ol class="steps-list">
+      <li>
+        <span class="step-num">1</span>
+        <div>
+          <strong>Download the sample template</strong>
+          <p>Use the template to ensure your data matches the expected format.</p>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">2</span>
+        <div>
+          <strong>Fill in student data</strong>
+          <p>Populate the spreadsheet with student records following the column format.</p>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">3</span>
+        <div>
+          <strong>Upload the file</strong>
+          <p>Drag and drop or click to select your completed Excel file for import.</p>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">4</span>
+        <div>
+          <strong>Review the results</strong>
+          <p>A success or error message will confirm the outcome of the import.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</div>

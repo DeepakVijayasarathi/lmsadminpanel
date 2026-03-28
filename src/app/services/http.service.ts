@@ -28,7 +28,7 @@ export class HttpGeneralService<T> {
     });
   }
 
-  getData(url: string, apiRoute: string): Observable<any> {
+  getData(url: string, apiRoute: string, options?: any): Observable<any> {
     this.turnOnModal();
     return this.httpClient.get(url + apiRoute, { headers: this.getAuthHeaders(), }).pipe(
       map(
@@ -48,11 +48,11 @@ export class HttpGeneralService<T> {
     );
   }
 
-  postData(url: string, apiRoute: string, data: T): Observable<any> {
+  postData(url: string, apiRoute: string, data: T, options?: any): Observable<any> {
     this.turnOnModal();
     const isFormData = data instanceof FormData;
     return this.httpClient.post(
-      url + apiRoute, 
+      url + apiRoute,
       isFormData ? data : JSON.stringify(data),
       {
         headers: isFormData ? this.getFormDataHeaders() : this.getAuthHeaders()
@@ -78,7 +78,7 @@ export class HttpGeneralService<T> {
   putData(url: string, apiRoute: string, data: T) {
     const isFormData = data instanceof FormData;
     return this.httpClient.put(
-      url + apiRoute, 
+      url + apiRoute,
       isFormData ? data : JSON.stringify(data),
       {
         headers: isFormData ? this.getFormDataHeaders() : this.getAuthHeaders()
