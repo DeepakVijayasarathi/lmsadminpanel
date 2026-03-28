@@ -3,9 +3,7 @@
   <!-- Page Header -->
   <div class="pg-head">
     <div class="pg-head__left">
-      <div class="pg-head__icon chip-indigo">
-        <i class="fa-solid fa-calendar-days"></i>
-      </div>
+      <div class="pg-head__icon chip-indigo"><i class="fa-solid fa-calendar-days"></i></div>
       <div>
         <div class="pg-head__title">Timetable Assignment</div>
         <div class="pg-head__sub">Online session schedule for all batches and grades &mdash; powered by BigBlueButton</div>
@@ -20,34 +18,10 @@
 
   <!-- Stats -->
   <div class="pg-stats">
-    <div class="pg-stat">
-      <div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-calendar-check"></i></div>
-      <div>
-        <div class="pg-stat__val">{{ totalSlots }}</div>
-        <div class="pg-stat__lbl">Total Sessions</div>
-      </div>
-    </div>
-    <div class="pg-stat">
-      <div class="pg-stat__icon chip-rose"><i class="fa-solid fa-circle-dot"></i></div>
-      <div>
-        <div class="pg-stat__val">{{ liveNow }}</div>
-        <div class="pg-stat__lbl">Live Now</div>
-      </div>
-    </div>
-    <div class="pg-stat">
-      <div class="pg-stat__icon chip-sky"><i class="fa-solid fa-clock"></i></div>
-      <div>
-        <div class="pg-stat__val">{{ scheduledCount }}</div>
-        <div class="pg-stat__lbl">Scheduled</div>
-      </div>
-    </div>
-    <div class="pg-stat">
-      <div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-layer-group"></i></div>
-      <div>
-        <div class="pg-stat__val">{{ activeBatches }}</div>
-        <div class="pg-stat__lbl">Active Batches</div>
-      </div>
-    </div>
+    <div class="pg-stat"><div class="pg-stat__icon chip-indigo"><i class="fa-solid fa-calendar-check"></i></div><div><div class="pg-stat__val">{{ totalSlots }}</div><div class="pg-stat__lbl">Total Sessions</div></div></div>
+    <div class="pg-stat"><div class="pg-stat__icon chip-rose"><i class="fa-solid fa-circle-dot"></i></div><div><div class="pg-stat__val">{{ liveNow }}</div><div class="pg-stat__lbl">Live Now</div></div></div>
+    <div class="pg-stat"><div class="pg-stat__icon chip-sky"><i class="fa-solid fa-clock"></i></div><div><div class="pg-stat__val">{{ scheduledCount }}</div><div class="pg-stat__lbl">Scheduled</div></div></div>
+    <div class="pg-stat"><div class="pg-stat__icon chip-emerald"><i class="fa-solid fa-layer-group"></i></div><div><div class="pg-stat__val">{{ activeBatches }}</div><div class="pg-stat__lbl">Active Batches</div></div></div>
   </div>
 
   <!-- Table Card -->
@@ -66,17 +40,18 @@
           <option *ngFor="let b of apiBatches" [value]="getBatchName(b)">{{ getBatchName(b) }}</option>
         </select>
         <div class="tt-view-toggle">
-          <button [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" title="Grid view">
-            <i class="fa-solid fa-table-cells"></i>
-          </button>
-          <button [class.active]="viewMode === 'list'" (click)="viewMode = 'list'" title="List view">
-            <i class="fa-solid fa-list"></i>
-          </button>
+          <button [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" title="Grid view"><i class="fa-solid fa-table-cells"></i></button>
+          <button [class.active]="viewMode === 'list'" (click)="viewMode = 'list'" title="List view"><i class="fa-solid fa-list"></i></button>
         </div>
       </div>
     </div>
 
-    <!-- ── GRID VIEW ──────────────────────────────────────────────────── -->
+    <!-- ════════════════════════════════════════════════════════════════
+         GRID VIEW
+         filteredSlots comes from expandedSlots — merged sessions are
+         duplicated once per participating batch, so the grid shows
+         the merged card under EACH batch column when filtered.
+         ════════════════════════════════════════════════════════════════ -->
     <div class="tt-grid-wrap" *ngIf="viewMode === 'grid'">
       <table class="tt-grid">
         <thead>
@@ -89,14 +64,11 @@
           <tr *ngFor="let session of sessions">
             <td class="tt-session-label">
               <div class="tt-session-num">{{ getSessionLabel(session) }}</div>
-              <div class="tt-session-time" *ngIf="formatSessionTime(session)">
-                <i class="fa-regular fa-clock"></i>
-                {{ formatSessionTime(session) }}
-              </div>
+              <div class="tt-session-time" *ngIf="formatSessionTime(session)"><i class="fa-regular fa-clock"></i> {{ formatSessionTime(session) }}</div>
             </td>
             <td *ngFor="let day of days" class="tt-cell">
               <ng-container *ngIf="getSlot(day, session) as slot; else emptyCell">
-                <div [class]="'tt-slot tt-slot--' + slot.status">
+                <div [class]="'tt-slot tt-slot--' + slot.status + (slot.isMergedSession ? ' tt-slot--merged' : '')">
 
                   <!-- Top row: subject + status pill -->
                   <div class="tt-slot__top">
@@ -107,103 +79,69 @@
                     </span>
                   </div>
 
+                  <!-- Merged banner — shows all batch names -->
+                  <div class="tt-merged-banner" *ngIf="slot.isMergedSession">
+                    <i class="fa-solid fa-code-merge"></i>
+                    <span>Merged</span>
+                    <div class="tt-merged-batches">
+                      <span class="tt-merged-batch-chip" *ngFor="let b of getMergedBatchList(slot)">{{ b }}</span>
+                    </div>
+                  </div>
+
                   <!-- Topic -->
                   <div class="tt-slot__topic" *ngIf="slot.topic">{{ slot.topic }}</div>
 
                   <!-- Teacher -->
-                  <div class="tt-slot__teacher">
-                    <i class="fa-solid fa-chalkboard-user"></i>
-                    {{ slot.teacher }}
-                  </div>
+                  <div class="tt-slot__teacher"><i class="fa-solid fa-chalkboard-user"></i> {{ slot.teacher }}</div>
 
-                  <!-- Footer: category + action buttons -->
+                  <!-- Footer -->
                   <div class="tt-slot__foot">
                     <span [class]="'tt-exam-tag ' + getCategoryChip(slot.category)">{{ slot.category }}</span>
-
                     <div style="display:flex;gap:3px;align-items:center;">
-
-                      <!-- scheduled → Start + Join -->
                       <ng-container *ngIf="slot.status === 'scheduled'">
-                        <button class="tt-join-btn" *ngIf="p.canUpdate"
-                          [disabled]="startingId === slot.id"
-                          (click)="startSession(slot); $event.stopPropagation()" title="Start session">
-                          <i class="fa-solid"
-                             [class.fa-circle-notch]="startingId === slot.id"
-                             [class.fa-spin]="startingId === slot.id"
-                             [class.fa-play]="startingId !== slot.id"></i>
+                        <button class="tt-join-btn" *ngIf="p.canUpdate" [disabled]="startingId === slot.id" (click)="startSession(slot); $event.stopPropagation()">
+                          <i class="fa-solid" [class.fa-circle-notch]="startingId===slot.id" [class.fa-spin]="startingId===slot.id" [class.fa-play]="startingId!==slot.id"></i>
                           {{ startingId === slot.id ? '…' : 'Start' }}
                         </button>
-                        <button class="tt-join-btn"
-                          [disabled]="joiningId === slot.id"
-                          (click)="joinSlot(slot, false); $event.stopPropagation()" title="Join as attendee">
-                          <i class="fa-solid"
-                             [class.fa-circle-notch]="joiningId === slot.id"
-                             [class.fa-spin]="joiningId === slot.id"
-                             [class.fa-video]="joiningId !== slot.id"></i>
-                          Join
+                        <button class="tt-join-btn" [disabled]="joiningId === slot.id" (click)="joinSlot(slot, false); $event.stopPropagation()">
+                          <i class="fa-solid" [class.fa-circle-notch]="joiningId===slot.id" [class.fa-spin]="joiningId===slot.id" [class.fa-video]="joiningId!==slot.id"></i> Join
                         </button>
                       </ng-container>
-
-                      <!-- live → End + Join Live -->
                       <ng-container *ngIf="slot.status === 'live'">
-                        <button *ngIf="p.canUpdate" class="tt-join-btn"
-                          [disabled]="endingId === slot.id"
-                          (click)="endSession(slot); $event.stopPropagation()" title="End session">
-                          <i class="fa-solid"
-                             [class.fa-circle-notch]="endingId === slot.id"
-                             [class.fa-spin]="endingId === slot.id"
-                             [class.fa-stop]="endingId !== slot.id"></i>
+                        <button *ngIf="p.canUpdate" class="tt-join-btn" [disabled]="endingId === slot.id" (click)="endSession(slot); $event.stopPropagation()">
+                          <i class="fa-solid" [class.fa-circle-notch]="endingId===slot.id" [class.fa-spin]="endingId===slot.id" [class.fa-stop]="endingId!==slot.id"></i>
                           {{ endingId === slot.id ? '…' : 'End' }}
                         </button>
-                        <button class="tt-join-btn tt-join-btn--live"
-                          [disabled]="joiningId === slot.id"
-                          (click)="joinSlot(slot, true); $event.stopPropagation()" title="Join live as moderator">
-                          <i class="fa-solid"
-                             [class.fa-circle-notch]="joiningId === slot.id"
-                             [class.fa-spin]="joiningId === slot.id"
-                             [class.fa-video]="joiningId !== slot.id"></i>
-                          Live
+                        <button class="tt-join-btn tt-join-btn--live" [disabled]="joiningId === slot.id" (click)="joinSlot(slot, true); $event.stopPropagation()">
+                          <i class="fa-solid" [class.fa-circle-notch]="joiningId===slot.id" [class.fa-spin]="joiningId===slot.id" [class.fa-video]="joiningId!==slot.id"></i> Live
                         </button>
                       </ng-container>
-
-                      <!-- completed → Play / Download or Get Recording -->
                       <ng-container *ngIf="slot.status === 'completed'">
                         <ng-container *ngIf="slot.bucketUrl || slot.mp4Url || slot.playbackUrl">
-                          <a *ngIf="slot.bucketUrl || slot.mp4Url"
-                             [href]="slot.bucketUrl || slot.mp4Url" target="_blank"
-                             class="tt-rec-btn tt-rec-btn--ready" (click)="$event.stopPropagation()" title="Play MP4">
-                            <i class="fa-solid fa-circle-play"></i> MP4
-                          </a>
-                          <a *ngIf="slot.playbackUrl && !slot.bucketUrl && !slot.mp4Url" [href]="slot.playbackUrl" target="_blank"
-                             class="tt-rec-btn tt-rec-btn--ready" (click)="$event.stopPropagation()" title="BBB Playback">
-                            <i class="fa-solid fa-circle-play"></i> Play
-                          </a>
+                          <a *ngIf="slot.bucketUrl || slot.mp4Url" [href]="slot.bucketUrl || slot.mp4Url" target="_blank" class="tt-rec-btn tt-rec-btn--ready" (click)="$event.stopPropagation()"><i class="fa-solid fa-circle-play"></i> MP4</a>
+                          <a *ngIf="slot.playbackUrl && !slot.bucketUrl && !slot.mp4Url" [href]="slot.playbackUrl" target="_blank" class="tt-rec-btn tt-rec-btn--ready" (click)="$event.stopPropagation()"><i class="fa-solid fa-circle-play"></i> Play</a>
                         </ng-container>
-                        <span *ngIf="recordingPolling[slot.id]" class="tt-rec-btn" style="cursor:default;" title="Processing recording…">
-                          <i class="fa-solid fa-circle-notch fa-spin"></i> Processing…
-                        </span>
-                        <span *ngIf="!slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id]"
-                          class="tt-rec-btn tt-rec-btn--pending" title="Recording link being prepared">
-                          <i class="fa-solid fa-hourglass-half"></i> Pending
-                        </span>
+                        <span *ngIf="recordingPolling[slot.id]" class="tt-rec-btn" style="cursor:default;"><i class="fa-solid fa-circle-notch fa-spin"></i> Processing…</span>
+                        <span *ngIf="!slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id]" class="tt-rec-btn tt-rec-btn--pending"><i class="fa-solid fa-hourglass-half"></i> Pending</span>
                       </ng-container>
-
                     </div>
                   </div>
 
                   <!-- Hover actions -->
                   <div class="tt-slot__actions">
-                    <button *ngIf="p.canRead" class="tt-action" title="View"   (click)="openView(slot)">  <i class="fa-solid fa-eye"></i>   </button>
-                    <button *ngIf="p.canUpdate" class="tt-action" title="Edit"   (click)="openEdit(slot)">  <i class="fa-solid fa-pen"></i>   </button>
-                    <button *ngIf="p.canUpdate" class="tt-action tt-action--warn" title="Mark Unavailable / Substitute" (click)="openSubstitute(slot); $event.stopPropagation()"><i class="fa-solid fa-user-slash"></i></button>
-                    <button *ngIf="p.canDelete" class="tt-action tt-action--del" title="Delete" (click)="openDelete(slot)"><i class="fa-solid fa-trash"></i></button>
+                    <button *ngIf="p.canRead"   class="tt-action" title="View"   (click)="openView(slot)"><i class="fa-solid fa-eye"></i></button>
+                    <button *ngIf="p.canUpdate" class="tt-action" title="Edit"   (click)="openEdit(slot)"><i class="fa-solid fa-pen"></i></button>
+                    <button *ngIf="p.canUpdate && (slot.status === 'scheduled' || slot.status === 'live')"
+                      class="tt-action" title="Merge sessions" (click)="openMerge(slot); $event.stopPropagation()">
+                      <i class="fa-solid fa-code-merge"></i>
+                    </button>
+                    <button *ngIf="p.canUpdate" class="tt-action tt-action--warn" title="Substitute" (click)="openSubstitute(slot); $event.stopPropagation()"><i class="fa-solid fa-user-slash"></i></button>
+                    <button *ngIf="p.canDelete" class="tt-action tt-action--del"  title="Delete"    (click)="openDelete(slot)"><i class="fa-solid fa-trash"></i></button>
                   </div>
                 </div>
               </ng-container>
               <ng-template #emptyCell>
-                <div *ngIf="p.canCreate; else readonlyCell" class="tt-cell-empty" (click)="openCreate(day, session)" title="Schedule session">
-                  <i class="fa-solid fa-plus"></i>
-                </div>
+                <div *ngIf="p.canCreate; else readonlyCell" class="tt-cell-empty" (click)="openCreate(day, session)" title="Schedule session"><i class="fa-solid fa-plus"></i></div>
                 <ng-template #readonlyCell><div class="tt-cell-empty tt-cell-empty--readonly"></div></ng-template>
               </ng-template>
             </td>
@@ -212,33 +150,22 @@
       </table>
     </div>
 
-    <!-- ── LIST VIEW ──────────────────────────────────────────────────── -->
+    <!-- ════════════════════════════════════════════════════════════════
+         LIST VIEW — pagedSlots also comes from filteredSlots/expandedSlots
+         ════════════════════════════════════════════════════════════════ -->
     <div class="pg-table-wrap" *ngIf="viewMode === 'list'">
       <table class="pg-table">
         <thead>
-          <tr>
-            <th>Day &amp; Session</th>
-            <th>Subject &amp; Topic</th>
-            <th>Teacher</th>
-            <th>Batch / Category</th>
-            <th>Time</th>
-            <th>BBB Meeting</th>
-            <th>Recording</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
+          <tr><th>Day &amp; Session</th><th>Subject &amp; Topic</th><th>Teacher</th><th>Batch / Category</th><th>Time</th><th>BBB Meeting</th><th>Recording</th><th>Status</th><th>Actions</th></tr>
         </thead>
         <tbody>
-          <tr *ngFor="let slot of pagedSlots">
+          <tr *ngFor="let slot of pagedSlots" [class.tt-row--merged]="slot.isMergedSession">
             <td>
               <div class="pg-cell__primary">{{ slot.day }}</div>
               <div class="pg-cell__sub">Session {{ slot.session }}</div>
             </td>
             <td>
-              <div class="pg-cell__primary">
-                <span [class]="'tt-list-dot ' + getSubjectColor(slot.subject)"></span>
-                {{ slot.subject }}
-              </div>
+              <div class="pg-cell__primary"><span [class]="'tt-list-dot ' + getSubjectColor(slot.subject)"></span>{{ slot.subject }}</div>
               <div class="pg-cell__sub">{{ slot.topic }}</div>
             </td>
             <td>
@@ -248,602 +175,335 @@
               </div>
             </td>
             <td>
-              <div class="pg-cell__primary">{{ slot.batch }}</div>
+              <!-- For merged sessions show all participating batches -->
+              <ng-container *ngIf="slot.isMergedSession; else normalBatch">
+                <div class="tt-merged-batch-list">
+                  <span class="tt-merged-batch-chip-sm" *ngFor="let b of getMergedBatchList(slot)">
+                    <i class="fa-solid fa-code-merge" style="font-size:9px;"></i> {{ b }}
+                  </span>
+                </div>
+              </ng-container>
+              <ng-template #normalBatch>
+                <div class="pg-cell__primary">{{ slot.batch }}</div>
+              </ng-template>
               <span [class]="'tt-exam-tag-sm ' + getCategoryChip(slot.category)">{{ slot.category }}</span>
             </td>
-            <td>
-              <div class="pg-cell__primary">{{ slot.startTime }} – {{ slot.endTime }}</div>
-            </td>
+            <td><div class="pg-cell__primary">{{ slot.startTime }} – {{ slot.endTime }}</div></td>
             <td>
               <div class="tt-bbb-cell">
-                <span class="tt-bbb-id" title="{{ slot.meetingLink }}">
-                  <i class="fa-solid fa-circle-play" style="color:#e74c3c;"></i>
-                  {{ slot.meetingId }}
-                </span>
-                <button class="tt-copy-btn" (click)="copyLink(slot)" [title]="copiedId === slot.id ? 'Copied!' : 'Copy link'">
-                  <i [class]="copiedId === slot.id ? 'fa-solid fa-check' : 'fa-regular fa-copy'"></i>
-                </button>
+                <span class="tt-bbb-id" title="{{ slot.meetingLink }}"><i class="fa-solid fa-circle-play" style="color:#e74c3c;"></i> {{ slot.meetingId }}</span>
+                <button class="tt-copy-btn" (click)="copyLink(slot)" [title]="copiedId === slot.id ? 'Copied!' : 'Copy link'"><i [class]="copiedId === slot.id ? 'fa-solid fa-check' : 'fa-regular fa-copy'"></i></button>
               </div>
             </td>
             <td>
               <ng-container *ngIf="slot.bucketUrl || slot.mp4Url || slot.playbackUrl">
-                <a *ngIf="slot.bucketUrl || slot.mp4Url"
-                   [href]="slot.bucketUrl || slot.mp4Url" target="_blank"
-                   class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 12px;text-decoration:none;margin-right:4px;"
-                   title="{{ slot.bucketUrl || slot.mp4Url }}">
-                  <i class="fa-solid fa-circle-play"></i> MP4
-                </a>
-                <a *ngIf="slot.playbackUrl" [href]="slot.playbackUrl" target="_blank"
-                   class="pg-btn pg-btn--ghost" style="font-size:12px;padding:5px 12px;text-decoration:none;">
-                  <i class="fa-solid fa-display"></i> BBB
-                </a>
+                <a *ngIf="slot.bucketUrl || slot.mp4Url" [href]="slot.bucketUrl || slot.mp4Url" target="_blank" class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 12px;text-decoration:none;margin-right:4px;"><i class="fa-solid fa-circle-play"></i> MP4</a>
+                <a *ngIf="slot.playbackUrl" [href]="slot.playbackUrl" target="_blank" class="pg-btn pg-btn--ghost" style="font-size:12px;padding:5px 12px;text-decoration:none;"><i class="fa-solid fa-display"></i> BBB</a>
               </ng-container>
-              <span *ngIf="recordingPolling[slot.id]" style="font-size:12px;color:#6366f1;">
-                <i class="fa-solid fa-circle-notch fa-spin"></i> Processing…
-              </span>
-              <span *ngIf="!slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id] && slot.status === 'completed'"
-                style="font-size:12px;color:#f59e0b;font-weight:600;display:flex;align-items:center;gap:4px;">
-                <i class="fa-solid fa-hourglass-half"></i> Pending
-              </span>
+              <span *ngIf="recordingPolling[slot.id]" style="font-size:12px;color:#6366f1;"><i class="fa-solid fa-circle-notch fa-spin"></i> Processing…</span>
+              <span *ngIf="!slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id] && slot.status === 'completed'" style="font-size:12px;color:#f59e0b;font-weight:600;"><i class="fa-solid fa-hourglass-half"></i> Pending</span>
               <span *ngIf="slot.status !== 'completed' && !slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl" style="color:#cbd5e1;font-size:12px;">—</span>
             </td>
             <td>
-              <span [class]="getStatusClass(slot.status)">
-                <i *ngIf="slot.status === 'live'" class="fa-solid fa-circle" style="font-size:8px;"></i>
-                {{ slot.status | titlecase }}
-              </span>
+              <span [class]="getStatusClass(slot.status)"><i *ngIf="slot.status === 'live'" class="fa-solid fa-circle" style="font-size:8px;"></i>{{ slot.status | titlecase }}</span>
+              <div *ngIf="slot.isMergedSession" class="tt-merged-tag"><i class="fa-solid fa-code-merge"></i> Merged</div>
             </td>
             <td>
               <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
-
-                <!-- scheduled: Start + Join -->
                 <ng-container *ngIf="slot.status === 'scheduled'">
-                  <button class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 10px;background:#10b981;" *ngIf="p.canUpdate"
-                    [disabled]="startingId === slot.id" (click)="startSession(slot)">
-                    <i class="fa-solid" [class.fa-circle-notch]="startingId===slot.id" [class.fa-spin]="startingId===slot.id" [class.fa-play]="startingId!==slot.id"></i>
-                    {{ startingId === slot.id ? '…' : 'Start' }}
+                  <button class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 10px;background:#10b981;" *ngIf="p.canUpdate" [disabled]="startingId === slot.id" (click)="startSession(slot)">
+                    <i class="fa-solid" [class.fa-circle-notch]="startingId===slot.id" [class.fa-spin]="startingId===slot.id" [class.fa-play]="startingId!==slot.id"></i>{{ startingId === slot.id ? '…' : 'Start' }}
                   </button>
-                  <button class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 10px;"
-                    [disabled]="joiningId === slot.id" (click)="joinSlot(slot, false)">
-                    <i class="fa-solid" [class.fa-circle-notch]="joiningId===slot.id" [class.fa-spin]="joiningId===slot.id" [class.fa-video]="joiningId!==slot.id"></i>
-                    Join
+                  <button class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 10px;" [disabled]="joiningId === slot.id" (click)="joinSlot(slot, false)">
+                    <i class="fa-solid" [class.fa-circle-notch]="joiningId===slot.id" [class.fa-spin]="joiningId===slot.id" [class.fa-video]="joiningId!==slot.id"></i> Join
                   </button>
                 </ng-container>
-
-                <!-- live: End + Join Live -->
                 <ng-container *ngIf="slot.status === 'live'">
-                  <button class="pg-btn pg-btn--danger" style="font-size:12px;padding:5px 10px;"
-                    [disabled]="endingId === slot.id" (click)="endSession(slot)">
-                    <i class="fa-solid" [class.fa-circle-notch]="endingId===slot.id" [class.fa-spin]="endingId===slot.id" [class.fa-stop]="endingId!==slot.id"></i>
-                    {{ endingId === slot.id ? '…' : 'End' }}
+                  <button class="pg-btn pg-btn--danger" style="font-size:12px;padding:5px 10px;" [disabled]="endingId === slot.id" (click)="endSession(slot)">
+                    <i class="fa-solid" [class.fa-circle-notch]="endingId===slot.id" [class.fa-spin]="endingId===slot.id" [class.fa-stop]="endingId!==slot.id"></i>{{ endingId === slot.id ? '…' : 'End' }}
                   </button>
-                  <button class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 10px;background:#ef4444;"
-                    [disabled]="joiningId === slot.id" (click)="joinSlot(slot, true)">
-                    <i class="fa-solid" [class.fa-circle-notch]="joiningId===slot.id" [class.fa-spin]="joiningId===slot.id" [class.fa-video]="joiningId!==slot.id"></i>
-                    Live
+                  <button class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 10px;background:#ef4444;" [disabled]="joiningId === slot.id" (click)="joinSlot(slot, true)">
+                    <i class="fa-solid" [class.fa-circle-notch]="joiningId===slot.id" [class.fa-spin]="joiningId===slot.id" [class.fa-video]="joiningId!==slot.id"></i> Live
                   </button>
                 </ng-container>
-
-                <button class="pg-action-btn" title="View"   (click)="openView(slot)">  <i class="fa-solid fa-eye"></i>  </button>
-                <button class="pg-action-btn" title="Edit"   (click)="openEdit(slot)">  <i class="fa-solid fa-pen"></i>  </button>
-                <button *ngIf="p.canUpdate" class="pg-action-btn" title="Mark Unavailable / Substitute" (click)="openSubstitute(slot)" style="color:#f59e0b;border-color:#f59e0b;">
-                  <i class="fa-solid fa-user-slash"></i>
+                <button class="pg-action-btn" title="View" (click)="openView(slot)"><i class="fa-solid fa-eye"></i></button>
+                <button class="pg-action-btn" title="Edit" (click)="openEdit(slot)"><i class="fa-solid fa-pen"></i></button>
+                <button *ngIf="p.canUpdate && (slot.status === 'scheduled' || slot.status === 'live')"
+                  class="pg-action-btn" title="Merge sessions" (click)="openMerge(slot)" style="color:#6366f1;border-color:#6366f1;">
+                  <i class="fa-solid fa-code-merge"></i>
                 </button>
+                <button *ngIf="p.canUpdate" class="pg-action-btn" title="Substitute" (click)="openSubstitute(slot)" style="color:#f59e0b;border-color:#f59e0b;"><i class="fa-solid fa-user-slash"></i></button>
                 <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDelete(slot)"><i class="fa-solid fa-trash"></i></button>
               </div>
             </td>
           </tr>
           <tr *ngIf="filteredSlots.length === 0">
-            <td colspan="8" style="text-align:center;padding:32px;color:#94a3b8;">
-              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
-              No sessions found
-            </td>
+            <td colspan="9" style="text-align:center;padding:32px;color:#94a3b8;"><i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>No sessions found</td>
           </tr>
         </tbody>
       </table>
-      <app-common-pagination
-        [currentPage]="currentPage"
-        [totalPages]="totalPages"
-        [pageSize]="pageSize"
-        [totalRecords]="filteredSlots.length"
-        (pageChange)="onPageChange($event)">
-      </app-common-pagination>
+      <app-common-pagination [currentPage]="currentPage" [totalPages]="totalPages" [pageSize]="pageSize" [totalRecords]="filteredSlots.length" (pageChange)="onPageChange($event)"></app-common-pagination>
     </div>
   </div>
 
 </div>
 
-<!-- ── CREATE / EDIT MODAL ─────────────────────────────────────────────── -->
+<!-- CREATE / EDIT MODAL -->
 <div class="pg-modal-backdrop" *ngIf="modalMode === 'create' || modalMode === 'edit'" (click)="closeModal()"></div>
 <div class="pg-modal" *ngIf="modalMode === 'create' || modalMode === 'edit'">
   <div class="pg-modal__head">
-    <h3>
-      <i class="fa-solid fa-video" style="color:#6366f1;margin-right:8px;"></i>
-      {{ modalMode === 'create' ? 'Schedule Online Session' : 'Edit Session' }}
-    </h3>
+    <h3><i class="fa-solid fa-video" style="color:#6366f1;margin-right:8px;"></i>{{ modalMode === 'create' ? 'Schedule Online Session' : 'Edit Session' }}</h3>
     <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
   </div>
   <div class="pg-modal__body">
-
-    <!-- Validation errors -->
     <ng-container *ngIf="getFormErrorMessages().length > 0">
       <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;margin-bottom:12px;">
-        <div *ngFor="let msg of getFormErrorMessages()" style="font-size:13px;color:#dc2626;display:flex;align-items:center;gap:6px;">
-          <i class="fa-solid fa-circle-exclamation"></i> {{ msg }}
-        </div>
+        <div *ngFor="let msg of getFormErrorMessages()" style="font-size:13px;color:#dc2626;display:flex;align-items:center;gap:6px;"><i class="fa-solid fa-circle-exclamation"></i> {{ msg }}</div>
       </div>
     </ng-container>
-
     <div class="pg-form-grid">
-
-      <div class="pg-form-group">
-        <label>Category <span class="req">*</span></label>
-        <select [(ngModel)]="form.category" (ngModelChange)="onCategoryChange()">
-          <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
-        </select>
-      </div>
-
-      <div class="pg-form-group" [class.has-error]="formErrors['batch']">
-        <label>Batch <span class="req">*</span></label>
-        <select [(ngModel)]="form.batch" (ngModelChange)="onBatchChange(); formErrors['batch']=''">
-          <option value="">Select Batch</option>
-          <option *ngFor="let b of apiBatches" [value]="getBatchName(b)">{{ getBatchName(b) }}</option>
-        </select>
-        <div class="field-error" *ngIf="formErrors['batch']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['batch'] }}</div>
-      </div>
-
-      <div class="pg-form-group" [class.has-error]="formErrors['day']">
-        <label>Day <span class="req">*</span></label>
-        <select [(ngModel)]="form.day" (ngModelChange)="formErrors['day']=''">
-          <option value="">Select Day</option>
-          <option *ngFor="let d of days" [value]="d">{{ d }}</option>
-        </select>
-        <div class="field-error" *ngIf="formErrors['day']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['day'] }}</div>
-      </div>
-
-      <div class="pg-form-group">
-        <label>Session Slot <span class="req">*</span></label>
-        <select [(ngModel)]="form.session" (ngModelChange)="onSessionChange()">
-          <option *ngFor="let s of sessions" [value]="s">{{ getSessionLabel(s) }} ({{ formatSessionTime(s) }})</option>
-        </select>
-      </div>
-
-      <div class="pg-form-group" [class.has-error]="formErrors['subject']">
-        <label>Subject <span class="req">*</span></label>
-        <select [(ngModel)]="form.subject" (ngModelChange)="onSubjectChange(); formErrors['subject']=''">
-          <option value="">Select Subject</option>
-          <option *ngFor="let s of apiSubjects" [value]="s.name">{{ s.name }}</option>
-        </select>
-        <div class="field-error" *ngIf="formErrors['subject']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['subject'] }}</div>
-      </div>
-
-      <div class="pg-form-group">
-        <label>Topic / Chapter</label>
-        <select [(ngModel)]="form.topic">
-          <option value="">Select Topic</option>
-          <option *ngFor="let t of filteredTopicsList" [value]="t.name">{{ t.name }}</option>
-        </select>
-      </div>
-
-      <div class="pg-form-group" [class.has-error]="formErrors['teacher']">
-        <label>Teacher <span class="req">*</span></label>
-        <select [(ngModel)]="form.teacher" (ngModelChange)="onTeacherChange(); formErrors['teacher']=''">
-          <option value="">Select Teacher</option>
-          <option *ngFor="let t of apiTeachers" [value]="getTeacherName(t)">{{ getTeacherName(t) }}</option>
-        </select>
-        <div class="field-error" *ngIf="formErrors['teacher']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['teacher'] }}</div>
-      </div>
-
-      <div class="pg-form-group">
-        <label>Course <span style="font-size:11px;color:#94a3b8;font-weight:400;">(optional)</span></label>
-        <select [(ngModel)]="form.courseId">
-          <option [value]="null">— No course —</option>
-          <option *ngFor="let c of apiCourses" [value]="c.id">{{ getCourseName(c) }}</option>
-        </select>
-      </div>
-
-      <div class="pg-form-group">
-        <label>Status</label>
-        <select [(ngModel)]="form.status">
-          <option *ngFor="let s of statuses" [value]="s">{{ s | titlecase }}</option>
-        </select>
-      </div>
-
-
+      <div class="pg-form-group"><label>Category <span class="req">*</span></label><select [(ngModel)]="form.category" (ngModelChange)="onCategoryChange()"><option *ngFor="let c of categories" [value]="c">{{ c }}</option></select></div>
+      <div class="pg-form-group" [class.has-error]="formErrors['batch']"><label>Batch <span class="req">*</span></label><select [(ngModel)]="form.batch" (ngModelChange)="onBatchChange(); formErrors['batch']=''"><option value="">Select Batch</option><option *ngFor="let b of apiBatches" [value]="getBatchName(b)">{{ getBatchName(b) }}</option></select><div class="field-error" *ngIf="formErrors['batch']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['batch'] }}</div></div>
+      <div class="pg-form-group" [class.has-error]="formErrors['day']"><label>Day <span class="req">*</span></label><select [(ngModel)]="form.day" (ngModelChange)="formErrors['day']=''"><option value="">Select Day</option><option *ngFor="let d of days" [value]="d">{{ d }}</option></select><div class="field-error" *ngIf="formErrors['day']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['day'] }}</div></div>
+      <div class="pg-form-group"><label>Session Slot <span class="req">*</span></label><select [(ngModel)]="form.session" (ngModelChange)="onSessionChange()"><option *ngFor="let s of sessions" [value]="s">{{ getSessionLabel(s) }} ({{ formatSessionTime(s) }})</option></select></div>
+      <div class="pg-form-group" [class.has-error]="formErrors['subject']"><label>Subject <span class="req">*</span></label><select [(ngModel)]="form.subject" (ngModelChange)="onSubjectChange(); formErrors['subject']=''"><option value="">Select Subject</option><option *ngFor="let s of apiSubjects" [value]="s.name">{{ s.name }}</option></select><div class="field-error" *ngIf="formErrors['subject']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['subject'] }}</div></div>
+      <div class="pg-form-group"><label>Topic / Chapter</label><select [(ngModel)]="form.topic"><option value="">Select Topic</option><option *ngFor="let t of filteredTopicsList" [value]="t.name">{{ t.name }}</option></select></div>
+      <div class="pg-form-group" [class.has-error]="formErrors['teacher']"><label>Teacher <span class="req">*</span></label><select [(ngModel)]="form.teacher" (ngModelChange)="onTeacherChange(); formErrors['teacher']=''"><option value="">Select Teacher</option><option *ngFor="let t of apiTeachers" [value]="getTeacherName(t)">{{ getTeacherName(t) }}</option></select><div class="field-error" *ngIf="formErrors['teacher']"><i class="fa-solid fa-circle-exclamation"></i> {{ formErrors['teacher'] }}</div></div>
+      <div class="pg-form-group"><label>Course <span style="font-size:11px;color:#94a3b8;font-weight:400;">(optional)</span></label><select [(ngModel)]="form.courseId"><option [value]="null">— No course —</option><option *ngFor="let c of apiCourses" [value]="c.id">{{ getCourseName(c) }}</option></select></div>
+      <div class="pg-form-group"><label>Status</label><select [(ngModel)]="form.status"><option *ngFor="let s of statuses" [value]="s">{{ s | titlecase }}</option></select></div>
     </div>
-
   </div>
   <div class="pg-modal__foot">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()" [disabled]="isSaving">Cancel</button>
     <button class="pg-btn pg-btn--primary" (click)="saveSlot()" [disabled]="isSaving">
-      <i class="fa-solid"
-         [class.fa-circle-notch]="isSaving"
-         [class.fa-spin]="isSaving"
-         [class.fa-circle-play]="!isSaving"></i>
+      <i class="fa-solid" [class.fa-circle-notch]="isSaving" [class.fa-spin]="isSaving" [class.fa-circle-play]="!isSaving"></i>
       {{ isSaving ? 'Saving…' : (modalMode === 'create' ? 'Create & Generate Room' : 'Save Changes') }}
     </button>
   </div>
 </div>
 
-<!-- ── VIEW MODAL ──────────────────────────────────────────────────────── -->
+<!-- VIEW MODAL -->
 <div class="pg-modal-backdrop" *ngIf="modalMode === 'view'" (click)="closeModal()"></div>
 <div class="sd-modal" *ngIf="modalMode === 'view' && selectedSlot">
-
-  <!-- ── Hero Banner ── -->
   <div [class]="'sd-hero sd-hero--' + selectedSlot.status">
     <button class="sd-close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-    <div class="sd-hero__left">
-      <div class="sd-hero__icon"><i class="fa-solid fa-book-open"></i></div>
-      <div>
-        <div class="sd-hero__subject">{{ selectedSlot.subject }}</div>
-        <div class="sd-hero__topic">{{ selectedSlot.topic || 'No topic specified' }}</div>
-      </div>
-    </div>
+    <div class="sd-hero__left"><div class="sd-hero__icon"><i class="fa-solid fa-book-open"></i></div><div><div class="sd-hero__subject">{{ selectedSlot.subject }}</div><div class="sd-hero__topic">{{ selectedSlot.topic || 'No topic specified' }}</div></div></div>
     <div class="sd-hero__badges">
       <span [class]="'sd-badge sd-badge--cat ' + getCategoryChip(selectedSlot.category)">{{ selectedSlot.category }}</span>
-      <span [class]="'sd-badge ' + getStatusClass(selectedSlot.status)">
-        <i *ngIf="selectedSlot.status === 'live'" class="fa-solid fa-circle sd-live-dot"></i>
-        {{ selectedSlot.status | titlecase }}
-      </span>
+      <span [class]="'sd-badge ' + getStatusClass(selectedSlot.status)"><i *ngIf="selectedSlot.status === 'live'" class="fa-solid fa-circle sd-live-dot"></i>{{ selectedSlot.status | titlecase }}</span>
+      <span *ngIf="selectedSlot.isMergedSession" class="sd-badge" style="background:#ede9fe;color:#6366f1;"><i class="fa-solid fa-code-merge"></i> Merged</span>
     </div>
   </div>
-
-  <!-- ── Info Grid ── -->
   <div class="sd-body" style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+
+    <!-- Merged batches info card -->
+    <div class="sd-merged-info" *ngIf="selectedSlot.isMergedSession && selectedSlot.mergedBatchNames">
+      <i class="fa-solid fa-code-merge" style="color:#6366f1;font-size:15px;flex-shrink:0;"></i>
+      <div>
+        <div style="font-weight:600;font-size:13px;color:#3730a3;margin-bottom:4px;">Combined Batches</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <span class="tt-merged-batch-chip" *ngFor="let b of getMergedBatchList(selectedSlot)">{{ b }}</span>
+        </div>
+      </div>
+    </div>
+
     <div class="sd-info-grid">
-
-      <div class="sd-info-card">
-        <div class="sd-info-card__icon av-indigo"><i class="fa-solid fa-chalkboard-user"></i></div>
-        <div>
-          <div class="sd-info-card__label">Teacher</div>
-          <div class="sd-info-card__val">{{ selectedSlot.teacher }}</div>
-        </div>
-      </div>
-
-      <div class="sd-info-card">
-        <div class="sd-info-card__icon av-sky"><i class="fa-solid fa-layer-group"></i></div>
-        <div>
-          <div class="sd-info-card__label">Batch</div>
-          <div class="sd-info-card__val">{{ selectedSlot.batch }}</div>
-        </div>
-      </div>
-
-      <div class="sd-info-card">
-        <div class="sd-info-card__icon av-emerald"><i class="fa-solid fa-calendar-days"></i></div>
-        <div>
-          <div class="sd-info-card__label">Day</div>
-          <div class="sd-info-card__val">{{ selectedSlot.day }}</div>
-        </div>
-      </div>
-
-      <div class="sd-info-card">
-        <div class="sd-info-card__icon av-rose"><i class="fa-solid fa-hashtag"></i></div>
-        <div>
-          <div class="sd-info-card__label">Session</div>
-          <div class="sd-info-card__val">Session {{ selectedSlot.session }}</div>
-        </div>
-      </div>
-
-      <div class="sd-info-card" *ngIf="selectedSlot.startTime || selectedSlot.endTime">
-        <div class="sd-info-card__icon av-amber"><i class="fa-solid fa-clock"></i></div>
-        <div>
-          <div class="sd-info-card__label">Time</div>
-          <div class="sd-info-card__val">{{ selectedSlot.startTime || '—' }} – {{ selectedSlot.endTime || '—' }}</div>
-        </div>
-      </div>
-
+      <div class="sd-info-card"><div class="sd-info-card__icon av-indigo"><i class="fa-solid fa-chalkboard-user"></i></div><div><div class="sd-info-card__label">Teacher</div><div class="sd-info-card__val">{{ selectedSlot.teacher }}</div></div></div>
+      <div class="sd-info-card"><div class="sd-info-card__icon av-sky"><i class="fa-solid fa-layer-group"></i></div><div><div class="sd-info-card__label">Batch</div><div class="sd-info-card__val">{{ selectedSlot.isMergedSession ? selectedSlot.mergedBatchNames : selectedSlot.batch }}</div></div></div>
+      <div class="sd-info-card"><div class="sd-info-card__icon av-emerald"><i class="fa-solid fa-calendar-days"></i></div><div><div class="sd-info-card__label">Day</div><div class="sd-info-card__val">{{ selectedSlot.day }}</div></div></div>
+      <div class="sd-info-card"><div class="sd-info-card__icon av-rose"><i class="fa-solid fa-hashtag"></i></div><div><div class="sd-info-card__label">Session</div><div class="sd-info-card__val">Session {{ selectedSlot.session }}</div></div></div>
+      <div class="sd-info-card" *ngIf="selectedSlot.startTime || selectedSlot.endTime"><div class="sd-info-card__icon av-amber"><i class="fa-solid fa-clock"></i></div><div><div class="sd-info-card__label">Time</div><div class="sd-info-card__val">{{ selectedSlot.startTime || '—' }} – {{ selectedSlot.endTime || '—' }}</div></div></div>
       <div class="sd-info-card sd-info-card--full sd-bbb-card">
         <div class="sd-bbb-logo">BBB</div>
-        <div style="min-width:0;flex:1;">
-          <div class="sd-info-card__label">BigBlueButton Meeting</div>
-          <a *ngIf="selectedSlot.meetingLink" [href]="selectedSlot.meetingLink" target="_blank" class="sd-meeting-url">
-            <i class="fa-solid fa-link"></i> {{ selectedSlot.meetingLink }}
-          </a>
-        </div>
-        <button class="sd-copy-btn" (click)="copyLink(selectedSlot)" [title]="copiedId === selectedSlot.id ? 'Copied!' : 'Copy link'">
-          <i [class]="copiedId === selectedSlot.id ? 'fa-solid fa-check' : 'fa-regular fa-copy'"></i>
-          {{ copiedId === selectedSlot.id ? 'Copied!' : 'Copy' }}
-        </button>
+        <div style="min-width:0;flex:1;"><div class="sd-info-card__label">BigBlueButton Meeting</div><a *ngIf="selectedSlot.meetingLink" [href]="selectedSlot.meetingLink" target="_blank" class="sd-meeting-url"><i class="fa-solid fa-link"></i> {{ selectedSlot.meetingLink }}</a></div>
+        <button class="sd-copy-btn" (click)="copyLink(selectedSlot)" [title]="copiedId === selectedSlot.id ? 'Copied!' : 'Copy link'"><i [class]="copiedId === selectedSlot.id ? 'fa-solid fa-check' : 'fa-regular fa-copy'"></i>{{ copiedId === selectedSlot.id ? 'Copied!' : 'Copy' }}</button>
       </div>
-
     </div>
-
-    <!-- ── Join Button ── -->
-    <button *ngIf="canJoin(selectedSlot.status)"
-      class="sd-join-btn"
-      [class.sd-join-btn--live]="selectedSlot.status === 'live'"
-      [disabled]="joiningId === selectedSlot.id"
-      (click)="joinSlot(selectedSlot, selectedSlot.status === 'live')">
-      <i class="fa-solid"
-         [class.fa-circle-notch]="joiningId === selectedSlot.id"
-         [class.fa-spin]="joiningId === selectedSlot.id"
-         [class.fa-video]="joiningId !== selectedSlot.id"></i>
+    <button *ngIf="canJoin(selectedSlot.status)" class="sd-join-btn" [class.sd-join-btn--live]="selectedSlot.status === 'live'" [disabled]="joiningId === selectedSlot.id" (click)="joinSlot(selectedSlot, selectedSlot.status === 'live')">
+      <i class="fa-solid" [class.fa-circle-notch]="joiningId===selectedSlot.id" [class.fa-spin]="joiningId===selectedSlot.id" [class.fa-video]="joiningId!==selectedSlot.id"></i>
       {{ joiningId === selectedSlot.id ? 'Connecting…' : (selectedSlot.status === 'live' ? 'Join Live Session' : 'Join Session') }}
     </button>
-
-    <!-- ── Recording Section ── -->
     <ng-container *ngIf="selectedSlot.status === 'completed'">
-
       <div class="sd-section-title"><i class="fa-solid fa-circle-play"></i> Session Recording</div>
-
-      <!-- Polling: checking ready -->
-      <div *ngIf="recordingPolling[selectedSlot.id] && !recordingProcessing[selectedSlot.id]" class="sd-alert sd-alert--info">
-        <i class="fa-solid fa-circle-notch fa-spin"></i>
-        Checking recording status…
-      </div>
-
-      <!-- isReady: false — BBB still encoding -->
-      <div *ngIf="recordingProcessing[selectedSlot.id]" class="sd-processing-card">
-        <div class="sd-processing-card__icon">
-          <i class="fa-solid fa-film fa-beat-fade"></i>
-        </div>
-        <div>
-          <div class="sd-processing-card__title">Video is Processing</div>
-          <div class="sd-processing-card__sub">BigBlueButton is still encoding the recording. This may take a few minutes. We'll keep checking automatically.</div>
-        </div>
-      </div>
-
-      <!-- Error -->
-      <div *ngIf="recordingError[selectedSlot.id]" class="sd-alert sd-alert--error">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-        {{ recordingError[selectedSlot.id] }}
-      </div>
-
-      <!-- No recording yet → link in progress -->
-      <div *ngIf="!selectedSlot.bucketUrl && !selectedSlot.mp4Url && !selectedSlot.playbackUrl && !recordingPolling[selectedSlot.id] && !recordingProcessing[selectedSlot.id]"
-        class="sd-link-progress">
-        <div class="sd-link-progress__bar">
-          <div class="sd-link-progress__fill"></div>
-        </div>
-        <span><i class="fa-solid fa-link"></i> Recording link is being prepared…</span>
-      </div>
-
-      <!-- Player card -->
+      <div *ngIf="recordingPolling[selectedSlot.id] && !recordingProcessing[selectedSlot.id]" class="sd-alert sd-alert--info"><i class="fa-solid fa-circle-notch fa-spin"></i> Checking recording status…</div>
+      <div *ngIf="recordingProcessing[selectedSlot.id]" class="sd-processing-card"><div class="sd-processing-card__icon"><i class="fa-solid fa-film fa-beat-fade"></i></div><div><div class="sd-processing-card__title">Video is Processing</div><div class="sd-processing-card__sub">BigBlueButton is still encoding the recording.</div></div></div>
+      <div *ngIf="recordingError[selectedSlot.id]" class="sd-alert sd-alert--error"><i class="fa-solid fa-triangle-exclamation"></i> {{ recordingError[selectedSlot.id] }}</div>
+      <div *ngIf="!selectedSlot.bucketUrl && !selectedSlot.mp4Url && !selectedSlot.playbackUrl && !recordingPolling[selectedSlot.id] && !recordingProcessing[selectedSlot.id]" class="sd-link-progress"><div class="sd-link-progress__bar"><div class="sd-link-progress__fill"></div></div><span><i class="fa-solid fa-link"></i> Recording link is being prepared…</span></div>
       <div *ngIf="selectedSlot.bucketUrl || selectedSlot.mp4Url || selectedSlot.playbackUrl" class="sd-player-card">
         <div class="sd-player-card__actions">
-          <a *ngIf="selectedSlot.bucketUrl || selectedSlot.mp4Url"
-             [href]="selectedSlot.bucketUrl || selectedSlot.mp4Url" download
-             class="sd-player-card__btn">
-            <i class="fa-solid fa-download"></i> Download
-          </a>
-          <a *ngIf="selectedSlot.playbackUrl" [href]="selectedSlot.playbackUrl" target="_blank"
-             class="sd-player-card__btn sd-player-card__btn--ghost">
-            <i class="fa-solid fa-arrow-up-right-from-square"></i> BBB Playback
-          </a>
+          <a *ngIf="selectedSlot.bucketUrl || selectedSlot.mp4Url" [href]="selectedSlot.bucketUrl || selectedSlot.mp4Url" download class="sd-player-card__btn"><i class="fa-solid fa-download"></i> Download</a>
+          <a *ngIf="selectedSlot.playbackUrl" [href]="selectedSlot.playbackUrl" target="_blank" class="sd-player-card__btn sd-player-card__btn--ghost"><i class="fa-solid fa-arrow-up-right-from-square"></i> BBB Playback</a>
         </div>
         <ng-container *ngIf="selectedSlot.bucketUrl || (!selectedSlot.playbackUrl && selectedSlot.mp4Url)">
-          <video #videoEl
-            class="sd-video"
-            controls
-            preload="metadata"
-            [src]="getSafeUrl(selectedSlot.bucketUrl || selectedSlot.mp4Url)">
-          </video>
-          <div class="sd-speed-bar">
-            <span class="sd-speed-label">Speed</span>
-            <button *ngFor="let rate of [0.5, 1, 1.5, 2, 3]"
-              class="sd-speed-btn"
-              [class.active]="videoEl.playbackRate === rate"
-              (click)="videoEl.playbackRate = rate">
-              {{ rate }}x
-            </button>
-          </div>
+          <video #videoEl class="sd-video" controls preload="metadata" [src]="getSafeUrl(selectedSlot.bucketUrl || selectedSlot.mp4Url)"></video>
+          <div class="sd-speed-bar"><span class="sd-speed-label">Speed</span><button *ngFor="let rate of [0.5, 1, 1.5, 2, 3]" class="sd-speed-btn" [class.active]="videoEl.playbackRate === rate" (click)="videoEl.playbackRate = rate">{{ rate }}x</button></div>
         </ng-container>
-        <iframe *ngIf="!selectedSlot.bucketUrl && !selectedSlot.mp4Url && selectedSlot.playbackUrl"
-          [src]="getSafeUrl(selectedSlot.playbackUrl)"
-          class="sd-player-card__iframe"
-          allowfullscreen frameborder="0">
-        </iframe>
+        <iframe *ngIf="!selectedSlot.bucketUrl && !selectedSlot.mp4Url && selectedSlot.playbackUrl" [src]="getSafeUrl(selectedSlot.playbackUrl)" class="sd-player-card__iframe" allowfullscreen frameborder="0"></iframe>
       </div>
-
     </ng-container>
-
-    <!-- ── WhatsApp ── -->
     <div class="sd-section-title"><i class="fa-brands fa-whatsapp"></i> WhatsApp Notifications</div>
-
     <div class="wa-action-row" *ngIf="p.canUpdate || p.canCreate">
-      <!-- Send Reminder -->
-      <button class="wa-btn wa-btn--green"
-        [disabled]="waReminderSending === selectedSlot.id"
-        (click)="sendWhatsappReminder(selectedSlot)">
-        <i class="fa-solid" [class.fa-circle-notch]="waReminderSending===selectedSlot.id"
-           [class.fa-spin]="waReminderSending===selectedSlot.id"
-           [class.fa-bell]="waReminderSending!==selectedSlot.id"></i>
-        {{ waReminderSending === selectedSlot.id ? 'Sending…' : 'Send Class Reminder' }}
-      </button>
-
-      <!-- Send Timetable -->
-      <button class="wa-btn wa-btn--teal" *ngIf="selectedSlot.batchId"
-        [disabled]="waTimetableSending === selectedSlot.id"
-        (click)="sendWhatsappTimetable(selectedSlot)">
-        <i class="fa-solid" [class.fa-circle-notch]="waTimetableSending===selectedSlot.id"
-           [class.fa-spin]="waTimetableSending===selectedSlot.id"
-           [class.fa-calendar-days]="waTimetableSending!==selectedSlot.id"></i>
-        {{ waTimetableSending === selectedSlot.id ? 'Sending…' : 'Send Timetable' }}
-      </button>
-
-      <!-- Custom Message toggle -->
-      <button class="wa-btn wa-btn--ghost" (click)="waShowCustom = !waShowCustom">
-        <i class="fa-solid fa-pen-to-square"></i> Custom
-      </button>
+      <button class="wa-btn wa-btn--green" [disabled]="waReminderSending === selectedSlot.id" (click)="sendWhatsappReminder(selectedSlot)"><i class="fa-solid" [class.fa-circle-notch]="waReminderSending===selectedSlot.id" [class.fa-spin]="waReminderSending===selectedSlot.id" [class.fa-bell]="waReminderSending!==selectedSlot.id"></i>{{ waReminderSending === selectedSlot.id ? 'Sending…' : 'Send Class Reminder' }}</button>
+      <button class="wa-btn wa-btn--teal" *ngIf="selectedSlot.batchId" [disabled]="waTimetableSending === selectedSlot.id" (click)="sendWhatsappTimetable(selectedSlot)"><i class="fa-solid" [class.fa-circle-notch]="waTimetableSending===selectedSlot.id" [class.fa-spin]="waTimetableSending===selectedSlot.id" [class.fa-calendar-days]="waTimetableSending!==selectedSlot.id"></i>{{ waTimetableSending === selectedSlot.id ? 'Sending…' : 'Send Timetable' }}</button>
+      <button class="wa-btn wa-btn--ghost" (click)="waShowCustom = !waShowCustom"><i class="fa-solid fa-pen-to-square"></i> Custom</button>
     </div>
-
-    <!-- Success / Error for reminder -->
-    <div *ngIf="waSuccess[selectedSlot.id]" class="sd-alert sd-alert--info" style="background:#f0fdf4;border-color:#86efac;color:#166534;">
-      <i class="fa-solid fa-circle-check"></i> {{ waSuccess[selectedSlot.id] }}
-    </div>
-    <div *ngIf="waError[selectedSlot.id]" class="sd-alert sd-alert--error">
-      <i class="fa-solid fa-triangle-exclamation"></i> {{ waError[selectedSlot.id] }}
-    </div>
-    <!-- Success / Error for timetable -->
-    <div *ngIf="waSuccess[selectedSlot.id + '_tt']" class="sd-alert sd-alert--info" style="background:#f0fdf4;border-color:#86efac;color:#166534;">
-      <i class="fa-solid fa-circle-check"></i> {{ waSuccess[selectedSlot.id + '_tt'] }}
-    </div>
-    <div *ngIf="waError[selectedSlot.id + '_tt']" class="sd-alert sd-alert--error">
-      <i class="fa-solid fa-triangle-exclamation"></i> {{ waError[selectedSlot.id + '_tt'] }}
-    </div>
-
-    <!-- Custom send form -->
+    <div *ngIf="waSuccess[selectedSlot.id]" class="sd-alert sd-alert--info" style="background:#f0fdf4;border-color:#86efac;color:#166534;"><i class="fa-solid fa-circle-check"></i> {{ waSuccess[selectedSlot.id] }}</div>
+    <div *ngIf="waError[selectedSlot.id]"   class="sd-alert sd-alert--error"><i class="fa-solid fa-triangle-exclamation"></i> {{ waError[selectedSlot.id] }}</div>
     <div *ngIf="waShowCustom" class="wa-custom-form">
       <div class="wa-custom-form__title"><i class="fa-brands fa-whatsapp"></i> Send Custom Message</div>
-      <input class="wa-custom-form__input" type="tel" placeholder="+91 9876543210"
-        [(ngModel)]="waCustomPhone" />
-      <textarea class="wa-custom-form__textarea" rows="3" placeholder="Type your message…"
-        [(ngModel)]="waCustomMessage"></textarea>
+      <input class="wa-custom-form__input" type="tel" placeholder="+91 9876543210" [(ngModel)]="waCustomPhone" />
+      <textarea class="wa-custom-form__textarea" rows="3" placeholder="Type your message…" [(ngModel)]="waCustomMessage"></textarea>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
         <button class="wa-btn wa-btn--ghost" (click)="waShowCustom=false">Cancel</button>
-        <button class="wa-btn wa-btn--green" [disabled]="waCustomSending || !waCustomPhone || !waCustomMessage"
-          (click)="sendWhatsappCustom()">
-          <i class="fa-solid" [class.fa-circle-notch]="waCustomSending" [class.fa-spin]="waCustomSending"
-             [class.fa-paper-plane]="!waCustomSending"></i>
-          {{ waCustomSending ? 'Sending…' : 'Send' }}
-        </button>
+        <button class="wa-btn wa-btn--green" [disabled]="waCustomSending || !waCustomPhone || !waCustomMessage" (click)="sendWhatsappCustom()"><i class="fa-solid" [class.fa-circle-notch]="waCustomSending" [class.fa-spin]="waCustomSending" [class.fa-paper-plane]="!waCustomSending"></i>{{ waCustomSending ? 'Sending…' : 'Send' }}</button>
       </div>
     </div>
-
-    <!-- Auto-reminder info -->
-    <div class="wa-auto-badge">
-      <i class="fa-solid fa-robot"></i>
-      <span>Auto-reminder active — sessions are notified 15 min before start</span>
-    </div>
-
-    <!-- ── Analytics ── -->
+    <div class="wa-auto-badge"><i class="fa-solid fa-robot"></i><span>Auto-reminder active — sessions are notified 15 min before start</span></div>
     <ng-container *ngIf="selectedSlot.status === 'completed'">
       <div class="sd-section-title"><i class="fa-solid fa-chart-bar"></i> Attendance Analytics</div>
-
-      <div *ngIf="analyticsLoading" class="sd-alert sd-alert--info">
-        <i class="fa-solid fa-circle-notch fa-spin"></i> Loading analytics…
-      </div>
-
-      <div *ngIf="!analyticsLoading && analytics.length === 0" class="sd-empty">
-        <i class="fa-solid fa-users-slash"></i> No attendance data available
-      </div>
-
+      <div *ngIf="analyticsLoading" class="sd-alert sd-alert--info"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading analytics…</div>
+      <div *ngIf="!analyticsLoading && analytics.length === 0" class="sd-empty"><i class="fa-solid fa-users-slash"></i> No attendance data available</div>
       <div *ngIf="!analyticsLoading && analytics.length > 0" class="sd-table-wrap">
         <table class="sd-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Role</th>
-              <th title="Online time">Online</th>
-              <th title="Talk time">Talk</th>
-              <th title="Webcam time">Cam</th>
-              <th title="Messages">Msg</th>
-              <th title="Raise hand">✋</th>
-              <th title="Activity score">Score</th>
-              <th>Status</th>
-            </tr>
-          </thead>
+          <thead><tr><th>Name</th><th>Role</th><th>Online</th><th>Talk</th><th>Cam</th><th>Msg</th><th>&#9994;</th><th>Score</th><th>Status</th></tr></thead>
           <tbody>
             <tr *ngFor="let a of analytics">
-              <td>
-                <div class="pg-with-avatar">
-                  <div [class]="'pg-avatar ' + (a.isModerator ? 'av-indigo' : 'av-sky')">{{ a.userName.charAt(0) }}</div>
-                  <span>{{ a.userName }}</span>
-                </div>
-              </td>
+              <td><div class="pg-with-avatar"><div [class]="'pg-avatar ' + (a.isModerator ? 'av-indigo' : 'av-sky')">{{ a.userName.charAt(0) }}</div><span>{{ a.userName }}</span></div></td>
               <td><span [class]="a.isModerator ? 'pg-badge pg-badge--blue' : 'pg-badge pg-badge--gray'">{{ a.isModerator ? 'Teacher' : 'Student' }}</span></td>
-              <td>{{ secsToMin(a.onlineTimeSeconds) }}</td>
-              <td>{{ secsToMin(a.talkTimeSeconds) }}</td>
-              <td>{{ secsToMin(a.webcamTimeSeconds) }}</td>
-              <td>{{ a.messageCount }}</td>
-              <td>{{ a.raiseHandCount }}</td>
+              <td>{{ secsToMin(a.onlineTimeSeconds) }}</td><td>{{ secsToMin(a.talkTimeSeconds) }}</td><td>{{ secsToMin(a.webcamTimeSeconds) }}</td>
+              <td>{{ a.messageCount }}</td><td>{{ a.raiseHandCount }}</td>
               <td><span [class]="scoreClass(a.activityScore)">{{ a.activityScore }}</span></td>
-              <td>
-                <span [class]="a.status === 'Online' ? 'pg-badge pg-badge--green' : 'pg-badge pg-badge--gray'">
-                  <i *ngIf="a.status === 'Online'" class="fa-solid fa-circle" style="font-size:6px;"></i>
-                  {{ a.status }}
-                </span>
-              </td>
+              <td><span [class]="a.status === 'Online' ? 'pg-badge pg-badge--green' : 'pg-badge pg-badge--gray'"><i *ngIf="a.status === 'Online'" class="fa-solid fa-circle" style="font-size:6px;"></i>{{ a.status }}</span></td>
             </tr>
           </tbody>
         </table>
       </div>
     </ng-container>
-
   </div>
-
-  <!-- ── Footer ── -->
   <div class="sd-footer">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
-    <button class="pg-btn pg-btn--primary" *ngIf="p.canUpdate" (click)="openEdit(selectedSlot); modalMode = 'edit'">
-      <i class="fa-solid fa-pen"></i> Edit Session
-    </button>
+    <button class="pg-btn pg-btn--primary" *ngIf="p.canUpdate" (click)="openEdit(selectedSlot); modalMode = 'edit'"><i class="fa-solid fa-pen"></i> Edit Session</button>
   </div>
-
 </div>
 
-<!-- ── SUBSTITUTE MODAL ────────────────────────────────────────────────── -->
-<div class="pg-modal-backdrop" *ngIf="modalMode === 'substitute'" (click)="closeModal()"></div>
-<div class="pg-modal pg-modal--sm" *ngIf="modalMode === 'substitute' && selectedSlot">
+<!-- MERGE MODAL -->
+<div class="pg-modal-backdrop" *ngIf="modalMode === 'merge'" (click)="closeModal()"></div>
+<div class="pg-modal pg-modal--lg" *ngIf="modalMode === 'merge' && selectedSlot" role="dialog" aria-modal="true">
   <div class="pg-modal__head">
-    <h3><i class="fa-solid fa-user-slash" style="color:#f59e0b;margin-right:8px;"></i> Mark Teacher Unavailable</h3>
+    <div>
+      <h3><i class="fa-solid fa-code-merge" style="color:#6366f1;margin-right:8px;"></i>Merge Sessions</h3>
+      <p class="pg-modal__sub">
+        Primary: <strong>{{ selectedSlot.subject }}</strong> — {{ selectedSlot.batch }}
+        <span class="merge-modal__day-chip">{{ selectedSlot.day }}, Session {{ selectedSlot.session }}</span>
+      </p>
+    </div>
     <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
   </div>
   <div class="pg-modal__body">
-    <p style="margin:0 0 16px;color:#64748b;font-size:13px;">
-      <strong>{{ selectedSlot.subject }}</strong> – {{ selectedSlot.teacher }}<br/>
-      {{ selectedSlot.day }}, {{ getSessionLabel(selectedSlot.session) }} &nbsp;|&nbsp; {{ selectedSlot.batch }}
-    </p>
+    <div class="merge-modal__banner merge-modal__banner--error" *ngIf="mergeError" role="alert"><i class="fa-solid fa-circle-xmark"></i> {{ mergeError }}</div>
+    <div class="merge-modal__banner merge-modal__banner--success" *ngIf="mergeSuccess" role="status"><i class="fa-solid fa-circle-check"></i> {{ mergeSuccess }}</div>
 
-    <div class="pg-form-grid">
-      <div class="pg-form-group" style="grid-column:1/-1;">
-        <label>Date of Unavailability <span class="req">*</span></label>
-        <input type="date" [(ngModel)]="substituteDate" class="pg-input" />
+    <!-- STEP 1 -->
+    <section class="merge-section">
+      <div class="merge-section__heading">
+        <span class="merge-step-badge">1</span>
+        <h3>Select sessions to merge with</h3>
+        <span class="merge-count-chip" *ngIf="selectedSecondaryIds.size > 0">{{ selectedSecondaryIds.size }} selected</span>
       </div>
+      <div class="merge-search-wrap">
+        <i class="fa-solid fa-magnifying-glass merge-search-icon"></i>
+        <input class="merge-search" type="text" placeholder="Search by batch, subject or teacher…" [(ngModel)]="mergeSearchText" />
+        <button class="merge-search__clear" *ngIf="mergeSearchText" (click)="mergeSearchText = ''"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="merge-skeleton" *ngIf="mergeableLoading"><div class="merge-skeleton__row" *ngFor="let i of [1,2,3]"></div></div>
+      <div class="merge-empty" *ngIf="!mergeableLoading && filteredMergeableSessions.length === 0">
+        <i class="fa-solid fa-circle-info" style="font-size:28px;color:#94a3b8;display:block;margin-bottom:8px;"></i>
+        <p>No mergeable sessions found{{ mergeSearchText ? ' for "' + mergeSearchText + '"' : '' }}.</p>
+      </div>
+      <div class="merge-session-list" *ngIf="!mergeableLoading && filteredMergeableSessions.length > 0">
+        <label class="merge-session-card" *ngFor="let s of filteredMergeableSessions"
+          [class.merge-session-card--selected]="isSecondarySelected(s.id)"
+          (click)="toggleSecondary(s.id)">
+          <div class="merge-session-card__check" [class.merge-session-card__check--active]="isSecondarySelected(s.id)">
+            <i *ngIf="isSecondarySelected(s.id)" class="fa-solid fa-check" style="font-size:10px;"></i>
+          </div>
+          <div class="merge-session-card__info">
+            <div class="merge-session-card__row">
+              <span class="merge-session-card__batch">{{ s.batchName }}</span>
+              <span class="pg-badge" [ngClass]="getStatusClass(s.status)">{{ s.status }}</span>
+            </div>
+            <div class="merge-session-card__meta">
+              <span class="merge-session-card__subject">{{ s.subject }}</span>
+              <span class="merge-session-card__sep">·</span>
+              <span>{{ s.day }}, Session {{ s.session }}</span>
+              <span class="merge-session-card__sep">·</span>
+              <span class="merge-session-card__teacher"><i class="fa-solid fa-user" style="font-size:10px;"></i> {{ s.teacherName || 'No teacher' }}</span>
+            </div>
+          </div>
+        </label>
+      </div>
+    </section>
 
-      <div class="pg-form-group" style="grid-column:1/-1;">
-        <label>Substitute Teacher</label>
-        <select [(ngModel)]="substituteTeacherId" class="pg-input" (ngModelChange)="mergedIntoBatchId = substituteTeacherId ? null : mergedIntoBatchId">
-          <option [ngValue]="null">— No substitute (merge class) —</option>
-          <option *ngFor="let t of apiTeachers" [value]="t.id">{{ getTeacherName(t) }}</option>
+    <!-- STEP 2 -->
+    <section class="merge-section">
+      <div class="merge-section__heading"><span class="merge-step-badge">2</span><h3>Override teacher <span class="merge-optional">(optional)</span></h3></div>
+      <p class="merge-section__hint">Leave blank to keep: <strong>{{ selectedSlot.teacher }}</strong></p>
+      <div class="pg-form-group">
+        <label>Teacher for merged session</label>
+        <select [(ngModel)]="mergeAssignedTeacherId">
+          <option [ngValue]="null">— Keep primary teacher —</option>
+          <option *ngFor="let t of apiTeachers" [ngValue]="t.id">{{ getTeacherName(t) }}</option>
         </select>
       </div>
+    </section>
 
-      <div class="pg-form-group" style="grid-column:1/-1;" *ngIf="!substituteTeacherId">
-        <label>Merge Into Batch</label>
-        <select [(ngModel)]="mergedIntoBatchId" class="pg-input">
-          <option [ngValue]="null">— Select batch to merge into —</option>
-          <option *ngFor="let b of apiBatches" [value]="b.id">{{ getBatchName(b) }}</option>
-        </select>
-        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">
-          Students will join the selected batch for this date.
-        </div>
+    <!-- STEP 3 -->
+    <section class="merge-section">
+      <div class="merge-section__heading"><span class="merge-step-badge">3</span><h3>Session details <span class="merge-optional">(optional)</span></h3></div>
+      <div class="pg-form-group">
+        <label>Custom Title</label>
+        <input type="text" [(ngModel)]="mergeCustomTitle" [placeholder]="mergePreviewTitle" />
+        <span class="merge-section__hint">Auto-title: <em>{{ mergePreviewTitle }}</em></span>
       </div>
-    </div>
+      <div class="pg-form-group">
+        <label>Reason / Note</label>
+        <textarea [(ngModel)]="mergeReason" rows="2" placeholder="e.g. Teacher unavailable, holiday rescheduling…" style="resize:vertical;"></textarea>
+      </div>
+    </section>
 
-    <div *ngIf="substituteError" style="margin-top:8px;padding:8px 12px;background:#fef2f2;border-radius:6px;color:#dc2626;font-size:13px;">
-      <i class="fa-solid fa-circle-exclamation"></i> {{ substituteError }}
+    <!-- Preview -->
+    <div class="merge-preview" *ngIf="selectedSecondaryIds.size > 0">
+      <div class="merge-preview__label"><i class="fa-solid fa-eye" style="margin-right:4px;"></i>Preview</div>
+      <div class="merge-preview__title">{{ mergePreviewTitle }}</div>
+      <div class="merge-preview__meta">
+        <span><i class="fa-solid fa-chalkboard-user" style="font-size:11px;"></i> {{ mergePreviewTeacher }}</span>
+        <span><i class="fa-solid fa-users" style="font-size:11px;"></i> {{ selectedSecondaryIds.size + 1 }} batches combined</span>
+        <span class="merge-preview__dissolve-note">{{ selectedSecondaryIds.size }} session{{ selectedSecondaryIds.size === 1 ? '' : 's' }} will be dissolved</span>
+      </div>
     </div>
   </div>
   <div class="pg-modal__foot">
-    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
-    <button class="pg-btn pg-btn--primary" [disabled]="isSavingSubstitute" (click)="saveSubstitute()" style="background:#f59e0b;border-color:#f59e0b;">
-      <i class="fa-solid" [class.fa-circle-notch]="isSavingSubstitute" [class.fa-spin]="isSavingSubstitute" [class.fa-check]="!isSavingSubstitute"></i>
-      {{ isSavingSubstitute ? 'Saving…' : 'Save Substitution' }}
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()" [disabled]="isMerging">Cancel</button>
+    <button class="pg-btn pg-btn--primary" style="background:#6366f1;border-color:#6366f1;"
+      (click)="saveMerge()" [disabled]="isMerging || selectedSecondaryIds.size === 0 || !!mergeSuccess">
+      <i class="fa-solid" [class.fa-circle-notch]="isMerging" [class.fa-spin]="isMerging" [class.fa-code-merge]="!isMerging"></i>
+      {{ isMerging ? 'Merging…' : ('Merge' + (selectedSecondaryIds.size > 0 ? ' (' + selectedSecondaryIds.size + ' sessions)' : '')) }}
     </button>
   </div>
 </div>
 
-<!-- ── DELETE MODAL ────────────────────────────────────────────────────── -->
+<!-- DELETE MODAL -->
 <div class="pg-modal-backdrop" *ngIf="modalMode === 'delete'" (click)="closeModal()"></div>
 <div class="pg-modal pg-modal--sm" *ngIf="modalMode === 'delete' && selectedSlot">
-  <div class="pg-modal__head">
-    <h3>Remove Session</h3>
-    <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-  </div>
+  <div class="pg-modal__head"><h3>Remove Session</h3><button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button></div>
   <div class="pg-modal__body" style="text-align:center;padding:24px 32px;">
     <div style="font-size:40px;color:#ef4444;margin-bottom:12px;"><i class="fa-solid fa-triangle-exclamation"></i></div>
     <p style="margin:0 0 8px;font-weight:600;font-size:15px;color:#1e293b;">Remove this session?</p>
-    <p style="margin:0;color:#64748b;font-size:14px;">
-      <strong>{{ selectedSlot.subject }}</strong> – {{ selectedSlot.topic }}<br/>
-      {{ selectedSlot.day }}, Session {{ selectedSlot.session }} &nbsp;|&nbsp; {{ selectedSlot.batch }}
-    </p>
+    <p style="margin:0;color:#64748b;font-size:14px;"><strong>{{ selectedSlot.subject }}</strong> – {{ selectedSlot.topic }}<br/>{{ selectedSlot.day }}, Session {{ selectedSlot.session }} &nbsp;|&nbsp; {{ selectedSlot.batch }}</p>
     <p style="margin:8px 0 0;color:#94a3b8;font-size:12px;">BBB Room: {{ selectedSlot.meetingId }}</p>
   </div>
   <div class="pg-modal__foot">
     <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
-    <button class="pg-btn pg-btn--danger" (click)="confirmDelete()">
-      <i class="fa-solid fa-trash"></i> Remove
-    </button>
+    <button class="pg-btn pg-btn--danger" (click)="confirmDelete()"><i class="fa-solid fa-trash"></i> Remove</button>
   </div>
 </div>
