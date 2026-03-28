@@ -168,7 +168,7 @@ export class RegistrationComponent implements OnInit {
   async loadBoards() {
     this.boardsLoading = true;
     try {
-      const data: any = await firstValueFrom(this.http.get(`${this.API}/board`));
+      const data: any = await firstValueFrom(this.http.get(`${this.API}/board/get-boards`));
       const loaded: any[] = Array.isArray(data) ? data : (data?.data ?? []);
       if (loaded.length) {
         this.boards = loaded;
