@@ -45,6 +45,7 @@ import { ZonalComponent } from './components/zonal/zonal.component';
 import { StudentImportComponent } from './components/student-import/student-import.component';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
+import { ChangePasswordComponent } from './components/change-password/change-password.component';
 
 const AG = [AuthGuard];
 
@@ -117,6 +118,8 @@ const routes: Routes = [
   { path: 'dashboard', component: DashboardComponent, canActivate: AG },
 
   { path: 'zonal', component: ZonalComponent, canActivate: AG },
+
+  { path: 'change-password',  component: ChangePasswordComponent,  canActivate: AG },
 
   { path: '**', redirectTo: 'login' },
 ];

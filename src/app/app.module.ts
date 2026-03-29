@@ -59,6 +59,7 @@ import { ZonalComponent } from './components/zonal/zonal.component';
 import { StudentImportComponent } from './components/student-import/student-import.component';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
+import { ChangePasswordComponent } from './components/change-password/change-password.component';
 
 @NgModule({
   declarations: [
@@ -112,7 +113,8 @@ import { ResetPasswordComponent } from './components/reset-password/reset-passwo
     ZonalComponent,
     StudentImportComponent,
     ForgotPasswordComponent,
-    ResetPasswordComponent
+    ResetPasswordComponent,
+    ChangePasswordComponent
   ],
   imports: [
     BrowserModule,
