@@ -116,14 +116,14 @@
                           <i class="fa-solid" [class.fa-circle-notch]="joiningId===slot.id" [class.fa-spin]="joiningId===slot.id" [class.fa-video]="joiningId!==slot.id"></i> Live
                         </button>
                       </ng-container>
-                      <ng-container *ngIf="slot.status === 'completed'">
+                      <!-- <ng-container *ngIf="slot.status === 'completed'">
                         <ng-container *ngIf="slot.bucketUrl || slot.mp4Url || slot.playbackUrl">
                           <a *ngIf="slot.bucketUrl || slot.mp4Url" [href]="slot.bucketUrl || slot.mp4Url" target="_blank" class="tt-rec-btn tt-rec-btn--ready" (click)="$event.stopPropagation()"><i class="fa-solid fa-circle-play"></i> MP4</a>
                           <a *ngIf="slot.playbackUrl && !slot.bucketUrl && !slot.mp4Url" [href]="slot.playbackUrl" target="_blank" class="tt-rec-btn tt-rec-btn--ready" (click)="$event.stopPropagation()"><i class="fa-solid fa-circle-play"></i> Play</a>
                         </ng-container>
                         <span *ngIf="recordingPolling[slot.id]" class="tt-rec-btn" style="cursor:default;"><i class="fa-solid fa-circle-notch fa-spin"></i> Processing…</span>
                         <span *ngIf="!slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id]" class="tt-rec-btn tt-rec-btn--pending"><i class="fa-solid fa-hourglass-half"></i> Pending</span>
-                      </ng-container>
+                      </ng-container> -->
                     </div>
                   </div>
 
@@ -156,7 +156,9 @@
     <div class="pg-table-wrap" *ngIf="viewMode === 'list'">
       <table class="pg-table">
         <thead>
-          <tr><th>Day &amp; Session</th><th>Subject &amp; Topic</th><th>Teacher</th><th>Batch / Category</th><th>Time</th><th>BBB Meeting</th><th>Recording</th><th>Status</th><th>Actions</th></tr>
+          <tr><th>Day &amp; Session</th><th>Subject &amp; Topic</th><th>Teacher</th><th>Batch / Category</th><th>Time</th><th>BBB Meeting</th>
+            <!-- <th>Recording</th> -->
+            <th>Status</th><th>Actions</th></tr>
         </thead>
         <tbody>
           <tr *ngFor="let slot of pagedSlots" [class.tt-row--merged]="slot.isMergedSession">
@@ -195,7 +197,7 @@
                 <button class="tt-copy-btn" (click)="copyLink(slot)" [title]="copiedId === slot.id ? 'Copied!' : 'Copy link'"><i [class]="copiedId === slot.id ? 'fa-solid fa-check' : 'fa-regular fa-copy'"></i></button>
               </div>
             </td>
-            <td>
+            <!-- <td>
               <ng-container *ngIf="slot.bucketUrl || slot.mp4Url || slot.playbackUrl">
                 <a *ngIf="slot.bucketUrl || slot.mp4Url" [href]="slot.bucketUrl || slot.mp4Url" target="_blank" class="pg-btn pg-btn--primary" style="font-size:12px;padding:5px 12px;text-decoration:none;margin-right:4px;"><i class="fa-solid fa-circle-play"></i> MP4</a>
                 <a *ngIf="slot.playbackUrl" [href]="slot.playbackUrl" target="_blank" class="pg-btn pg-btn--ghost" style="font-size:12px;padding:5px 12px;text-decoration:none;"><i class="fa-solid fa-display"></i> BBB</a>
@@ -203,7 +205,7 @@
               <span *ngIf="recordingPolling[slot.id]" style="font-size:12px;color:#6366f1;"><i class="fa-solid fa-circle-notch fa-spin"></i> Processing…</span>
               <span *ngIf="!slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl && !recordingPolling[slot.id] && slot.status === 'completed'" style="font-size:12px;color:#f59e0b;font-weight:600;"><i class="fa-solid fa-hourglass-half"></i> Pending</span>
               <span *ngIf="slot.status !== 'completed' && !slot.bucketUrl && !slot.mp4Url && !slot.playbackUrl" style="color:#cbd5e1;font-size:12px;">—</span>
-            </td>
+            </td> -->
             <td>
               <span [class]="getStatusClass(slot.status)"><i *ngIf="slot.status === 'live'" class="fa-solid fa-circle" style="font-size:8px;"></i>{{ slot.status | titlecase }}</span>
               <div *ngIf="slot.isMergedSession" class="tt-merged-tag"><i class="fa-solid fa-code-merge"></i> Merged</div>
@@ -323,7 +325,7 @@
       <i class="fa-solid" [class.fa-circle-notch]="joiningId===selectedSlot.id" [class.fa-spin]="joiningId===selectedSlot.id" [class.fa-video]="joiningId!==selectedSlot.id"></i>
       {{ joiningId === selectedSlot.id ? 'Connecting…' : (selectedSlot.status === 'live' ? 'Join Live Session' : 'Join Session') }}
     </button>
-    <ng-container *ngIf="selectedSlot.status === 'completed'">
+    <!-- <ng-container *ngIf="selectedSlot.status === 'completed'">
       <div class="sd-section-title"><i class="fa-solid fa-circle-play"></i> Session Recording</div>
       <div *ngIf="recordingPolling[selectedSlot.id] && !recordingProcessing[selectedSlot.id]" class="sd-alert sd-alert--info"><i class="fa-solid fa-circle-notch fa-spin"></i> Checking recording status…</div>
       <div *ngIf="recordingProcessing[selectedSlot.id]" class="sd-processing-card"><div class="sd-processing-card__icon"><i class="fa-solid fa-film fa-beat-fade"></i></div><div><div class="sd-processing-card__title">Video is Processing</div><div class="sd-processing-card__sub">BigBlueButton is still encoding the recording.</div></div></div>
@@ -340,7 +342,7 @@
         </ng-container>
         <iframe *ngIf="!selectedSlot.bucketUrl && !selectedSlot.mp4Url && selectedSlot.playbackUrl" [src]="getSafeUrl(selectedSlot.playbackUrl)" class="sd-player-card__iframe" allowfullscreen frameborder="0"></iframe>
       </div>
-    </ng-container>
+    </ng-container> -->
     <div class="sd-section-title"><i class="fa-brands fa-whatsapp"></i> WhatsApp Notifications</div>
     <div class="wa-action-row" *ngIf="p.canUpdate || p.canCreate">
       <button class="wa-btn wa-btn--green" [disabled]="waReminderSending === selectedSlot.id" (click)="sendWhatsappReminder(selectedSlot)"><i class="fa-solid" [class.fa-circle-notch]="waReminderSending===selectedSlot.id" [class.fa-spin]="waReminderSending===selectedSlot.id" [class.fa-bell]="waReminderSending!==selectedSlot.id"></i>{{ waReminderSending === selectedSlot.id ? 'Sending…' : 'Send Class Reminder' }}</button>

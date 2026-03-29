@@ -31,10 +31,10 @@ export interface TimetableSlot {
   scheduledStart:  string;
   meetingId:       string;
   meetingLink:     string;
-  recordingUrl:    string;
-  playbackUrl:     string;
-  mp4Url:          string;
-  bucketUrl:       string;
+  // recordingUrl:    string;
+  // playbackUrl:     string;
+  // mp4Url:          string;
+  // bucketUrl:       string;
   status:          'scheduled' | 'live' | 'completed' | 'cancelled';
   // Merged-session fields returned by the API
   isMergedSession:  boolean;
@@ -148,10 +148,10 @@ export class TimetableComponent implements OnInit, OnDestroy {
   joiningId  = '';
   startingId = '';
   endingId   = '';
-  recordingId           = '';
-  recordingPolling:     Record<string, boolean> = {};
-  recordingError:       Record<string, string>  = {};
-  recordingProcessing:  Record<string, boolean> = {};
+  // recordingId           = '';
+  // recordingPolling:     Record<string, boolean> = {};
+  // recordingError:       Record<string, string>  = {};
+  // recordingProcessing:  Record<string, boolean> = {};
   private pollingIntervals:     Record<string, ReturnType<typeof setInterval>> = {};
   private livePollingIntervals: Record<string, ReturnType<typeof setInterval>> = {};
 
@@ -342,7 +342,11 @@ export class TimetableComponent implements OnInit, OnDestroy {
     this.endingId = slot.id;
     this.stopLivePolling(slot.id);
     this.timetableService.end(slot.id).subscribe({
-      next: () => { this.endingId = ''; this.loadSlots(); this.triggerRecording(slot); },
+      next: () => { 
+        this.endingId = ''; 
+        this.loadSlots(); 
+        // this.triggerRecording(slot); 
+      },
       error: () => { this.endingId = ''; }
     });
   }
@@ -357,7 +361,11 @@ export class TimetableComponent implements OnInit, OnDestroy {
           if (status && status !== 'live') {
             this.stopLivePolling(id);
             const slot = this.slots.find(s => s.id === id);
-            if (slot) { slot.status = status as any; if (status === 'completed') this.triggerRecording(slot); }
+            if (slot) { 
+              slot.status = status as any; 
+              // if (status === 'completed') 
+              //   this.triggerRecording(slot); 
+            }
             this.loadSlots();
           }
         },
@@ -372,58 +380,58 @@ export class TimetableComponent implements OnInit, OnDestroy {
   }
 
   // ── Recording ─────────────────────────────────────────────────────────────
-  triggerRecording(slot: TimetableSlot): void {
-    if (this.pollingIntervals[slot.id]) return;
-    this.recordingId               = slot.id;
-    this.recordingError[slot.id]   = '';
-    this.recordingPolling[slot.id] = true;
-    this.checkReadyAndFetch(slot);
-    this.pollingIntervals[slot.id] = setInterval(() => this.checkReadyAndFetch(slot), 30000);
-  }
+  // triggerRecording(slot: TimetableSlot): void {
+  //   if (this.pollingIntervals[slot.id]) return;
+  //   this.recordingId               = slot.id;
+  //   this.recordingError[slot.id]   = '';
+  //   this.recordingPolling[slot.id] = true;
+  //   this.checkReadyAndFetch(slot);
+  //   this.pollingIntervals[slot.id] = setInterval(() => this.checkReadyAndFetch(slot), 30000);
+  // }
 
-  private checkReadyAndFetch(slot: TimetableSlot): void {
-    this.timetableService.checkRecordingReady(slot.id).subscribe({
-      next: (res) => {
-        if (res.isReady) {
-          this.stopPolling(slot.id);
-          delete this.recordingProcessing[slot.id];
-          if (res.bucketUrl || res.playbackUrl || res.mp4Url) {
-            this.recordingId = '';
-            this.applyRecordingUrls(slot.id, res.playbackUrl, res.mp4Url, res.bucketUrl);
-          } else {
-            this.timetableService.triggerRecording(slot.id).subscribe({
-              next: (rec) => { this.recordingId = ''; this.applyRecordingUrls(slot.id, rec.playbackUrl, rec.mp4Url, rec.bucketUrl); },
-              error: (err) => { this.recordingId = ''; this.recordingError[slot.id] = err?.error?.message ?? 'Failed to fetch recording.'; }
-            });
-          }
-        } else {
-          this.recordingProcessing[slot.id] = true;
-        }
-      },
-      error: () => {
-        this.stopPolling(slot.id);
-        this.recordingId = '';
-        this.recordingError[slot.id] = 'Failed to check recording status.';
-      }
-    });
-  }
+  // private checkReadyAndFetch(slot: TimetableSlot): void {
+  //   this.timetableService.checkRecordingReady(slot.id).subscribe({
+  //     next: (res) => {
+  //       if (res.isReady) {
+  //         this.stopPolling(slot.id);
+  //         delete this.recordingProcessing[slot.id];
+  //         if (res.bucketUrl || res.playbackUrl || res.mp4Url) {
+  //           this.recordingId = '';
+  //           this.applyRecordingUrls(slot.id, res.playbackUrl, res.mp4Url, res.bucketUrl);
+  //         } else {
+  //           this.timetableService.triggerRecording(slot.id).subscribe({
+  //             next: (rec) => { this.recordingId = ''; this.applyRecordingUrls(slot.id, rec.playbackUrl, rec.mp4Url, rec.bucketUrl); },
+  //             error: (err) => { this.recordingId = ''; this.recordingError[slot.id] = err?.error?.message ?? 'Failed to fetch recording.'; }
+  //           });
+  //         }
+  //       } else {
+  //         this.recordingProcessing[slot.id] = true;
+  //       }
+  //     },
+  //     error: () => {
+  //       this.stopPolling(slot.id);
+  //       this.recordingId = '';
+  //       this.recordingError[slot.id] = 'Failed to check recording status.';
+  //     }
+  //   });
+  // }
 
-  private stopPolling(id: string): void {
-    clearInterval(this.pollingIntervals[id]);
-    delete this.pollingIntervals[id];
-    delete this.recordingPolling[id];
-    delete this.recordingProcessing[id];
-  }
+  // private stopPolling(id: string): void {
+  //   clearInterval(this.pollingIntervals[id]);
+  //   delete this.pollingIntervals[id];
+  //   delete this.recordingPolling[id];
+  //   delete this.recordingProcessing[id];
+  // }
 
-  private applyRecordingUrls(id: string, playbackUrl: string | null, mp4Url: string | null, bucketUrl?: string | null): void {
-    const found = this.slots.find(s => s.id === id);
-    if (found) {
-      found.playbackUrl  = playbackUrl ?? '';
-      found.mp4Url       = mp4Url      ?? '';
-      found.bucketUrl    = bucketUrl   ?? mp4Url ?? '';
-      found.recordingUrl = bucketUrl   ?? playbackUrl ?? mp4Url ?? '';
-    }
-  }
+  // private applyRecordingUrls(id: string, playbackUrl: string | null, mp4Url: string | null, bucketUrl?: string | null): void {
+  //   const found = this.slots.find(s => s.id === id);
+  //   if (found) {
+  //     found.playbackUrl  = playbackUrl ?? '';
+  //     found.mp4Url       = mp4Url      ?? '';
+  //     found.bucketUrl    = bucketUrl   ?? mp4Url ?? '';
+  //     found.recordingUrl = bucketUrl   ?? playbackUrl ?? mp4Url ?? '';
+  //   }
+  // }
 
   getSafeUrl(url: string): SafeResourceUrl { return this.sanitizer.bypassSecurityTrustResourceUrl(url); }
 
