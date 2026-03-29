@@ -1987,12 +1987,12 @@
   gap: 2px;
 }
 .tt-merged-batch-chip {
-  background: rgba(255,255,255,0.22);
+  /* background: rgba(255,255,255,0.22); */
   border: 1px solid rgba(255,255,255,0.3);
   border-radius: 4px;
   padding: 1px 5px;
   font-size: 8.5px;
-  color: #fff;
+  /* color: #fff; */
   white-space: nowrap;
 }
 

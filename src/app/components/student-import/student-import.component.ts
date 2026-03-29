@@ -13,7 +13,7 @@ interface ImportResult {
   selector: 'app-student-import',
   standalone: false,
   templateUrl: './student-import.component.html',
-  styleUrls: ['./student-import.component.css'],
+  styleUrls: ['../../shared-page.css', './student-import.component.css'],
 })
 export class StudentImportComponent {
   private readonly apiBase = `${environment.apiUrl}/users/student`;

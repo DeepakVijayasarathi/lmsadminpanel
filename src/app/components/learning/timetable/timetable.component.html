@@ -68,7 +68,7 @@
             </td>
             <td *ngFor="let day of days" class="tt-cell">
               <ng-container *ngIf="getSlot(day, session) as slot; else emptyCell">
-                <div [class]="'tt-slot tt-slot--' + slot.status + (slot.isMergedSession ? ' tt-slot--merged' : '')">
+                <div [class]="'tt-slot tt-slot--' + slot.status + (slot.isMergedSession ? ' tt-slot--merged' : '')" style="height: auto; min-height: 138px;">
 
                   <!-- Top row: subject + status pill -->
                   <div class="tt-slot__top">
