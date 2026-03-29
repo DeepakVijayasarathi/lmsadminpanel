@@ -14,8 +14,15 @@ export class AppComponent {
   constructor(private router: Router) {
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
-        this.isLoginPage = this.router.url === '/login' || this.router.url === '/reset-password'|| this.router.url === '/forgot-password'
-        || this.router.url === '/register'|| this.router.url === '/demo-register';
+
+        const url = this.router.url;
+
+        this.isLoginPage =
+          url.startsWith('/login') ||
+          url.startsWith('/reset-password') ||
+          url.startsWith('/forgot-password') ||
+          url.startsWith('/register') ||
+          url.startsWith('/demo-register');
 
         setTimeout(() => {
           window.dispatchEvent(new Event('resize'));
