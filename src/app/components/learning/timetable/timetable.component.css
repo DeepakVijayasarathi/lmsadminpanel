@@ -1822,7 +1822,7 @@
 
 /* Grid slot: purple left border for merged sessions */
 .tt-slot--merged {
-  border-left: 3px solid #6366f1 !important;
+  /* border-left: 3px solid #6366f1 !important; */
 }
 
 /* Merged banner inside grid slot card */
@@ -1830,7 +1830,7 @@
   display: flex;
   align-items: flex-start;
   gap: 5px;
-  background: #f5f3ff;
+  /* background: #f5f3ff; */
   border: 1px solid #c4b5fd;
   border-radius: 6px;
   padding: 4px 8px;
@@ -1959,7 +1959,7 @@
 
 /* Merged session slot variant */
 .tt-slot--merged {
-  background: linear-gradient(140deg, #4338ca 0%, #6366f1 50%, #a78bfa 100%);
+  /* background: linear-gradient(140deg, #4338ca 0%, #6366f1 50%, #a78bfa 100%); */
 }
 .tt-slot--merged .tt-slot__subject::after {
   content: ' ⟵⟶';
