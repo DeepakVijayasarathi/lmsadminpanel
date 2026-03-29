@@ -57,6 +57,8 @@ import { DemoClassesComponent } from './components/learning/demo-classes/demo-cl
 import { DemoRegisterComponent } from './components/learning/demo-classes/demo-register.component';
 import { ZonalComponent } from './components/zonal/zonal.component';
 import { StudentImportComponent } from './components/student-import/student-import.component';
+import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 
 @NgModule({
   declarations: [
@@ -108,7 +110,9 @@ import { StudentImportComponent } from './components/student-import/student-impo
     DemoClassesComponent,
     DemoRegisterComponent,
     ZonalComponent,
-    StudentImportComponent
+    StudentImportComponent,
+    ForgotPasswordComponent,
+    ResetPasswordComponent
   ],
   imports: [
     BrowserModule,

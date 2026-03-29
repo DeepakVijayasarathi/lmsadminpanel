@@ -284,7 +284,7 @@
             <span class="checkbox-custom"></span>
             <span class="checkbox-text">Remember me</span> -->
           </label>
-          <a href="/register" class="forgot-password">Don't have an account? Register</a>
+          <a href="/forgot-password" class="forgot-password">Forgot Password?</a>
         </div>
 
         <button type="submit" class="submit-btn" [disabled]="isLoading">
@@ -307,10 +307,13 @@
             Signing in...
           </span>
         </button>
+        <button type="button" class="submit-btn" routerLink="/register" [disabled]="isLoading" style="margin-top: 10px;">
+          <span>Register</span>
+        </button>
       </form>
 
       <!-- ══ OTP LOGIN ═══════════════════════════════════════════ -->
-      <div *ngIf="loginMode === 'otp'">
+      <div *ngIf="loginMode === 'otp'" style="margin-top: 10px;">
         <!-- Step 1: Enter Email -->
         <form
           *ngIf="otpStep === 'email'"

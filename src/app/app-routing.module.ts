@@ -43,6 +43,8 @@ import { DemoClassesComponent } from './components/learning/demo-classes/demo-cl
 import { DemoRegisterComponent } from './components/learning/demo-classes/demo-register.component';
 import { ZonalComponent } from './components/zonal/zonal.component';
 import { StudentImportComponent } from './components/student-import/student-import.component';
+import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 
 const AG = [AuthGuard];
 
@@ -51,6 +53,8 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegistrationComponent },
   { path: 'demo-register', component: DemoRegisterComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'reset-password',  component: ResetPasswordComponent  },
 
   // dashboard
   { path: 'dashboard', component: CommonDashboardComponent, canActivate: AG },
