@@ -488,8 +488,9 @@
   color: #374151;
 }
 .pg-form-group input,
+.pg-form-group textarea,
 .pg-form-group select {
-  border: 1px solid #e2e8f0;
+  border: 2px solid #e2e8f0;
   border-radius: 8px;
   padding: 9px 12px;
   font-size: 14px;
@@ -499,11 +500,13 @@
   background: #fff;
 }
 .pg-form-group input:focus,
+.pg-form-group textarea:focus,
 .pg-form-group select:focus {
   border-color: #6366f1;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 .pg-form-group.has-error input,
+.pg-form-group.has-error textarea,
 .pg-form-group.has-error select {
   border-color: #ef4444;
 }
