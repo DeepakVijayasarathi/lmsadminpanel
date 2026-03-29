@@ -135,7 +135,7 @@
                       class="tt-action" title="Merge sessions" (click)="openMerge(slot); $event.stopPropagation()">
                       <i class="fa-solid fa-code-merge"></i>
                     </button>
-                    <button *ngIf="p.canUpdate" class="tt-action tt-action--warn" title="Substitute" (click)="openSubstitute(slot); $event.stopPropagation()"><i class="fa-solid fa-user-slash"></i></button>
+                    <!-- <button *ngIf="p.canUpdate" class="tt-action tt-action--warn" title="Substitute" (click)="openSubstitute(slot); $event.stopPropagation()"><i class="fa-solid fa-user-slash"></i></button> -->
                     <button *ngIf="p.canDelete" class="tt-action tt-action--del"  title="Delete"    (click)="openDelete(slot)"><i class="fa-solid fa-trash"></i></button>
                   </div>
                 </div>
@@ -232,7 +232,7 @@
                   class="pg-action-btn" title="Merge sessions" (click)="openMerge(slot)" style="color:#6366f1;border-color:#6366f1;">
                   <i class="fa-solid fa-code-merge"></i>
                 </button>
-                <button *ngIf="p.canUpdate" class="pg-action-btn" title="Substitute" (click)="openSubstitute(slot)" style="color:#f59e0b;border-color:#f59e0b;"><i class="fa-solid fa-user-slash"></i></button>
+                <!-- <button *ngIf="p.canUpdate" class="pg-action-btn" title="Substitute" (click)="openSubstitute(slot)" style="color:#f59e0b;border-color:#f59e0b;"><i class="fa-solid fa-user-slash"></i></button> -->
                 <button class="pg-action-btn pg-action-btn--danger" title="Delete" (click)="openDelete(slot)"><i class="fa-solid fa-trash"></i></button>
               </div>
             </td>
