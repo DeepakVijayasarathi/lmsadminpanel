@@ -46,6 +46,7 @@ import { StudentImportComponent } from './components/student-import/student-impo
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 import { ChangePasswordComponent } from './components/change-password/change-password.component';
+import { UserPlanComponent } from './components/user-plan/user-plan.component';
 
 const AG = [AuthGuard];
 
@@ -54,6 +55,7 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegistrationComponent },
   { path: 'demo-register', component: DemoRegisterComponent },
+  { path: 'user-plan', component: UserPlanComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'reset-password',  component: ResetPasswordComponent  },
 

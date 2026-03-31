@@ -60,6 +60,7 @@ import { StudentImportComponent } from './components/student-import/student-impo
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 import { ChangePasswordComponent } from './components/change-password/change-password.component';
+import { UserPlanComponent } from './components/user-plan/user-plan.component';
 
 @NgModule({
   declarations: [
@@ -114,7 +115,8 @@ import { ChangePasswordComponent } from './components/change-password/change-pas
     StudentImportComponent,
     ForgotPasswordComponent,
     ResetPasswordComponent,
-    ChangePasswordComponent
+    ChangePasswordComponent,
+    UserPlanComponent
   ],
   imports: [
     BrowserModule,

@@ -1,0 +1,391 @@
+/* ─────────────────────────────────────────────────────────
+   Tokens
+───────────────────────────────────────────────────────── */
+:host {
+  --ink:           #0f0f0f;
+  --ink-muted:     #6b7280;
+  --surface:       #ffffff;
+  --surface-alt:   #f7f6f2;
+  --border:        #e5e3de;
+  --accent:        #d4531a;
+  --accent-soft:   #fff1eb;
+  --accent-border: #fbd5c3;
+  --green:         #16a34a;
+  --green-soft:    #f0fdf4;
+  --green-border:  #86efac;
+  --blue-soft:     #eff6ff;
+  --blue:          #1d4ed8;
+  --blue-border:   #93c5fd;
+  --gold:          #b45309;
+  --gold-soft:     #fffbeb;
+  --gold-border:   #fcd34d;
+  --pink:          #9d174d;
+  --pink-soft:     #fdf2f8;
+  --pink-border:   #f9a8d4;
+  --danger:        #dc2626;
+  --radius-card:   16px;
+  --radius-inner:  10px;
+  --shadow-card:   0 2px 8px rgba(0,0,0,.06), 0 12px 32px rgba(0,0,0,.08);
+  --shadow-hover:  0 4px 16px rgba(0,0,0,.08), 0 24px 48px rgba(0,0,0,.12);
+}
+
+/* ─────────────────────────────────────────────────────────
+   State containers (loading / error / empty)
+───────────────────────────────────────────────────────── */
+.state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  gap: 16px;
+  color: var(--ink-muted);
+}
+
+.state-text {
+  font-size: 15px;
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.state-icon {
+  color: var(--ink-muted);
+  opacity: 0.5;
+}
+
+.state-icon.error-icon {
+  color: var(--danger);
+  opacity: 0.8;
+}
+
+/* Spinner */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Retry button */
+.btn-retry {
+  padding: 8px 24px;
+  background: transparent;
+  color: var(--accent);
+  border: 1.5px solid var(--accent);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-retry:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Grid
+───────────────────────────────────────────────────────── */
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 28px;
+  padding: 24px;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Card Shell
+───────────────────────────────────────────────────────── */
+.course-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.course-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* ─────────────────────────────────────────────────────────
+   Thumbnail
+───────────────────────────────────────────────────────── */
+.card-thumbnail {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+  background: var(--surface-alt);
+}
+
+.thumbnail-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.course-card:hover .thumbnail-img {
+  transform: scale(1.04);
+}
+
+/* Level badge */
+.badge-level {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.level-beginner     { background: var(--green-soft); color: var(--green); border: 1px solid var(--green-border); }
+.level-intermediate { background: var(--blue-soft);  color: var(--blue);  border: 1px solid var(--blue-border);  }
+.level-advanced     { background: var(--gold-soft);  color: var(--gold);  border: 1px solid var(--gold-border);  }
+.level-expert       { background: var(--pink-soft);  color: var(--pink);  border: 1px solid var(--pink-border);  }
+
+/* Category badge */
+.badge-category {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  letter-spacing: 0.04em;
+}
+
+/* Published ribbon */
+.published-ribbon {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: var(--green);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ribbon-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #bbf7d0;
+  border-radius: 50%;
+  animation: pulse 1.6s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(1.4); }
+}
+
+/* ─────────────────────────────────────────────────────────
+   Card Body
+───────────────────────────────────────────────────────── */
+.card-body {
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid var(--border);
+  flex: 1;
+}
+
+.course-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 8px;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.course-description {
+  font-size: 13.5px;
+  color: var(--ink-muted);
+  line-height: 1.65;
+  margin: 0 0 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Meta row */
+.meta-row {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--ink-muted);
+}
+
+.meta-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Pricing
+───────────────────────────────────────────────────────── */
+.card-pricing {
+  padding: 18px 22px 20px;
+  background: var(--surface-alt);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.price-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.price-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
+
+.price-amount {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+}
+
+/* EMI block */
+.installment-block {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-inner);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.installment-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 9px;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.installment-detail {
+  margin: 0;
+  font-size: 13px;
+  color: #7c2d12;
+  line-height: 1.4;
+}
+
+.installment-detail strong {
+  font-size: 14px;
+  color: var(--accent);
+}
+
+/* One-time */
+.no-installment {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 600;
+}
+
+/* Enroll CTA */
+.btn-enroll {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 0;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-inner);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+  margin-top: 2px;
+}
+
+.btn-enroll:hover {
+  background: var(--accent);
+  transform: translateY(-1px);
+}
+
+.btn-enroll:active {
+  transform: translateY(0);
+}
+
+/* ─────────────────────────────────────────────────────────
+   Responsive
+───────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .courses-grid {
+    grid-template-columns: 1fr;
+    padding: 16px;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .price-amount {
+    font-size: 22px;
+  }
+
+  .card-body {
+    padding: 16px 16px 12px;
+  }
+
+  .card-pricing {
+    padding: 14px 16px 16px;
+  }
+}

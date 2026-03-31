@@ -1,0 +1,142 @@
+<!-- Loading State -->
+<div class="state-container" *ngIf="isLoading">
+  <div class="spinner"></div>
+  <p class="state-text">Loading courses...</p>
+</div>
+
+<!-- Error State -->
+<div class="state-container" *ngIf="!isLoading && hasError">
+  <div class="state-icon error-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="32" height="32">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+  </div>
+  <p class="state-text">Failed to load courses. Please try again.</p>
+  <button class="btn-retry" (click)="loadCourses()">Retry</button>
+</div>
+
+<!-- Empty State -->
+<div class="state-container" *ngIf="!isLoading && !hasError && courses.length === 0">
+  <div class="state-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40">
+      <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+      <path d="M2 17l10 5 10-5"/>
+      <path d="M2 12l10 5 10-5"/>
+    </svg>
+  </div>
+  <p class="state-text">No courses available at the moment.</p>
+</div>
+
+<!-- Course Grid -->
+<div class="courses-grid" *ngIf="!isLoading && !hasError && courses.length > 0">
+
+  <div
+    class="course-card"
+    *ngFor="let course of courses"
+    [class.is-published]="course.isPublished">
+
+    <!-- ── Thumbnail ─────────────────────────────── -->
+    <div class="card-thumbnail">
+      <img
+        [src]="course.thumbnailUrl || 'assets/placeholder-course.jpg'"
+        [alt]="course.title"
+        class="thumbnail-img"
+        loading="lazy" />
+
+      <span class="badge-level" [ngClass]="getLevelClass(course.level)">
+        {{ course.level }}
+      </span>
+
+      <span class="badge-category">{{ course.category }}</span>
+
+      <div class="published-ribbon" *ngIf="course.isPublished">
+        <span class="ribbon-dot"></span> Live
+      </div>
+    </div>
+
+    <!-- ── Body ──────────────────────────────────── -->
+    <div class="card-body">
+      <h2 class="course-title">{{ course.title }}</h2>
+      <p class="course-description">{{ course.description }}</p>
+
+      <div class="meta-row">
+
+        <div class="meta-item">
+          <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span>{{ course.durationHours }} hrs</span>
+        </div>
+
+        <div class="meta-item">
+          <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span>{{ course.durationInMonths }} months</span>
+        </div>
+
+        <div class="meta-item" *ngIf="course.batches && course.batches.length > 0">
+          <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <span>{{ course.batches.length }} batch{{ course.batches.length !== 1 ? 'es' : '' }}</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Pricing ────────────────────────────────── -->
+    <div class="card-pricing">
+
+      <div class="price-main">
+        <span class="price-label">Course Fee</span>
+        <span class="price-amount">
+          {{ course.price | currency:'INR':'symbol':'1.0-0' }}
+        </span>
+      </div>
+
+      <!-- EMI Block -->
+      <div class="installment-block"
+           *ngIf="course.isPartialAllowed && course.installmentCount">
+        <span class="installment-tag">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+            <line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+          EMI Available
+        </span>
+        <p class="installment-detail">
+          {{ course.installmentCount }} installments of
+          <strong>{{ getInstallmentAmount(course) | currency:'INR':'symbol':'1.0-0' }}</strong>
+          / month
+        </p>
+      </div>
+
+      <!-- One-time -->
+      <div class="no-installment" *ngIf="!course.isPartialAllowed">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        One-time payment only
+      </div>
+
+      <button class="btn-enroll" (click)="onEnroll(course)">
+        Enroll Now
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
