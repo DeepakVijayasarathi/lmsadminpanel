@@ -22,7 +22,8 @@ export class AppComponent {
           url.startsWith('/reset-password') ||
           url.startsWith('/forgot-password') ||
           url.startsWith('/register') ||
-          url.startsWith('/demo-register');
+          url.startsWith('/demo-register') ||
+          url.startsWith('/user-plan');
 
         setTimeout(() => {
           window.dispatchEvent(new Event('resize'));
