@@ -2,6 +2,7 @@ import { Component, Output, EventEmitter, OnInit } from '@angular/core';
 import { HttpGeneralService } from '../../services/http.service';
 import { environment } from '../../../environments/environment';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 
 export interface CreateBatchDto {
   id: string;
@@ -40,7 +41,7 @@ export class UserPlanComponent implements OnInit {
   isLoading = true;
   hasError = false;
 
-  constructor(private httpService: HttpGeneralService<any>, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit(): void {
     this.loadCourses();
@@ -50,8 +51,8 @@ export class UserPlanComponent implements OnInit {
     this.isLoading = true;
     this.hasError = false;
 
-    this.httpService
-      .getData(environment.apiUrl, '/courses/get-course-register')
+    this.http
+      .get<CourseDto[]>(`${environment.apiUrl}/courses/get-course-register`) // ✅ direct API call
       .subscribe({
         next: (res) => {
           this.courses = res;
