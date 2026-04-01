@@ -83,6 +83,6 @@ export class UserPlanComponent implements OnInit {
   }
 
   onEnroll(course: CourseDto): void {
-    this.router.navigate(['/login']);
+    this.router.navigate(['/register']);
   }
 }
