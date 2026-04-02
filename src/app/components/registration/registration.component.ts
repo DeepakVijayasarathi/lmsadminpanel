@@ -35,6 +35,13 @@ interface Batch {
   isActive?: boolean;
 }
 
+interface GroupEntry {
+  id: string;
+  name: string;
+  description: string | null;
+  order: number | null;
+}
+
 @Component({
   selector: 'app-registration',
   standalone: false,
@@ -51,6 +58,7 @@ export class RegistrationComponent implements OnInit {
   zonals: any[] = [];
   boards: { id: string; name: string; order: number }[] = [];
   classes: any[] = [];
+  groups: GroupEntry[] = [];
   subjects: any[] = [];
   selectedCourse: Course | null = null;
   selectedBatch: Batch | null = null;
@@ -67,6 +75,7 @@ export class RegistrationComponent implements OnInit {
   coursesLoading = false;
   boardsLoading = false;
   classesLoading = false;
+  groupsLoading = false;
   subjectsLoading = false;
 
   // ── Shared account form fields ──
@@ -108,6 +117,7 @@ export class RegistrationComponent implements OnInit {
     learningGoals: '',
     whatsAppNumber: '',
     classId: null as string | null,
+    groupId: null as string | null,
     subjectIds: [] as string[],
   };
 
@@ -148,6 +158,15 @@ export class RegistrationComponent implements OnInit {
       : this.studentStepLabels.length;
   }
 
+  // ── Whether groups/subjects sections are shown ──
+  get hasGroups(): boolean {
+    return this.groups.length > 0;
+  }
+
+  get hasSubjects(): boolean {
+    return this.subjects.length > 0;
+  }
+
   // ── Role Selection ──
   async selectRole(role: 'teacher' | 'student') {
     this.selectedRole = role;
@@ -160,11 +179,11 @@ export class RegistrationComponent implements OnInit {
   }
 
   private readonly FALLBACK_BOARDS = [
-    { id: '258c9777-7f4b-49bc-8bcd-ac479088a19f', name: 'IB',                    order: 1 },
+    { id: '258c9777-7f4b-49bc-8bcd-ac479088a19f', name: 'IB', order: 1 },
     { id: '2694b9bf-bf25-4941-9295-9428bcadebb4', name: 'Tamil Nadu State Board', order: 2 },
-    { id: '3097e4ae-7fab-44a1-a960-12e961a35173', name: 'CBSE',                   order: 3 },
-    { id: '3dfd2184-28da-414f-9040-998182b73b34', name: 'ICSE',                   order: 4 },
-    { id: '9d70735b-479f-4468-96f8-1823e5b4ee7c', name: 'Cambridge',              order: 5 },
+    { id: '3097e4ae-7fab-44a1-a960-12e961a35173', name: 'CBSE', order: 3 },
+    { id: '3dfd2184-28da-414f-9040-998182b73b34', name: 'ICSE', order: 4 },
+    { id: '9d70735b-479f-4468-96f8-1823e5b4ee7c', name: 'Cambridge', order: 5 },
   ];
 
   async loadBoards() {
@@ -218,15 +237,19 @@ export class RegistrationComponent implements OnInit {
   async loadClasses(boardId: string) {
     if (!boardId) {
       this.classes = [];
+      this.groups = [];
       this.subjects = [];
       this.studentForm.classId = null;
+      this.studentForm.groupId = null;
       this.studentForm.subjectIds = [];
       return;
     }
     this.classesLoading = true;
     this.classes = [];
+    this.groups = [];
     this.subjects = [];
     this.studentForm.classId = null;
+    this.studentForm.groupId = null;
     this.studentForm.subjectIds = [];
     try {
       const data: any = await firstValueFrom(
@@ -237,6 +260,30 @@ export class RegistrationComponent implements OnInit {
       this.classes = [];
     }
     this.classesLoading = false;
+  }
+
+  // ── Load Groups by classId ──
+  async loadGroups(classId: string) {
+    this.groups = [];
+    this.subjects = [];
+    this.studentForm.groupId = null;
+    this.studentForm.subjectIds = [];
+
+    if (!classId) return;
+
+    this.groupsLoading = true;
+    try {
+      const data: any = await firstValueFrom(
+        this.http.get(`${this.API}/groups/by-class/${classId}`)
+      );
+      this.groups = Array.isArray(data) ? data : data?.data || [];
+    } catch {
+      this.groups = [];
+    }
+    this.groupsLoading = false;
+
+    // After loading groups, also load subjects
+    await this.loadSubjects(classId);
   }
 
   // ── Load Subjects by classId ──
@@ -273,6 +320,38 @@ export class RegistrationComponent implements OnInit {
     this.loadClasses(boardId);
   }
 
+  // ── On Class Selection ──
+  onClassSelect(classId: string | null) {
+    this.studentForm.classId = classId;
+    delete this.errors['classId'];
+    if (classId) {
+      this.loadGroups(classId);
+    } else {
+      this.groups = [];
+      this.subjects = [];
+      this.studentForm.groupId = null;
+      this.studentForm.subjectIds = [];
+      this.studentForm.currentGrade = '';
+    }
+  }
+
+  // ── Subject toggle helper ──
+  toggleSubject(subjectId: string) {
+    const idx = this.studentForm.subjectIds.indexOf(subjectId);
+    if (idx === -1) {
+      this.studentForm.subjectIds.push(subjectId);
+    } else {
+      this.studentForm.subjectIds.splice(idx, 1);
+    }
+    delete this.errors['subjectIds'];
+  }
+
+  // ── Group selection ──
+  selectGroup(groupId: string) {
+    this.studentForm.groupId = groupId;
+    delete this.errors['groupId'];
+  }
+
   async selectCourse(course: Course) {
     this.selectedCourse = course;
     this.selectedBatch = null;
@@ -293,17 +372,6 @@ export class RegistrationComponent implements OnInit {
     }
   }
 
-  // ── Subject toggle helper ──
-  toggleSubject(subjectId: string) {
-    const idx = this.studentForm.subjectIds.indexOf(subjectId);
-    if (idx === -1) {
-      this.studentForm.subjectIds.push(subjectId);
-    } else {
-      this.studentForm.subjectIds.splice(idx, 1);
-    }
-    delete this.errors['subjectIds'];
-  }
-
   // ── Payment type ──
   setPaymentType(type: 1 | 2) {
     this.paymentType = type;
@@ -315,9 +383,8 @@ export class RegistrationComponent implements OnInit {
 
   validateStep1(): boolean {
     this.errors = {};
-    const { firstName, lastName, username, phone, email, password, zonalId } = this.form;
+    const { firstName, username, phone, email, password, zonalId } = this.form;
     if (!firstName.trim()) this.errors['firstName'] = 'First name is required';
-    // if (!lastName.trim()) this.errors['lastName'] = 'Last name is required';
     if (!username.trim()) this.errors['username'] = 'Username is required';
     if (!phone.trim()) this.errors['phone'] = 'Phone is required';
     if (!zonalId.trim()) this.errors['zonalId'] = 'Zonal is required';
@@ -361,7 +428,17 @@ export class RegistrationComponent implements OnInit {
     if (!s.whatsAppNumber.trim()) this.errors['whatsAppNumber'] = 'WhatsApp number is required';
     if (!s.learningGoals.trim()) this.errors['learningGoals'] = 'Learning goals are required';
     if (!s.classId) this.errors['classId'] = 'Please select a class';
-    if (!s.subjectIds.length) this.errors['subjectIds'] = 'Please select at least one subject';
+
+    // Group is mandatory only if groups exist for the selected class
+    if (s.classId && this.hasGroups && !s.groupId) {
+      this.errors['groupId'] = 'Please select a group';
+    }
+
+    // Subjects are mandatory only if subjects exist for the selected class
+    if (s.classId && this.hasSubjects && !s.subjectIds.length) {
+      this.errors['subjectIds'] = 'Please select at least one subject';
+    }
+
     return Object.keys(this.errors).length === 0;
   }
 
@@ -546,6 +623,7 @@ export class RegistrationComponent implements OnInit {
       address: s.address.trim(),
       currentGrade: s.currentGrade.trim(),
       classId: s.classId || null,
+      groupId: s.groupId || null,
       subjectIds: s.subjectIds,
       learningGoals: s.learningGoals.trim(),
       parentName: s.parentName.trim(),
@@ -644,6 +722,7 @@ export class RegistrationComponent implements OnInit {
       learningGoals: '',
       whatsAppNumber: '',
       classId: null,
+      groupId: null,
       subjectIds: [],
     };
     this.selectedCourse = null;
@@ -651,6 +730,7 @@ export class RegistrationComponent implements OnInit {
     this.selectedBoardId = '';
     this.paymentType = 1;
     this.classes = [];
+    this.groups = [];
     this.subjects = [];
     this.errors = {};
   }

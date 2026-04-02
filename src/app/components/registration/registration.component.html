@@ -165,9 +165,8 @@
               <span class="err" *ngIf="errors['firstName']">{{ errors["firstName"] }}</span>
             </div>
             <div class="field">
-              <label>Last Name </label>
+              <label>Last Name</label>
               <input type="text" [(ngModel)]="form.lastName" placeholder="Doe" />
-              <!-- <span class="err" *ngIf="errors['lastName']">{{ errors["lastName"] }}</span> -->
             </div>
             <div class="field">
               <label>Username <span class="req">*</span></label>
@@ -354,9 +353,8 @@
               <span class="err" *ngIf="errors['firstName']">{{ errors["firstName"] }}</span>
             </div>
             <div class="field">
-              <label>Last Name </label>
+              <label>Last Name</label>
               <input type="text" [(ngModel)]="form.lastName" placeholder="Doe" />
-              <!-- <span class="err" *ngIf="errors['lastName']">{{ errors["lastName"] }}</span> -->
             </div>
             <div class="field">
               <label>Username <span class="req">*</span></label>
@@ -431,19 +429,18 @@
             <!-- ── Class Dropdown (shown after board is selected) ── -->
             <div class="field full" *ngIf="selectedBoardId">
 
-              <!-- Class loading -->
               <div class="cascade-loading" *ngIf="classesLoading">
                 <i class="fa-solid fa-circle-notch fa-spin"></i> Loading classes…
               </div>
 
               <ng-container *ngIf="!classesLoading">
                 <label class="cascade-label">
-                  <span class="cascade-icon"><i class="fa-solid fa-layer-group"></i></span>
+                  <span class="cascade-icon"><i class="fa-solid fa-school"></i></span>
                   Class <span class="req">*</span>
                 </label>
                 <select
                   [(ngModel)]="studentForm.classId"
-                  (ngModelChange)="loadSubjects($event)"
+                  (ngModelChange)="onClassSelect($event)"
                   [class.invalid]="errors['classId']"
                   class="cascade-select"
                 >
@@ -457,21 +454,58 @@
               </ng-container>
             </div>
 
-            <!-- ── Subject Pills (shown after class is selected) ── -->
+            <!-- ══════════════════════════════════════════════ -->
+            <!-- ── Group Pills (shown if groups exist for class) ── -->
+            <!-- ══════════════════════════════════════════════ -->
             <div class="field full" *ngIf="studentForm.classId && !classesLoading">
-              <label class="cascade-label">
-                <span class="cascade-icon"><i class="fa-solid fa-book"></i></span>
-                Subjects <span class="req">*</span>
-              </label>
 
-              <!-- Subject loading -->
+              <!-- Group loading spinner -->
+              <div class="cascade-loading" *ngIf="groupsLoading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading groups…
+              </div>
+
+              <!-- Groups section — shown only when groups exist -->
+              <ng-container *ngIf="!groupsLoading && hasGroups">
+                <label class="cascade-label">
+                  <span class="cascade-icon cascade-icon--violet"><i class="fa-solid fa-layer-group"></i></span>
+                  Group <span class="req">*</span>
+                  <span class="cascade-badge">Required</span>
+                </label>
+                <div class="board-pills group-pills">
+                  <button
+                    type="button"
+                    *ngFor="let grp of groups"
+                    class="board-pill"
+                    [class.selected]="studentForm.groupId === grp.id"
+                    (click)="selectGroup(grp.id)"
+                  >
+                    <i class="fa-solid fa-layer-group pill-icon"></i>
+                    {{ grp.name }}
+                    <span class="pill-order" *ngIf="grp.order != null">#{{ grp.order }}</span>
+                    <i class="fa-solid fa-check pill-check" *ngIf="studentForm.groupId === grp.id"></i>
+                  </button>
+                </div>
+                <span class="err" *ngIf="errors['groupId']">{{ errors["groupId"] }}</span>
+              </ng-container>
+
+            </div>
+
+            <!-- ── Subject Pills (shown if subjects exist for class) ── -->
+            <div class="field full" *ngIf="studentForm.classId && !classesLoading && !groupsLoading">
+
+              <!-- Subject loading spinner -->
               <div class="cascade-loading" *ngIf="subjectsLoading">
                 <i class="fa-solid fa-circle-notch fa-spin"></i> Loading subjects…
               </div>
 
-              <!-- Subject pills -->
-              <ng-container *ngIf="!subjectsLoading">
-                <div class="board-pills subject-pills" *ngIf="subjects.length">
+              <!-- Subjects section — shown only when subjects exist -->
+              <ng-container *ngIf="!subjectsLoading && hasSubjects">
+                <label class="cascade-label">
+                  <span class="cascade-icon cascade-icon--purple"><i class="fa-solid fa-book"></i></span>
+                  Subjects <span class="req">*</span>
+                  <span class="cascade-badge">Required · Select all that apply</span>
+                </label>
+                <div class="board-pills subject-pills">
                   <button
                     type="button"
                     *ngFor="let sub of subjects"
@@ -484,12 +518,14 @@
                     <i class="fa-solid fa-check pill-check" *ngIf="studentForm.subjectIds.includes(sub.id)"></i>
                   </button>
                 </div>
-                <div class="no-data-hint" *ngIf="!subjects.length">
-                  <i class="fa-solid fa-inbox"></i> No subjects found for this class.
-                </div>
+                <span class="err" *ngIf="errors['subjectIds']">{{ errors["subjectIds"] }}</span>
               </ng-container>
 
-              <span class="err" *ngIf="errors['subjectIds']">{{ errors["subjectIds"] }}</span>
+              <!-- No subjects hint (only after loading is done and subjects are empty) -->
+              <!-- <div class="no-data-hint" *ngIf="!subjectsLoading && !hasSubjects && studentForm.classId">
+                <i class="fa-solid fa-inbox"></i> No subjects available for this class.
+              </div> -->
+
             </div>
 
             <!-- ── Gender ── -->
@@ -505,7 +541,7 @@
               <span class="err" *ngIf="errors['gender']">{{ errors["gender"] }}</span>
             </div>
 
-            <!-- ── Current Grade ── -->
+            <!-- ── Current Grade (auto-filled from class) ── -->
             <div class="field">
               <label>Current Grade / Class <span class="req">*</span></label>
               <div class="input-autofill-wrap">
@@ -602,13 +638,11 @@
             <p>Select a course to enroll in.</p>
           </div>
 
-          <!-- Course loading -->
           <div class="course-loading" *ngIf="coursesLoading">
             <div class="mini-spinner"></div>
             <span>Loading courses...</span>
           </div>
 
-          <!-- Course grid -->
           <div class="course-grid" *ngIf="!coursesLoading">
             <div
               class="course-card"
@@ -642,13 +676,11 @@
 
           <span class="err block-err" *ngIf="errors['course']">{{ errors["course"] }}</span>
 
-          <!-- ── No active batch warning ── -->
           <div class="info-note" *ngIf="selectedCourse && !selectedBatch && !coursesLoading">
             <i class="fa-solid fa-triangle-exclamation"></i>
             No active batch found for this course. Please select another course.
           </div>
 
-          <!-- ── Active batch confirmation ── -->
           <div class="batch-confirm" *ngIf="selectedCourse && selectedBatch">
             <i class="fa-solid fa-circle-check"></i>
             Batch found: <strong>{{ selectedBatch.batchName || selectedBatch.name || 'Active Batch' }}</strong>
@@ -694,7 +726,6 @@
               </div>
             </div>
 
-            <!-- Payment Type Toggle -->
             <div class="pay-type-section" *ngIf="selectedCourse.isPartialAllowed && selectedCourse.installmentCount">
               <div class="pay-type-label">Payment Option</div>
               <div class="pay-toggle">
