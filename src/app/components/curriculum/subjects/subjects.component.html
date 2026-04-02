@@ -36,37 +36,6 @@
     </div>
   </div>
 
-  <!-- <div class="pg-stats">
-    <div class="pg-stat">
-      <div class="pg-stat__icon chip-orange"><i class="fas fa-atom"></i></div>
-      <div>
-        <div class="pg-stat__val">96</div>
-        <div class="pg-stat__lbl">Total Subjects</div>
-      </div>
-    </div>
-    <div class="pg-stat">
-      <div class="pg-stat__icon chip-emerald"><i class="fas fa-circle-check"></i></div>
-      <div>
-        <div class="pg-stat__val">91</div>
-        <div class="pg-stat__lbl">Active</div>
-      </div>
-    </div>
-    <div class="pg-stat">
-      <div class="pg-stat__icon chip-indigo"><i class="fas fa-list-check"></i></div>
-      <div>
-        <div class="pg-stat__val">1,248</div>
-        <div class="pg-stat__lbl">Topics Covered</div>
-      </div>
-    </div>
-    <div class="pg-stat">
-      <div class="pg-stat__icon chip-purple"><i class="fas fa-building-columns"></i></div>
-      <div>
-        <div class="pg-stat__val">8</div>
-        <div class="pg-stat__lbl">Boards Covered</div>
-      </div>
-    </div>
-  </div> -->
-
   <!-- Table Card -->
   <div class="pg-card">
     <div class="pg-card__head">
@@ -104,6 +73,7 @@
             <th>#</th>
             <th>Subject Name</th>
             <th>Class</th>
+            <th>Group</th>
             <th>Description</th>
             <th>Actions</th>
           </tr>
@@ -124,9 +94,16 @@
               >
                 {{ getClassName(subject.classId) }}
               </span>
-              <span class="no-val" *ngIf="getClassName(subject.classId) === '—'"
-                >—</span
+              <span class="no-val" *ngIf="getClassName(subject.classId) === '—'">—</span>
+            </td>
+            <td>
+              <span
+                class="pg-badge pg-badge--indigo"
+                *ngIf="getGroupName(subject.groupId) !== '—'"
               >
+                {{ getGroupName(subject.groupId) }}
+              </span>
+              <span class="no-val" *ngIf="getGroupName(subject.groupId) === '—'">—</span>
             </td>
             <td class="desc-cell">{{ subject.description || "—" }}</td>
             <td>
@@ -159,7 +136,7 @@
             </td>
           </tr>
           <tr *ngIf="filteredSubjects.length === 0">
-            <td colspan="5" class="pg-empty">
+            <td colspan="6" class="pg-empty">
               <i class="fas fa-atom pg-empty__icon"></i>
               No subjects found matching your criteria.
             </td>
@@ -224,7 +201,7 @@
       <select
         class="form-control form-select"
         [(ngModel)]="formClassId"
-        (change)="classError = ''"
+        (change)="onFormClassChange()"
       >
         <option value="">— Select a Class —</option>
         <option *ngFor="let cls of classes" [value]="cls.id">
@@ -233,6 +210,45 @@
       </select>
       <div class="field-error" *ngIf="classError">
         <i class="fas fa-circle-exclamation"></i> {{ classError }}
+      </div>
+    </div>
+
+    <!-- Group (loads after class is selected) -->
+    <div class="form-group">
+      <label>
+        Group
+        <span class="hint">(optional)</span>
+        <i
+          class="fas fa-spinner fa-spin ms-1"
+          style="font-size: 0.75rem; color: var(--color-muted)"
+          *ngIf="isGroupsLoading"
+        ></i>
+      </label>
+      <select
+        class="form-control form-select"
+        [(ngModel)]="formGroupId"
+        [disabled]="!formClassId || isGroupsLoading"
+      >
+        <option value="">
+          {{
+            !formClassId
+              ? "— Select a class first —"
+              : isGroupsLoading
+              ? "Loading groups..."
+              : classGroups.length === 0
+              ? "— No groups available —"
+              : "— Select a Group —"
+          }}
+        </option>
+        <option *ngFor="let grp of classGroups" [value]="grp.id">
+          {{ grp.name }}
+        </option>
+      </select>
+      <div
+        class="field-hint"
+        *ngIf="formClassId && !isGroupsLoading && classGroups.length === 0"
+      >
+        <i class="fas fa-info-circle"></i> No groups found for this class.
       </div>
     </div>
 
@@ -278,6 +294,23 @@
         <span class="pg-badge pg-badge--sky view-showcase__badge">
           {{ getClassName(selectedSubject.classId) }}
         </span>
+        <span
+          class="pg-badge pg-badge--indigo view-showcase__badge"
+          *ngIf="getGroupName(selectedSubject.groupId) !== '—'"
+          style="margin-left: 6px;"
+        >
+          {{ getGroupName(selectedSubject.groupId) }}
+        </span>
+      </div>
+    </div>
+
+    <div class="view-detail-block">
+      <div class="view-detail-label">Group</div>
+      <div
+        class="view-detail-val"
+        [class.view-detail-val--empty]="!selectedSubject.groupId"
+      >
+        {{ getGroupName(selectedSubject.groupId) }}
       </div>
     </div>
 

@@ -19,6 +19,7 @@ export interface Subject {
   name: string;
   description: string | null;
   classId: string;
+  groupId?: string | null;
   class?: ClassEntry;
 }
 
@@ -26,12 +27,23 @@ export interface SubjectPayload {
   name: string;
   description: string | null;
   classId: string;
+  groupId: string | null;
 }
 
 export interface Board {
   id: string;
   name: string;
   description: string | null;
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  description: string | null;
+  classId: string;
+  order: number;
+  isActive: boolean;
+  createdAt: string;
 }
 
 type ModalMode = 'create' | 'edit' | 'view' | 'delete' | null;
@@ -47,6 +59,9 @@ export class SubjectsComponent implements OnInit {
   filteredSubjects: Subject[] = [];
   classes: ClassEntry[] = [];
   boards: Board[] = [];
+  allGroups: Group[] = [];
+  classGroups: Group[] = [];
+  isGroupsLoading: boolean = false;
 
   searchQuery: string = '';
   selectedClassFilter: string = '';
@@ -60,6 +75,7 @@ export class SubjectsComponent implements OnInit {
   formName: string = '';
   formDescription: string = '';
   formClassId: string = '';
+  formGroupId: string = '';
 
   // Validation
   nameError: string = '';
@@ -71,7 +87,7 @@ export class SubjectsComponent implements OnInit {
   get pagedSubjects(): Subject[] {
     return this.filteredSubjects.slice(
       (this.currentPage - 1) * this.pageSize,
-      this.currentPage * this.pageSize,
+      this.currentPage * this.pageSize
     );
   }
 
@@ -87,13 +103,14 @@ export class SubjectsComponent implements OnInit {
     private commonService: CommonService,
     private httpService: HttpGeneralService<any>,
     private permissionService: PermissionService,
-    private router: Router,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.loadBoards();
     this.loadClasses();
     this.loadSubjects();
+    this.loadAllGroups();
   }
 
   get p(): Permission {
@@ -139,19 +156,53 @@ export class SubjectsComponent implements OnInit {
     });
   }
 
+  loadAllGroups(): void {
+    this.httpService.getData(BASE_URL, '/groups').subscribe({
+      next: (res: any) => {
+        this.allGroups = Array.isArray(res) ? res : (res?.data ?? []);
+      },
+      error: () => {
+        this.commonService.error('Failed to load groups.');
+      },
+    });
+  }
+
+  loadGroupsByClass(classId: string, restoreGroupId?: string): void {
+    this.classGroups = [];
+    this.formGroupId = '';
+    if (!classId) return;
+
+    this.isGroupsLoading = true;
+    this.httpService.getData(BASE_URL, `/groups/by-class/${classId}`).subscribe({
+      next: (res: any) => {
+        this.classGroups = Array.isArray(res) ? res : (res?.data ?? []);
+        // Restore the saved groupId when editing
+        if (restoreGroupId) {
+          const exists = this.classGroups.find((g) => g.id === restoreGroupId);
+          this.formGroupId = exists ? restoreGroupId : '';
+        }
+        this.isGroupsLoading = false;
+      },
+      error: () => {
+        this.commonService.error('Failed to load groups for selected class.');
+        this.isGroupsLoading = false;
+      },
+    });
+  }
+
   createSubject(): void {
     const payload: SubjectPayload = {
       name: this.formName.trim(),
       description: this.formDescription.trim() || null,
       classId: this.formClassId,
+      groupId: this.formGroupId || null,
     };
     this.httpService.postData(BASE_URL, '/subject', payload).subscribe({
       next: () => {
-        this.commonService.success(
-          `Subject "${payload.name}" created successfully.`,
-        );
+        this.commonService.success(`Subject "${payload.name}" created successfully.`);
         this.closeModal();
         this.loadSubjects();
+        this.loadAllGroups();
       },
       error: (err: any) => {
         const msg = err?.error?.message || 'Failed to create subject.';
@@ -166,16 +217,16 @@ export class SubjectsComponent implements OnInit {
       name: this.formName.trim(),
       description: this.formDescription.trim() || null,
       classId: this.formClassId,
+      groupId: this.formGroupId || null,
     };
     this.httpService
       .putData(BASE_URL, `/subject/${this.selectedSubject.id}`, payload)
       .subscribe({
         next: () => {
-          this.commonService.success(
-            `Subject "${payload.name}" updated successfully.`,
-          );
+          this.commonService.success(`Subject "${payload.name}" updated successfully.`);
           this.closeModal();
           this.loadSubjects();
+          this.loadAllGroups();
         },
         error: (err: any) => {
           const msg = err?.error?.message || 'Failed to update subject.';
@@ -191,7 +242,7 @@ export class SubjectsComponent implements OnInit {
       .subscribe({
         next: () => {
           this.commonService.success(
-            `Subject "${this.selectedSubject!.name}" deleted successfully.`,
+            `Subject "${this.selectedSubject!.name}" deleted successfully.`
           );
           this.closeModal();
           this.loadSubjects();
@@ -211,6 +262,8 @@ export class SubjectsComponent implements OnInit {
     this.formName = '';
     this.formDescription = '';
     this.formClassId = '';
+    this.formGroupId = '';
+    this.classGroups = [];
     this.clearErrors();
   }
 
@@ -220,7 +273,11 @@ export class SubjectsComponent implements OnInit {
     this.formName = subject.name;
     this.formDescription = subject.description ?? '';
     this.formClassId = subject.classId;
+    this.formGroupId = subject.groupId ?? '';
+    this.classGroups = [];
     this.clearErrors();
+    // Load groups for this class and restore the saved groupId
+    this.loadGroupsByClass(subject.classId, subject.groupId ?? '');
   }
 
   openViewModal(subject: Subject): void {
@@ -236,12 +293,21 @@ export class SubjectsComponent implements OnInit {
   closeModal(): void {
     this.modalMode = null;
     this.selectedSubject = null;
+    this.classGroups = [];
+    this.formGroupId = '';
     this.clearErrors();
   }
 
   clearErrors(): void {
     this.nameError = '';
     this.classError = '';
+  }
+
+  // ─── Form Class Change ───────────────────────────────────────
+
+  onFormClassChange(): void {
+    this.classError = '';
+    this.loadGroupsByClass(this.formClassId);
   }
 
   // ─── Form Submit ─────────────────────────────────────────────
@@ -268,7 +334,7 @@ export class SubjectsComponent implements OnInit {
         (s) =>
           s.name.toLowerCase() === trimmed.toLowerCase() &&
           s.classId === this.formClassId &&
-          s.id !== this.selectedSubject?.id,
+          s.id !== this.selectedSubject?.id
       );
       if (duplicate) {
         this.nameError =
@@ -290,15 +356,19 @@ export class SubjectsComponent implements OnInit {
   getClassName(classId: string): string {
     const cls = this.classes.find((c) => c.id === classId);
     if (!cls) return '—';
-
     const board = this.boards.find((b) => b.id === cls.boardId);
-
     return board ? `${board.name} - ${cls.name}` : cls.name;
   }
 
   getBoardClassName(cls: ClassEntry): string {
     const board = this.boards.find((b) => b.id === cls.boardId);
     return board ? `${board.name} - ${cls.name}` : cls.name;
+  }
+
+  getGroupName(groupId: string | null | undefined): string {
+    if (!groupId) return '—';
+    const grp = this.allGroups.find((g) => g.id === groupId);
+    return grp ? grp.name : '—';
   }
 
   // Classes that actually appear in loaded subjects (for filter dropdown)
@@ -310,6 +380,7 @@ export class SubjectsComponent implements OnInit {
   onSearch(): void {
     this.applyFilters();
   }
+
   onClassFilter(): void {
     this.applyFilters();
   }
@@ -325,7 +396,8 @@ export class SubjectsComponent implements OnInit {
         (s) =>
           s.name.toLowerCase().includes(q) ||
           this.getClassName(s.classId).toLowerCase().includes(q) ||
-          s.description?.toLowerCase().includes(q),
+          this.getGroupName(s.groupId).toLowerCase().includes(q) ||
+          s.description?.toLowerCase().includes(q)
       );
     }
     this.filteredSubjects = list;
