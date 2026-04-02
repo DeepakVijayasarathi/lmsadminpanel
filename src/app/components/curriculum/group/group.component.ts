@@ -19,13 +19,18 @@ export interface GroupEntry {
   name: string;
   description: string | null;
   classId: string;
-  order: number | null;
 }
 
 export interface GroupPayload {
   name: string;
   description: string | null;
-  order: number | null;
+  classId: string;
+}
+
+export interface Board {
+  id: string;
+  name: string;
+  description: string | null;
 }
 
 type ModalMode = 'create' | 'edit' | 'view' | 'delete' | null;
@@ -40,6 +45,7 @@ export class GroupComponent implements OnInit {
   groups: GroupEntry[] = [];
   filteredGroups: GroupEntry[] = [];
   classes: ClassEntry[] = [];
+  boards: Board[] = [];
 
   searchQuery: string = '';
   selectedClassFilter: string = '';
@@ -53,7 +59,6 @@ export class GroupComponent implements OnInit {
   formName: string = '';
   formDescription: string = '';
   formClassId: string = '';
-  formOrder: number | null = null;
 
   // Validation
   nameError: string = '';
@@ -85,6 +90,7 @@ export class GroupComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loadBoards();
     this.loadClasses();
     this.loadGroups();
   }
@@ -102,6 +108,17 @@ export class GroupComponent implements OnInit {
       },
       error: () => {
         this.commonService.error('Failed to load classes.');
+      },
+    });
+  }
+
+  loadBoards(): void {
+    this.httpService.getData(BASE_URL, '/board').subscribe({
+      next: (res: any) => {
+        this.boards = Array.isArray(res) ? res : (res?.data ?? []);
+      },
+      error: () => {
+        this.commonService.error('Failed to load boards.');
       },
     });
   }
@@ -147,7 +164,7 @@ export class GroupComponent implements OnInit {
     const payload: GroupPayload = {
       name: this.formName.trim(),
       description: this.formDescription.trim() || null,
-      order: this.formOrder ?? null,
+      classId: this.formClassId,
     };
     this.httpService
       .postData(BASE_URL, `/groups`, payload)
@@ -171,7 +188,7 @@ export class GroupComponent implements OnInit {
     const payload: GroupPayload = {
       name: this.formName.trim(),
       description: this.formDescription.trim() || null,
-      order: this.formOrder ?? null,
+      classId: this.formClassId,
     };
     this.httpService
       .putData(BASE_URL, `/groups/${this.selectedGroup.id}`, payload)
@@ -217,7 +234,6 @@ export class GroupComponent implements OnInit {
     this.formName = '';
     this.formDescription = '';
     this.formClassId = this.selectedClassFilter || '';
-    this.formOrder = null;
     this.clearErrors();
   }
 
@@ -227,7 +243,6 @@ export class GroupComponent implements OnInit {
     this.formName = grp.name;
     this.formDescription = grp.description ?? '';
     this.formClassId = grp.classId;
-    this.formOrder = grp.order ?? null;
     this.clearErrors();
   }
 
@@ -295,9 +310,14 @@ export class GroupComponent implements OnInit {
 
   // ─── Helpers ─────────────────────────────────────────────────
 
-  getClassName(classId: string): string {
-    return this.classes.find((c) => c.id === classId)?.name ?? '—';
-  }
+   getClassName(classId: string): string {
+      const cls = this.classes.find((c) => c.id === classId);
+      if (!cls) return '—';
+  
+      const board = this.boards.find((b) => b.id === cls.boardId);
+  
+      return board ? `${board.name} - ${cls.name}` : cls.name;
+    }
 
   // Unique classes present in loaded groups (for filter dropdown)
   get classFilterOptions(): ClassEntry[] {

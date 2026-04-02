@@ -12,7 +12,7 @@
       </div>
     </div>
     <div class="pg-head__right">
-      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()">
+      <button class="pg-btn pg-btn--primary" *ngIf="p.canCreate" (click)="openCreateModal()">
         <i class="fas fa-plus"></i> Add Group
       </button>
     </div>
@@ -75,7 +75,6 @@
             <th>#</th>
             <th>Group Name</th>
             <th>Class</th>
-            <th>Order</th>
             <th>Description</th>
             <th>Actions</th>
           </tr>
@@ -94,12 +93,6 @@
                 {{ getClassName(grp.classId) }}
               </span>
               <span class="no-val" *ngIf="getClassName(grp.classId) === '—'">—</span>
-            </td>
-            <td>
-              <span class="order-badge" *ngIf="grp.order != null">
-                <i class="fas fa-sort-numeric-up-alt"></i> {{ grp.order }}
-              </span>
-              <span class="no-val" *ngIf="grp.order == null">—</span>
             </td>
             <td class="desc-cell">{{ grp.description || '—' }}</td>
             <td>
@@ -186,7 +179,7 @@
       >
         <option value="">— Select a Class —</option>
         <option *ngFor="let cls of classes" [value]="cls.id">
-          {{ cls.name }}
+          {{ getClassName(cls.id) }}
         </option>
       </select>
       <div class="field-error" *ngIf="classError">
@@ -207,18 +200,6 @@
       <div class="field-error" *ngIf="nameError">
         <i class="fas fa-circle-exclamation"></i> {{ nameError }}
       </div>
-    </div>
-
-    <!-- Order -->
-    <div class="form-group">
-      <label>Order <span class="hint">(optional)</span></label>
-      <input
-        type="number"
-        class="form-control"
-        placeholder="e.g. 1"
-        [(ngModel)]="formOrder"
-        min="1"
-      />
     </div>
 
     <!-- Description -->
@@ -263,13 +244,6 @@
         <span class="pg-badge pg-badge--sky view-showcase__badge">
           {{ getClassName(selectedGroup.classId) }}
         </span>
-      </div>
-    </div>
-
-    <div class="view-detail-block" *ngIf="selectedGroup.order != null">
-      <div class="view-detail-label">Order</div>
-      <div class="view-detail-val">
-        {{ selectedGroup.order }}
       </div>
     </div>
 
