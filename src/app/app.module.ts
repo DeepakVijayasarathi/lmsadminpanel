@@ -61,6 +61,7 @@ import { ForgotPasswordComponent } from './components/forgot-password/forgot-pas
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 import { ChangePasswordComponent } from './components/change-password/change-password.component';
 import { UserPlanComponent } from './components/user-plan/user-plan.component';
+import { GroupComponent } from './components/curriculum/group/group.component';
 
 @NgModule({
   declarations: [
@@ -116,7 +117,8 @@ import { UserPlanComponent } from './components/user-plan/user-plan.component';
     ForgotPasswordComponent,
     ResetPasswordComponent,
     ChangePasswordComponent,
-    UserPlanComponent
+    UserPlanComponent,
+    GroupComponent
   ],
   imports: [
     BrowserModule,

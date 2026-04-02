@@ -47,6 +47,7 @@ import { ForgotPasswordComponent } from './components/forgot-password/forgot-pas
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 import { ChangePasswordComponent } from './components/change-password/change-password.component';
 import { UserPlanComponent } from './components/user-plan/user-plan.component';
+import { GroupComponent } from './components/curriculum/group/group.component';
 
 const AG = [AuthGuard];
 
@@ -74,6 +75,7 @@ const routes: Routes = [
   // Curriculum
   { path: 'boards',    component: BoardsComponent,    canActivate: AG },
   { path: 'classes',   component: ClassesComponent,   canActivate: AG },
+  { path: 'group',   component: GroupComponent,   canActivate: AG },
   { path: 'subjects',  component: SubjectsComponent,  canActivate: AG },
   { path: 'topics',    component: TopicsComponent,    canActivate: AG },
 
