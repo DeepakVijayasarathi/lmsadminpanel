@@ -43,12 +43,15 @@ interface Batch {
 })
 export class RegistrationComponent implements OnInit {
   readonly API = environment.apiUrl;
+  readonly today = new Date().toISOString().split('T')[0];
 
   selectedRole: 'teacher' | 'student' | null = null;
   courses: Course[] = [];
   batches: Batch[] = [];
   zonals: any[] = [];
   boards: { id: string; name: string; order: number }[] = [];
+  classes: any[] = [];
+  subjects: any[] = [];
   selectedCourse: Course | null = null;
   selectedBatch: Batch | null = null;
   selectedBoardId = '';
@@ -63,7 +66,8 @@ export class RegistrationComponent implements OnInit {
   showSuccess = false;
   coursesLoading = false;
   boardsLoading = false;
-
+  classesLoading = false;
+  subjectsLoading = false;
 
   // ── Shared account form fields ──
   form = {
@@ -94,21 +98,19 @@ export class RegistrationComponent implements OnInit {
 
   // ── Student-specific fields ──
   studentForm = {
-    dateOfBirth: null as string | null,
     gender: '',
     address: '',
     currentGrade: '',
-    previousSchool: null as string | null,
     parentName: '',
     relationship: '',
     parentEmail: '',
     parentPhone: '',
-    favoriteSubjects: [] as string[],
-    hobbies: '',
     learningGoals: '',
+    whatsAppNumber: '',
+    classId: null as string | null,
+    subjectIds: [] as string[],
   };
 
-  subjectInput = '';
   showPassword = false;
   errors: Record<string, string> = {};
   successData: any = null;
@@ -158,11 +160,11 @@ export class RegistrationComponent implements OnInit {
   }
 
   private readonly FALLBACK_BOARDS = [
-    { id: '258c9777-7f4b-49bc-8bcd-ac479088a19f', name: 'IB',                     order: 1 },
-    { id: '2694b9bf-bf25-4941-9295-9428bcadebb4', name: 'Tamil Nadu State Board',  order: 2 },
-    { id: '3097e4ae-7fab-44a1-a960-12e961a35173', name: 'CBSE',                    order: 3 },
-    { id: '3dfd2184-28da-414f-9040-998182b73b34', name: 'ICSE',                    order: 4 },
-    { id: '9d70735b-479f-4468-96f8-1823e5b4ee7c', name: 'Cambridge',               order: 5 },
+    { id: '258c9777-7f4b-49bc-8bcd-ac479088a19f', name: 'IB',                    order: 1 },
+    { id: '2694b9bf-bf25-4941-9295-9428bcadebb4', name: 'Tamil Nadu State Board', order: 2 },
+    { id: '3097e4ae-7fab-44a1-a960-12e961a35173', name: 'CBSE',                   order: 3 },
+    { id: '3dfd2184-28da-414f-9040-998182b73b34', name: 'ICSE',                   order: 4 },
+    { id: '9d70735b-479f-4468-96f8-1823e5b4ee7c', name: 'Cambridge',              order: 5 },
   ];
 
   async loadBoards() {
@@ -193,7 +195,9 @@ export class RegistrationComponent implements OnInit {
   async loadCourses() {
     this.coursesLoading = true;
     try {
-      const data: any = await this.http.get(`${this.API}/courses/get-course-register`).toPromise();
+      const data: any = await firstValueFrom(
+        this.http.get(`${this.API}/courses/get-course-register`)
+      );
       this.courses = Array.isArray(data) ? data : data?.data || [];
     } catch (e: any) {
       this.toast('Failed to load courses: ' + (e.message || 'Unknown error'));
@@ -203,73 +207,101 @@ export class RegistrationComponent implements OnInit {
 
   async loadZonals() {
     try {
-      const data: any = await this.http.get(`${this.API}/zonal`).toPromise();
+      const data: any = await firstValueFrom(this.http.get(`${this.API}/zonal`));
       this.zonals = Array.isArray(data) ? data : data?.data || [];
     } catch (e: any) {
       this.toast('Failed to load zonals: ' + (e.message || 'Unknown error'));
     }
   }
 
-  // async selectCourse(course: Course) {
-  //   this.selectedCourse = course;
-  //   this.selectedBatch = null;
-  //   delete this.errors['course'];
+  // ── Load Classes by boardId ──
+  async loadClasses(boardId: string) {
+    if (!boardId) {
+      this.classes = [];
+      this.subjects = [];
+      this.studentForm.classId = null;
+      this.studentForm.subjectIds = [];
+      return;
+    }
+    this.classesLoading = true;
+    this.classes = [];
+    this.subjects = [];
+    this.studentForm.classId = null;
+    this.studentForm.subjectIds = [];
+    try {
+      const data: any = await firstValueFrom(
+        this.http.get(`${this.API}/class/get-classes`, { params: { boardId } })
+      );
+      this.classes = Array.isArray(data) ? data : data?.data || [];
+    } catch {
+      this.classes = [];
+    }
+    this.classesLoading = false;
+  }
 
-  //   try {
-  //     console.log('Fetching batches for course:', course.id);
-  //       console.log('Fetching batches for course:', this.selectedCourse!.id);
-  //     if (!this.batches.length) {
-  //       const data: any = await this.http.get(`${this.API}/batches/get-batch-by-id/${this.selectedCourse!.id}`).toPromise();
-  //       this.batches = Array.isArray(data) ? data : data?.data || [];
-  //       const batch = this.batches.find((b) => b.isActive === true);
-  //       this.selectedBatch = batch || null;
-  //       console.log('Batches loaded:', this.batches);
-  //       console.log('Batches loaded:', batch);
-  //     }
-  //   } catch {
-  //     console.warn('Batches fetch failed');
-  //   }
-  // }
+  // ── Load Subjects by classId ──
+  async loadSubjects(classId: string) {
+    this.studentForm.subjectIds = [];
+    this.subjects = [];
+    if (!classId) {
+      this.studentForm.currentGrade = '';
+      return;
+    }
+
+    // Auto-fill currentGrade with the selected class name
+    const selectedClass = this.classes.find((c) => c.id === classId);
+    if (selectedClass) {
+      this.studentForm.currentGrade = selectedClass.name || '';
+    }
+
+    this.subjectsLoading = true;
+    try {
+      const data: any = await firstValueFrom(
+        this.http.get(`${this.API}/subject/get-subject/by-class`, { params: { classId } })
+      );
+      this.subjects = Array.isArray(data) ? data : data?.data || [];
+    } catch {
+      this.subjects = [];
+    }
+    this.subjectsLoading = false;
+  }
+
+  // ── On Board Selection ──
+  onBoardSelect(boardId: string) {
+    this.selectedBoardId = boardId;
+    delete this.errors['boardId'];
+    this.loadClasses(boardId);
+  }
+
   async selectCourse(course: Course) {
     this.selectedCourse = course;
     this.selectedBatch = null;
     delete this.errors['course'];
 
     try {
-      console.log('Fetching batch for course:', this.selectedCourse!.id);
-
       const response: any = await firstValueFrom(
-        this.http.get(`${this.API}/batches/get-batch-by-id/${this.selectedCourse!.id}`)
+        this.http.get(`${this.API}/batches/get-batch-by-id/${course.id}`)
       );
-
-      console.log('API Response:', response);
-
-      // ✅ Since API returns single object
-      if (response && response.isActive) {
+      if (response) {
         this.selectedBatch = response;
       } else {
         this.selectedBatch = null;
       }
-
-      console.log('Selected Batch:', this.selectedBatch);
-
     } catch (error) {
       console.warn('Batch fetch failed', error);
+      this.selectedBatch = null;
     }
   }
 
-  // ── Subject tag helpers ──
-  addSubject() {
-    const val = this.subjectInput.trim();
-    if (val && !this.studentForm.favoriteSubjects.includes(val)) {
-      this.studentForm.favoriteSubjects.push(val);
-      delete this.errors['favoriteSubjects'];
+  // ── Subject toggle helper ──
+  toggleSubject(subjectId: string) {
+    const idx = this.studentForm.subjectIds.indexOf(subjectId);
+    if (idx === -1) {
+      this.studentForm.subjectIds.push(subjectId);
+    } else {
+      this.studentForm.subjectIds.splice(idx, 1);
     }
-    this.subjectInput = '';
-  }
-
-  removeSubject(index: number) {
-    this.studentForm.favoriteSubjects.splice(index, 1);
+    delete this.errors['subjectIds'];
   }
 
   // ── Payment type ──
@@ -281,19 +313,6 @@ export class RegistrationComponent implements OnInit {
   //                   VALIDATION
   // ═══════════════════════════════════════════════════
 
-  // validateStep1(): boolean {
-  //   this.errors = {};
-  //   const { firstName, lastName, username, phone, email, password } = this.form;
-  //   if (!firstName.trim()) this.errors['firstName'] = 'First name is required';
-  //   if (!lastName.trim()) this.errors['lastName'] = 'Last name is required';
-  //   if (!username.trim()) this.errors['username'] = 'Username is required';
-  //   if (!phone.trim()) this.errors['phone'] = 'Phone is required';
-  //   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-  //     this.errors['email'] = 'Valid email is required';
-  //   if (password.length < 8)
-  //     this.errors['password'] = 'Minimum 8 characters required';
-  //   return Object.keys(this.errors).length === 0;
-  // }
   validateStep1(): boolean {
     this.errors = {};
     const { firstName, lastName, username, phone, email, password, zonalId } = this.form;
@@ -301,7 +320,7 @@ export class RegistrationComponent implements OnInit {
     if (!lastName.trim()) this.errors['lastName'] = 'Last name is required';
     if (!username.trim()) this.errors['username'] = 'Username is required';
     if (!phone.trim()) this.errors['phone'] = 'Phone is required';
-    if (!zonalId.trim()) this.errors['zonalId'] = 'Zonal ID is required';
+    if (!zonalId.trim()) this.errors['zonalId'] = 'Zonal is required';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       this.errors['email'] = 'Valid email is required';
     if (password.length < 8)
@@ -309,7 +328,6 @@ export class RegistrationComponent implements OnInit {
     return Object.keys(this.errors).length === 0;
   }
 
-  /** Teacher Step 2 */
   validateTeacherStep2(): boolean {
     this.errors = {};
     const t = this.teacherForm;
@@ -324,7 +342,6 @@ export class RegistrationComponent implements OnInit {
     return Object.keys(this.errors).length === 0;
   }
 
-  /** Teacher Step 3 */
   validateTeacherStep3(): boolean {
     this.errors = {};
     const t = this.teacherForm;
@@ -334,21 +351,20 @@ export class RegistrationComponent implements OnInit {
     return Object.keys(this.errors).length === 0;
   }
 
-  /** Student Step 2 */
   validateStudentStep2(): boolean {
     this.errors = {};
-    if (!this.selectedBoardId) this.errors['boardId'] = 'Please select a board (CBSE / State Board)';
+    if (!this.selectedBoardId) this.errors['boardId'] = 'Please select a board';
     const s = this.studentForm;
     if (!s.gender) this.errors['gender'] = 'Gender is required';
     if (!s.currentGrade.trim()) this.errors['currentGrade'] = 'Current grade is required';
     if (!s.address.trim()) this.errors['address'] = 'Address is required';
-    if (!s.favoriteSubjects.length) this.errors['favoriteSubjects'] = 'Add at least one subject';
-    if (!s.hobbies.trim()) this.errors['hobbies'] = 'Hobbies are required';
+    if (!s.whatsAppNumber.trim()) this.errors['whatsAppNumber'] = 'WhatsApp number is required';
     if (!s.learningGoals.trim()) this.errors['learningGoals'] = 'Learning goals are required';
+    if (!s.classId) this.errors['classId'] = 'Please select a class';
+    if (!s.subjectIds.length) this.errors['subjectIds'] = 'Please select at least one subject';
     return Object.keys(this.errors).length === 0;
   }
 
-  /** Student Step 3 */
   validateStudentStep3(): boolean {
     this.errors = {};
     const s = this.studentForm;
@@ -360,10 +376,14 @@ export class RegistrationComponent implements OnInit {
     return Object.keys(this.errors).length === 0;
   }
 
-  /** Student Step 4 */
   validateStudentStep4(): boolean {
+    this.errors = {};
     if (!this.selectedCourse) {
       this.errors['course'] = 'Please select a course';
+      return false;
+    }
+    if (!this.selectedBatch) {
+      this.errors['course'] = 'No active batch found for this course';
       return false;
     }
     return true;
@@ -422,9 +442,9 @@ export class RegistrationComponent implements OnInit {
     this.loaderMsg = 'Creating your account...';
     try {
       const payload = this.buildTeacherPayload();
-      const user: any = await this.http
-        .post(`${this.API}/auth/teacher/register`, payload)
-        .toPromise();
+      const user: any = await firstValueFrom(
+        this.http.post(`${this.API}/auth/teacher/register`, payload)
+      );
       this.loading = false;
       this.triggerSuccess('teacher', user);
     } catch (e: any) {
@@ -469,7 +489,6 @@ export class RegistrationComponent implements OnInit {
     this.loaderMsg = 'Creating your account...';
 
     try {
-      // Step 1: Register student
       const payload = this.buildStudentPayload();
       const user: any = await firstValueFrom(
         this.http.post(`${this.API}/auth/student/register`, payload)
@@ -478,15 +497,14 @@ export class RegistrationComponent implements OnInit {
 
       this.loaderMsg = 'Creating subscription...';
 
-      // Step 2: Create subscription directly with courseId
-      const sub: any = await this.http
-        .post(`${this.API}/subscription`, {
+      const sub: any = await firstValueFrom(
+        this.http.post(`${this.API}/subscription`, {
           userId,
           courseId: this.selectedCourse!.id,
           batchId: this.selectedBatch?.id ?? null,
           paymentType: this.paymentType,
         })
-        .toPromise();
+      );
       const subscriptionId = sub?.id || sub?.data?.id;
 
       this.loading = false;
@@ -494,24 +512,14 @@ export class RegistrationComponent implements OnInit {
       const isFree = (this.selectedCourse!.price || 0) === 0;
 
       if (isFree) {
-        // Free course — call /subscription/pay directly with amount 0
         await this.recordPayment(subscriptionId, 0, 'FREE', user);
       } else {
-        // Paid course — open Razorpay
         const payAmount =
           this.paymentType === 2 && this.selectedCourse!.installmentCount
             ? this.installmentAmount
             : this.netAmount;
         this.openRazorpay(payAmount, subscriptionId, userId, user);
       }
-
-      // Step 3: Open Razorpay
-      // const payAmount =
-      //   this.paymentType === 2 && this.selectedCourse!.installmentCount
-      //     ? this.installmentAmount
-      //     : this.netAmount;
-
-      // this.openRazorpay(payAmount, subscriptionId, userId, user);
     } catch (e: any) {
       this.loading = false;
       this.toast(e?.error?.message || e?.message || 'Something went wrong');
@@ -521,38 +529,33 @@ export class RegistrationComponent implements OnInit {
   private buildStudentPayload() {
     const s = this.studentForm;
     return {
+      batchId: this.selectedBatch?.id || '',
       boardId: this.selectedBoardId || null,
       isFreeDemoStudent: false,
-      batchId: this.selectedBatch?.id || null,
       register: {
+        zonalId: this.form.zonalId.trim(),
         firstName: this.form.firstName.trim(),
         lastName: this.form.lastName.trim(),
-        username: this.form.username.trim(),
+        userName: this.form.username.trim(),
         email: this.form.email.trim(),
-        zonalId: this.form.zonalId.trim(),
         password: this.form.password,
         phone: this.form.phone.trim(),
+        whatsAppNumber: s.whatsAppNumber.trim(),
       },
-      dateOfBirth: s.dateOfBirth ? new Date(s.dateOfBirth).toISOString() : null,
       gender: s.gender,
       address: s.address.trim(),
       currentGrade: s.currentGrade.trim(),
+      classId: s.classId || null,
+      subjectIds: s.subjectIds,
+      learningGoals: s.learningGoals.trim(),
       parentName: s.parentName.trim(),
       relationship: s.relationship,
       parentEmail: s.parentEmail.trim(),
       parentPhone: s.parentPhone.trim(),
-      favoriteSubjects: s.favoriteSubjects,
-      hobbies: s.hobbies.trim(),
-      learningGoals: s.learningGoals.trim(),
     };
   }
 
-  openRazorpay(
-    amount: number,
-    subscriptionId: string,
-    userId: string,
-    user: any,
-  ) {
+  openRazorpay(amount: number, subscriptionId: string, userId: string, user: any) {
     if (typeof Razorpay === 'undefined') {
       this.toast('Payment gateway not loaded. Please refresh and try again.');
       return;
@@ -571,12 +574,7 @@ export class RegistrationComponent implements OnInit {
       },
       theme: { color: '#2563eb' },
       handler: async (response: any) => {
-        await this.recordPayment(
-          subscriptionId,
-          amount,
-          response.razorpay_payment_id,
-          user,
-        );
+        await this.recordPayment(subscriptionId, amount, response.razorpay_payment_id, user);
       },
       modal: {
         ondismiss: () => {
@@ -592,17 +590,17 @@ export class RegistrationComponent implements OnInit {
     rzp.open();
   }
 
-  async recordPayment(subscriptionId: string, amount: number, txnRef: string, user: any,) {
+  async recordPayment(subscriptionId: string, amount: number, txnRef: string, user: any) {
     this.loading = true;
     this.loaderMsg = 'Recording payment...';
     try {
-      await this.http
-        .post(`${this.API}/subscription/pay`, {
+      await firstValueFrom(
+        this.http.post(`${this.API}/subscription/pay`, {
           subscriptionId,
           amount,
           transactionReference: txnRef,
         })
-        .toPromise();
+      );
       this.loading = false;
       this.triggerSuccess('student', user, { subscriptionId, amount, txnRef });
     } catch (e: any) {
@@ -613,11 +611,6 @@ export class RegistrationComponent implements OnInit {
 
   // ── Helpers ──
 
-  // triggerSuccess(role: string, user: any, extra: any = {}) {
-  //   this.showSuccess = true;
-  //   this.successData = { role, user, extra, course: this.selectedCourse };
-  //   this.toast('Registration successful! 🎉', 'success');
-  // }
   triggerSuccess(role: string, user: any, extra: any = {}) {
     this.showSuccess = true;
     this.successData = { role, user, extra, course: this.selectedCourse };
@@ -625,7 +618,7 @@ export class RegistrationComponent implements OnInit {
 
     setTimeout(() => {
       this.router.navigate(['/login']);
-    }, 5000); // ← changed from 2500 to 5000
+    }, 5000);
   }
 
   resetForm() {
@@ -641,16 +634,24 @@ export class RegistrationComponent implements OnInit {
       identityProofUrl: '', degreeCertificateUrl: '',
     };
     this.studentForm = {
-      dateOfBirth: null, gender: '', address: '', currentGrade: '',
-      previousSchool: null, parentName: '', relationship: '',
-      parentEmail: '', parentPhone: '', favoriteSubjects: [],
-      hobbies: '', learningGoals: '',
+      gender: '',
+      address: '',
+      currentGrade: '',
+      parentName: '',
+      relationship: '',
+      parentEmail: '',
+      parentPhone: '',
+      learningGoals: '',
+      whatsAppNumber: '',
+      classId: null,
+      subjectIds: [],
     };
-    this.subjectInput = '';
     this.selectedCourse = null;
     this.selectedBatch = null;
     this.selectedBoardId = '';
     this.paymentType = 1;
+    this.classes = [];
+    this.subjects = [];
     this.errors = {};
   }
 
@@ -681,5 +682,4 @@ export class RegistrationComponent implements OnInit {
   goToLogin() {
     this.router.navigate(['/login']);
   }
-
 }
