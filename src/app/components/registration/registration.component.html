@@ -22,10 +22,12 @@
 </div>
 
 <div class="reg-page">
-  <!-- Left Panel -->
+
+  <!-- ══════════════════════════════════════ -->
+  <!--              LEFT PANEL               -->
+  <!-- ══════════════════════════════════════ -->
   <div class="left-panel">
 
-    <!-- Brand -->
     <div class="brand">
       <div class="brand-logo">
         <img src="logo.png" alt="B2P Teachers Logo" />
@@ -36,25 +38,22 @@
       </div>
     </div>
 
-    <!-- Center illustration -->
     <div class="lp-illustration">
       <div class="lp-ill-ring lp-ill-ring--outer"></div>
       <div class="lp-ill-ring lp-ill-ring--inner"></div>
       <div class="lp-ill-icon">
-        <i *ngIf="!selectedRole"         class="fa-solid fa-graduation-cap"></i>
+        <i *ngIf="!selectedRole"            class="fa-solid fa-graduation-cap"></i>
         <i *ngIf="selectedRole==='teacher'" class="fa-solid fa-chalkboard-user"></i>
         <i *ngIf="selectedRole==='student'" class="fa-solid fa-user-graduate"></i>
       </div>
     </div>
 
-    <!-- Hero text -->
     <div class="lp-hero">
       <h2 *ngIf="!selectedRole">Create your<br /><span>account</span></h2>
       <h2 *ngIf="selectedRole === 'teacher'">Welcome,<br /><span>Educator!</span></h2>
       <h2 *ngIf="selectedRole === 'student'">Your learning<br /><span>starts here!</span></h2>
     </div>
 
-    <!-- Feature list -->
     <div class="lp-feat-list">
       <div class="lp-feat-item">
         <div class="lp-feat-icon"><i class="fa-solid fa-video"></i></div>
@@ -64,17 +63,8 @@
         <div class="lp-feat-icon"><i class="fa-solid fa-book-open"></i></div>
         <span>Digital Library</span>
       </div>
-      <!-- <div class="lp-feat-item">
-        <div class="lp-feat-icon"><i class="fa-solid fa-chart-line"></i></div>
-        <span>Progress Analytics</span>
-      </div>
-      <div class="lp-feat-item">
-        <div class="lp-feat-icon"><i class="fa-solid fa-certificate"></i></div>
-        <span>Certifications</span>
-      </div> -->
     </div>
 
-    <!-- Stats -->
     <div class="panel-stats">
       <div class="stat">
         <span class="stat-num">12k+</span>
@@ -92,11 +82,15 @@
 
   </div>
 
-  <!-- Right Panel -->
+  <!-- ══════════════════════════════════════ -->
+  <!--              RIGHT PANEL              -->
+  <!-- ══════════════════════════════════════ -->
   <div class="right-panel">
     <div class="form-wrap">
 
-      <!-- ROLE SELECTION -->
+      <!-- ─────────────────────────────── -->
+      <!--         ROLE SELECTION          -->
+      <!-- ─────────────────────────────── -->
       <div class="role-section" *ngIf="!selectedRole">
         <div class="form-header">
           <h1>Create Account</h1>
@@ -129,6 +123,7 @@
       <!--              TEACHER FLOW                   -->
       <!-- ═══════════════════════════════════════════ -->
       <div class="step-form" *ngIf="selectedRole === 'teacher' && !showSuccess">
+
         <!-- Stepper -->
         <div class="stepper">
           <button class="back-role" (click)="backToRole()">
@@ -174,19 +169,9 @@
               <input type="text" [(ngModel)]="form.lastName" placeholder="Doe" />
               <!-- <span class="err" *ngIf="errors['lastName']">{{ errors["lastName"] }}</span> -->
             </div>
-            <!-- <div class="field">
-              <label>Username <span class="req">*</span></label>
-              <input type="text" [(ngModel)]="form.username" placeholder="johndoe123" [class.invalid]="errors['username']" />
-              <span class="err" *ngIf="errors['username']">{{ errors["username"] }}</span>
-            </div> -->
             <div class="field">
               <label>Username <span class="req">*</span></label>
-              <input
-                type="text"
-                [(ngModel)]="form.username"
-                placeholder="johndoe123"
-                [class.invalid]="errors['username']"
-              />
+              <input type="text" [(ngModel)]="form.username" placeholder="johndoe123" [class.invalid]="errors['username']" />
               <span class="err" *ngIf="errors['username']">{{ errors["username"] }}</span>
             </div>
             <div class="field">
@@ -292,7 +277,7 @@
         <div class="form-step" *ngIf="currentStep === 3">
           <div class="step-header">
             <div class="step-badge">Step 3</div>
-            <h2>Documents & Links</h2>
+            <h2>Documents &amp; Links</h2>
             <p>Provide links to your uploaded documents.</p>
           </div>
           <div class="fields-grid">
@@ -312,14 +297,13 @@
               <span class="err" *ngIf="errors['degreeCertificateUrl']">{{ errors["degreeCertificateUrl"] }}</span>
             </div>
             <div class="field full doc-note">
-              <span>📌 Upload your documents to Google Drive or any cloud storage and paste the shareable link above.</span>
+              <i class="fa-solid fa-circle-info" style="color:#d97706"></i>
+              Upload your documents to Google Drive or any cloud storage and paste the shareable link above.
             </div>
           </div>
           <div class="form-actions between">
             <button class="btn btn-ghost" (click)="prevStep()">← Back</button>
-            <button class="btn btn-primary" (click)="submitTeacher()">
-              Create Account →
-            </button>
+            <button class="btn btn-primary" (click)="submitTeacher()">Create Account →</button>
           </div>
         </div>
       </div>
@@ -328,6 +312,7 @@
       <!--              STUDENT FLOW                   -->
       <!-- ═══════════════════════════════════════════ -->
       <div class="step-form" *ngIf="selectedRole === 'student' && !showSuccess">
+
         <!-- Stepper -->
         <div class="stepper">
           <button class="back-role" (click)="backToRole()">
@@ -373,19 +358,9 @@
               <input type="text" [(ngModel)]="form.lastName" placeholder="Doe" />
               <!-- <span class="err" *ngIf="errors['lastName']">{{ errors["lastName"] }}</span> -->
             </div>
-            <!-- <div class="field">
-              <label>Username <span class="req">*</span></label>
-              <input type="text" [(ngModel)]="form.username" placeholder="johndoe123" [class.invalid]="errors['username']" />
-              <span class="err" *ngIf="errors['username']">{{ errors["username"] }}</span>
-            </div> -->
             <div class="field">
               <label>Username <span class="req">*</span></label>
-              <input
-                type="text"
-                [(ngModel)]="form.username"
-                placeholder="johndoe123"
-                [class.invalid]="errors['username']"
-              />
+              <input type="text" [(ngModel)]="form.username" placeholder="johndoe123" [class.invalid]="errors['username']" />
               <span class="err" *ngIf="errors['username']">{{ errors["username"] }}</span>
             </div>
             <div class="field">
@@ -430,6 +405,8 @@
             <p>Tell us a bit about yourself.</p>
           </div>
           <div class="fields-grid">
+
+            <!-- ── Board Selection ── -->
             <div class="field full">
               <label>Board <span class="req">*</span></label>
               <div class="board-loading" *ngIf="boardsLoading">
@@ -441,7 +418,7 @@
                   *ngFor="let b of boards"
                   class="board-pill"
                   [class.selected]="selectedBoardId === b.id"
-                  (click)="selectedBoardId = b.id; errors['boardId'] = ''"
+                  (click)="onBoardSelect(b.id)"
                 >
                   <i class="fa-solid fa-graduation-cap pill-icon"></i>
                   {{ b.name }}
@@ -450,11 +427,72 @@
               </div>
               <span class="err" *ngIf="errors['boardId']">{{ errors['boardId'] }}</span>
             </div>
-            <div class="field">
-              <label>Date of Birth</label>
-              <input type="date" [(ngModel)]="studentForm.dateOfBirth" [class.invalid]="errors['dateOfBirth']" />
-              <span class="err" *ngIf="errors['dateOfBirth']">{{ errors["dateOfBirth"] }}</span>
+
+            <!-- ── Class Dropdown (shown after board is selected) ── -->
+            <div class="field full" *ngIf="selectedBoardId">
+
+              <!-- Class loading -->
+              <div class="cascade-loading" *ngIf="classesLoading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading classes…
+              </div>
+
+              <ng-container *ngIf="!classesLoading">
+                <label class="cascade-label">
+                  <span class="cascade-icon"><i class="fa-solid fa-layer-group"></i></span>
+                  Class <span class="req">*</span>
+                </label>
+                <select
+                  [(ngModel)]="studentForm.classId"
+                  (ngModelChange)="loadSubjects($event)"
+                  [class.invalid]="errors['classId']"
+                  class="cascade-select"
+                >
+                  <option [ngValue]="null">— Select a class —</option>
+                  <option *ngFor="let c of classes" [value]="c.id">{{ c.name }}</option>
+                </select>
+                <span class="err" *ngIf="errors['classId']">{{ errors["classId"] }}</span>
+                <div class="no-data-hint" *ngIf="!classes.length">
+                  <i class="fa-solid fa-inbox"></i> No classes found for this board.
+                </div>
+              </ng-container>
             </div>
+
+            <!-- ── Subject Pills (shown after class is selected) ── -->
+            <div class="field full" *ngIf="studentForm.classId && !classesLoading">
+              <label class="cascade-label">
+                <span class="cascade-icon"><i class="fa-solid fa-book"></i></span>
+                Subjects <span class="req">*</span>
+              </label>
+
+              <!-- Subject loading -->
+              <div class="cascade-loading" *ngIf="subjectsLoading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading subjects…
+              </div>
+
+              <!-- Subject pills -->
+              <ng-container *ngIf="!subjectsLoading">
+                <div class="board-pills subject-pills" *ngIf="subjects.length">
+                  <button
+                    type="button"
+                    *ngFor="let sub of subjects"
+                    class="board-pill"
+                    [class.selected]="studentForm.subjectIds.includes(sub.id)"
+                    (click)="toggleSubject(sub.id)"
+                  >
+                    <i class="fa-solid fa-book-open pill-icon"></i>
+                    {{ sub.name }}
+                    <i class="fa-solid fa-check pill-check" *ngIf="studentForm.subjectIds.includes(sub.id)"></i>
+                  </button>
+                </div>
+                <div class="no-data-hint" *ngIf="!subjects.length">
+                  <i class="fa-solid fa-inbox"></i> No subjects found for this class.
+                </div>
+              </ng-container>
+
+              <span class="err" *ngIf="errors['subjectIds']">{{ errors["subjectIds"] }}</span>
+            </div>
+
+            <!-- ── Gender ── -->
             <div class="field">
               <label>Gender <span class="req">*</span></label>
               <select [(ngModel)]="studentForm.gender" [class.invalid]="errors['gender']">
@@ -466,52 +504,47 @@
               </select>
               <span class="err" *ngIf="errors['gender']">{{ errors["gender"] }}</span>
             </div>
+
+            <!-- ── Current Grade ── -->
             <div class="field">
               <label>Current Grade / Class <span class="req">*</span></label>
-              <input type="text" [(ngModel)]="studentForm.currentGrade" placeholder="e.g. Grade 10, Class 12" [class.invalid]="errors['currentGrade']" />
+              <div class="input-autofill-wrap">
+                <input
+                  type="text"
+                  [(ngModel)]="studentForm.currentGrade"
+                  placeholder="Auto-filled from class selection"
+                  [class.invalid]="errors['currentGrade']"
+                  [readonly]="!!studentForm.classId"
+                  [class.autofilled]="!!studentForm.classId"
+                />
+                <span class="autofill-badge" *ngIf="studentForm.classId">
+                  <i class="fa-solid fa-circle-check"></i> Auto-filled
+                </span>
+              </div>
               <span class="err" *ngIf="errors['currentGrade']">{{ errors["currentGrade"] }}</span>
             </div>
+
+            <!-- ── WhatsApp Number ── -->
             <div class="field">
-              <label>Previous School</label>
-              <input type="text" [(ngModel)]="studentForm.previousSchool" placeholder="Previous institution (optional)" />
+              <label>WhatsApp Number <span class="req">*</span></label>
+              <input type="tel" [(ngModel)]="studentForm.whatsAppNumber" placeholder="+91 98765 43210" [class.invalid]="errors['whatsAppNumber']" />
+              <span class="err" *ngIf="errors['whatsAppNumber']">{{ errors["whatsAppNumber"] }}</span>
             </div>
+
+            <!-- ── Address ── -->
             <div class="field full">
               <label>Address <span class="req">*</span></label>
               <textarea [(ngModel)]="studentForm.address" placeholder="Your full address" rows="2" [class.invalid]="errors['address']"></textarea>
               <span class="err" *ngIf="errors['address']">{{ errors["address"] }}</span>
             </div>
-            <div class="field full">
-              <label>Favorite Subjects <span class="req">*</span></label>
-              <div class="subjects-wrap">
-                <div class="subject-tags">
-                  <span class="subject-tag" *ngFor="let s of studentForm.favoriteSubjects; let i = index">
-                    {{ s }}
-                    <button type="button" (click)="removeSubject(i)">×</button>
-                  </span>
-                </div>
-                <div class="subject-input-row">
-                  <input
-                    type="text"
-                    [(ngModel)]="subjectInput"
-                    placeholder="Type a subject and press Add"
-                    (keydown.enter)="addSubject()"
-                    [class.invalid]="errors['favoriteSubjects']"
-                  />
-                  <button type="button" class="btn-add-tag" (click)="addSubject()">+ Add</button>
-                </div>
-              </div>
-              <span class="err" *ngIf="errors['favoriteSubjects']">{{ errors["favoriteSubjects"] }}</span>
-            </div>
-            <div class="field full">
-              <label>Hobbies <span class="req">*</span></label>
-              <input type="text" [(ngModel)]="studentForm.hobbies" placeholder="e.g. Reading, Cricket, Drawing" [class.invalid]="errors['hobbies']" />
-              <span class="err" *ngIf="errors['hobbies']">{{ errors["hobbies"] }}</span>
-            </div>
+
+            <!-- ── Learning Goals ── -->
             <div class="field full">
               <label>Learning Goals <span class="req">*</span></label>
               <textarea [(ngModel)]="studentForm.learningGoals" placeholder="What do you want to achieve?" rows="2" [class.invalid]="errors['learningGoals']"></textarea>
               <span class="err" *ngIf="errors['learningGoals']">{{ errors["learningGoals"] }}</span>
             </div>
+
           </div>
           <div class="form-actions between">
             <button class="btn btn-ghost" (click)="prevStep()">← Back</button>
@@ -566,14 +599,16 @@
           <div class="step-header">
             <div class="step-badge">Step 4</div>
             <h2>Choose Your Course</h2>
-            <p>Select a course to subscribe to.</p>
+            <p>Select a course to enroll in.</p>
           </div>
 
+          <!-- Course loading -->
           <div class="course-loading" *ngIf="coursesLoading">
             <div class="mini-spinner"></div>
             <span>Loading courses...</span>
           </div>
 
+          <!-- Course grid -->
           <div class="course-grid" *ngIf="!coursesLoading">
             <div
               class="course-card"
@@ -607,6 +642,18 @@
 
           <span class="err block-err" *ngIf="errors['course']">{{ errors["course"] }}</span>
 
+          <!-- ── No active batch warning ── -->
+          <div class="info-note" *ngIf="selectedCourse && !selectedBatch && !coursesLoading">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            No active batch found for this course. Please select another course.
+          </div>
+
+          <!-- ── Active batch confirmation ── -->
+          <div class="batch-confirm" *ngIf="selectedCourse && selectedBatch">
+            <i class="fa-solid fa-circle-check"></i>
+            Batch found: <strong>{{ selectedBatch.batchName || selectedBatch.name || 'Active Batch' }}</strong>
+          </div>
+
           <div class="form-actions between">
             <button class="btn btn-ghost" (click)="prevStep()">← Back</button>
             <button class="btn btn-primary" (click)="nextStep()">Continue →</button>
@@ -617,7 +664,7 @@
         <div class="form-step" *ngIf="currentStep === 5">
           <div class="step-header">
             <div class="step-badge">Step 5</div>
-            <h2>Review & Pay</h2>
+            <h2>Review &amp; Pay</h2>
             <p>Confirm your course and complete payment via Razorpay.</p>
           </div>
 
@@ -631,7 +678,7 @@
                 <div class="order-course-title">{{ selectedCourse.title }}</div>
                 <div class="order-course-meta">
                   <span *ngIf="selectedCourse.level">{{ selectedCourse.level }}</span>
-                  <span *ngIf="selectedCourse.durationInMonths">· {{ selectedCourse.durationInMonths }} months</span>
+                  <span *ngIf="selectedCourse.durationInMonths"> · {{ selectedCourse.durationInMonths }} months</span>
                 </div>
               </div>
             </div>
@@ -640,11 +687,6 @@
               <div class="pb-row">
                 <span>Course Price</span>
                 <span>{{ formatCurrency(selectedCourse.price || 0) }}</span>
-              </div>
-              <!-- DELETE this block -->
-              <div class="pb-row discount" *ngIf="selectedCourse.price">
-                <span>Discount</span>
-                <span>− {{ formatCurrency(selectedCourse.price) }}</span>
               </div>
               <div class="pb-row total">
                 <span>Total</span>
@@ -677,13 +719,11 @@
               </div>
             </div>
 
-            <!-- Razorpay Notice -->
             <div class="razorpay-notice">
               <img src="https://razorpay.com/favicon.ico" alt="Razorpay" width="16" height="16" />
               <span>Payments secured by <strong>Razorpay</strong>. UPI, Cards, Net Banking accepted.</span>
             </div>
 
-            <!-- Amount to Pay Now -->
             <div class="pay-now-row">
               <span>Pay Now</span>
               <span class="pay-now-amount">{{ formatCurrency(paymentType === 2 ? installmentAmount : netAmount) }}</span>
@@ -692,20 +732,28 @@
 
           <div class="form-actions between">
             <button class="btn btn-ghost" (click)="prevStep()">← Back</button>
-            <!-- <button class="btn btn-pay" (click)="submitStudent()">
-              <span>🔐 Pay {{ formatCurrency(paymentType === 2 ? installmentAmount : netAmount) }} via Razorpay</span>
-            </button> -->
-            <button class="btn btn-pay" (click)="submitStudent()" *ngIf="(selectedCourse?.price || 0) > 0">
-              <span>🔐 Pay {{ formatCurrency(paymentType === 2 ? installmentAmount : netAmount) }} via Razorpay</span>
+            <button
+              class="btn btn-pay"
+              (click)="submitStudent()"
+              *ngIf="(selectedCourse?.price || 0) > 0"
+            >
+              <i class="fa-solid fa-lock"></i>
+              Pay {{ formatCurrency(paymentType === 2 ? installmentAmount : netAmount) }} via Razorpay
             </button>
-            <button class="btn btn-primary" (click)="submitStudent()" *ngIf="(selectedCourse?.price || 0) === 0">
+            <button
+              class="btn btn-primary"
+              (click)="submitStudent()"
+              *ngIf="(selectedCourse?.price || 0) === 0"
+            >
               Enroll for Free →
             </button>
           </div>
         </div>
       </div>
 
-      <!-- ── SUCCESS ── -->
+      <!-- ─────────────────────────────── -->
+      <!--           SUCCESS VIEW          -->
+      <!-- ─────────────────────────────── -->
       <div class="success-view" *ngIf="showSuccess && successData">
         <div class="success-icon-wrap">
           <div class="success-ring"></div>
@@ -741,10 +789,6 @@
               <span class="sd-key">Course</span>
               <span class="sd-val">{{ successData.course?.title }}</span>
             </div>
-            <!-- <div class="sd-row">
-              <span class="sd-key">Amount Paid</span>
-              <span class="sd-val success-green">{{ formatCurrency(successData.extra?.amount) }}</span>
-            </div> -->
             <div class="sd-row">
               <span class="sd-key">Amount Paid</span>
               <span class="sd-val success-green">
@@ -755,17 +799,14 @@
               <span class="sd-key">Subscription ID</span>
               <span class="sd-val mono">{{ successData.extra.subscriptionId }}</span>
             </div>
-            <div class="sd-row" *ngIf="successData.extra?.txnRef">
+            <div class="sd-row" *ngIf="successData.extra?.txnRef && successData.extra?.txnRef !== 'FREE'">
               <span class="sd-key">Razorpay Ref</span>
               <span class="sd-val mono">{{ successData.extra.txnRef }}</span>
             </div>
           </ng-container>
         </div>
 
-        <!-- <button class="btn btn-primary" (click)="resetForm()" style="margin-top: 24px; width: 100%">
-          Register Another Account →
-        </button> -->
-        <p style="text-align:center; color: var(--text-muted); font-size:13px; margin-top:16px;">
+        <p style="text-align:center; color: #6b7280; font-size:13px; margin-top:16px;">
           Redirecting to login in a few seconds...
         </p>
         <button class="btn btn-primary" (click)="goToLogin()" style="margin-top: 12px; width: 100%">
@@ -777,6 +818,9 @@
   </div>
 </div>
 
+<!-- ─────────────────────────────── -->
+<!--      SUCCESS OVERLAY POPUP      -->
+<!-- ─────────────────────────────── -->
 <div class="success-overlay" *ngIf="showSuccess && successData">
   <div class="success-popup">
 
@@ -825,7 +869,7 @@
           <span class="sd-key">Subscription ID</span>
           <span class="sd-val mono">{{ successData.extra.subscriptionId }}</span>
         </div>
-        <div class="sd-row" *ngIf="successData.extra?.txnRef">
+        <div class="sd-row" *ngIf="successData.extra?.txnRef && successData.extra?.txnRef !== 'FREE'">
           <span class="sd-key">Razorpay Ref</span>
           <span class="sd-val mono">{{ successData.extra.txnRef }}</span>
         </div>
@@ -837,8 +881,7 @@
     </div>
     <p class="redirect-label">Redirecting to login in 5 seconds...</p>
 
-    <button class="btn btn-primary" (click)="goToLogin()"
-      style="margin-top: 12px; width: 100%">
+    <button class="btn btn-primary" (click)="goToLogin()" style="margin-top: 12px; width: 100%">
       Go to Login Now →
     </button>
 
