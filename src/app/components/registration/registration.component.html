@@ -170,9 +170,9 @@
               <span class="err" *ngIf="errors['firstName']">{{ errors["firstName"] }}</span>
             </div>
             <div class="field">
-              <label>Last Name <span class="req">*</span></label>
-              <input type="text" [(ngModel)]="form.lastName" placeholder="Doe" [class.invalid]="errors['lastName']" />
-              <span class="err" *ngIf="errors['lastName']">{{ errors["lastName"] }}</span>
+              <label>Last Name </label>
+              <input type="text" [(ngModel)]="form.lastName" placeholder="Doe" />
+              <!-- <span class="err" *ngIf="errors['lastName']">{{ errors["lastName"] }}</span> -->
             </div>
             <!-- <div class="field">
               <label>Username <span class="req">*</span></label>
@@ -369,9 +369,9 @@
               <span class="err" *ngIf="errors['firstName']">{{ errors["firstName"] }}</span>
             </div>
             <div class="field">
-              <label>Last Name <span class="req">*</span></label>
-              <input type="text" [(ngModel)]="form.lastName" placeholder="Doe" [class.invalid]="errors['lastName']" />
-              <span class="err" *ngIf="errors['lastName']">{{ errors["lastName"] }}</span>
+              <label>Last Name </label>
+              <input type="text" [(ngModel)]="form.lastName" placeholder="Doe" />
+              <!-- <span class="err" *ngIf="errors['lastName']">{{ errors["lastName"] }}</span> -->
             </div>
             <!-- <div class="field">
               <label>Username <span class="req">*</span></label>
@@ -387,6 +387,16 @@
                 [class.invalid]="errors['username']"
               />
               <span class="err" *ngIf="errors['username']">{{ errors["username"] }}</span>
+            </div>
+            <div class="field">
+              <label>Password <span class="req">*</span></label>
+              <div class="input-icon-wrap">
+                <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="form.password" placeholder="Min. 8 characters" [class.invalid]="errors['password']" />
+                <button type="button" class="eye-toggle" (click)="showPassword = !showPassword">
+                  <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                </button>
+              </div>
+              <span class="err" *ngIf="errors['password']">{{ errors["password"] }}</span>
             </div>
             <div class="field">
               <label>Phone <span class="req">*</span></label>
@@ -405,16 +415,6 @@
                 <option *ngFor="let z of zonals" [value]="z.id">{{ z.name }}</option>
               </select>
               <span class="err" *ngIf="errors['zonalId']">{{ errors["zonalId"] }}</span>
-            </div>
-            <div class="field full">
-              <label>Password <span class="req">*</span></label>
-              <div class="input-icon-wrap">
-                <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="form.password" placeholder="Min. 8 characters" [class.invalid]="errors['password']" />
-                <button type="button" class="eye-toggle" (click)="showPassword = !showPassword">
-                  <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
-                </button>
-              </div>
-              <span class="err" *ngIf="errors['password']">{{ errors["password"] }}</span>
             </div>
           </div>
           <div class="form-actions">

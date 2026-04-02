@@ -298,7 +298,7 @@ export class RegistrationComponent implements OnInit {
     this.errors = {};
     const { firstName, lastName, username, phone, email, password, zonalId } = this.form;
     if (!firstName.trim()) this.errors['firstName'] = 'First name is required';
-    if (!lastName.trim()) this.errors['lastName'] = 'Last name is required';
+    // if (!lastName.trim()) this.errors['lastName'] = 'Last name is required';
     if (!username.trim()) this.errors['username'] = 'Username is required';
     if (!phone.trim()) this.errors['phone'] = 'Phone is required';
     if (!zonalId.trim()) this.errors['zonalId'] = 'Zonal ID is required';
