@@ -173,7 +173,7 @@ export class RegistrationComponent implements OnInit {
     this.currentStep = 1;
 
     if (role === 'student') {
-      this.loadCourses();
+      // this.loadCourses();
       this.loadBoards();
     }
   }
@@ -211,11 +211,11 @@ export class RegistrationComponent implements OnInit {
   }
 
   // ── Courses ──
-  async loadCourses() {
+  async loadCourses(classId: string) {
     this.coursesLoading = true;
     try {
       const data: any = await firstValueFrom(
-        this.http.get(`${this.API}/courses/get-course-register`)
+        this.http.get(`${this.API}/courses/get-course-register/by-class/${classId}`)
       );
       this.courses = Array.isArray(data) ? data : data?.data || [];
     } catch (e: any) {
@@ -326,6 +326,7 @@ export class RegistrationComponent implements OnInit {
     delete this.errors['classId'];
     if (classId) {
       this.loadGroups(classId);
+      this.loadCourses(classId);
     } else {
       this.groups = [];
       this.subjects = [];
