@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { firstValueFrom, Subscription } from 'rxjs';
 
 declare var Razorpay: any;
 
@@ -48,7 +48,8 @@ interface GroupEntry {
   templateUrl: './registration.component.html',
   styleUrls: ['./registration.component.css'],
 })
-export class RegistrationComponent implements OnInit {
+export class RegistrationComponent implements OnInit, OnDestroy {
+  private querySub?: Subscription;
   readonly API = environment.apiUrl;
   readonly today = new Date().toISOString().split('T')[0];
 
@@ -129,11 +130,25 @@ export class RegistrationComponent implements OnInit {
   readonly teacherStepLabels = ['Account', 'Professional', 'Documents'];
   readonly studentStepLabels = ['Account', 'Profile', 'Parent Info', 'Course', 'Payment'];
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
     this.loadBoards();
     this.loadZonals();
+    this.querySub = this.route.queryParamMap.subscribe(params => {
+      const role = (params.get('role') ?? 'student') as 'teacher' | 'student';
+      this.selectedRole = role;
+      this.currentStep = 1;
+      this.showSuccess = false;
+      this.errors = {};
+      if (role === 'student') {
+        this.loadCourses();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.querySub?.unsubscribe();
   }
 
   // ── Computed properties ──
@@ -168,14 +183,8 @@ export class RegistrationComponent implements OnInit {
   }
 
   // ── Role Selection ──
-  async selectRole(role: 'teacher' | 'student') {
-    this.selectedRole = role;
-    this.currentStep = 1;
-
-    if (role === 'student') {
-      // this.loadCourses();
-      this.loadBoards();
-    }
+  selectRole(role: 'teacher' | 'student') {
+    this.router.navigate(['/register'], { queryParams: { role } });
   }
 
   private readonly FALLBACK_BOARDS = [
@@ -204,10 +213,7 @@ export class RegistrationComponent implements OnInit {
   }
 
   backToRole() {
-    this.selectedRole = null;
-    this.currentStep = 1;
-    this.showSuccess = false;
-    this.errors = {};
+    this.router.navigate(['/login']);
   }
 
   // ── Courses ──
