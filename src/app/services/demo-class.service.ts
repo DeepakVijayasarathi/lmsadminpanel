@@ -49,6 +49,7 @@ export interface DemoRegistrationDto {
   studentPhone: string;
   registeredAt: string;
   hasAttended: boolean;
+  joinUrl?: string;
 }
 
 export interface DemoRegisterPayload {

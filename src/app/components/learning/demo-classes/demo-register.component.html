@@ -248,6 +248,9 @@
         <div class="dr-success-detail"><i class="fa-regular fa-clock"></i> {{ selectedClass?.startTime }} &ndash; {{ selectedClass?.endTime }}</div>
         <div class="dr-success-detail"><i class="fa-solid fa-chalkboard-user"></i> {{ selectedClass?.teacherName }}</div>
       </div>
+      <a *ngIf="joinUrl" [href]="joinUrl" target="_blank" rel="noopener" class="dr-submit dr-join-btn">
+        <i class="fa-solid fa-video"></i> Join Live Class
+      </a>
       <div class="dr-success-actions">
         <button class="dr-submit dr-submit--ghost" (click)="backToList()">
           <i class="fa-solid fa-arrow-left"></i> Browse More

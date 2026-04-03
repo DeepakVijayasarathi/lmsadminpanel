@@ -38,6 +38,7 @@ export class DemoRegisterComponent implements OnInit {
   showSuccess   = false;
   errorMsg      = '';
   errors: Record<string, string> = {};
+  joinUrl       = '';
 
   // Logged-in student (if any)
   private studentId: string | null = null;
@@ -154,6 +155,7 @@ export class DemoRegisterComponent implements OnInit {
     this.selectedBoardId = '';
     this.selectedClassId = '';
     this.filteredClasses = [];
+    this.joinUrl         = '';
   }
 
   get isFull(): boolean {
@@ -187,8 +189,9 @@ export class DemoRegisterComponent implements OnInit {
     };
 
     this.demoClassService.register(payload).subscribe({
-      next: () => {
+      next: (res) => {
         this.isSubmitting = false;
+        this.joinUrl      = res.joinUrl || '';
         this.showSuccess  = true;
       },
       error: (err: any) => {
