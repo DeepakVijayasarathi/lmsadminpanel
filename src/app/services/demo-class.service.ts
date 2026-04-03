@@ -22,6 +22,9 @@ export interface DemoClassDto {
   endTime: string;
   maxStudents: number;
   registeredCount: number;
+  meetingUrl?: string;
+  moderatorUrl?: string;
+  liveSessionId?: string;
   status: 'Scheduled' | 'Live' | 'Completed' | 'Canceled';
 }
 

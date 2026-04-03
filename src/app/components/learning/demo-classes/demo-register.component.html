@@ -248,9 +248,30 @@
         <div class="dr-success-detail"><i class="fa-regular fa-clock"></i> {{ selectedClass?.startTime }} &ndash; {{ selectedClass?.endTime }}</div>
         <div class="dr-success-detail"><i class="fa-solid fa-chalkboard-user"></i> {{ selectedClass?.teacherName }}</div>
       </div>
-      <a *ngIf="joinUrl" [href]="joinUrl" target="_blank" rel="noopener" class="dr-submit dr-join-btn">
-        <i class="fa-solid fa-video"></i> Join Live Class
-      </a>
+      <ng-container *ngIf="joinUrl">
+
+        <!-- Countdown -->
+        <div class="dr-countdown" *ngIf="!canJoin">
+          <div class="dr-countdown-label">
+            <i class="fa-regular fa-clock"></i> Class starts in
+          </div>
+          <div class="dr-countdown-timer">{{ countdown }}</div>
+          <div class="dr-countdown-hint">Your personalised join link is ready. Join at the scheduled time.</div>
+        </div>
+
+        <!-- Copy URL -->
+        <button class="dr-copy-btn" (click)="copyUrl()">
+          <i class="fa-solid" [class.fa-check]="urlCopied" [class.fa-copy]="!urlCopied"></i>
+          {{ urlCopied ? 'Link Copied!' : 'Copy Your Join Link' }}
+        </button>
+
+        <!-- Join Now — only when time has come -->
+        <a *ngIf="canJoin" [href]="joinUrl" target="_blank" rel="noopener" class="dr-submit dr-join-btn">
+          <i class="fa-solid fa-video"></i> Join Now
+        </a>
+
+      </ng-container>
+
       <div class="dr-success-actions">
         <button class="dr-submit dr-submit--ghost" (click)="backToList()">
           <i class="fa-solid fa-arrow-left"></i> Browse More
