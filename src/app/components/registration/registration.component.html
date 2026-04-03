@@ -491,7 +491,39 @@
             </div>
 
             <!-- ── Subject Pills (shown if subjects exist for class) ── -->
-            <div class="field full" *ngIf="studentForm.classId && !classesLoading && !groupsLoading">
+            <!-- <div class="field full" *ngIf="studentForm.classId && !classesLoading && !groupsLoading">
+
+              <div class="cascade-loading" *ngIf="subjectsLoading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading subjects…
+              </div>
+
+              <ng-container *ngIf="!subjectsLoading && hasSubjects">
+                <label class="cascade-label">
+                  <span class="cascade-icon cascade-icon--purple"><i class="fa-solid fa-book"></i></span>
+                  Subjects <span class="req">*</span>
+                  <span class="cascade-badge">Required · Select all that apply</span>
+                </label>
+                <div class="board-pills subject-pills">
+                  <button
+                    type="button"
+                    *ngFor="let sub of subjects"
+                    class="board-pill"
+                    [class.selected]="studentForm.subjectIds.includes(sub.id)"
+                    (click)="toggleSubject(sub.id)"
+                  >
+                    <i class="fa-solid fa-book-open pill-icon"></i>
+                    {{ sub.name }}
+                    <i class="fa-solid fa-check pill-check" *ngIf="studentForm.subjectIds.includes(sub.id)"></i>
+                  </button>
+                </div>
+                <span class="err" *ngIf="errors['subjectIds']">{{ errors["subjectIds"] }}</span>
+              </ng-container>
+            </div> -->
+            <!-- ── Subject Pills ── -->
+            <!-- Show subjects if: (no groups for class) OR (groups exist AND one is selected) -->
+            <div class="field full"
+              *ngIf="studentForm.classId && !classesLoading && !groupsLoading &&
+                    (!hasGroups || (hasGroups && studentForm.groupId))">
 
               <!-- Subject loading spinner -->
               <div class="cascade-loading" *ngIf="subjectsLoading">
@@ -520,12 +552,6 @@
                 </div>
                 <span class="err" *ngIf="errors['subjectIds']">{{ errors["subjectIds"] }}</span>
               </ng-container>
-
-              <!-- No subjects hint (only after loading is done and subjects are empty) -->
-              <!-- <div class="no-data-hint" *ngIf="!subjectsLoading && !hasSubjects && studentForm.classId">
-                <i class="fa-solid fa-inbox"></i> No subjects available for this class.
-              </div> -->
-
             </div>
 
             <!-- ── Gender ── -->

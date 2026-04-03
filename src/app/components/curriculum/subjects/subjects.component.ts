@@ -336,11 +336,11 @@ export class SubjectsComponent implements OnInit {
           s.classId === this.formClassId &&
           s.id !== this.selectedSubject?.id
       );
-      if (duplicate) {
-        this.nameError =
-          'A subject with this name already exists for the selected class.';
-        valid = false;
-      }
+      // if (duplicate) {
+      //   this.nameError =
+      //     'A subject with this name already exists for the selected class.';
+      //   valid = false;
+      // }
     }
 
     if (!this.formClassId) {

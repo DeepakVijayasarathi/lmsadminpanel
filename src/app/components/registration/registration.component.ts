@@ -286,28 +286,44 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     this.groupsLoading = false;
 
     // After loading groups, also load subjects
-    await this.loadSubjects(classId);
+    if (!this.hasGroups) {
+      await this.loadSubjects(classId, 'class');
+    }
   }
 
   // ── Load Subjects by classId ──
-  async loadSubjects(classId: string) {
+  async loadSubjects(classId: string,  mode: 'class' | 'group') {
     this.studentForm.subjectIds = [];
     this.subjects = [];
     if (!classId) {
-      this.studentForm.currentGrade = '';
+      if (mode === 'class') this.studentForm.currentGrade = '';
       return;
     }
 
-    // Auto-fill currentGrade with the selected class name
-    const selectedClass = this.classes.find((c) => c.id === classId);
-    if (selectedClass) {
-      this.studentForm.currentGrade = selectedClass.name || '';
+    if (mode === 'class') {
+      const selectedClass = this.classes.find((c) => c.id === classId);
+      if (selectedClass) {
+        this.studentForm.currentGrade = selectedClass.name || '';
+      }
     }
 
     this.subjectsLoading = true;
     try {
+      let url: string;
+      let params: any;
+
+      if (mode === 'group') {
+        // ✅ Use group endpoint
+        url = `${this.API}/subject/get-subject/by-group`;
+        params = { groupId: classId };
+      } else {
+        // Use class endpoint (no groups scenario)
+        url = `${this.API}/subject/get-subject/by-class`;
+        params = { classId: classId };
+      }
+
       const data: any = await firstValueFrom(
-        this.http.get(`${this.API}/subject/get-subject/by-class`, { params: { classId } })
+        this.http.get(url, { params })
       );
       this.subjects = Array.isArray(data) ? data : data?.data || [];
     } catch {
@@ -326,9 +342,17 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   // ── On Class Selection ──
   onClassSelect(classId: string | null) {
     this.studentForm.classId = classId;
+    this.subjects = [];
+    this.studentForm.subjectIds = [];
     delete this.errors['classId'];
+
     if (classId) {
-      this.loadGroups(classId);
+      // Auto-fill grade immediately
+      const selectedClass = this.classes.find((c) => c.id === classId);
+      if (selectedClass) {
+        this.studentForm.currentGrade = selectedClass.name || '';
+      }
+      this.loadGroups(classId);   // groups load first; subjects follow inside loadGroups
       this.loadCourses(classId);
     } else {
       this.groups = [];
@@ -353,7 +377,12 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   // ── Group selection ──
   selectGroup(groupId: string) {
     this.studentForm.groupId = groupId;
+    this.studentForm.subjectIds = [];
+    this.subjects = [];
     delete this.errors['groupId'];
+
+    // ✅ KEY CHANGE: Load subjects by groupId when a group is selected
+    this.loadSubjects(groupId, 'group');
   }
 
   async selectCourse(course: Course) {
