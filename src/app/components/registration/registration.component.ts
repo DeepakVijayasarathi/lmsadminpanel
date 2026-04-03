@@ -141,9 +141,6 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       this.currentStep = 1;
       this.showSuccess = false;
       this.errors = {};
-      if (role === 'student') {
-        this.loadCourses();
-      }
     });
   }
 
