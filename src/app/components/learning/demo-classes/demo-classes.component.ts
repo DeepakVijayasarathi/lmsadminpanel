@@ -277,6 +277,23 @@ export class DemoClassesComponent implements OnInit {
     return map[status] || 'pg-badge';
   }
 
+  meetingUrlCopied   = false;
+  moderatorUrlCopied = false;
+
+  copyMeetingUrl(url: string): void {
+    navigator.clipboard.writeText(url).then(() => {
+      this.meetingUrlCopied = true;
+      setTimeout(() => (this.meetingUrlCopied = false), 2500);
+    });
+  }
+
+  copyModeratorUrl(url: string): void {
+    navigator.clipboard.writeText(url).then(() => {
+      this.moderatorUrlCopied = true;
+      setTimeout(() => (this.moderatorUrlCopied = false), 2500);
+    });
+  }
+
   onTeacherChange(): void {
     const t = this.apiTeachers.find((x: any) => x.id === this.formTeacherId);
     this.formTeacherName = t

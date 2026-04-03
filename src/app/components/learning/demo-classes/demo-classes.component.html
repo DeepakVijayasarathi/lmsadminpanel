@@ -263,6 +263,37 @@
       <div class="pg-detail-item" style="grid-column:1/-1;" *ngIf="selected.description">
         <span class="pg-detail-lbl">Description</span><span>{{ selected.description }}</span>
       </div>
+      <!-- Moderator URL (admin join) -->
+      <div class="pg-detail-item" style="grid-column:1/-1;" *ngIf="selected.moderatorUrl">
+        <span class="pg-detail-lbl">
+          <i class="fa-solid fa-shield-halved" style="color:#7c3aed;margin-right:4px;"></i>
+          Moderator Join URL <span style="font-size:10px;background:#ede9fe;color:#7c3aed;padding:2px 7px;border-radius:20px;margin-left:4px;font-weight:700;">ADMIN</span>
+        </span>
+        <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:6px;">
+          <span style="font-size:12px;word-break:break-all;color:#7c3aed;flex:1;min-width:0;">{{ selected.moderatorUrl }}</span>
+          <button class="pg-action-btn" title="Copy moderator URL" (click)="copyModeratorUrl(selected.moderatorUrl!)">
+            <i class="fa-solid" [class.fa-check]="moderatorUrlCopied" [class.fa-copy]="!moderatorUrlCopied"></i>
+          </button>
+          <a [href]="selected.moderatorUrl" target="_blank" rel="noopener"
+            style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:5px 12px;background:#7c3aed;color:#fff;border-radius:8px;text-decoration:none;white-space:nowrap;">
+            <i class="fa-solid fa-video"></i> Join as Moderator
+          </a>
+        </div>
+      </div>
+
+      <!-- Guest / Attendee URL -->
+      <div class="pg-detail-item" style="grid-column:1/-1;" *ngIf="selected.meetingUrl">
+        <span class="pg-detail-lbl">
+          <i class="fa-solid fa-users" style="color:#6366f1;margin-right:4px;"></i>
+          Guest Attendee URL
+        </span>
+        <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:6px;">
+          <span style="font-size:12px;word-break:break-all;color:#6366f1;flex:1;min-width:0;">{{ selected.meetingUrl }}</span>
+          <button class="pg-action-btn" title="Copy guest URL" (click)="copyMeetingUrl(selected.meetingUrl!)">
+            <i class="fa-solid" [class.fa-check]="meetingUrlCopied" [class.fa-copy]="!meetingUrlCopied"></i>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
   <div class="pg-modal__foot">
@@ -281,6 +312,28 @@
     <button class="pg-modal__close" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
   </div>
   <div class="pg-modal__body">
+    <!-- Moderator join banner -->
+    <div *ngIf="selected.moderatorUrl" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#ede9fe;border-radius:10px;margin-bottom:10px;flex-wrap:wrap;">
+      <i class="fa-solid fa-shield-halved" style="color:#7c3aed;flex-shrink:0;"></i>
+      <span style="font-size:11px;font-weight:700;color:#7c3aed;white-space:nowrap;">MODERATOR</span>
+      <span style="font-size:11px;color:#6d28d9;flex:1;min-width:0;word-break:break-all;">{{ selected.moderatorUrl }}</span>
+      <button class="pg-action-btn" title="Copy moderator link" (click)="copyModeratorUrl(selected.moderatorUrl!)">
+        <i class="fa-solid" [class.fa-check]="moderatorUrlCopied" [class.fa-copy]="!moderatorUrlCopied"></i>
+      </button>
+      <a [href]="selected.moderatorUrl" target="_blank" rel="noopener"
+        style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:5px 12px;background:#7c3aed;color:#fff;border-radius:8px;text-decoration:none;white-space:nowrap;">
+        <i class="fa-solid fa-video"></i> Join as Moderator
+      </a>
+    </div>
+    <!-- Guest attendee banner -->
+    <div *ngIf="selected.meetingUrl" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#eef2ff;border-radius:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <i class="fa-solid fa-users" style="color:#6366f1;flex-shrink:0;"></i>
+      <span style="font-size:11px;font-weight:700;color:#6366f1;white-space:nowrap;">GUEST</span>
+      <span style="font-size:11px;color:#4338ca;flex:1;min-width:0;word-break:break-all;">{{ selected.meetingUrl }}</span>
+      <button class="pg-action-btn" title="Copy guest link" (click)="copyMeetingUrl(selected.meetingUrl!)">
+        <i class="fa-solid" [class.fa-check]="meetingUrlCopied" [class.fa-copy]="!meetingUrlCopied"></i>
+      </button>
+    </div>
     <div *ngIf="regsLoading" style="text-align:center;padding:24px;color:#94a3b8;">
       <i class="fa-solid fa-circle-notch fa-spin"></i> Loading registrations…
     </div>

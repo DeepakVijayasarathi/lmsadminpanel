@@ -22,6 +22,9 @@ export interface DemoClassDto {
   endTime: string;
   maxStudents: number;
   registeredCount: number;
+  meetingUrl?: string;
+  moderatorUrl?: string;
+  liveSessionId?: string;
   status: 'Scheduled' | 'Live' | 'Completed' | 'Canceled';
 }
 
@@ -49,6 +52,7 @@ export interface DemoRegistrationDto {
   studentPhone: string;
   registeredAt: string;
   hasAttended: boolean;
+  joinUrl?: string;
 }
 
 export interface DemoRegisterPayload {
