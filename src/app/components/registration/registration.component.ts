@@ -66,6 +66,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   selectedBoardId = '';
   paymentType: 1 | 2 = 1;
   currentStep = 1;
+  classId: string = '';
 
   loading = false;
   loaderMsg = 'Processing...';
@@ -271,6 +272,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     this.subjects = [];
     this.studentForm.groupId = null;
     this.studentForm.subjectIds = [];
+    this.classId = classId; // Store classId for later use in subject loading
 
     if (!classId) return;
 
@@ -292,16 +294,16 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   }
 
   // ── Load Subjects by classId ──
-  async loadSubjects(classId: string,  mode: 'class' | 'group') {
+  async loadSubjects(id: string,  mode: 'class' | 'group') {
     this.studentForm.subjectIds = [];
     this.subjects = [];
-    if (!classId) {
+    if (!id) {
       if (mode === 'class') this.studentForm.currentGrade = '';
       return;
     }
 
     if (mode === 'class') {
-      const selectedClass = this.classes.find((c) => c.id === classId);
+      const selectedClass = this.classes.find((c) => c.id === id);
       if (selectedClass) {
         this.studentForm.currentGrade = selectedClass.name || '';
       }
@@ -315,11 +317,11 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       if (mode === 'group') {
         // ✅ Use group endpoint
         url = `${this.API}/subject/get-subject/by-group`;
-        params = { groupId: classId };
+        params = { groupId: id, classId: this.classId };
       } else {
         // Use class endpoint (no groups scenario)
         url = `${this.API}/subject/get-subject/by-class`;
-        params = { classId: classId };
+        params = { classId: id };
       }
 
       const data: any = await firstValueFrom(
