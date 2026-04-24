@@ -1,0 +1,193 @@
+<div class="pg">
+  <!-- Page Header -->
+  <div class="pg-head">
+    <div class="pg-head__left">
+      <div class="pg-head__icon chip-indigo">
+        <i class="fas fa-globe"></i>
+      </div>
+      <div>
+        <div class="pg-head__title">Country Master</div>
+        <div class="pg-head__sub">Manage countries for location setup</div>
+      </div>
+    </div>
+    <div class="pg-head__right">
+      <button class="pg-btn pg-btn--primary" (click)="openCreateModal()" *ngIf="p.canCreate">
+        <i class="fas fa-plus"></i> Add Country
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pg-stats">
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-indigo"><i class="fas fa-globe"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ countries.length }}</div>
+        <div class="pg-stat__lbl">Total Countries</div>
+      </div>
+    </div>
+    <div class="pg-stat">
+      <div class="pg-stat__icon chip-emerald"><i class="fas fa-circle-check"></i></div>
+      <div>
+        <div class="pg-stat__val">{{ activeCount }}</div>
+        <div class="pg-stat__lbl">Active</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="pg-card">
+    <div class="pg-card__head">
+      <span class="pg-card__title">All Countries</span>
+      <div class="pg-toolbar">
+        <input class="pg-search" type="text" placeholder="Search countries..."
+          [(ngModel)]="searchQuery" (input)="onSearch()" />
+      </div>
+    </div>
+
+    <div class="pg-loading" *ngIf="isLoading">
+      <i class="fas fa-spinner fa-spin"></i> Loading countries...
+    </div>
+
+    <div class="pg-table-wrap" *ngIf="!isLoading">
+      <table class="pg-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Country Name</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let country of pagedCountries; let i = index">
+            <td class="idx-cell">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+            <td>
+              <span class="pg-cell__primary">{{ country.countryName }}</span>
+            </td>
+            <td>
+              <span class="badge" [class.badge--success]="country.isActive" [class.badge--danger]="!country.isActive">
+                {{ country.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-group">
+                <button *ngIf="p.canRead" class="pg-action-btn" title="View" (click)="openViewModal(country)">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button *ngIf="p.canUpdate" class="pg-action-btn" title="Edit" (click)="openEditModal(country)">
+                  <i class="fas fa-pen-to-square"></i>
+                </button>
+                <button *ngIf="p.canDelete" class="pg-action-btn pg-action-btn--danger" title="Delete"
+                  (click)="openDeleteModal(country)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredCountries.length === 0">
+            <td colspan="4" class="pg-empty">
+              <i class="fas fa-globe pg-empty__icon"></i>
+              No countries found.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <app-common-pagination [currentPage]="currentPage" [totalPages]="totalPages"
+        [pageSize]="pageSize" [totalRecords]="filteredCountries.length"
+        (pageChange)="onPageChange($event)">
+      </app-common-pagination>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Overlay -->
+<div class="modal-overlay" *ngIf="modalMode" (click)="closeModal()"></div>
+
+<!-- Create / Edit Modal -->
+<div class="modal modal--sm" *ngIf="modalMode === 'create' || modalMode === 'edit'">
+  <div class="modal__header">
+    <h3>
+      <i class="fas fa-{{ modalMode === 'create' ? 'plus-circle' : 'pen-to-square' }}"></i>
+      {{ modalMode === 'create' ? 'Add New Country' : 'Edit Country' }}
+    </h3>
+    <button class="modal__close" (click)="closeModal()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="modal__body">
+    <div class="form-group" [class.has-error]="nameError">
+      <label>Country Name <span class="required">*</span></label>
+      <input type="text" class="form-control" placeholder="e.g. India"
+        [(ngModel)]="formName" (input)="nameError = ''" />
+      <div class="field-error" *ngIf="nameError">
+        <i class="fas fa-circle-exclamation"></i> {{ nameError }}
+      </div>
+    </div>
+    <div class="form-group" *ngIf="modalMode === 'edit'">
+      <label>Status</label>
+      <select class="form-control" [(ngModel)]="formIsActive">
+        <option [ngValue]="true">Active</option>
+        <option [ngValue]="false">Inactive</option>
+      </select>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--primary" (click)="submitForm()">
+      <i class="fas fa-{{ modalMode === 'create' ? 'plus' : 'floppy-disk' }}"></i>
+      {{ modalMode === 'create' ? 'Create Country' : 'Save Changes' }}
+    </button>
+  </div>
+</div>
+
+<!-- View Modal -->
+<div class="modal modal--sm" *ngIf="modalMode === 'view' && selectedCountry">
+  <div class="modal__header">
+    <h3><i class="fas fa-eye"></i> Country Details</h3>
+    <button class="modal__close" (click)="closeModal()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="modal__body">
+    <div class="view-showcase">
+      <div class="view-showcase__icon"><i class="fas fa-globe"></i></div>
+      <div>
+        <div class="view-showcase__title">{{ selectedCountry.countryName }}</div>
+      </div>
+    </div>
+    <div class="view-detail-block">
+      <div class="view-detail-label">Status</div>
+      <div class="view-detail-val">
+        <span class="badge" [class.badge--success]="selectedCountry.isActive"
+          [class.badge--danger]="!selectedCountry.isActive">
+          {{ selectedCountry.isActive ? 'Active' : 'Inactive' }}
+        </span>
+      </div>
+    </div>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Close</button>
+    <button class="pg-btn pg-btn--primary" *ngIf="p.canUpdate" (click)="openEditModal(selectedCountry)">
+      <i class="fas fa-pen-to-square"></i> Edit
+    </button>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal modal--sm" *ngIf="modalMode === 'delete' && selectedCountry">
+  <div class="modal__header modal__header--danger">
+    <h3><i class="fas fa-triangle-exclamation"></i> Deactivate Country</h3>
+    <button class="modal__close" (click)="closeModal()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="modal__body modal__body--center">
+    <div class="delete-icon"><i class="fas fa-globe"></i></div>
+    <p class="delete-msg">
+      Are you sure you want to deactivate<br />
+      <strong>"{{ selectedCountry.countryName }}"</strong>?
+    </p>
+    <p class="delete-sub">Associated states and cities will no longer appear in dropdowns.</p>
+  </div>
+  <div class="modal__footer">
+    <button class="pg-btn pg-btn--ghost" (click)="closeModal()">Cancel</button>
+    <button class="pg-btn pg-btn--danger" (click)="deleteCountry()">
+      <i class="fas fa-ban"></i> Deactivate
+    </button>
+  </div>
+</div>

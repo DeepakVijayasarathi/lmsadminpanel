@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom, Subscription } from 'rxjs';
+import { LocationService, LocationItem, CountryDto, StateDto, CityDto } from '../../services/location.service';
 
 declare var Razorpay: any;
 
@@ -80,6 +81,14 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   groupsLoading = false;
   subjectsLoading = false;
 
+  // ── Location fields ──
+  countries: LocationItem[] = [];
+  states: LocationItem[] = [];
+  cities: LocationItem[] = [];
+  countriesLoading = false;
+  statesLoading = false;
+  citiesLoading = false;
+
   // ── Shared account form fields ──
   form = {
     firstName: '',
@@ -88,7 +97,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     phone: '',
     email: '',
     password: '',
-    zonalId: '',
+    // zonalId: '',
   };
 
   // ── Teacher-specific fields ──
@@ -105,6 +114,9 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     resumeUrl: '',
     identityProofUrl: '',
     degreeCertificateUrl: '',
+    countryId: null as number | null,
+    stateId: null as number | null,
+    cityId: null as number | null,
   };
 
   // ── Student-specific fields ──
@@ -121,6 +133,9 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     classId: null as string | null,
     groupId: null as string | null,
     subjectIds: [] as string[],
+    countryId: null as number | null,
+    stateId: null as number | null,
+    cityId: null as number | null,
   };
 
   showPassword = false;
@@ -131,11 +146,17 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   readonly teacherStepLabels = ['Account', 'Professional', 'Documents'];
   readonly studentStepLabels = ['Account', 'Profile', 'Parent Info', 'Course', 'Payment'];
 
-  constructor(private http: HttpClient, private router: Router, private route: ActivatedRoute) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private route: ActivatedRoute,
+    private locationService: LocationService
+  ) {}
 
   ngOnInit(): void {
     this.loadBoards();
     this.loadZonals();
+    this.loadCountries();
     this.querySub = this.route.queryParamMap.subscribe(params => {
       const role = (params.get('role') ?? 'student') as 'teacher' | 'student';
       this.selectedRole = role;
@@ -235,6 +256,70 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     } catch (e: any) {
       this.toast('Failed to load zonals: ' + (e.message || 'Unknown error'));
     }
+  }
+
+  // ── Location Services ──
+
+  async loadCountries() {
+    this.countriesLoading = true;
+    try {
+      const data = await firstValueFrom(this.locationService.getCountries());
+      this.countries = this.locationService.transformToDropdownFormat(data);
+    } catch (e: any) {
+      this.toast('Failed to load countries: ' + (e.message || 'Unknown error'));
+      this.countries = [];
+    }
+    this.countriesLoading = false;
+  }
+
+  async onCountryChange(countryId: number | null) {
+    this.states = [];
+    this.cities = [];
+    this.statesLoading = false;
+    this.citiesLoading = false;
+
+    if (this.selectedRole === 'student') {
+      this.studentForm.stateId = null;
+      this.studentForm.cityId = null;
+    } else {
+      this.teacherForm.stateId = null;
+      this.teacherForm.cityId = null;
+    }
+
+    if (!countryId) return;
+
+    this.statesLoading = true;
+    try {
+      const data = await firstValueFrom(this.locationService.getStatesByCountry(countryId));
+      this.states = this.locationService.transformToDropdownFormat(data);
+    } catch (e: any) {
+      this.toast('Failed to load states: ' + (e.message || 'Unknown error'));
+      this.states = [];
+    }
+    this.statesLoading = false;
+  }
+
+  async onStateChange(stateId: number | null) {
+    this.cities = [];
+    this.citiesLoading = false;
+
+    if (this.selectedRole === 'student') {
+      this.studentForm.cityId = null;
+    } else {
+      this.teacherForm.cityId = null;
+    }
+
+    if (!stateId) return;
+
+    this.citiesLoading = true;
+    try {
+      const data = await firstValueFrom(this.locationService.getCitiesByState(stateId));
+      this.cities = this.locationService.transformToDropdownFormat(data);
+    } catch (e: any) {
+      this.toast('Failed to load cities: ' + (e.message || 'Unknown error'));
+      this.cities = [];
+    }
+    this.citiesLoading = false;
   }
 
   // ── Load Classes by boardId ──
@@ -418,11 +503,11 @@ export class RegistrationComponent implements OnInit, OnDestroy {
 
   validateStep1(): boolean {
     this.errors = {};
-    const { firstName, username, phone, email, password, zonalId } = this.form;
+    const { firstName, username, phone, email, password } = this.form;
     if (!firstName.trim()) this.errors['firstName'] = 'First name is required';
     if (!username.trim()) this.errors['username'] = 'Username is required';
     if (!phone.trim()) this.errors['phone'] = 'Phone is required';
-    if (!zonalId.trim()) this.errors['zonalId'] = 'Zonal is required';
+    // if (!zonalId.trim()) this.errors['zonalId'] = 'Zonal is required';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       this.errors['email'] = 'Valid email is required';
     if (password.length < 8)
@@ -441,6 +526,9 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     if (!t.whatsAppNumber.trim()) this.errors['whatsAppNumber'] = 'WhatsApp number is required';
     if (!t.address.trim()) this.errors['address'] = 'Address is required';
     if (!t.workingType) this.errors['workingType'] = 'Working type is required';
+    if (!t.countryId) this.errors['countryId'] = 'Country is required';
+    if (!t.stateId) this.errors['stateId'] = 'State is required';
+    if (!t.cityId) this.errors['cityId'] = 'City is required';
     return Object.keys(this.errors).length === 0;
   }
 
@@ -463,6 +551,9 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     if (!s.whatsAppNumber.trim()) this.errors['whatsAppNumber'] = 'WhatsApp number is required';
     if (!s.learningGoals.trim()) this.errors['learningGoals'] = 'Learning goals are required';
     if (!s.classId) this.errors['classId'] = 'Please select a class';
+    if (!s.countryId) this.errors['countryId'] = 'Country is required';
+    if (!s.stateId) this.errors['stateId'] = 'State is required';
+    if (!s.cityId) this.errors['cityId'] = 'City is required';
 
     // Group is mandatory only if groups exist for the selected class
     if (s.classId && this.hasGroups && !s.groupId) {
@@ -573,9 +664,12 @@ export class RegistrationComponent implements OnInit, OnDestroy {
         lastName: this.form.lastName.trim(),
         userName: this.form.username.trim(),
         email: this.form.email.trim(),
-        zonalId: this.form.zonalId.trim(),
+        // zonalId: this.form.zonalId.trim(),
         password: this.form.password,
         phone: this.form.phone.trim(),
+        countryId: t.countryId,
+        stateId: t.stateId,
+        cityId: t.cityId,
       },
       fullName: t.fullName.trim(),
       qualification: t.qualification.trim(),
@@ -586,6 +680,9 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       hasHighSpeedInternet: t.hasHighSpeedInternet,
       readyForEarlyMorning: t.readyForEarlyMorning,
       workingType: t.workingType,
+      countryId: t.countryId,
+      stateId: t.stateId,
+      cityId: t.cityId,
       resumeUrl: t.resumeUrl.trim(),
       identityProofUrl: t.identityProofUrl.trim(),
       degreeCertificateUrl: t.degreeCertificateUrl.trim(),
@@ -645,7 +742,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       boardId: this.selectedBoardId || null,
       isFreeDemoStudent: false,
       register: {
-        zonalId: this.form.zonalId.trim(),
+        // zonalId: this.form.zonalId.trim(),
         firstName: this.form.firstName.trim(),
         lastName: this.form.lastName.trim(),
         userName: this.form.username.trim(),
@@ -653,6 +750,9 @@ export class RegistrationComponent implements OnInit, OnDestroy {
         password: this.form.password,
         phone: this.form.phone.trim(),
         whatsAppNumber: s.whatsAppNumber.trim(),
+        countryId: s.countryId,
+        stateId: s.stateId,
+        cityId: s.cityId,
       },
       gender: s.gender,
       address: s.address.trim(),
@@ -665,6 +765,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       relationship: s.relationship,
       parentEmail: s.parentEmail.trim(),
       parentPhone: s.parentPhone.trim(),
+
     };
   }
 
@@ -739,12 +840,13 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     this.currentStep = 1;
     this.showSuccess = false;
     this.successData = null;
-    this.form = { firstName: '', lastName: '', username: '', phone: '', email: '', password: '', zonalId: '' };
+    this.form = { firstName: '', lastName: '', username: '', phone: '', email: '', password: ''};
     this.teacherForm = {
       fullName: '', qualification: '', major: '', experience: 0,
       address: '', whatsAppNumber: '', hasHighSpeedInternet: false,
       readyForEarlyMorning: false, workingType: '', resumeUrl: '',
       identityProofUrl: '', degreeCertificateUrl: '',
+      countryId: null, stateId: null, cityId: null,
     };
     this.studentForm = {
       gender: '',
@@ -759,6 +861,9 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       classId: null,
       groupId: null,
       subjectIds: [],
+      countryId: null,
+      stateId: null,
+      cityId: null,
     };
     this.selectedCourse = null;
     this.selectedBatch = null;
@@ -767,6 +872,8 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     this.classes = [];
     this.groups = [];
     this.subjects = [];
+    this.states = [];
+    this.cities = [];
     this.errors = {};
   }
 

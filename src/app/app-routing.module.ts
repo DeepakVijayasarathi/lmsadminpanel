@@ -48,6 +48,9 @@ import { ResetPasswordComponent } from './components/reset-password/reset-passwo
 import { ChangePasswordComponent } from './components/change-password/change-password.component';
 import { UserPlanComponent } from './components/user-plan/user-plan.component';
 import { GroupComponent } from './components/curriculum/group/group.component';
+import { CountryComponent } from './components/location/country/country.component';
+import { StateComponent } from './components/location/state/state.component';
+import { CityComponent } from './components/location/city/city.component';
 
 const AG = [AuthGuard];
 
@@ -122,6 +125,11 @@ const routes: Routes = [
   { path: 'dashboard', component: DashboardComponent, canActivate: AG },
 
   { path: 'zonal', component: ZonalComponent, canActivate: AG },
+
+  // Location Master
+  { path: 'country-master', component: CountryComponent, canActivate: AG },
+  { path: 'state-master',   component: StateComponent,   canActivate: AG },
+  { path: 'city-master',    component: CityComponent,    canActivate: AG },
 
   { path: 'change-password',  component: ChangePasswordComponent,  canActivate: AG },
 

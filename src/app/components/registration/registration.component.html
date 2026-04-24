@@ -183,14 +183,14 @@
               <input type="email" [(ngModel)]="form.email" placeholder="john@example.com" [class.invalid]="errors['email']" />
               <span class="err" *ngIf="errors['email']">{{ errors["email"] }}</span>
             </div>
-            <div class="field">
+            <!-- <div class="field">
               <label>Zone <span class="req">*</span></label>
               <select [(ngModel)]="form.zonalId" [class.invalid]="errors['zonalId']">
                 <option value="">Select zone</option>
                 <option *ngFor="let z of zonals" [value]="z.id">{{ z.name }}</option>
               </select>
               <span class="err" *ngIf="errors['zonalId']">{{ errors["zonalId"] }}</span>
-            </div>
+            </div> -->
             <div class="field full">
               <label>Password <span class="req">*</span></label>
               <div class="input-icon-wrap">
@@ -264,6 +264,43 @@
                 <input type="checkbox" [(ngModel)]="teacherForm.readyForEarlyMorning" />
                 <span>I am available for early morning sessions</span>
               </label>
+            </div>
+
+            <!-- ── Location Section ── -->
+            <div class="field">
+              <label>Country <span class="req">*</span></label>
+              <div *ngIf="countriesLoading" class="cascade-loading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading countries…
+              </div>
+              <select *ngIf="!countriesLoading" [(ngModel)]="teacherForm.countryId" (ngModelChange)="onCountryChange($event)" [class.invalid]="errors['countryId']" class="cascade-select">
+                <option [ngValue]="null">— Select Country —</option>
+                <option *ngFor="let country of countries" [ngValue]="country.id">{{ country.name }}</option>
+              </select>
+              <span class="err" *ngIf="errors['countryId']">{{ errors["countryId"] }}</span>
+            </div>
+
+            <div class="field">
+              <label>State <span class="req">*</span></label>
+              <div *ngIf="statesLoading" class="cascade-loading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading states…
+              </div>
+              <select *ngIf="!statesLoading" [(ngModel)]="teacherForm.stateId" (ngModelChange)="onStateChange($event)" [class.invalid]="errors['stateId']" [disabled]="!teacherForm.countryId" class="cascade-select">
+                <option [ngValue]="null">— Select State —</option>
+                <option *ngFor="let state of states" [ngValue]="state.id">{{ state.name }}</option>
+              </select>
+              <span class="err" *ngIf="errors['stateId']">{{ errors["stateId"] }}</span>
+            </div>
+
+            <div class="field">
+              <label>City <span class="req">*</span></label>
+              <div *ngIf="citiesLoading" class="cascade-loading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading cities…
+              </div>
+              <select *ngIf="!citiesLoading" [(ngModel)]="teacherForm.cityId" [class.invalid]="errors['cityId']" [disabled]="!teacherForm.stateId" class="cascade-select">
+                <option [ngValue]="null">— Select City —</option>
+                <option *ngFor="let city of cities" [ngValue]="city.id">{{ city.name }}</option>
+              </select>
+              <span class="err" *ngIf="errors['cityId']">{{ errors["cityId"] }}</span>
             </div>
           </div>
           <div class="form-actions between">
@@ -381,14 +418,14 @@
               <input type="email" [(ngModel)]="form.email" placeholder="john@example.com" [class.invalid]="errors['email']" />
               <span class="err" *ngIf="errors['email']">{{ errors["email"] }}</span>
             </div>
-            <div class="field">
+            <!-- <div class="field">
               <label>Zone <span class="req">*</span></label>
               <select [(ngModel)]="form.zonalId" [class.invalid]="errors['zonalId']">
                 <option value="">Select zone</option>
                 <option *ngFor="let z of zonals" [value]="z.id">{{ z.name }}</option>
               </select>
               <span class="err" *ngIf="errors['zonalId']">{{ errors["zonalId"] }}</span>
-            </div>
+            </div> -->
           </div>
           <div class="form-actions">
             <button class="btn btn-primary" (click)="nextStep()">Continue →</button>
@@ -605,6 +642,43 @@
               <label>Learning Goals <span class="req">*</span></label>
               <textarea [(ngModel)]="studentForm.learningGoals" placeholder="What do you want to achieve?" rows="2" [class.invalid]="errors['learningGoals']"></textarea>
               <span class="err" *ngIf="errors['learningGoals']">{{ errors["learningGoals"] }}</span>
+            </div>
+
+            <!-- ── Location Section ── -->
+            <div class="field">
+              <label>Country <span class="req">*</span></label>
+              <div *ngIf="countriesLoading" class="cascade-loading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading countries…
+              </div>
+              <select *ngIf="!countriesLoading" [(ngModel)]="studentForm.countryId" (ngModelChange)="onCountryChange($event)" [class.invalid]="errors['countryId']" class="cascade-select">
+                <option [ngValue]="null">— Select Country —</option>
+                <option *ngFor="let country of countries" [ngValue]="country.id">{{ country.name }}</option>
+              </select>
+              <span class="err" *ngIf="errors['countryId']">{{ errors["countryId"] }}</span>
+            </div>
+
+            <div class="field">
+              <label>State <span class="req">*</span></label>
+              <div *ngIf="statesLoading" class="cascade-loading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading states…
+              </div>
+              <select *ngIf="!statesLoading" [(ngModel)]="studentForm.stateId" (ngModelChange)="onStateChange($event)" [class.invalid]="errors['stateId']" [disabled]="!studentForm.countryId" class="cascade-select">
+                <option [ngValue]="null">— Select State —</option>
+                <option *ngFor="let state of states" [ngValue]="state.id">{{ state.name }}</option>
+              </select>
+              <span class="err" *ngIf="errors['stateId']">{{ errors["stateId"] }}</span>
+            </div>
+
+            <div class="field">
+              <label>City <span class="req">*</span></label>
+              <div *ngIf="citiesLoading" class="cascade-loading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading cities…
+              </div>
+              <select *ngIf="!citiesLoading" [(ngModel)]="studentForm.cityId" [class.invalid]="errors['cityId']" [disabled]="!studentForm.stateId" class="cascade-select">
+                <option [ngValue]="null">— Select City —</option>
+                <option *ngFor="let city of cities" [ngValue]="city.id">{{ city.name }}</option>
+              </select>
+              <span class="err" *ngIf="errors['cityId']">{{ errors["cityId"] }}</span>
             </div>
 
           </div>

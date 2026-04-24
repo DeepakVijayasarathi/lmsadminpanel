@@ -62,6 +62,9 @@ import { ResetPasswordComponent } from './components/reset-password/reset-passwo
 import { ChangePasswordComponent } from './components/change-password/change-password.component';
 import { UserPlanComponent } from './components/user-plan/user-plan.component';
 import { GroupComponent } from './components/curriculum/group/group.component';
+import { CountryComponent } from './components/location/country/country.component';
+import { StateComponent } from './components/location/state/state.component';
+import { CityComponent } from './components/location/city/city.component';
 
 @NgModule({
   declarations: [
@@ -118,7 +121,10 @@ import { GroupComponent } from './components/curriculum/group/group.component';
     ResetPasswordComponent,
     ChangePasswordComponent,
     UserPlanComponent,
-    GroupComponent
+    GroupComponent,
+    CountryComponent,
+    StateComponent,
+    CityComponent
   ],
   imports: [
     BrowserModule,
