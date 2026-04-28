@@ -639,15 +639,33 @@ export class StudentQuickEnrollComponent implements OnInit {
         });
       },
       modal: {
-        ondismiss: () => this.toast('Payment cancelled. You can retry by submitting the form again.'),
+        ondismiss: () => {
+          this.ngZone.run(async () => {
+            await this.cancelRegistration(userId);
+            this.toast('Payment cancelled. Your registration has been removed.');
+          });
+        },
       },
     };
 
     const rzp = new Razorpay(options);
     rzp.on('payment.failed', (resp: any) => {
-      this.toast('Payment failed: ' + resp.error.description);
+      this.ngZone.run(async () => {
+        await this.cancelRegistration(userId);
+        this.toast('Payment failed: ' + resp.error.description + '. Your registration has been removed.');
+      });
     });
     rzp.open();
+  }
+
+  private async cancelRegistration(userId: string) {
+    try {
+      await firstValueFrom(
+        this.http.delete(`${this.API}/auth/cancel-registration/${userId}`)
+      );
+    } catch {
+      // Silent — user is already informed via toast; deletion failure is non-critical
+    }
   }
 
   // ── Helpers ──
