@@ -23,7 +23,8 @@ export class AppComponent {
           url.startsWith('/forgot-password') ||
           url.startsWith('/register') ||
           url.startsWith('/demo-register') ||
-          url.startsWith('/user-plan');
+          url.startsWith('/user-plan') ||
+          url.startsWith('/student-register');
 
         setTimeout(() => {
           window.dispatchEvent(new Event('resize'));

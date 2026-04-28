@@ -1,0 +1,538 @@
+<!-- Global Loader Overlay -->
+<div class="loader-overlay" *ngIf="loading">
+  <div class="loader-box">
+    <div class="spinner"></div>
+    <p>{{ loaderMsg }}</p>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast" [class.show]="toastVisible" [class.success]="toastType === 'success'" [class.error]="toastType === 'error'">
+  <i [class]="toastType === 'success' ? 'fa-solid fa-circle-check' : 'fa-solid fa-triangle-exclamation'"></i>
+  {{ toastMsg }}
+</div>
+
+<!-- Success Popup Overlay -->
+<div class="success-overlay" *ngIf="showSuccess && successData">
+  <div class="success-popup">
+
+    <!-- Animated check icon -->
+    <div class="success-icon">
+      <div class="success-ring"></div>
+      <div class="success-check">✓</div>
+    </div>
+
+    <!-- Dynamic heading -->
+    <h2>
+      {{ (successData.amount || 0) === 0 ? 'Enrollment Successful!' : 'Registration &amp; Payment Successful!' }}
+    </h2>
+    <p class="success-sub">
+      You have been enrolled in <strong>{{ successData.courseName }}</strong>.
+    </p>
+
+    <!-- Detail rows -->
+    <div class="success-details">
+      <div class="sd-row">
+        <span class="sd-key">Name</span>
+        <span class="sd-val">{{ successData.studentName }}</span>
+      </div>
+      <div class="sd-row">
+        <span class="sd-key">Username</span>
+        <span class="sd-val">{{ successData.username }}</span>
+      </div>
+      <div class="sd-row">
+        <span class="sd-key">Email</span>
+        <span class="sd-val">{{ successData.email }}</span>
+      </div>
+      <div class="sd-row">
+        <span class="sd-key">Course</span>
+        <span class="sd-val">{{ successData.courseName }}</span>
+      </div>
+      <div class="sd-row">
+        <span class="sd-key">Batch</span>
+        <span class="sd-val">{{ successData.batchName }}</span>
+      </div>
+      <div class="sd-row">
+        <span class="sd-key">Amount Paid</span>
+        <span class="sd-val success-green">
+          {{ (successData.amount || 0) === 0 ? 'Free' : formatCurrency(successData.amount) }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Live countdown ring -->
+    <div class="countdown-wrap">
+      <div class="countdown-ring">
+        <svg viewBox="0 0 44 44">
+          <circle cx="22" cy="22" r="18" class="countdown-track" />
+          <circle
+            cx="22" cy="22" r="18"
+            class="countdown-progress"
+            [style.stroke-dashoffset]="(1 - countdown / 6) * 113.1"
+          />
+        </svg>
+        <span class="countdown-num">{{ countdown }}</span>
+      </div>
+      <span class="redirect-note">Redirecting to login…</span>
+    </div>
+
+    <button class="btn btn-primary" (click)="closeSuccessAndLogin()">
+      Go to Login →
+    </button>
+
+  </div>
+</div>
+
+<!-- Page Layout -->
+<div class="reg-page">
+
+  <div class="left-panel">
+
+    <div class="brand">
+      <div class="brand-logo">
+        <img src="logo.png" alt="B2P Teachers Logo" />
+      </div>
+      <div>
+        <div class="brand-name">B2P Teachers</div>
+        <div class="brand-tagline">Learn. Grow. Succeed.</div>
+      </div>
+    </div>
+
+    <div class="lp-illustration">
+      <div class="lp-ill-ring lp-ill-ring--outer"></div>
+      <div class="lp-ill-ring lp-ill-ring--inner"></div>
+      <div class="lp-ill-icon">
+        <i class="fa-solid fa-graduation-cap"></i>
+        <i class="fa-solid fa-user-graduate"></i>
+      </div>
+    </div>
+
+    <div class="lp-hero">
+      <h2>Your learning<br /><span>starts here!</span></h2>
+    </div>
+
+    <div class="lp-feat-list">
+      <div class="lp-feat-item">
+        <div class="lp-feat-icon"><i class="fa-solid fa-video"></i></div>
+        <span>Live Video Classes</span>
+      </div>
+      <div class="lp-feat-item">
+        <div class="lp-feat-icon"><i class="fa-solid fa-book-open"></i></div>
+        <span>Digital Library</span>
+      </div>
+    </div>
+
+    <div class="panel-stats">
+      <div class="stat">
+        <span class="stat-num">12k+</span>
+        <span class="stat-label">Students</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">480+</span>
+        <span class="stat-label">Courses</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">200+</span>
+        <span class="stat-label">Teachers</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right Panel – Single Page Form -->
+  <div class="right-panel">
+    <div class="form-wrap">
+
+      <div class="form-header">
+        <h1>Student Enrollment</h1>
+        <p>Fill in all details and complete payment to get started.</p>
+      </div>
+
+      <!-- ── SECTION 1: Student Information ── -->
+      <div class="form-section">
+        <div class="section-title">
+          <i class="fa-solid fa-user"></i> Student Information
+        </div>
+        <div class="fields-grid">
+
+          <div class="field">
+            <label>First Name <span class="req">*</span></label>
+            <input type="text" [(ngModel)]="form.firstName" placeholder="John" [class.invalid]="errors['firstName']" />
+            <span class="err" *ngIf="errors['firstName']">{{ errors['firstName'] }}</span>
+          </div>
+
+          <div class="field">
+            <label>Last Name <span class="req">*</span></label>
+            <input type="text" [(ngModel)]="form.lastName" placeholder="Doe" [class.invalid]="errors['lastName']" />
+            <span class="err" *ngIf="errors['lastName']">{{ errors['lastName'] }}</span>
+          </div>
+
+          <div class="field">
+            <label>Username <span class="req">*</span></label>
+            <div class="input-icon-wrap">
+              <input
+                type="text"
+                [(ngModel)]="form.username"
+                placeholder="johndoe123"
+                [class.invalid]="errors['username']"
+                (blur)="checkUsername()"
+              />
+              <span class="eye-toggle" *ngIf="usernameChecking">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+              </span>
+            </div>
+            <span class="err" *ngIf="errors['username']">{{ errors["username"] }}</span>
+            <span class="username-status username-ok" *ngIf="usernameAvailable && !usernameChecking && !errors['username']">
+              <i class="fa-solid fa-circle-check"></i> Username is available
+            </span>
+          </div>
+
+          <div class="field">
+            <label>Email Address <span class="req">*</span></label>
+            <input type="email" [(ngModel)]="form.email" placeholder="john@example.com" [class.invalid]="errors['email']" />
+            <span class="err" *ngIf="errors['email']">{{ errors['email'] }}</span>
+          </div>
+
+          <div class="field">
+            <label>Phone Number <span class="req">*</span></label>
+            <input type="tel" [(ngModel)]="form.phone" placeholder="+91 98765 43210" [class.invalid]="errors['phone']" />
+            <span class="err" *ngIf="errors['phone']">{{ errors['phone'] }}</span>
+          </div>
+
+          <!-- ── Password (added) ── -->
+          <div class="field">
+            <label>Password <span class="req">*</span></label>
+            <div class="input-icon-wrap">
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                [(ngModel)]="form.password"
+                placeholder="Min. 8 characters"
+                [class.invalid]="errors['password']"
+              />
+              <button type="button" class="eye-toggle" (click)="showPassword = !showPassword">
+                <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+              </button>
+            </div>
+            <span class="err" *ngIf="errors['password']">{{ errors['password'] }}</span>
+          </div>
+
+          <div class="field">
+            <label>Gender <span class="req">*</span></label>
+            <select [(ngModel)]="form.gender" [class.invalid]="errors['gender']">
+              <option value="">— Select Gender —</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
+            <span class="err" *ngIf="errors['gender']">{{ errors['gender'] }}</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── SECTION 2: Academic Details (Board → Class → Group → Subject) ── -->
+      <div class="form-section">
+        <div class="section-title">
+          <i class="fa-solid fa-graduation-cap"></i> Academic Details
+        </div>
+        <div class="fields-grid">
+
+          <!-- ── Board Selection ── -->
+          <div class="field full">
+            <label>Board <span class="req">*</span></label>
+            <div class="board-loading" *ngIf="boardsLoading">
+              <i class="fa-solid fa-circle-notch fa-spin"></i> Loading boards…
+            </div>
+            <div class="board-pills" *ngIf="!boardsLoading">
+              <button
+                type="button"
+                *ngFor="let b of boards"
+                class="board-pill"
+                [class.selected]="selectedBoardId === b.id"
+                (click)="onBoardSelect(b.id)"
+              >
+                <i class="fa-solid fa-graduation-cap pill-icon"></i>
+                {{ b.name }}
+                <i class="fa-solid fa-check pill-check" *ngIf="selectedBoardId === b.id"></i>
+              </button>
+            </div>
+            <span class="err" *ngIf="errors['boardId']">{{ errors['boardId'] }}</span>
+          </div>
+
+          <!-- ── Class Dropdown (shown after board is selected) ── -->
+          <div class="field full" *ngIf="selectedBoardId">
+            <div class="cascade-loading" *ngIf="classesLoading">
+              <i class="fa-solid fa-circle-notch fa-spin"></i> Loading classes…
+            </div>
+            <ng-container *ngIf="!classesLoading">
+              <label class="cascade-label">
+                <span class="cascade-icon"><i class="fa-solid fa-school"></i></span>
+                Class <span class="req">*</span>
+              </label>
+              <select
+                [(ngModel)]="form.classId"
+                (ngModelChange)="onClassSelect($event)"
+                [class.invalid]="errors['classId']"
+                class="cascade-select"
+              >
+                <option [ngValue]="null">— Select a class —</option>
+                <option *ngFor="let c of classes" [value]="c.id">{{ c.name }}</option>
+              </select>
+              <span class="err" *ngIf="errors['classId']">{{ errors['classId'] }}</span>
+              <div class="no-data-hint" *ngIf="!classes.length">
+                <i class="fa-solid fa-inbox"></i> No classes found for this board.
+              </div>
+            </ng-container>
+          </div>
+
+          <!-- ── Group Pills (shown if groups exist for class) ── -->
+          <div class="field full" *ngIf="form.classId && !classesLoading">
+            <div class="cascade-loading" *ngIf="groupsLoading">
+              <i class="fa-solid fa-circle-notch fa-spin"></i> Loading groups…
+            </div>
+            <ng-container *ngIf="!groupsLoading && hasGroups">
+              <label class="cascade-label">
+                <span class="cascade-icon cascade-icon--violet"><i class="fa-solid fa-layer-group"></i></span>
+                Group <span class="req">*</span>
+                <span class="cascade-badge">Required</span>
+              </label>
+              <div class="board-pills group-pills">
+                <button
+                  type="button"
+                  *ngFor="let grp of groups"
+                  class="board-pill"
+                  [class.selected]="form.groupId === grp.id"
+                  (click)="selectGroup(grp.id)"
+                >
+                  <i class="fa-solid fa-layer-group pill-icon"></i>
+                  {{ grp.name }}
+                  <span class="pill-order" *ngIf="grp.order != null">#{{ grp.order }}</span>
+                  <i class="fa-solid fa-check pill-check" *ngIf="form.groupId === grp.id"></i>
+                </button>
+              </div>
+              <span class="err" *ngIf="errors['groupId']">{{ errors['groupId'] }}</span>
+            </ng-container>
+          </div>
+
+          <!-- ── Subject Pills (shown when no groups OR group is selected) ── -->
+          <div class="field full"
+            *ngIf="form.classId && !classesLoading && !groupsLoading &&
+                   (!hasGroups || (hasGroups && form.groupId))">
+            <div class="cascade-loading" *ngIf="subjectsLoading">
+              <i class="fa-solid fa-circle-notch fa-spin"></i> Loading subjects…
+            </div>
+            <ng-container *ngIf="!subjectsLoading && hasSubjects">
+              <label class="cascade-label">
+                <span class="cascade-icon cascade-icon--purple"><i class="fa-solid fa-book"></i></span>
+                Subjects <span class="req">*</span>
+                <span class="cascade-badge">Required · Select all that apply</span>
+              </label>
+              <div class="board-pills subject-pills">
+                <button
+                  type="button"
+                  *ngFor="let sub of subjects"
+                  class="board-pill"
+                  [class.selected]="form.subjectIds.includes(sub.id)"
+                  (click)="toggleSubject(sub.id)"
+                >
+                  <i class="fa-solid fa-book-open pill-icon"></i>
+                  {{ sub.name }}
+                  <i class="fa-solid fa-check pill-check" *ngIf="form.subjectIds.includes(sub.id)"></i>
+                </button>
+              </div>
+              <span class="err" *ngIf="errors['subjectIds']">{{ errors['subjectIds'] }}</span>
+            </ng-container>
+          </div>
+
+          <!-- ── Current Grade (auto-filled from class) ── -->
+          <div class="field full">
+            <label>Current Grade / Class <span class="req">*</span></label>
+            <div class="input-autofill-wrap">
+              <input
+                type="text"
+                [(ngModel)]="form.grade"
+                placeholder="Auto-filled from class selection"
+                [class.invalid]="errors['grade']"
+                [readonly]="!!form.classId"
+                [class.autofilled]="!!form.classId"
+              />
+              <span class="autofill-badge" *ngIf="form.classId">
+                <i class="fa-solid fa-circle-check"></i> Auto-filled
+              </span>
+            </div>
+            <span class="err" *ngIf="errors['grade']">{{ errors['grade'] }}</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── SECTION 3: Location ── -->
+      <div class="form-section">
+        <div class="section-title">
+          <i class="fa-solid fa-location-dot"></i> Location
+        </div>
+        <div class="fields-grid">
+
+          <div class="field">
+            <label>Country <span class="req">*</span></label>
+            <div *ngIf="countriesLoading" class="cascade-loading">
+              <i class="fa-solid fa-circle-notch fa-spin"></i> Loading…
+            </div>
+            <select *ngIf="!countriesLoading" [(ngModel)]="form.countryId" (ngModelChange)="onCountryChange($event)" [class.invalid]="errors['countryId']">
+              <option [ngValue]="null">— Select Country —</option>
+              <option *ngFor="let c of countries" [ngValue]="c.id">{{ c.name }}</option>
+            </select>
+            <span class="err" *ngIf="errors['countryId']">{{ errors['countryId'] }}</span>
+          </div>
+
+          <div class="field">
+            <label>State <span class="req">*</span></label>
+            <div *ngIf="statesLoading" class="cascade-loading">
+              <i class="fa-solid fa-circle-notch fa-spin"></i> Loading…
+            </div>
+            <select *ngIf="!statesLoading" [(ngModel)]="form.stateId" (ngModelChange)="onStateChange($event)" [disabled]="!form.countryId" [class.invalid]="errors['stateId']">
+              <option [ngValue]="null">— Select State —</option>
+              <option *ngFor="let s of states" [ngValue]="s.id">{{ s.name }}</option>
+            </select>
+            <span class="err" *ngIf="errors['stateId']">{{ errors['stateId'] }}</span>
+          </div>
+
+          <div class="field">
+            <label>City <span class="req">*</span></label>
+            <div *ngIf="citiesLoading" class="cascade-loading">
+              <i class="fa-solid fa-circle-notch fa-spin"></i> Loading…
+            </div>
+            <select *ngIf="!citiesLoading" [(ngModel)]="form.cityId" [disabled]="!form.stateId" [class.invalid]="errors['cityId']">
+              <option [ngValue]="null">— Select City —</option>
+              <option *ngFor="let ct of cities" [ngValue]="ct.id">{{ ct.name }}</option>
+            </select>
+            <span class="err" *ngIf="errors['cityId']">{{ errors['cityId'] }}</span>
+          </div>
+
+          <div class="field full">
+            <label>Address <span class="req">*</span></label>
+            <textarea [(ngModel)]="form.address" placeholder="Your full address" rows="2" [class.invalid]="errors['address']"></textarea>
+            <span class="err" *ngIf="errors['address']">{{ errors['address'] }}</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── SECTION 4: Parent / Guardian ── -->
+      <div class="form-section">
+        <div class="section-title">
+          <i class="fa-solid fa-people-roof"></i> Parent / Guardian
+        </div>
+        <div class="fields-grid">
+
+          <div class="field">
+            <label>Parent / Guardian Name <span class="req">*</span></label>
+            <input type="text" [(ngModel)]="form.parentName" placeholder="Jane Doe" [class.invalid]="errors['parentName']" />
+            <span class="err" *ngIf="errors['parentName']">{{ errors['parentName'] }}</span>
+          </div>
+
+          <div class="field">
+            <label>Relationship <span class="req">*</span></label>
+            <select [(ngModel)]="form.relationship" [class.invalid]="errors['relationship']">
+              <option value="">— Select —</option>
+              <option value="Father">Father</option>
+              <option value="Mother">Mother</option>
+              <option value="Guardian">Guardian</option>
+              <option value="Sibling">Sibling</option>
+              <option value="Other">Other</option>
+            </select>
+            <span class="err" *ngIf="errors['relationship']">{{ errors['relationship'] }}</span>
+          </div>
+
+          <div class="field">
+            <label>Parent Email <span class="req">*</span></label>
+            <input type="email" [(ngModel)]="form.parentEmail" placeholder="parent@example.com" [class.invalid]="errors['parentEmail']" />
+            <span class="err" *ngIf="errors['parentEmail']">{{ errors['parentEmail'] }}</span>
+          </div>
+
+          <div class="field">
+            <label>Parent Phone <span class="req">*</span></label>
+            <input type="tel" [(ngModel)]="form.parentPhone" placeholder="+91 98765 43210" [class.invalid]="errors['parentPhone']" />
+            <span class="err" *ngIf="errors['parentPhone']">{{ errors['parentPhone'] }}</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── SECTION 5: Course & Batch Selection ── -->
+      <div class="form-section">
+        <div class="section-title">
+          <i class="fa-solid fa-book-open"></i> Course &amp; Batch
+        </div>
+
+        <div class="fields-grid">
+
+          <div class="field full">
+            <label>Course <span class="req">*</span></label>
+            <div *ngIf="coursesLoading" class="cascade-loading">
+              <i class="fa-solid fa-circle-notch fa-spin"></i> Loading courses…
+            </div>
+            <select *ngIf="!coursesLoading" [(ngModel)]="form.courseId" (ngModelChange)="onCourseChange($event)" [class.invalid]="errors['courseId']">
+              <option value="">— Select Course —</option>
+              <option *ngFor="let c of courses" [value]="c.id">{{ c.title }}</option>
+            </select>
+            <span class="err" *ngIf="errors['courseId']">{{ errors['courseId'] }}</span>
+          </div>
+
+          <div class="field full" *ngIf="form.courseId">
+            <label>Batch <span class="req">*</span></label>
+            <div *ngIf="batchesLoading" class="cascade-loading">
+              <i class="fa-solid fa-circle-notch fa-spin"></i> Loading batch…
+            </div>
+            <ng-container *ngIf="!batchesLoading">
+              <select [(ngModel)]="form.batchId" [class.invalid]="errors['batchId']">
+                <option value="">— Select Batch —</option>
+                <option *ngFor="let b of batches" [value]="b.id">{{ b.name }}</option>
+              </select>
+              <div class="no-batch-warn" *ngIf="!batches.length">
+                <i class="fa-solid fa-triangle-exclamation"></i> No active batch found for this course.
+              </div>
+            </ng-container>
+            <span class="err" *ngIf="errors['batchId']">{{ errors['batchId'] }}</span>
+          </div>
+
+        </div>
+
+        <!-- Course Price Preview -->
+        <div class="price-preview" *ngIf="selectedCourse">
+          <div class="pp-row">
+            <span>{{ selectedCourse.title }}</span>
+            <span class="pp-price">{{ formatCurrency(selectedCourse.price || 0) }}</span>
+          </div>
+          <div class="pp-note">
+            <img src="https://razorpay.com/favicon.ico" width="14" height="14" alt="Razorpay" />
+            Secured by <strong>Razorpay</strong> · UPI, Cards, Net Banking accepted
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Submit Button -->
+      <div class="form-actions">
+        <a href="/login" class="btn btn-ghost">Already enrolled? Sign in</a>
+        <button
+          class="btn btn-pay"
+          (click)="onSubmit()"
+          *ngIf="(selectedCourse?.price || 0) > 0"
+        >
+          <i class="fa-solid fa-lock"></i>
+          Pay {{ formatCurrency(selectedCourse?.price || 0) }} &amp; Enroll
+        </button>
+        <button
+          class="btn btn-primary"
+          (click)="onSubmit()"
+          *ngIf="!selectedCourse || (selectedCourse?.price || 0) === 0"
+        >
+          Enroll Now →
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

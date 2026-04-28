@@ -51,6 +51,7 @@ import { GroupComponent } from './components/curriculum/group/group.component';
 import { CountryComponent } from './components/location/country/country.component';
 import { StateComponent } from './components/location/state/state.component';
 import { CityComponent } from './components/location/city/city.component';
+import { StudentQuickEnrollComponent } from './components/student-quick-enroll/student-quick-enroll.component';
 
 const AG = [AuthGuard];
 
@@ -58,6 +59,7 @@ const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegistrationComponent },
+  { path: 'student-register', component: StudentQuickEnrollComponent },
   { path: 'demo-register', component: DemoRegisterComponent },
   { path: 'user-plan', component: UserPlanComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },

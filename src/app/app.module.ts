@@ -65,6 +65,7 @@ import { GroupComponent } from './components/curriculum/group/group.component';
 import { CountryComponent } from './components/location/country/country.component';
 import { StateComponent } from './components/location/state/state.component';
 import { CityComponent } from './components/location/city/city.component';
+import { StudentQuickEnrollComponent } from './components/student-quick-enroll/student-quick-enroll.component';
 
 @NgModule({
   declarations: [
@@ -124,7 +125,8 @@ import { CityComponent } from './components/location/city/city.component';
     GroupComponent,
     CountryComponent,
     StateComponent,
-    CityComponent
+    CityComponent,
+    StudentQuickEnrollComponent
   ],
   imports: [
     BrowserModule,
