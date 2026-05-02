@@ -6,7 +6,10 @@
       "Bash(npm install:*)",
       "Bash(npm list:*)",
       "Bash(node -e \"const m = require\\(''./node_modules/@angular/core/fesm2022/core.mjs''\\); console.log\\(Object.keys\\(m\\).filter\\(k => k.includes\\(''afterEvery''\\) || k.includes\\(''afterNext''\\)\\)\\)\")",
-      "Bash(node -e \"const v=JSON.parse\\(require\\(''''fs''''\\).readFileSync\\(''''/dev/stdin'''',''''utf8''''\\)\\); console.log\\(v.slice\\(-15\\).join\\(''''\\\\n''''\\)\\)\")"
+      "Bash(node -e \"const v=JSON.parse\\(require\\(''''fs''''\\).readFileSync\\(''''/dev/stdin'''',''''utf8''''\\)\\); console.log\\(v.slice\\(-15\\).join\\(''''\\\\n''''\\)\\)\")",
+      "Bash(Get-ChildItem -Path \"e:\\\\lmsadminpanel\" -Recurse -Directory)",
+      "Bash(Select-Object -First 20 FullName)",
+      "Bash(xargs grep *)"
     ]
   }
 }

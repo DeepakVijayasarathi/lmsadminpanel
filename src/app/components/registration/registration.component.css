@@ -1590,3 +1590,67 @@
   color: var(--text-muted, #888);
   margin-bottom: 4px;
 }
+
+/* ── THANKS CARD (shown between payment preview and profile steps) ── */
+.thanks-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  animation: fadeInScale 0.35s ease;
+}
+
+.thanks-icon {
+  font-size: 52px;
+  margin-bottom: 16px;
+  animation: bounceIn 0.5s ease;
+}
+
+.thanks-card h3 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px;
+}
+
+.thanks-card p {
+  font-size: 14px;
+  color: #64748b;
+  max-width: 320px;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+.thanks-progress-bar {
+  width: 100%;
+  max-width: 280px;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.thanks-progress-fill {
+  height: 100%;
+  background: #6366f1;
+  border-radius: 4px;
+  animation: fillProgress 2.2s linear forwards;
+}
+
+@keyframes fillProgress {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bounceIn {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}

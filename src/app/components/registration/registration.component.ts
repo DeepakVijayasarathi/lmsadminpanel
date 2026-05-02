@@ -64,6 +64,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   showSuccess = false;
   coursesLoading = false;
   boardsLoading = false;
+  showThanksCard = false;
 
 
   // ── Shared account form fields ──
@@ -116,7 +117,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
 
   // ── Step labels ──
   readonly teacherStepLabels = ['Account', 'Professional', 'Documents'];
-  readonly studentStepLabels = ['Account', 'Profile', 'Parent Info', 'Course', 'Payment'];
+  readonly studentStepLabels = ['Account', 'Course', 'Payment', 'Profile', 'Parent'];
 
   constructor(private http: HttpClient, private router: Router, private route: ActivatedRoute) {}
 
@@ -402,13 +403,19 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       if (!this.validateStep1()) return;
       this.currentStep = 2;
     } else if (this.currentStep === 2) {
-      if (!this.validateStudentStep2()) return;
+      // Step 2: Course selection
+      if (!this.validateStudentStep4()) return;
       this.currentStep = 3;
     } else if (this.currentStep === 3) {
-      if (!this.validateStudentStep3()) return;
-      this.currentStep = 4;
+      // Step 3: Payment preview — show thanks card, then advance to profile
+      this.showThanksCard = true;
+      setTimeout(() => {
+        this.showThanksCard = false;
+        this.currentStep = 4;
+      }, 2200);
     } else if (this.currentStep === 4) {
-      if (!this.validateStudentStep4()) return;
+      // Step 4: Personal profile
+      if (!this.validateStudentStep2()) return;
       this.currentStep = 5;
     }
   }
@@ -638,6 +645,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     this.selectedRole = null;
     this.currentStep = 1;
     this.showSuccess = false;
+    this.showThanksCard = false;
     this.successData = null;
     this.form = { firstName: '', lastName: '', username: '', phone: '', email: '', password: '', zonalId: '' };
     this.teacherForm = {
