@@ -1,0 +1,63 @@
+<div class="ty-page">
+  <div class="ty-card">
+
+    <div class="ty-icon-wrap">
+      <div class="ty-ring"></div>
+      <div class="ty-check">✓</div>
+    </div>
+
+    <h1 class="ty-title">
+      {{ data?.role === 'teacher' ? 'Welcome Aboard! 🎉' : "You're Enrolled! 🎓" }}
+    </h1>
+
+    <p class="ty-sub" *ngIf="data?.role === 'student'">
+      Thank you for enrolling in <strong>{{ data?.course?.title }}</strong>. Your learning journey starts now!
+    </p>
+    <p class="ty-sub" *ngIf="data?.role === 'teacher'">
+      Thank you for registering as a teacher. Our team will review your application shortly.
+    </p>
+    <p class="ty-sub" *ngIf="!data">
+      Thank you! Your registration was successful.
+    </p>
+
+    <div class="ty-details" *ngIf="data">
+      <div class="ty-row" *ngIf="data.firstName || data.name">
+        <span class="ty-key">Name</span>
+        <span class="ty-val">{{ data.firstName }} {{ data.lastName }}</span>
+      </div>
+      <div class="ty-row" *ngIf="data.email">
+        <span class="ty-key">Email</span>
+        <span class="ty-val">{{ data.email }}</span>
+      </div>
+      <div class="ty-row" *ngIf="data.role">
+        <span class="ty-key">Role</span>
+        <span class="ty-val capitalize">{{ data.role }}</span>
+      </div>
+      <ng-container *ngIf="data.role === 'student'">
+        <div class="ty-row" *ngIf="data.course?.title">
+          <span class="ty-key">Course</span>
+          <span class="ty-val">{{ data.course.title }}</span>
+        </div>
+        <div class="ty-row" *ngIf="data.subscriptionId">
+          <span class="ty-key">Subscription ID</span>
+          <span class="ty-val mono">{{ data.subscriptionId }}</span>
+        </div>
+        <div class="ty-row">
+          <span class="ty-key">Amount Paid</span>
+          <span class="ty-val ty-green">
+            {{ (data.amount || 0) === 0 ? 'Free' : formatCurrency(data.amount) }}
+          </span>
+        </div>
+        <div class="ty-row" *ngIf="data.txnRef && data.txnRef !== 'FREE'">
+          <span class="ty-key">Transaction Ref</span>
+          <span class="ty-val mono">{{ data.txnRef }}</span>
+        </div>
+      </ng-container>
+    </div>
+
+    <p class="ty-countdown">Redirecting to login in <strong>{{ countdown }}s</strong>...</p>
+
+    <button class="ty-btn" (click)="goToLogin()">Go to Login →</button>
+
+  </div>
+</div>

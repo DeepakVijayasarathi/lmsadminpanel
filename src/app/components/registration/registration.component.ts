@@ -835,13 +835,19 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   }
 
   triggerSuccess(role: string, user: any, extra: any = {}) {
-    this.showSuccess = true;
-    this.successData = { role, user, extra, course: this.selectedCourse };
-    this.toast('Registration successful! 🎉', 'success');
-
-    setTimeout(() => {
-      this.router.navigate(['/login']);
-    }, 5000);
+    const userData = user?.data || user;
+    this.router.navigate(['/thank-you'], {
+      state: {
+        role,
+        firstName: this.form.firstName,
+        lastName: this.form.lastName,
+        email: this.form.email,
+        course: this.selectedCourse,
+        subscriptionId: extra.subscriptionId,
+        amount: extra.amount,
+        txnRef: extra.txnRef,
+      },
+    });
   }
 
   resetForm() {

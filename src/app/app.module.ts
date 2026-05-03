@@ -46,6 +46,7 @@ import { MenuComponent } from './components/system/menu/menu.component';
 import { TimetableComponent } from './components/learning/timetable/timetable.component';
 import { SessionSlotsComponent } from './components/learning/session-slots/session-slots.component';
 import { RegistrationComponent } from './components/registration/registration.component';
+import { ThankYouComponent } from './components/thank-you/thank-you.component';
 import { VideoPlayerComponent } from './components/controls/video-player/video-player.component';
 import { RecordVideoComponent } from './components/learning/record-video/record-video.component';
 import { CommonDashboardComponent } from './components/common-dashboard/common-dashboard.component';
@@ -107,6 +108,7 @@ import { StudentQuickEnrollComponent } from './components/student-quick-enroll/s
     CommonPaginationComponent,
     ActionButtonsComponent,
     RegistrationComponent,
+    ThankYouComponent,
     VideoPlayerComponent,
     RecordVideoComponent,
     CommonDashboardComponent,

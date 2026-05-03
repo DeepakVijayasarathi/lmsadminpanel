@@ -52,6 +52,7 @@ import { CountryComponent } from './components/location/country/country.componen
 import { StateComponent } from './components/location/state/state.component';
 import { CityComponent } from './components/location/city/city.component';
 import { StudentQuickEnrollComponent } from './components/student-quick-enroll/student-quick-enroll.component';
+import { ThankYouComponent } from './components/thank-you/thank-you.component';
 
 const AG = [AuthGuard];
 
@@ -59,6 +60,7 @@ const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegistrationComponent },
+  { path: 'thank-you', component: ThankYouComponent },
   { path: 'student-register', component: StudentQuickEnrollComponent },
   { path: 'demo-register', component: DemoRegisterComponent },
   { path: 'user-plan', component: UserPlanComponent },
