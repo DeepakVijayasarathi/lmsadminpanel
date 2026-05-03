@@ -347,7 +347,7 @@
       <!-- ═══════════════════════════════════════════ -->
       <!--              STUDENT FLOW                   -->
       <!-- ═══════════════════════════════════════════ -->
-      <div class="step-form" *ngIf="selectedRole === 'student' && !showSuccess">
+      <div class="step-form" *ngIf="selectedRole === 'student' && !showSuccess && !showPaymentFailure">
 
         <!-- Stepper -->
         <div class="stepper">
@@ -432,10 +432,10 @@
           </div>
         </div>
 
-        <!-- ── STUDENT STEP 2: Personal Profile ── -->
-        <div class="form-step" *ngIf="currentStep === 2">
+        <!-- ── STUDENT STEP 4: Personal Profile ── -->
+        <div class="form-step" *ngIf="currentStep === 4">
           <div class="step-header">
-            <div class="step-badge">Step 2</div>
+            <div class="step-badge">Step 4</div>
             <h2>Personal Profile</h2>
             <p>Tell us a bit about yourself.</p>
           </div>
@@ -688,10 +688,10 @@
           </div>
         </div>
 
-        <!-- ── STUDENT STEP 3: Parent / Guardian ── -->
-        <div class="form-step" *ngIf="currentStep === 3">
+        <!-- ── STUDENT STEP 5: Parent / Guardian ── -->
+        <div class="form-step" *ngIf="currentStep === 5">
           <div class="step-header">
-            <div class="step-badge">Step 3</div>
+            <div class="step-badge">Step 5</div>
             <h2>Parent / Guardian</h2>
             <p>We need a parent or guardian contact for your account.</p>
           </div>
@@ -726,14 +726,28 @@
           </div>
           <div class="form-actions between">
             <button class="btn btn-ghost" (click)="prevStep()">← Back</button>
-            <button class="btn btn-primary" (click)="nextStep()">Continue →</button>
+            <button
+              class="btn btn-pay"
+              (click)="submitStudent()"
+              *ngIf="(selectedCourse?.price || 0) > 0"
+            >
+              <i class="fa-solid fa-lock"></i>
+              Pay {{ formatCurrency(paymentType === 2 ? installmentAmount : netAmount) }} via Razorpay
+            </button>
+            <button
+              class="btn btn-primary"
+              (click)="submitStudent()"
+              *ngIf="(selectedCourse?.price || 0) === 0"
+            >
+              Enroll for Free →
+            </button>
           </div>
         </div>
 
-        <!-- ── STUDENT STEP 4: Course Selection ── -->
-        <div class="form-step" *ngIf="currentStep === 4">
+        <!-- ── STUDENT STEP 2: Course Selection ── -->
+        <div class="form-step" *ngIf="currentStep === 2">
           <div class="step-header">
-            <div class="step-badge">Step 4</div>
+            <div class="step-badge">Step 2</div>
             <h2>Choose Your Course</h2>
             <p>Select a course to enroll in.</p>
           </div>
@@ -792,12 +806,12 @@
           </div>
         </div>
 
-        <!-- ── STUDENT STEP 5: Payment ── -->
-        <div class="form-step" *ngIf="currentStep === 5">
+        <!-- ── STUDENT STEP 3: Payment Preview ── -->
+        <div class="form-step" *ngIf="currentStep === 3">
           <div class="step-header">
-            <div class="step-badge">Step 5</div>
-            <h2>Review &amp; Pay</h2>
-            <p>Confirm your course and complete payment via Razorpay.</p>
+            <div class="step-badge">Step 3</div>
+            <h2>Review &amp; Payment</h2>
+            <p>Review your course and choose your payment plan. You'll pay after completing your profile.</p>
           </div>
 
           <div class="order-card" *ngIf="selectedCourse">
@@ -863,22 +877,26 @@
 
           <div class="form-actions between">
             <button class="btn btn-ghost" (click)="prevStep()">← Back</button>
-            <button
-              class="btn btn-pay"
-              (click)="submitStudent()"
-              *ngIf="(selectedCourse?.price || 0) > 0"
-            >
-              <i class="fa-solid fa-lock"></i>
-              Pay {{ formatCurrency(paymentType === 2 ? installmentAmount : netAmount) }} via Razorpay
-            </button>
-            <button
-              class="btn btn-primary"
-              (click)="submitStudent()"
-              *ngIf="(selectedCourse?.price || 0) === 0"
-            >
-              Enroll for Free →
-            </button>
+            <button class="btn btn-primary" (click)="nextStep()">Continue →</button>
           </div>
+        </div>
+      </div>
+
+      <!-- ─────────────────────────────── -->
+      <!--        PAYMENT FAILURE VIEW     -->
+      <!-- ─────────────────────────────── -->
+      <div class="failure-view" *ngIf="showPaymentFailure">
+        <div class="failure-icon-wrap">
+          <div class="failure-ring"></div>
+          <div class="failure-x">✕</div>
+        </div>
+        <h2 class="failure-title">Payment Failed</h2>
+        <p class="failure-sub">{{ paymentFailureMsg }}</p>
+        <div class="failure-actions">
+          <button class="btn btn-pay" (click)="retryPayment()">
+            <i class="fa-solid fa-rotate-right"></i> Retry Payment
+          </button>
+          <button class="btn btn-ghost" (click)="goToLogin()">Go to Login</button>
         </div>
       </div>
 

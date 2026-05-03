@@ -75,6 +75,8 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   toastType: 'success' | 'error' = 'error';
   toastVisible = false;
   showSuccess = false;
+  showPaymentFailure = false;
+  paymentFailureMsg = '';
   coursesLoading = false;
   boardsLoading = false;
   classesLoading = false;
@@ -144,7 +146,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
 
   // ── Step labels ──
   readonly teacherStepLabels = ['Account', 'Professional', 'Documents'];
-  readonly studentStepLabels = ['Account', 'Profile', 'Parent Info', 'Course', 'Payment'];
+  readonly studentStepLabels = ['Account', 'Course', 'Payment', 'Profile', 'Parent Info'];
 
   constructor(
     private http: HttpClient,
@@ -619,13 +621,13 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       if (!this.validateStep1()) return;
       this.currentStep = 2;
     } else if (this.currentStep === 2) {
-      if (!this.validateStudentStep2()) return;
+      if (!this.validateStudentStep4()) return; // Course
       this.currentStep = 3;
     } else if (this.currentStep === 3) {
-      if (!this.validateStudentStep3()) return;
+      // Payment preview — no extra validation, course already validated
       this.currentStep = 4;
     } else if (this.currentStep === 4) {
-      if (!this.validateStudentStep4()) return;
+      if (!this.validateStudentStep2()) return; // Profile
       this.currentStep = 5;
     }
   }
@@ -694,6 +696,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   // ═══════════════════════════════════════════════════
 
   async submitStudent() {
+    if (!this.validateStudentStep3()) return; // Parent Info (step 5)
     this.loading = true;
     this.loaderMsg = 'Creating your account...';
 
@@ -799,7 +802,8 @@ export class RegistrationComponent implements OnInit, OnDestroy {
 
     const rzp = new Razorpay(options);
     rzp.on('payment.failed', (response: any) => {
-      this.toast('Payment failed: ' + response.error.description);
+      this.showPaymentFailure = true;
+      this.paymentFailureMsg = response.error?.description || 'Payment failed. Please try again.';
     });
     rzp.open();
   }
@@ -825,6 +829,11 @@ export class RegistrationComponent implements OnInit, OnDestroy {
 
   // ── Helpers ──
 
+  retryPayment() {
+    this.showPaymentFailure = false;
+    this.paymentFailureMsg = '';
+  }
+
   triggerSuccess(role: string, user: any, extra: any = {}) {
     this.showSuccess = true;
     this.successData = { role, user, extra, course: this.selectedCourse };
@@ -839,6 +848,8 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     this.selectedRole = null;
     this.currentStep = 1;
     this.showSuccess = false;
+    this.showPaymentFailure = false;
+    this.paymentFailureMsg = '';
     this.successData = null;
     this.form = { firstName: '', lastName: '', username: '', phone: '', email: '', password: ''};
     this.teacherForm = {
