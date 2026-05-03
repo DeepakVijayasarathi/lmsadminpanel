@@ -1,0 +1,200 @@
+<div class="cp-page">
+
+  <!-- Left accent panel -->
+  <div class="cp-left">
+    <div class="cp-brand">
+      <img src="logo.png" alt="B2P Teachers Logo" class="cp-logo" />
+      <span class="cp-brand-name">B2P Teachers</span>
+    </div>
+    <div class="cp-hero">
+      <div class="cp-hero-icon"><i class="fa-solid fa-id-card"></i></div>
+      <h2>Complete Your<br /><span>Profile</span></h2>
+      <p>Help us personalise your learning experience. This only takes a minute.</p>
+    </div>
+    <ul class="cp-steps">
+      <li class="active"><i class="fa-solid fa-circle-check"></i> Account Created</li>
+      <li class="active"><i class="fa-solid fa-spinner fa-spin"></i> Complete Profile</li>
+      <li><i class="fa-regular fa-circle"></i> Start Learning</li>
+    </ul>
+  </div>
+
+  <!-- Right form panel -->
+  <div class="cp-right">
+    <div class="cp-form-wrap">
+
+      <div class="cp-form-header">
+        <h1>Tell us about yourself</h1>
+        <p>All fields marked <span class="req">*</span> are required.</p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+        <!-- Personal Information -->
+        <div class="cp-section">
+          <div class="cp-section-title">
+            <i class="fa-solid fa-user"></i> Personal Information
+          </div>
+          <div class="cp-grid">
+
+            <div class="cp-field">
+              <label>First Name <span class="req">*</span></label>
+              <input type="text" formControlName="firstName" placeholder="John"
+                [class.invalid]="fieldError('firstName')" />
+              <span class="err" *ngIf="fieldError('firstName')">{{ fieldError('firstName') }}</span>
+            </div>
+
+            <div class="cp-field">
+              <label>Last Name <span class="req">*</span></label>
+              <input type="text" formControlName="lastName" placeholder="Doe"
+                [class.invalid]="fieldError('lastName')" />
+              <span class="err" *ngIf="fieldError('lastName')">{{ fieldError('lastName') }}</span>
+            </div>
+
+            <div class="cp-field">
+              <label>Phone Number <span class="req">*</span></label>
+              <input type="tel" formControlName="phone" placeholder="+91 98765 43210"
+                [class.invalid]="fieldError('phone')" />
+              <span class="err" *ngIf="fieldError('phone')">{{ fieldError('phone') }}</span>
+            </div>
+
+            <div class="cp-field">
+              <label>Gender <span class="req">*</span></label>
+              <select formControlName="gender" [class.invalid]="fieldError('gender')">
+                <option value="">— Select Gender —</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
+              </select>
+              <span class="err" *ngIf="fieldError('gender')">{{ fieldError('gender') }}</span>
+            </div>
+
+            <div class="cp-field">
+              <label>Date of Birth <span class="req">*</span></label>
+              <input type="date" formControlName="dateOfBirth"
+                [class.invalid]="fieldError('dateOfBirth')" />
+              <span class="err" *ngIf="fieldError('dateOfBirth')">{{ fieldError('dateOfBirth') }}</span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Address & Location -->
+        <div class="cp-section">
+          <div class="cp-section-title">
+            <i class="fa-solid fa-location-dot"></i> Address &amp; Location
+          </div>
+          <div class="cp-grid">
+
+            <div class="cp-field">
+              <label>Country <span class="req">*</span></label>
+              <div *ngIf="countriesLoading" class="cp-loading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading…
+              </div>
+              <select *ngIf="!countriesLoading" formControlName="countryId"
+                (change)="countryChanged()"
+                [class.invalid]="fieldError('countryId')">
+                <option [ngValue]="null">— Select Country —</option>
+                <option *ngFor="let c of countries" [ngValue]="c.id">{{ c.name }}</option>
+              </select>
+              <span class="err" *ngIf="fieldError('countryId')">{{ fieldError('countryId') }}</span>
+            </div>
+
+            <div class="cp-field">
+              <label>State <span class="req">*</span></label>
+              <div *ngIf="statesLoading" class="cp-loading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading…
+              </div>
+              <select *ngIf="!statesLoading" formControlName="stateId"
+                (change)="stateChanged()"
+                [class.invalid]="fieldError('stateId')">
+                <option [ngValue]="null">— Select State —</option>
+                <option *ngFor="let s of states" [ngValue]="s.id">{{ s.name }}</option>
+              </select>
+              <span class="err" *ngIf="fieldError('stateId')">{{ fieldError('stateId') }}</span>
+            </div>
+
+            <div class="cp-field">
+              <label>City <span class="req">*</span></label>
+              <div *ngIf="citiesLoading" class="cp-loading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading…
+              </div>
+              <select *ngIf="!citiesLoading" formControlName="cityId"
+                [class.invalid]="fieldError('cityId')">
+                <option [ngValue]="null">— Select City —</option>
+                <option *ngFor="let ct of cities" [ngValue]="ct.id">{{ ct.name }}</option>
+              </select>
+              <span class="err" *ngIf="fieldError('cityId')">{{ fieldError('cityId') }}</span>
+            </div>
+
+            <div class="cp-field cp-field--full">
+              <label>Address <span class="req">*</span></label>
+              <textarea formControlName="address" rows="2" placeholder="Your full address"
+                [class.invalid]="fieldError('address')"></textarea>
+              <span class="err" *ngIf="fieldError('address')">{{ fieldError('address') }}</span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Parent / Guardian -->
+        <div class="cp-section">
+          <div class="cp-section-title">
+            <i class="fa-solid fa-people-roof"></i> Parent / Guardian
+          </div>
+          <div class="cp-grid">
+
+            <div class="cp-field">
+              <label>Parent / Guardian Name <span class="req">*</span></label>
+              <input type="text" formControlName="parentName" placeholder="Jane Doe"
+                [class.invalid]="fieldError('parentName')" />
+              <span class="err" *ngIf="fieldError('parentName')">{{ fieldError('parentName') }}</span>
+            </div>
+
+            <div class="cp-field">
+              <label>Relationship <span class="req">*</span></label>
+              <select formControlName="relationship" [class.invalid]="fieldError('relationship')">
+                <option value="">— Select —</option>
+                <option value="Father">Father</option>
+                <option value="Mother">Mother</option>
+                <option value="Guardian">Guardian</option>
+                <option value="Sibling">Sibling</option>
+                <option value="Other">Other</option>
+              </select>
+              <span class="err" *ngIf="fieldError('relationship')">{{ fieldError('relationship') }}</span>
+            </div>
+
+            <div class="cp-field">
+              <label>Parent Email <span class="req">*</span></label>
+              <input type="email" formControlName="parentEmail" placeholder="parent@example.com"
+                [class.invalid]="fieldError('parentEmail')" />
+              <span class="err" *ngIf="fieldError('parentEmail')">{{ fieldError('parentEmail') }}</span>
+            </div>
+
+            <div class="cp-field">
+              <label>Parent Phone <span class="req">*</span></label>
+              <input type="tel" formControlName="parentPhone" placeholder="+91 98765 43210"
+                [class.invalid]="fieldError('parentPhone')" />
+              <span class="err" *ngIf="fieldError('parentPhone')">{{ fieldError('parentPhone') }}</span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="cp-actions">
+          <button type="submit" class="cp-btn-submit" [disabled]="isSubmitting">
+            <span *ngIf="!isSubmitting">
+              <i class="fa-solid fa-circle-check"></i> Save &amp; Continue
+            </span>
+            <span *ngIf="isSubmitting">
+              <i class="fa-solid fa-circle-notch fa-spin"></i> Saving…
+            </span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</div>

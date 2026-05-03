@@ -58,6 +58,31 @@
 
     <!-- Footer -->
     <div class="al-sidebar__footer">
+
+      <!-- Profile Completion (students only) -->
+      <div class="al-profile-completion" *ngIf="isStudent && profileCompletion < 100" (click)="navigate('/profile')" title="Update Profile">
+        <div class="al-pc__header">
+          <i class="fa-solid fa-circle-user al-pc__icon"></i>
+          <div class="al-pc__info">
+            <span class="al-pc__label">Profile Completion</span>
+            <span class="al-pc__pct">{{ profileCompletion }}%</span>
+          </div>
+          <i class="fa-solid fa-pen-to-square al-pc__edit"></i>
+        </div>
+        <div class="al-pc__bar-track">
+          <div class="al-pc__bar-fill"
+            [style.width.%]="profileCompletion"
+            [class.al-pc__bar-fill--complete]="profileCompletion === 100">
+          </div>
+        </div>
+        <span class="al-pc__status" *ngIf="profileCompletion < 100">
+          Tap to complete your profile
+        </span>
+        <span class="al-pc__status al-pc__status--done" *ngIf="profileCompletion === 100">
+          <i class="fa-solid fa-circle-check"></i> Profile complete
+        </span>
+      </div>
+
       <div class="al-user">
         <div class="al-user__avatar">{{ (userName | slice:0:1) || 'U' }}</div>
         <div class="al-user__info">

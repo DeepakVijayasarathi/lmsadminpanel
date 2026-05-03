@@ -67,6 +67,8 @@ import { CountryComponent } from './components/location/country/country.componen
 import { StateComponent } from './components/location/state/state.component';
 import { CityComponent } from './components/location/city/city.component';
 import { StudentQuickEnrollComponent } from './components/student-quick-enroll/student-quick-enroll.component';
+import { CompleteProfileComponent } from './components/complete-profile/complete-profile.component';
+import { UserProfileComponent } from './components/user-profile/user-profile.component';
 
 @NgModule({
   declarations: [
@@ -128,7 +130,9 @@ import { StudentQuickEnrollComponent } from './components/student-quick-enroll/s
     CountryComponent,
     StateComponent,
     CityComponent,
-    StudentQuickEnrollComponent
+    StudentQuickEnrollComponent,
+    CompleteProfileComponent,
+    UserProfileComponent,
   ],
   imports: [
     BrowserModule,

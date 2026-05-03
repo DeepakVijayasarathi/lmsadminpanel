@@ -24,7 +24,8 @@ export class AppComponent {
           url.startsWith('/register') ||
           url.startsWith('/demo-register') ||
           url.startsWith('/user-plan') ||
-          url.startsWith('/student-register');
+          url.startsWith('/student-register') ||
+          url.startsWith('/complete-profile');
 
         setTimeout(() => {
           window.dispatchEvent(new Event('resize'));

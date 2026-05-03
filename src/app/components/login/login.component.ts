@@ -123,7 +123,7 @@ export class LoginComponent implements OnInit {
       next: () => {
         this.isLoading = false;
         this.commonService.success('Login Successful', 'Success');
-        this.router.navigate(['/dashboard']);
+        this.router.navigate([this.postLoginRoute]);
       },
       error: (err) => {
         this.isLoading = false;
@@ -185,7 +185,7 @@ export class LoginComponent implements OnInit {
       next: () => {
         this.isLoading = false;
         this.commonService.success('Login Successful', 'Success');
-        this.router.navigate(['/dashboard']);
+        this.router.navigate([this.postLoginRoute]);
       },
       error: () => {
         this.isLoading = false;
@@ -231,6 +231,10 @@ export class LoginComponent implements OnInit {
   goBackToEmail() {
     this.otpStep = 'email';
     this.otpForm.get('otp')?.reset();
+  }
+
+  private get postLoginRoute(): string {
+    return '/dashboard';
   }
 
   get email() {

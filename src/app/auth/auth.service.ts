@@ -36,6 +36,7 @@ export class AuthService {
             res.expiresTime,
           );
           localStorage.setItem('roleName', res.roleName);
+          if (res.userId) localStorage.setItem('userId', res.userId);
           this.isLoggedInSubject.next(true);
         }),
       );
@@ -63,6 +64,7 @@ export class AuthService {
             res.expiresTime,
           );
           localStorage.setItem('roleName', res.roleName);
+          if (res.userId) localStorage.setItem('userId', res.userId);
           this.isLoggedInSubject.next(true);
         }),
       );
@@ -81,6 +83,7 @@ export class AuthService {
             res.expiresTime,
           );
           localStorage.setItem('roleName', res.roleName);
+          if (res.userId) localStorage.setItem('userId', res.userId);
         }),
         catchError((err) => {
           this.commonService.error(

@@ -1,0 +1,250 @@
+/* ── Page layout ── */
+.cp-page {
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+  background: #f1f5f9;
+}
+
+/* ── Left panel ── */
+.cp-left {
+  width: 300px;
+  flex-shrink: 0;
+  background: linear-gradient(160deg, #1e3a8a 0%, #2563eb 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 1.75rem;
+  gap: 2rem;
+}
+
+.cp-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cp-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.15);
+  padding: 4px;
+}
+
+.cp-brand-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.cp-hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cp-hero-icon {
+  font-size: 2.5rem;
+  opacity: 0.85;
+}
+
+.cp-hero h2 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.cp-hero h2 span {
+  color: #93c5fd;
+}
+
+.cp-hero p {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  line-height: 1.5;
+}
+
+.cp-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cp-steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.875rem;
+  opacity: 0.55;
+}
+
+.cp-steps li.active {
+  opacity: 1;
+  font-weight: 600;
+}
+
+/* ── Right panel ── */
+.cp-right {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.cp-form-wrap {
+  width: 100%;
+  max-width: 780px;
+}
+
+.cp-form-header {
+  margin-bottom: 1.75rem;
+}
+
+.cp-form-header h1 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 0.25rem;
+}
+
+.cp-form-header p {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+/* ── Sections ── */
+.cp-section {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.cp-section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #2563eb;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Grid ── */
+.cp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.cp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cp-field--full {
+  grid-column: 1 / -1;
+}
+
+/* ── Inputs ── */
+.cp-field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.cp-field input,
+.cp-field select,
+.cp-field textarea {
+  padding: 0.55rem 0.75rem;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #1e293b;
+  background: #f8fafc;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+  resize: none;
+}
+
+.cp-field input:focus,
+.cp-field select:focus,
+.cp-field textarea:focus {
+  border-color: #2563eb;
+  background: #fff;
+}
+
+.cp-field input.invalid,
+.cp-field select.invalid,
+.cp-field textarea.invalid {
+  border-color: #ef4444;
+  background: #fff5f5;
+}
+
+.req { color: #ef4444; }
+
+.err {
+  font-size: 0.75rem;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.cp-loading {
+  font-size: 0.85rem;
+  color: #64748b;
+  padding: 0.5rem 0;
+}
+
+/* ── Actions ── */
+.cp-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.cp-btn-submit {
+  padding: 0.7rem 2rem;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.cp-btn-submit:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.cp-btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .cp-left { display: none; }
+  .cp-grid { grid-template-columns: 1fr; }
+  .cp-right { padding: 1.25rem 1rem; }
+}

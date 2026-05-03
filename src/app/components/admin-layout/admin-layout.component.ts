@@ -1,10 +1,12 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 import { HttpGeneralService } from '../../services/http.service';
 import { environment } from '../../../environments/environment';
 import { PermissionService } from '../../auth/permission.service';
 import { TokenStorageService } from '../../auth/token-storage.service';
+import { StudentService } from '../../services/student.service';
 
 interface NavItem {
   label: string;
@@ -35,6 +37,13 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   userName = '';
   roleName = '';
 
+  profileCompletion = 0;
+
+  private readonly PROFILE_FIELDS = [
+    'firstName', 'lastName', 'phone', 'gender', 'address',
+    'countryId', 'stateId', 'parentName', 'parentEmail', 'parentPhone'
+  ];
+
   standaloneMenus: NavItem[] = [];
 
   navGroups: NavGroup[] = [];
@@ -42,6 +51,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private authService: AuthService,
+    private studentService: StudentService,
     private httpService: HttpGeneralService<any>,
     private permissionService: PermissionService,
     private tokenStorage: TokenStorageService
@@ -64,6 +74,27 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       }
     });
     this.loadMenus();
+    if (this.roleName === 'Student') {
+      this.loadProfileCompletion();
+    }
+  }
+
+  get isStudent(): boolean {
+    return this.roleName === 'Student';
+  }
+
+  private async loadProfileCompletion(): Promise<void> {
+    try {
+      const res: any = await firstValueFrom(this.studentService.getUserProfile());
+      const profile = res?.data || res;
+      const filled = this.PROFILE_FIELDS.filter(f => {
+        const v = profile[f];
+        return v !== null && v !== undefined && v !== '';
+      }).length;
+      this.profileCompletion = Math.round((filled / this.PROFILE_FIELDS.length) * 100);
+    } catch {
+      this.profileCompletion = 0;
+    }
   }
 
   ngOnDestroy(): void {}

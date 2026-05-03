@@ -43,6 +43,20 @@ export class TokenStorageService {
     return localStorage.getItem('roleName') || '';
   }
 
+  getUserId(): string {
+    const stored = localStorage.getItem('userId');
+    if (stored) return stored;
+    // fallback: decode from JWT sub claim
+    const token = this.getAccessToken();
+    if (!token) return '';
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.userId;
+    } catch {
+      return '';
+    }
+  }
+
   clear() {
     localStorage.clear();
   }

@@ -1,0 +1,319 @@
+<div class="up-page">
+
+  <!-- ── Loading ── -->
+  <div class="up-skeleton" *ngIf="isLoading">
+    <div class="up-skel up-skel--hero"></div>
+    <div class="up-skel up-skel--section"></div>
+    <div class="up-skel up-skel--section"></div>
+  </div>
+
+  <ng-container *ngIf="!isLoading && profile">
+
+    <!-- ════════════════════════════════
+         HERO HEADER
+    ═════════════════════════════════ -->
+    <div class="up-hero">
+
+      <div class="up-hero__left">
+        <!-- Avatar -->
+        <div class="up-avatar-wrap">
+          <div class="up-avatar">{{ initials }}</div>
+          <!-- Completion ring -->
+          <svg class="up-ring" viewBox="0 0 52 52">
+            <circle cx="26" cy="26" r="23" class="up-ring__track"/>
+            <circle cx="26" cy="26" r="23" class="up-ring__fill"
+              [style.stroke-dasharray]="144.5"
+              [style.stroke-dashoffset]="144.5 * (1 - profileCompletion / 100)"
+              [style.stroke]="completionColor"/>
+          </svg>
+        </div>
+
+        <div class="up-hero__info">
+          <h1 class="up-hero__name">{{ displayName }}</h1>
+          <div class="up-hero__meta">
+            <span class="up-hero__email"><i class="fa-solid fa-envelope"></i> {{ profile.email }}</span>
+            <span class="up-hero__username"><i class="fa-solid fa-at"></i> {{ profile.username }}</span>
+          </div>
+          <div class="up-hero__tags">
+            <span class="up-tag up-tag--role">{{ roleLabel }}</span>
+            <span class="up-tag up-tag--active" *ngIf="profile.isActive">Active</span>
+            <span class="up-tag up-tag--blocked" *ngIf="profile.isBlocked">Blocked</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="up-hero__right">
+        <!-- Completion pill -->
+        <div class="up-completion">
+          <div class="up-completion__label">Profile Complete</div>
+          <div class="up-completion__bar">
+            <div class="up-completion__fill"
+              [style.width.%]="profileCompletion"
+              [style.background]="completionColor">
+            </div>
+          </div>
+          <div class="up-completion__pct" [style.color]="completionColor">{{ profileCompletion }}%</div>
+        </div>
+
+        <button class="up-btn-edit" *ngIf="!isEditing" (click)="startEdit()">
+          <i class="fa-solid fa-pen-to-square"></i> Edit Profile
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ════════════════════════════════
+         VIEW MODE
+    ═════════════════════════════════ -->
+    <ng-container *ngIf="!isEditing">
+
+      <!-- Account Info -->
+      <div class="up-card">
+        <div class="up-card__title">
+          <i class="fa-solid fa-id-card"></i> Account Information
+        </div>
+        <div class="up-grid up-grid--4">
+          <div class="up-field-view">
+            <span class="up-fv__label">Username</span>
+            <span class="up-fv__val">{{ profile.username || '—' }}</span>
+          </div>
+          <div class="up-field-view">
+            <span class="up-fv__label">Email</span>
+            <span class="up-fv__val">{{ profile.email || '—' }}</span>
+          </div>
+          <div class="up-field-view">
+            <span class="up-fv__label">Role</span>
+            <span class="up-fv__val">{{ roleLabel }}</span>
+          </div>
+          <div class="up-field-view">
+            <span class="up-fv__label">Status</span>
+            <span class="up-fv__val">
+              <span class="up-status" [class.up-status--on]="profile.isActive" [class.up-status--off]="!profile.isActive">
+                {{ profile.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Personal Info -->
+      <div class="up-card">
+        <div class="up-card__title">
+          <i class="fa-solid fa-user"></i> Personal Information
+        </div>
+        <div class="up-grid up-grid--3">
+          <div class="up-field-view">
+            <span class="up-fv__label">First Name</span>
+            <span class="up-fv__val">{{ profile.firstName || '—' }}</span>
+          </div>
+          <div class="up-field-view">
+            <span class="up-fv__label">Last Name</span>
+            <span class="up-fv__val">{{ profile.lastName || '—' }}</span>
+          </div>
+          <div class="up-field-view">
+            <span class="up-fv__label">Phone</span>
+            <span class="up-fv__val">{{ profile.phone || '—' }}</span>
+          </div>
+          <div class="up-field-view">
+            <span class="up-fv__label">Gender</span>
+            <span class="up-fv__val up-fv__val--cap">{{ profile.gender || '—' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Address & Location -->
+      <div class="up-card">
+        <div class="up-card__title">
+          <i class="fa-solid fa-location-dot"></i> Address &amp; Location
+        </div>
+        <div class="up-grid up-grid--3">
+          <div class="up-field-view up-field-view--full">
+            <span class="up-fv__label">Address</span>
+            <span class="up-fv__val">{{ profile.address || '—' }}</span>
+          </div>
+          <div class="up-field-view">
+            <span class="up-fv__label">Country</span>
+            <span class="up-fv__val">{{ profile.countryName || '—' }}</span>
+          </div>
+          <div class="up-field-view">
+            <span class="up-fv__label">State</span>
+            <span class="up-fv__val">{{ profile.stateName || '—' }}</span>
+          </div>
+          <div class="up-field-view">
+            <span class="up-fv__label">City</span>
+            <span class="up-fv__val">{{ profile.cityName || '—' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Parent / Guardian -->
+      <div class="up-card">
+        <div class="up-card__title">
+          <i class="fa-solid fa-people-roof"></i> Parent / Guardian
+        </div>
+        <div class="up-grid up-grid--4">
+          <div class="up-field-view">
+            <span class="up-fv__label">Parent Name</span>
+            <span class="up-fv__val">{{ profile.parentName || '—' }}</span>
+          </div>
+          <div class="up-field-view">
+            <span class="up-fv__label">Relationship</span>
+            <span class="up-fv__val">{{ profile.parentRelationship || '—' }}</span>
+          </div>
+          <div class="up-field-view">
+            <span class="up-fv__label">Parent Email</span>
+            <span class="up-fv__val">{{ profile.parentEmail || '—' }}</span>
+          </div>
+          <div class="up-field-view">
+            <span class="up-fv__label">Parent Phone</span>
+            <span class="up-fv__val">{{ profile.parentPhone || '—' }}</span>
+          </div>
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- ════════════════════════════════
+         EDIT MODE
+    ═════════════════════════════════ -->
+    <ng-container *ngIf="isEditing">
+      <form [formGroup]="form" (ngSubmit)="saveProfile()" novalidate>
+
+        <!-- Personal Info -->
+        <div class="up-card">
+          <div class="up-card__title">
+            <i class="fa-solid fa-user"></i> Personal Information
+          </div>
+          <div class="up-form-grid">
+
+            <div class="up-field">
+              <label>First Name <span class="req">*</span></label>
+              <input type="text" formControlName="firstName"
+                [class.invalid]="fieldError('firstName')" placeholder="Enter first name" />
+              <span class="err" *ngIf="fieldError('firstName')">{{ fieldError('firstName') }}</span>
+            </div>
+
+            <div class="up-field">
+              <label>Last Name <span class="req">*</span></label>
+              <input type="text" formControlName="lastName" placeholder="Enter last name" />
+            </div>
+
+            <div class="up-field">
+              <label>Phone <span class="req">*</span></label>
+              <input type="tel" formControlName="phone"
+                [class.invalid]="fieldError('phone')" placeholder="+91 98765 43210" />
+              <span class="err" *ngIf="fieldError('phone')">{{ fieldError('phone') }}</span>
+            </div>
+
+            <div class="up-field">
+              <label>Gender <span class="req">*</span></label>
+              <select formControlName="gender" [class.invalid]="fieldError('gender')">
+                <option value="">— Select —</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
+              </select>
+              <span class="err" *ngIf="fieldError('gender')">{{ fieldError('gender') }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Address & Location -->
+        <div class="up-card">
+          <div class="up-card__title">
+            <i class="fa-solid fa-location-dot"></i> Address &amp; Location
+          </div>
+          <div class="up-form-grid">
+
+            <div class="up-field up-field--full">
+              <label>Address <span class="req">*</span></label>
+              <textarea formControlName="address" rows="2"
+                [class.invalid]="fieldError('address')" placeholder="Enter full address"></textarea>
+              <span class="err" *ngIf="fieldError('address')">{{ fieldError('address') }}</span>
+            </div>
+
+            <div class="up-field">
+              <label>Country</label>
+              <select formControlName="countryId" (change)="countryChanged()">
+                <option [ngValue]="null">— Select Country —</option>
+                <option *ngFor="let c of countries" [ngValue]="c.id">{{ c.name }}</option>
+              </select>
+            </div>
+
+            <div class="up-field">
+              <label>State</label>
+              <select formControlName="stateId" (change)="stateChanged()">
+                <option [ngValue]="null">— Select State —</option>
+                <option *ngFor="let s of states" [ngValue]="s.id">{{ s.name }}</option>
+              </select>
+            </div>
+
+            <div class="up-field">
+              <label>City</label>
+              <select formControlName="cityId">
+                <option [ngValue]="null">— Select City —</option>
+                <option *ngFor="let ct of cities" [ngValue]="ct.id">{{ ct.name }}</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Parent / Guardian -->
+        <div class="up-card">
+          <div class="up-card__title">
+            <i class="fa-solid fa-people-roof"></i> Parent / Guardian
+          </div>
+          <div class="up-form-grid">
+
+            <div class="up-field">
+              <label>Parent Name</label>
+              <input type="text" formControlName="parentName" placeholder="Parent full name" />
+            </div>
+
+            <div class="up-field">
+              <label>Relationship</label>
+              <select formControlName="relationship">
+                <option value="">— Select —</option>
+                <option value="Father">Father</option>
+                <option value="Mother">Mother</option>
+                <option value="Guardian">Guardian</option>
+                <option value="Sibling">Sibling</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="up-field">
+              <label>Parent Email</label>
+              <input type="email" formControlName="parentEmail"
+                [class.invalid]="fieldError('parentEmail')" placeholder="parent@example.com" />
+              <span class="err" *ngIf="fieldError('parentEmail')">{{ fieldError('parentEmail') }}</span>
+            </div>
+
+            <div class="up-field">
+              <label>Parent Phone</label>
+              <input type="tel" formControlName="parentPhone" placeholder="+91 98765 43210" />
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="up-form-actions">
+          <button type="button" class="up-btn-ghost" (click)="cancelEdit()">
+            <i class="fa-solid fa-xmark"></i> Cancel
+          </button>
+          <button type="submit" class="up-btn-save" [disabled]="isSaving">
+            <i class="fa-solid fa-floppy-disk" *ngIf="!isSaving"></i>
+            <i class="fa-solid fa-circle-notch fa-spin" *ngIf="isSaving"></i>
+            {{ isSaving ? 'Saving…' : 'Save Changes' }}
+          </button>
+        </div>
+
+      </form>
+    </ng-container>
+
+  </ng-container>
+
+</div>

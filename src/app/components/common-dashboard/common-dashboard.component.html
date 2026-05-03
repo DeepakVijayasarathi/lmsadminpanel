@@ -1,7 +1,56 @@
+<!-- Profile Completion Popup -->
+<div class="pcp-overlay" *ngIf="showProfilePopup" (click)="dismissProfilePopup()">
+  <div class="pcp-card" (click)="$event.stopPropagation()">
+
+    <button class="pcp-close" (click)="dismissProfilePopup()" aria-label="Dismiss">&#x2715;</button>
+
+    <div class="pcp-icon-wrap">
+      <i class="fa-solid fa-circle-user"></i>
+    </div>
+
+    <h2 class="pcp-title">Complete Your Profile</h2>
+    <p class="pcp-sub">Add the remaining details to unlock all features and get the best experience.</p>
+
+    <div class="pcp-ring-wrap" *ngIf="!profilePopupLoading">
+      <svg class="pcp-ring" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="40" class="pcp-ring-track" />
+        <circle
+          cx="50" cy="50" r="40"
+          class="pcp-ring-progress"
+          [style.stroke-dasharray]="circumference"
+          [style.stroke-dashoffset]="dashOffset"
+        />
+      </svg>
+      <div class="pcp-percent">
+        <span class="pcp-num">{{ profileCompletion }}</span>
+        <span class="pcp-pct">%</span>
+      </div>
+    </div>
+
+    <div class="pcp-loading" *ngIf="profilePopupLoading">
+      <i class="fa-solid fa-circle-notch fa-spin"></i>
+    </div>
+
+    <div class="pcp-bar-wrap" *ngIf="!profilePopupLoading">
+      <div class="pcp-bar-track">
+        <div class="pcp-bar-fill" [style.width.%]="profileCompletion"></div>
+      </div>
+      <span class="pcp-bar-label">{{ profileCompletion }}% complete</span>
+    </div>
+
+    <div class="pcp-actions">
+      <button class="pcp-btn-primary" (click)="goToProfile()">
+        <i class="fa-solid fa-pen-to-square"></i> Complete Profile
+      </button>
+      <button class="pcp-btn-ghost" (click)="dismissProfilePopup()">Maybe later</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Role-based Dashboard -->
 <app-dashboard *ngIf="roleName === ROLE_IDS.ADMIN || roleName === ROLE_IDS.ITADMIN || roleName === ROLE_IDS.ZONALADMIN"></app-dashboard>
 
-<!-- Teacher -->
 <app-teacher-dashboard *ngIf="roleName === ROLE_IDS.TEACHER"></app-teacher-dashboard>
 
-<!-- Student -->
 <app-student-dashboard *ngIf="roleName === ROLE_IDS.STUDENT"></app-student-dashboard>

@@ -318,6 +318,112 @@
 }
 .al-user__logout:hover { background: #fecaca; }
 
+/* ── Profile Completion Widget ── */
+.al-profile-completion {
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+  border: 1px solid #c7d2fe;
+  cursor: pointer;
+  transition: box-shadow 0.15s, background 0.15s;
+  overflow: hidden;
+}
+.al-profile-completion:hover {
+  box-shadow: 0 2px 10px rgba(79,70,229,0.15);
+  background: linear-gradient(135deg, #e0e7ff, #ede9fe);
+}
+
+.al-pc__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.al-pc__icon {
+  font-size: 20px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.al-pc__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.al-pc__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.al-pc__pct {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.al-pc__edit {
+  font-size: 12px;
+  color: var(--accent);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.al-pc__bar-track {
+  height: 6px;
+  background: #c7d2fe;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.al-pc__bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4f46e5, #7c3aed);
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+
+.al-pc__bar-fill--complete {
+  background: linear-gradient(90deg, #059669, #10b981);
+}
+
+.al-pc__status {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  display: block;
+}
+
+.al-pc__status--done {
+  color: #059669;
+  font-weight: 600;
+}
+
+/* Hide text in collapsed sidebar */
+.al-sidebar--collapsed .al-pc__info,
+.al-sidebar--collapsed .al-pc__edit,
+.al-sidebar--collapsed .al-pc__bar-track,
+.al-sidebar--collapsed .al-pc__status { display: none; }
+
+.al-sidebar--collapsed .al-profile-completion {
+  padding: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.al-sidebar--collapsed .al-pc__header {
+  margin-bottom: 0;
+}
+
 /* ══════════════════════════════════════
    MAIN
 ══════════════════════════════════════ */

@@ -53,8 +53,12 @@ import { StateComponent } from './components/location/state/state.component';
 import { CityComponent } from './components/location/city/city.component';
 import { StudentQuickEnrollComponent } from './components/student-quick-enroll/student-quick-enroll.component';
 import { ThankYouComponent } from './components/thank-you/thank-you.component';
+import { CompleteProfileComponent } from './components/complete-profile/complete-profile.component';
+import { UserProfileComponent } from './components/user-profile/user-profile.component';
+import { ProfileGuard } from './auth/profile.guard';
 
 const AG = [AuthGuard];
+const PG = [AuthGuard, ProfileGuard];
 
 const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -67,8 +71,13 @@ const routes: Routes = [
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'reset-password',  component: ResetPasswordComponent  },
 
-  // dashboard
-  { path: 'dashboard', component: CommonDashboardComponent, canActivate: AG },
+  // Profile completion & view (student post-login flow)
+  { path: 'complete-profile', component: CompleteProfileComponent, canActivate: AG },
+  { path: 'profile',          component: UserProfileComponent,     canActivate: AG },
+  { path: 'update-profile',   component: UserProfileComponent,     canActivate: AG },
+
+  // dashboard — ProfileGuard redirects students with incomplete profiles to /complete-profile
+  { path: 'dashboard', component: CommonDashboardComponent, canActivate: PG },
   // { path: 'admin-dashboard', component: DashboardComponent, canActivate: AG },
   // { path: 'student-dashboard', component: StudentDashboardComponent, canActivate: AG },
   // { path: 'teacher-dashboard', component: TeacherDashboardComponent, canActivate: AG },
