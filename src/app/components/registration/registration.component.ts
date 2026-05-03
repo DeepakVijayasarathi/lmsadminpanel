@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom, Subscription } from 'rxjs';
+import { LocationService, LocationItem, CountryDto, StateDto, CityDto } from '../../services/location.service';
 
 declare var Razorpay: any;
 
@@ -35,6 +36,13 @@ interface Batch {
   isActive?: boolean;
 }
 
+interface GroupEntry {
+  id: string;
+  name: string;
+  description: string | null;
+  order: number | null;
+}
+
 @Component({
   selector: 'app-registration',
   standalone: false,
@@ -44,17 +52,22 @@ interface Batch {
 export class RegistrationComponent implements OnInit, OnDestroy {
   private querySub?: Subscription;
   readonly API = environment.apiUrl;
+  readonly today = new Date().toISOString().split('T')[0];
 
   selectedRole: 'teacher' | 'student' | null = null;
   courses: Course[] = [];
   batches: Batch[] = [];
   zonals: any[] = [];
   boards: { id: string; name: string; order: number }[] = [];
+  classes: any[] = [];
+  groups: GroupEntry[] = [];
+  subjects: any[] = [];
   selectedCourse: Course | null = null;
   selectedBatch: Batch | null = null;
   selectedBoardId = '';
   paymentType: 1 | 2 = 1;
   currentStep = 1;
+  classId: string = '';
 
   loading = false;
   loaderMsg = 'Processing...';
@@ -64,8 +77,17 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   showSuccess = false;
   coursesLoading = false;
   boardsLoading = false;
-  showThanksCard = false;
+  classesLoading = false;
+  groupsLoading = false;
+  subjectsLoading = false;
 
+  // ── Location fields ──
+  countries: LocationItem[] = [];
+  states: LocationItem[] = [];
+  cities: LocationItem[] = [];
+  countriesLoading = false;
+  statesLoading = false;
+  citiesLoading = false;
 
   // ── Shared account form fields ──
   form = {
@@ -75,7 +97,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     phone: '',
     email: '',
     password: '',
-    zonalId: '',
+    // zonalId: '',
   };
 
   // ── Teacher-specific fields ──
@@ -92,47 +114,55 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     resumeUrl: '',
     identityProofUrl: '',
     degreeCertificateUrl: '',
+    countryId: null as number | null,
+    stateId: null as number | null,
+    cityId: null as number | null,
   };
 
   // ── Student-specific fields ──
   studentForm = {
-    dateOfBirth: null as string | null,
     gender: '',
     address: '',
     currentGrade: '',
-    previousSchool: null as string | null,
     parentName: '',
     relationship: '',
     parentEmail: '',
     parentPhone: '',
-    favoriteSubjects: [] as string[],
-    hobbies: '',
     learningGoals: '',
+    whatsAppNumber: '',
+    classId: null as string | null,
+    groupId: null as string | null,
+    subjectIds: [] as string[],
+    countryId: null as number | null,
+    stateId: null as number | null,
+    cityId: null as number | null,
   };
 
-  subjectInput = '';
   showPassword = false;
   errors: Record<string, string> = {};
   successData: any = null;
 
   // ── Step labels ──
   readonly teacherStepLabels = ['Account', 'Professional', 'Documents'];
-  readonly studentStepLabels = ['Account', 'Course', 'Payment', 'Profile', 'Parent'];
+  readonly studentStepLabels = ['Account', 'Profile', 'Parent Info', 'Course', 'Payment'];
 
-  constructor(private http: HttpClient, private router: Router, private route: ActivatedRoute) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private route: ActivatedRoute,
+    private locationService: LocationService
+  ) {}
 
   ngOnInit(): void {
     this.loadBoards();
     this.loadZonals();
+    this.loadCountries();
     this.querySub = this.route.queryParamMap.subscribe(params => {
       const role = (params.get('role') ?? 'student') as 'teacher' | 'student';
       this.selectedRole = role;
       this.currentStep = 1;
       this.showSuccess = false;
       this.errors = {};
-      if (role === 'student') {
-        this.loadCourses();
-      }
     });
   }
 
@@ -162,17 +192,26 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       : this.studentStepLabels.length;
   }
 
+  // ── Whether groups/subjects sections are shown ──
+  get hasGroups(): boolean {
+    return this.groups.length > 0;
+  }
+
+  get hasSubjects(): boolean {
+    return this.subjects.length > 0;
+  }
+
   // ── Role Selection ──
   selectRole(role: 'teacher' | 'student') {
     this.router.navigate(['/register'], { queryParams: { role } });
   }
 
   private readonly FALLBACK_BOARDS = [
-    { id: '258c9777-7f4b-49bc-8bcd-ac479088a19f', name: 'IB',                     order: 1 },
-    { id: '2694b9bf-bf25-4941-9295-9428bcadebb4', name: 'Tamil Nadu State Board',  order: 2 },
-    { id: '3097e4ae-7fab-44a1-a960-12e961a35173', name: 'CBSE',                    order: 3 },
-    { id: '3dfd2184-28da-414f-9040-998182b73b34', name: 'ICSE',                    order: 4 },
-    { id: '9d70735b-479f-4468-96f8-1823e5b4ee7c', name: 'Cambridge',               order: 5 },
+    { id: '258c9777-7f4b-49bc-8bcd-ac479088a19f', name: 'IB', order: 1 },
+    { id: '2694b9bf-bf25-4941-9295-9428bcadebb4', name: 'Tamil Nadu State Board', order: 2 },
+    { id: '3097e4ae-7fab-44a1-a960-12e961a35173', name: 'CBSE', order: 3 },
+    { id: '3dfd2184-28da-414f-9040-998182b73b34', name: 'ICSE', order: 4 },
+    { id: '9d70735b-479f-4468-96f8-1823e5b4ee7c', name: 'Cambridge', order: 5 },
   ];
 
   async loadBoards() {
@@ -197,10 +236,12 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   }
 
   // ── Courses ──
-  async loadCourses() {
+  async loadCourses(classId: string) {
     this.coursesLoading = true;
     try {
-      const data: any = await this.http.get(`${this.API}/courses/get-course-register`).toPromise();
+      const data: any = await firstValueFrom(
+        this.http.get(`${this.API}/courses/get-course-register/by-class/${classId}`)
+      );
       this.courses = Array.isArray(data) ? data : data?.data || [];
     } catch (e: any) {
       this.toast('Failed to load courses: ' + (e.message || 'Unknown error'));
@@ -210,73 +251,245 @@ export class RegistrationComponent implements OnInit, OnDestroy {
 
   async loadZonals() {
     try {
-      const data: any = await this.http.get(`${this.API}/zonal`).toPromise();
+      const data: any = await firstValueFrom(this.http.get(`${this.API}/zonal`));
       this.zonals = Array.isArray(data) ? data : data?.data || [];
     } catch (e: any) {
       this.toast('Failed to load zonals: ' + (e.message || 'Unknown error'));
     }
   }
 
-  // async selectCourse(course: Course) {
-  //   this.selectedCourse = course;
-  //   this.selectedBatch = null;
-  //   delete this.errors['course'];
+  // ── Location Services ──
 
-  //   try {
-  //     console.log('Fetching batches for course:', course.id);
-  //       console.log('Fetching batches for course:', this.selectedCourse!.id);
-  //     if (!this.batches.length) {
-  //       const data: any = await this.http.get(`${this.API}/batches/get-batch-by-id/${this.selectedCourse!.id}`).toPromise();
-  //       this.batches = Array.isArray(data) ? data : data?.data || [];
-  //       const batch = this.batches.find((b) => b.isActive === true);
-  //       this.selectedBatch = batch || null;
-  //       console.log('Batches loaded:', this.batches);
-  //       console.log('Batches loaded:', batch);
-  //     }
-  //   } catch {
-  //     console.warn('Batches fetch failed');
-  //   }
-  // }
+  async loadCountries() {
+    this.countriesLoading = true;
+    try {
+      const data = await firstValueFrom(this.locationService.getCountries());
+      this.countries = this.locationService.transformToDropdownFormat(data);
+    } catch (e: any) {
+      this.toast('Failed to load countries: ' + (e.message || 'Unknown error'));
+      this.countries = [];
+    }
+    this.countriesLoading = false;
+  }
+
+  async onCountryChange(countryId: number | null) {
+    this.states = [];
+    this.cities = [];
+    this.statesLoading = false;
+    this.citiesLoading = false;
+
+    if (this.selectedRole === 'student') {
+      this.studentForm.stateId = null;
+      this.studentForm.cityId = null;
+    } else {
+      this.teacherForm.stateId = null;
+      this.teacherForm.cityId = null;
+    }
+
+    if (!countryId) return;
+
+    this.statesLoading = true;
+    try {
+      const data = await firstValueFrom(this.locationService.getStatesByCountry(countryId));
+      this.states = this.locationService.transformToDropdownFormat(data);
+    } catch (e: any) {
+      this.toast('Failed to load states: ' + (e.message || 'Unknown error'));
+      this.states = [];
+    }
+    this.statesLoading = false;
+  }
+
+  async onStateChange(stateId: number | null) {
+    this.cities = [];
+    this.citiesLoading = false;
+
+    if (this.selectedRole === 'student') {
+      this.studentForm.cityId = null;
+    } else {
+      this.teacherForm.cityId = null;
+    }
+
+    if (!stateId) return;
+
+    this.citiesLoading = true;
+    try {
+      const data = await firstValueFrom(this.locationService.getCitiesByState(stateId));
+      this.cities = this.locationService.transformToDropdownFormat(data);
+    } catch (e: any) {
+      this.toast('Failed to load cities: ' + (e.message || 'Unknown error'));
+      this.cities = [];
+    }
+    this.citiesLoading = false;
+  }
+
+  // ── Load Classes by boardId ──
+  async loadClasses(boardId: string) {
+    if (!boardId) {
+      this.classes = [];
+      this.groups = [];
+      this.subjects = [];
+      this.studentForm.classId = null;
+      this.studentForm.groupId = null;
+      this.studentForm.subjectIds = [];
+      return;
+    }
+    this.classesLoading = true;
+    this.classes = [];
+    this.groups = [];
+    this.subjects = [];
+    this.studentForm.classId = null;
+    this.studentForm.groupId = null;
+    this.studentForm.subjectIds = [];
+    try {
+      const data: any = await firstValueFrom(
+        this.http.get(`${this.API}/class/get-classes`, { params: { boardId } })
+      );
+      this.classes = Array.isArray(data) ? data : data?.data || [];
+    } catch {
+      this.classes = [];
+    }
+    this.classesLoading = false;
+  }
+
+  // ── Load Groups by classId ──
+  async loadGroups(classId: string) {
+    this.groups = [];
+    this.subjects = [];
+    this.studentForm.groupId = null;
+    this.studentForm.subjectIds = [];
+    this.classId = classId; // Store classId for later use in subject loading
+
+    if (!classId) return;
+
+    this.groupsLoading = true;
+    try {
+      const data: any = await firstValueFrom(
+        this.http.get(`${this.API}/groups/by-class/${classId}`)
+      );
+      this.groups = Array.isArray(data) ? data : data?.data || [];
+    } catch {
+      this.groups = [];
+    }
+    this.groupsLoading = false;
+
+    // After loading groups, also load subjects
+    if (!this.hasGroups) {
+      await this.loadSubjects(classId, 'class');
+    }
+  }
+
+  // ── Load Subjects by classId ──
+  async loadSubjects(id: string,  mode: 'class' | 'group') {
+    this.studentForm.subjectIds = [];
+    this.subjects = [];
+    if (!id) {
+      if (mode === 'class') this.studentForm.currentGrade = '';
+      return;
+    }
+
+    if (mode === 'class') {
+      const selectedClass = this.classes.find((c) => c.id === id);
+      if (selectedClass) {
+        this.studentForm.currentGrade = selectedClass.name || '';
+      }
+    }
+
+    this.subjectsLoading = true;
+    try {
+      let url: string;
+      let params: any;
+
+      if (mode === 'group') {
+        // ✅ Use group endpoint
+        url = `${this.API}/subject/get-subject/by-group`;
+        params = { groupId: id, classId: this.classId };
+      } else {
+        // Use class endpoint (no groups scenario)
+        url = `${this.API}/subject/get-subject/by-class`;
+        params = { classId: id };
+      }
+
+      const data: any = await firstValueFrom(
+        this.http.get(url, { params })
+      );
+      this.subjects = Array.isArray(data) ? data : data?.data || [];
+    } catch {
+      this.subjects = [];
+    }
+    this.subjectsLoading = false;
+  }
+
+  // ── On Board Selection ──
+  onBoardSelect(boardId: string) {
+    this.selectedBoardId = boardId;
+    delete this.errors['boardId'];
+    this.loadClasses(boardId);
+  }
+
+  // ── On Class Selection ──
+  onClassSelect(classId: string | null) {
+    this.studentForm.classId = classId;
+    this.subjects = [];
+    this.studentForm.subjectIds = [];
+    delete this.errors['classId'];
+
+    if (classId) {
+      // Auto-fill grade immediately
+      const selectedClass = this.classes.find((c) => c.id === classId);
+      if (selectedClass) {
+        this.studentForm.currentGrade = selectedClass.name || '';
+      }
+      this.loadGroups(classId);   // groups load first; subjects follow inside loadGroups
+      this.loadCourses(classId);
+    } else {
+      this.groups = [];
+      this.subjects = [];
+      this.studentForm.groupId = null;
+      this.studentForm.subjectIds = [];
+      this.studentForm.currentGrade = '';
+    }
+  }
+
+  // ── Subject toggle helper ──
+  toggleSubject(subjectId: string) {
+    const idx = this.studentForm.subjectIds.indexOf(subjectId);
+    if (idx === -1) {
+      this.studentForm.subjectIds.push(subjectId);
+    } else {
+      this.studentForm.subjectIds.splice(idx, 1);
+    }
+    delete this.errors['subjectIds'];
+  }
+
+  // ── Group selection ──
+  selectGroup(groupId: string) {
+    this.studentForm.groupId = groupId;
+    this.studentForm.subjectIds = [];
+    this.subjects = [];
+    delete this.errors['groupId'];
+
+    // ✅ KEY CHANGE: Load subjects by groupId when a group is selected
+    this.loadSubjects(groupId, 'group');
+  }
+
   async selectCourse(course: Course) {
     this.selectedCourse = course;
     this.selectedBatch = null;
     delete this.errors['course'];
 
     try {
-      console.log('Fetching batch for course:', this.selectedCourse!.id);
-
       const response: any = await firstValueFrom(
-        this.http.get(`${this.API}/batches/get-batch-by-id/${this.selectedCourse!.id}`)
+        this.http.get(`${this.API}/batches/get-batch-by-id/${course.id}`)
       );
-
-      console.log('API Response:', response);
-
-      // ✅ Since API returns single object
-      if (response && response.isActive) {
+      if (response) {
         this.selectedBatch = response;
       } else {
         this.selectedBatch = null;
       }
-
-      console.log('Selected Batch:', this.selectedBatch);
-
     } catch (error) {
       console.warn('Batch fetch failed', error);
+      this.selectedBatch = null;
     }
-  }
-
-  // ── Subject tag helpers ──
-  addSubject() {
-    const val = this.subjectInput.trim();
-    if (val && !this.studentForm.favoriteSubjects.includes(val)) {
-      this.studentForm.favoriteSubjects.push(val);
-      delete this.errors['favoriteSubjects'];
-    }
-    this.subjectInput = '';
-  }
-
-  removeSubject(index: number) {
-    this.studentForm.favoriteSubjects.splice(index, 1);
   }
 
   // ── Payment type ──
@@ -288,27 +501,13 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   //                   VALIDATION
   // ═══════════════════════════════════════════════════
 
-  // validateStep1(): boolean {
-  //   this.errors = {};
-  //   const { firstName, lastName, username, phone, email, password } = this.form;
-  //   if (!firstName.trim()) this.errors['firstName'] = 'First name is required';
-  //   if (!lastName.trim()) this.errors['lastName'] = 'Last name is required';
-  //   if (!username.trim()) this.errors['username'] = 'Username is required';
-  //   if (!phone.trim()) this.errors['phone'] = 'Phone is required';
-  //   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-  //     this.errors['email'] = 'Valid email is required';
-  //   if (password.length < 8)
-  //     this.errors['password'] = 'Minimum 8 characters required';
-  //   return Object.keys(this.errors).length === 0;
-  // }
   validateStep1(): boolean {
     this.errors = {};
-    const { firstName, lastName, username, phone, email, password, zonalId } = this.form;
+    const { firstName, username, phone, email, password } = this.form;
     if (!firstName.trim()) this.errors['firstName'] = 'First name is required';
-    if (!lastName.trim()) this.errors['lastName'] = 'Last name is required';
     if (!username.trim()) this.errors['username'] = 'Username is required';
     if (!phone.trim()) this.errors['phone'] = 'Phone is required';
-    if (!zonalId.trim()) this.errors['zonalId'] = 'Zonal ID is required';
+    // if (!zonalId.trim()) this.errors['zonalId'] = 'Zonal is required';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       this.errors['email'] = 'Valid email is required';
     if (password.length < 8)
@@ -316,7 +515,6 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     return Object.keys(this.errors).length === 0;
   }
 
-  /** Teacher Step 2 */
   validateTeacherStep2(): boolean {
     this.errors = {};
     const t = this.teacherForm;
@@ -328,10 +526,12 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     if (!t.whatsAppNumber.trim()) this.errors['whatsAppNumber'] = 'WhatsApp number is required';
     if (!t.address.trim()) this.errors['address'] = 'Address is required';
     if (!t.workingType) this.errors['workingType'] = 'Working type is required';
+    if (!t.countryId) this.errors['countryId'] = 'Country is required';
+    if (!t.stateId) this.errors['stateId'] = 'State is required';
+    if (!t.cityId) this.errors['cityId'] = 'City is required';
     return Object.keys(this.errors).length === 0;
   }
 
-  /** Teacher Step 3 */
   validateTeacherStep3(): boolean {
     this.errors = {};
     const t = this.teacherForm;
@@ -341,21 +541,33 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     return Object.keys(this.errors).length === 0;
   }
 
-  /** Student Step 2 */
   validateStudentStep2(): boolean {
     this.errors = {};
-    if (!this.selectedBoardId) this.errors['boardId'] = 'Please select a board (CBSE / State Board)';
+    if (!this.selectedBoardId) this.errors['boardId'] = 'Please select a board';
     const s = this.studentForm;
     if (!s.gender) this.errors['gender'] = 'Gender is required';
     if (!s.currentGrade.trim()) this.errors['currentGrade'] = 'Current grade is required';
     if (!s.address.trim()) this.errors['address'] = 'Address is required';
-    if (!s.favoriteSubjects.length) this.errors['favoriteSubjects'] = 'Add at least one subject';
-    if (!s.hobbies.trim()) this.errors['hobbies'] = 'Hobbies are required';
+    if (!s.whatsAppNumber.trim()) this.errors['whatsAppNumber'] = 'WhatsApp number is required';
     if (!s.learningGoals.trim()) this.errors['learningGoals'] = 'Learning goals are required';
+    if (!s.classId) this.errors['classId'] = 'Please select a class';
+    if (!s.countryId) this.errors['countryId'] = 'Country is required';
+    if (!s.stateId) this.errors['stateId'] = 'State is required';
+    if (!s.cityId) this.errors['cityId'] = 'City is required';
+
+    // Group is mandatory only if groups exist for the selected class
+    if (s.classId && this.hasGroups && !s.groupId) {
+      this.errors['groupId'] = 'Please select a group';
+    }
+
+    // Subjects are mandatory only if subjects exist for the selected class
+    if (s.classId && this.hasSubjects && !s.subjectIds.length) {
+      this.errors['subjectIds'] = 'Please select at least one subject';
+    }
+
     return Object.keys(this.errors).length === 0;
   }
 
-  /** Student Step 3 */
   validateStudentStep3(): boolean {
     this.errors = {};
     const s = this.studentForm;
@@ -367,10 +579,14 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     return Object.keys(this.errors).length === 0;
   }
 
-  /** Student Step 4 */
   validateStudentStep4(): boolean {
+    this.errors = {};
     if (!this.selectedCourse) {
       this.errors['course'] = 'Please select a course';
+      return false;
+    }
+    if (!this.selectedBatch) {
+      this.errors['course'] = 'No active batch found for this course';
       return false;
     }
     return true;
@@ -403,19 +619,13 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       if (!this.validateStep1()) return;
       this.currentStep = 2;
     } else if (this.currentStep === 2) {
-      // Step 2: Course selection
-      if (!this.validateStudentStep4()) return;
+      if (!this.validateStudentStep2()) return;
       this.currentStep = 3;
     } else if (this.currentStep === 3) {
-      // Step 3: Payment preview — show thanks card, then advance to profile
-      this.showThanksCard = true;
-      setTimeout(() => {
-        this.showThanksCard = false;
-        this.currentStep = 4;
-      }, 2200);
+      if (!this.validateStudentStep3()) return;
+      this.currentStep = 4;
     } else if (this.currentStep === 4) {
-      // Step 4: Personal profile
-      if (!this.validateStudentStep2()) return;
+      if (!this.validateStudentStep4()) return;
       this.currentStep = 5;
     }
   }
@@ -435,9 +645,9 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     this.loaderMsg = 'Creating your account...';
     try {
       const payload = this.buildTeacherPayload();
-      const user: any = await this.http
-        .post(`${this.API}/auth/teacher/register`, payload)
-        .toPromise();
+      const user: any = await firstValueFrom(
+        this.http.post(`${this.API}/auth/teacher/register`, payload)
+      );
       this.loading = false;
       this.triggerSuccess('teacher', user);
     } catch (e: any) {
@@ -454,9 +664,12 @@ export class RegistrationComponent implements OnInit, OnDestroy {
         lastName: this.form.lastName.trim(),
         userName: this.form.username.trim(),
         email: this.form.email.trim(),
-        zonalId: this.form.zonalId.trim(),
+        // zonalId: this.form.zonalId.trim(),
         password: this.form.password,
         phone: this.form.phone.trim(),
+        countryId: t.countryId,
+        stateId: t.stateId,
+        cityId: t.cityId,
       },
       fullName: t.fullName.trim(),
       qualification: t.qualification.trim(),
@@ -467,6 +680,9 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       hasHighSpeedInternet: t.hasHighSpeedInternet,
       readyForEarlyMorning: t.readyForEarlyMorning,
       workingType: t.workingType,
+      countryId: t.countryId,
+      stateId: t.stateId,
+      cityId: t.cityId,
       resumeUrl: t.resumeUrl.trim(),
       identityProofUrl: t.identityProofUrl.trim(),
       degreeCertificateUrl: t.degreeCertificateUrl.trim(),
@@ -482,7 +698,6 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     this.loaderMsg = 'Creating your account...';
 
     try {
-      // Step 1: Register student
       const payload = this.buildStudentPayload();
       const user: any = await firstValueFrom(
         this.http.post(`${this.API}/auth/student/register`, payload)
@@ -491,15 +706,14 @@ export class RegistrationComponent implements OnInit, OnDestroy {
 
       this.loaderMsg = 'Creating subscription...';
 
-      // Step 2: Create subscription directly with courseId
-      const sub: any = await this.http
-        .post(`${this.API}/subscription`, {
+      const sub: any = await firstValueFrom(
+        this.http.post(`${this.API}/subscription`, {
           userId,
           courseId: this.selectedCourse!.id,
           batchId: this.selectedBatch?.id ?? null,
           paymentType: this.paymentType,
         })
-        .toPromise();
+      );
       const subscriptionId = sub?.id || sub?.data?.id;
 
       this.loading = false;
@@ -507,24 +721,14 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       const isFree = (this.selectedCourse!.price || 0) === 0;
 
       if (isFree) {
-        // Free course — call /subscription/pay directly with amount 0
         await this.recordPayment(subscriptionId, 0, 'FREE', user);
       } else {
-        // Paid course — open Razorpay
         const payAmount =
           this.paymentType === 2 && this.selectedCourse!.installmentCount
             ? this.installmentAmount
             : this.netAmount;
         this.openRazorpay(payAmount, subscriptionId, userId, user);
       }
-
-      // Step 3: Open Razorpay
-      // const payAmount =
-      //   this.paymentType === 2 && this.selectedCourse!.installmentCount
-      //     ? this.installmentAmount
-      //     : this.netAmount;
-
-      // this.openRazorpay(payAmount, subscriptionId, userId, user);
     } catch (e: any) {
       this.loading = false;
       this.toast(e?.error?.message || e?.message || 'Something went wrong');
@@ -534,38 +738,38 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   private buildStudentPayload() {
     const s = this.studentForm;
     return {
+      batchId: this.selectedBatch?.id || '',
       boardId: this.selectedBoardId || null,
       isFreeDemoStudent: false,
-      batchId: this.selectedBatch?.id || null,
       register: {
+        // zonalId: this.form.zonalId.trim(),
         firstName: this.form.firstName.trim(),
         lastName: this.form.lastName.trim(),
-        username: this.form.username.trim(),
+        userName: this.form.username.trim(),
         email: this.form.email.trim(),
-        zonalId: this.form.zonalId.trim(),
         password: this.form.password,
         phone: this.form.phone.trim(),
+        whatsAppNumber: s.whatsAppNumber.trim(),
+        countryId: s.countryId,
+        stateId: s.stateId,
+        cityId: s.cityId,
       },
-      dateOfBirth: s.dateOfBirth ? new Date(s.dateOfBirth).toISOString() : null,
       gender: s.gender,
       address: s.address.trim(),
       currentGrade: s.currentGrade.trim(),
+      classId: s.classId || null,
+      groupId: s.groupId || null,
+      subjectIds: s.subjectIds,
+      learningGoals: s.learningGoals.trim(),
       parentName: s.parentName.trim(),
       relationship: s.relationship,
       parentEmail: s.parentEmail.trim(),
       parentPhone: s.parentPhone.trim(),
-      favoriteSubjects: s.favoriteSubjects,
-      hobbies: s.hobbies.trim(),
-      learningGoals: s.learningGoals.trim(),
+
     };
   }
 
-  openRazorpay(
-    amount: number,
-    subscriptionId: string,
-    userId: string,
-    user: any,
-  ) {
+  openRazorpay(amount: number, subscriptionId: string, userId: string, user: any) {
     if (typeof Razorpay === 'undefined') {
       this.toast('Payment gateway not loaded. Please refresh and try again.');
       return;
@@ -584,12 +788,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       },
       theme: { color: '#2563eb' },
       handler: async (response: any) => {
-        await this.recordPayment(
-          subscriptionId,
-          amount,
-          response.razorpay_payment_id,
-          user,
-        );
+        await this.recordPayment(subscriptionId, amount, response.razorpay_payment_id, user);
       },
       modal: {
         ondismiss: () => {
@@ -605,17 +804,17 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     rzp.open();
   }
 
-  async recordPayment(subscriptionId: string, amount: number, txnRef: string, user: any,) {
+  async recordPayment(subscriptionId: string, amount: number, txnRef: string, user: any) {
     this.loading = true;
     this.loaderMsg = 'Recording payment...';
     try {
-      await this.http
-        .post(`${this.API}/subscription/pay`, {
+      await firstValueFrom(
+        this.http.post(`${this.API}/subscription/pay`, {
           subscriptionId,
           amount,
           transactionReference: txnRef,
         })
-        .toPromise();
+      );
       this.loading = false;
       this.triggerSuccess('student', user, { subscriptionId, amount, txnRef });
     } catch (e: any) {
@@ -626,11 +825,6 @@ export class RegistrationComponent implements OnInit, OnDestroy {
 
   // ── Helpers ──
 
-  // triggerSuccess(role: string, user: any, extra: any = {}) {
-  //   this.showSuccess = true;
-  //   this.successData = { role, user, extra, course: this.selectedCourse };
-  //   this.toast('Registration successful! 🎉', 'success');
-  // }
   triggerSuccess(role: string, user: any, extra: any = {}) {
     this.showSuccess = true;
     this.successData = { role, user, extra, course: this.selectedCourse };
@@ -638,33 +832,48 @@ export class RegistrationComponent implements OnInit, OnDestroy {
 
     setTimeout(() => {
       this.router.navigate(['/login']);
-    }, 5000); // ← changed from 2500 to 5000
+    }, 5000);
   }
 
   resetForm() {
     this.selectedRole = null;
     this.currentStep = 1;
     this.showSuccess = false;
-    this.showThanksCard = false;
     this.successData = null;
-    this.form = { firstName: '', lastName: '', username: '', phone: '', email: '', password: '', zonalId: '' };
+    this.form = { firstName: '', lastName: '', username: '', phone: '', email: '', password: ''};
     this.teacherForm = {
       fullName: '', qualification: '', major: '', experience: 0,
       address: '', whatsAppNumber: '', hasHighSpeedInternet: false,
       readyForEarlyMorning: false, workingType: '', resumeUrl: '',
       identityProofUrl: '', degreeCertificateUrl: '',
+      countryId: null, stateId: null, cityId: null,
     };
     this.studentForm = {
-      dateOfBirth: null, gender: '', address: '', currentGrade: '',
-      previousSchool: null, parentName: '', relationship: '',
-      parentEmail: '', parentPhone: '', favoriteSubjects: [],
-      hobbies: '', learningGoals: '',
+      gender: '',
+      address: '',
+      currentGrade: '',
+      parentName: '',
+      relationship: '',
+      parentEmail: '',
+      parentPhone: '',
+      learningGoals: '',
+      whatsAppNumber: '',
+      classId: null,
+      groupId: null,
+      subjectIds: [],
+      countryId: null,
+      stateId: null,
+      cityId: null,
     };
-    this.subjectInput = '';
     this.selectedCourse = null;
     this.selectedBatch = null;
     this.selectedBoardId = '';
     this.paymentType = 1;
+    this.classes = [];
+    this.groups = [];
+    this.subjects = [];
+    this.states = [];
+    this.cities = [];
     this.errors = {};
   }
 
@@ -695,5 +904,4 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   goToLogin() {
     this.router.navigate(['/login']);
   }
-
 }
