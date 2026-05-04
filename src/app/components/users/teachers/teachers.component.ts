@@ -8,6 +8,8 @@ import {
 } from '../users.service';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { Permission, PermissionService } from '../../../auth/permission.service';
+import { Router } from '@angular/router';
 
 type ModalMode =
   | 'create'
@@ -76,10 +78,16 @@ export class TeachersComponent implements OnInit {
   constructor(
     private commonService: CommonService,
     private userService: UserService,
+    private permissionService: PermissionService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.loadTeachers();
+  }
+
+  get p(): Permission {
+    return this.permissionService.for(this.router.url);
   }
 
   // ─── Load ────────────────────────────────────────────────────

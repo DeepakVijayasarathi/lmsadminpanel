@@ -203,6 +203,7 @@
                   class="pg-action-btn pg-action-btn--danger"
                   title="Delete"
                   (click)="openDeleteModal(user)"
+                  *ngIf="p.canDelete"
                 >
                   <i class="fas fa-trash"></i>
                 </button>
